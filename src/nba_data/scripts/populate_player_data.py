@@ -52,12 +52,14 @@ class PlayerDataPopulator:
         # Define which metrics go to which tables
         table_mappings = {
             "player_season_stats": [
-                "GP", "GS", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TOV", "PF", "PLUS_MINUS",  # Basic counts
+                "GP", "MIN", "FGM", "FGA", "FG3M", "FG3A", "FTM", "FTA", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "PTS", "PLUS_MINUS",  # Basic counts
                 "FGPCT", "FG3PCT", "FTPCT"  # Basic percentages
             ],
             "player_advanced_stats": [
                 "TSPCT", "USGPCT", "ORTG", "DRTG", "NRTG",  # Advanced metrics
-                "TRBPCT", "ASTPCT", "PIE"  # Advanced percentages
+                "TRBPCT", "ASTPCT", "PIE",  # Advanced percentages
+                "AGE", "GP_ADV", "WINS", "LOSSES", "WIN_PCT", "MIN_ADV",  # Additional metrics
+                "AST_TO", "AST_RATIO", "OREB_PCT", "DREB_PCT", "TOV_PCT", "EFG_PCT", "PACE_ADV"  # More advanced metrics
             ],
             "player_tracking_stats": [
                 "DRIVES", "DRIVE_FGM"  # Tracking metrics
@@ -172,15 +174,22 @@ class PlayerDataPopulator:
                 "FG3PCT": "three_point_percentage",
                 "FTPCT": "free_throw_percentage",
                 "GP": "games_played",
-                "GS": "games_started",
                 "MIN": "minutes_played",
-                "PTS": "points",
+                "FGM": "field_goals_made",
+                "FGA": "field_goals_attempted",
+                "FG3M": "three_pointers_made",
+                "FG3A": "three_pointers_attempted",
+                "FTM": "free_throws_made",
+                "FTA": "free_throws_attempted",
+                "OREB": "offensive_rebounds",
+                "DREB": "defensive_rebounds",
                 "REB": "total_rebounds",
                 "AST": "assists",
                 "STL": "steals",
                 "BLK": "blocks",
                 "TOV": "turnovers",
                 "PF": "personal_fouls",
+                "PTS": "points",
                 "PLUS_MINUS": "plus_minus"
             },
             "player_advanced_stats": {
@@ -191,7 +200,20 @@ class PlayerDataPopulator:
                 "NRTG": "net_rating",
                 "TRBPCT": "rebound_percentage",
                 "ASTPCT": "assist_percentage",
-                "PIE": "pie"
+                "PIE": "pie",
+                "AGE": "age",
+                "GP_ADV": "games_played",
+                "WINS": "wins",
+                "LOSSES": "losses",
+                "WIN_PCT": "win_percentage",
+                "MIN_ADV": "minutes_played",
+                "AST_TO": "assist_to_turnover_ratio",
+                "AST_RATIO": "assist_ratio",
+                "OREB_PCT": "offensive_rebound_percentage",
+                "DREB_PCT": "defensive_rebound_percentage",
+                "TOV_PCT": "turnover_percentage",
+                "EFG_PCT": "effective_field_goal_percentage",
+                "PACE_ADV": "pace"
             },
             "player_tracking_stats": {
                 "DRIVES": "drives",

@@ -30,6 +30,7 @@ class DataType(Enum):
     """Data types for metrics."""
     COUNT = "count"
     PERCENTAGE = "percentage"
+    RATING = "rating"
     TIME = "time"
     STRING = "string"
     CALCULATED = "calculated"
@@ -200,6 +201,80 @@ class DataFetcher:
                 notes="Direct mapping from base stats"
             ),
 
+            # Additional base stats metrics available in the API
+            "FGM": MetricMapping(
+                canonical_name="Field Goals Made",
+                api_source="leaguedashplayerstats",
+                api_column="FGM",
+                endpoint_params={"MeasureType": "Base", "PerMode": "Totals", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Field goals made from base stats"
+            ),
+            "FGA": MetricMapping(
+                canonical_name="Field Goals Attempted",
+                api_source="leaguedashplayerstats",
+                api_column="FGA",
+                endpoint_params={"MeasureType": "Base", "PerMode": "Totals", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Field goals attempted from base stats"
+            ),
+            "FG3M": MetricMapping(
+                canonical_name="Three Pointers Made",
+                api_source="leaguedashplayerstats",
+                api_column="FG3M",
+                endpoint_params={"MeasureType": "Base", "PerMode": "Totals", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Three pointers made from base stats"
+            ),
+            "FG3A": MetricMapping(
+                canonical_name="Three Pointers Attempted",
+                api_source="leaguedashplayerstats",
+                api_column="FG3A",
+                endpoint_params={"MeasureType": "Base", "PerMode": "Totals", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Three pointers attempted from base stats"
+            ),
+            "FTM": MetricMapping(
+                canonical_name="Free Throws Made",
+                api_source="leaguedashplayerstats",
+                api_column="FTM",
+                endpoint_params={"MeasureType": "Base", "PerMode": "Totals", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Free throws made from base stats"
+            ),
+            "FTA": MetricMapping(
+                canonical_name="Free Throws Attempted",
+                api_source="leaguedashplayerstats",
+                api_column="FTA",
+                endpoint_params={"MeasureType": "Base", "PerMode": "Totals", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Free throws attempted from base stats"
+            ),
+            "OREB": MetricMapping(
+                canonical_name="Offensive Rebounds",
+                api_source="leaguedashplayerstats",
+                api_column="OREB",
+                endpoint_params={"MeasureType": "Base", "PerMode": "Totals", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Offensive rebounds from base stats"
+            ),
+            "DREB": MetricMapping(
+                canonical_name="Defensive Rebounds",
+                api_source="leaguedashplayerstats",
+                api_column="DREB",
+                endpoint_params={"MeasureType": "Base", "PerMode": "Totals", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Defensive rebounds from base stats"
+            ),
+
             # Rebounding and playmaking
             "TRBPCT": MetricMapping(
                 canonical_name="Total Rebound Percentage",
@@ -219,6 +294,15 @@ class DataFetcher:
                 required=True,
                 notes="Direct mapping from advanced stats"
             ),
+            "PIE": MetricMapping(
+                canonical_name="Player Impact Estimate",
+                api_source="leaguedashplayerstats",
+                api_column="PIE",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Player Impact Estimate from advanced stats (can be negative)"
+            ),
 
             # Advanced metrics
             "USGPCT": MetricMapping(
@@ -235,7 +319,7 @@ class DataFetcher:
                 api_source="leaguedashplayerstats",
                 api_column="OFF_RATING",
                 endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
-                data_type=DataType.COUNT,
+                data_type=DataType.RATING,
                 required=True,
                 notes="Direct mapping from advanced stats"
             ),
@@ -244,7 +328,7 @@ class DataFetcher:
                 api_source="leaguedashplayerstats",
                 api_column="DEF_RATING",
                 endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
-                data_type=DataType.COUNT,
+                data_type=DataType.RATING,
                 required=True,
                 notes="Direct mapping from advanced stats"
             ),
@@ -253,9 +337,130 @@ class DataFetcher:
                 api_source="leaguedashplayerstats",
                 api_column="NET_RATING",
                 endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
-                data_type=DataType.COUNT,
+                data_type=DataType.RATING,
                 required=True,
                 notes="Direct mapping from advanced stats"
+            ),
+
+            # Additional advanced metrics available in the API
+            "AGE": MetricMapping(
+                canonical_name="Player Age",
+                api_source="leaguedashplayerstats",
+                api_column="AGE",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Player age from advanced stats"
+            ),
+            "GP_ADV": MetricMapping(
+                canonical_name="Games Played (Advanced)",
+                api_source="leaguedashplayerstats",
+                api_column="GP",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Games played from advanced stats"
+            ),
+            "WINS": MetricMapping(
+                canonical_name="Wins",
+                api_source="leaguedashplayerstats",
+                api_column="W",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Team wins from advanced stats"
+            ),
+            "LOSSES": MetricMapping(
+                canonical_name="Losses",
+                api_source="leaguedashplayerstats",
+                api_column="L",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Team losses from advanced stats"
+            ),
+            "WIN_PCT": MetricMapping(
+                canonical_name="Win Percentage",
+                api_source="leaguedashplayerstats",
+                api_column="W_PCT",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.PERCENTAGE,
+                required=True,
+                notes="Win percentage from advanced stats"
+            ),
+            "MIN_ADV": MetricMapping(
+                canonical_name="Minutes Played (Advanced)",
+                api_source="leaguedashplayerstats",
+                api_column="MIN",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Minutes played from advanced stats"
+            ),
+
+            # Additional advanced metrics available in the API
+            "AST_TO": MetricMapping(
+                canonical_name="Assist to Turnover Ratio",
+                api_source="leaguedashplayerstats",
+                api_column="AST_TO",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Assist to turnover ratio from advanced stats"
+            ),
+            "AST_RATIO": MetricMapping(
+                canonical_name="Assist Ratio",
+                api_source="leaguedashplayerstats",
+                api_column="AST_RATIO",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Assist ratio from advanced stats"
+            ),
+            "OREB_PCT": MetricMapping(
+                canonical_name="Offensive Rebound Percentage",
+                api_source="leaguedashplayerstats",
+                api_column="OREB_PCT",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.PERCENTAGE,
+                required=True,
+                notes="Offensive rebound percentage from advanced stats"
+            ),
+            "DREB_PCT": MetricMapping(
+                canonical_name="Defensive Rebound Percentage",
+                api_source="leaguedashplayerstats",
+                api_column="DREB_PCT",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.PERCENTAGE,
+                required=True,
+                notes="Defensive rebound percentage from advanced stats"
+            ),
+            "TOV_PCT": MetricMapping(
+                canonical_name="Turnover Percentage",
+                api_source="leaguedashplayerstats",
+                api_column="TM_TOV_PCT",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Turnover percentage from advanced stats (can exceed 100%)"
+            ),
+            "EFG_PCT": MetricMapping(
+                canonical_name="Effective Field Goal Percentage",
+                api_source="leaguedashplayerstats",
+                api_column="EFG_PCT",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Effective field goal percentage from advanced stats (can exceed 100%)"
+            ),
+            "PACE_ADV": MetricMapping(
+                canonical_name="Pace",
+                api_source="leaguedashplayerstats",
+                api_column="PACE",
+                endpoint_params={"MeasureType": "Advanced", "PerMode": "PerGame", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Pace from advanced stats"
             ),
 
             # Tracking metrics (available ones)
@@ -477,7 +682,8 @@ class DataFetcher:
                                         logger.warning(f"Invalid percentage value for {metric}, player {player_id}: {value}")
                                         continue
                                 elif mapping and mapping.data_type == DataType.COUNT:
-                                    if float(value) < 0:
+                                    # Allow negative values for PIE (Player Impact Estimate can be negative)
+                                    if metric != "PIE" and float(value) < 0:
                                         logger.warning(f"Invalid count value for {metric}, player {player_id}: {value}")
                                         continue
 

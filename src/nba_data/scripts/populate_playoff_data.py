@@ -158,9 +158,12 @@ class PlayoffDataPopulator:
                 try:
                     player_id = record.get("PLAYER_ID")
                     team_id = record.get("TEAM_ID", 0)
-                    value = record.get(metric_name)
+                    # For playoff data, map metric name to API column name
+                    api_column = self._get_api_column_name(metric_name)
+                    value = record.get(api_column)
 
-                    if player_id is None or value is None:
+                    if player_id is None:
+                        logger.warning(f"No PLAYER_ID in record: {record}")
                         continue
 
                     # Build dynamic column name mapping
@@ -179,6 +182,51 @@ class PlayoffDataPopulator:
             cursor.close()
 
         return inserted_count
+
+    def _get_api_column_name(self, metric_name: str) -> str:
+        """
+        Get the API column name for a given metric name.
+
+        Args:
+            metric_name: Internal metric name
+
+        Returns:
+            API column name
+        """
+        # Define mappings from internal metric names to API column names
+        api_mappings = {
+            # Basic stats mappings
+            "GP": "GP",
+            "GS": "GS",
+            "MIN": "MIN",
+            "PTS": "PTS",
+            "REB": "REB",
+            "AST": "AST",
+            "STL": "STL",
+            "BLK": "BLK",
+            "TOV": "TOV",
+            "PF": "PF",
+            "PLUS_MINUS": "PLUS_MINUS",
+            "FGPCT": "FG_PCT",
+            "FG3PCT": "FG3_PCT",
+            "FTPCT": "FT_PCT",
+
+            # Advanced stats mappings
+            "TSPCT": "TS_PCT",
+            "USGPCT": "USG_PCT",
+            "ORTG": "OFF_RATING",
+            "DRTG": "DEF_RATING",
+            "NRTG": "NET_RATING",
+            "TRBPCT": "REB_PCT",
+            "ASTPCT": "AST_PCT",
+            "PIE": "PIE",
+
+            # Tracking stats mappings
+            "DRIVES": "DRIVES",
+            "DRIVE_FGM": "DRIVE_FGM"
+        }
+
+        return api_mappings.get(metric_name, metric_name)
 
     def _get_column_mapping(self, table_name: str, metric_name: str) -> str:
         """
