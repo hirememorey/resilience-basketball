@@ -531,6 +531,109 @@ class DataFetcher:
         logger.info(f"Successfully fetched data for {len(all_data)} metrics")
         return all_data
 
+    def fetch_all_available_playoff_metrics(self, season: str = "2024-25") -> Dict[str, Dict[str, Any]]:
+        """
+        Fetch playoff data for all available metrics.
+
+        Args:
+            season: The season to fetch data for
+
+        Returns:
+            Dictionary mapping table names to their metric data
+        """
+        logger.info("Fetching playoff data for all available metrics...")
+
+        all_data = {}
+
+        # Define playoff data sources - mapping table names to API methods
+        playoff_data_sources = {
+            "player_playoff_stats": [
+                "GP", "GS", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TOV", "PF", "PLUS_MINUS",
+                "FGPCT", "FG3PCT", "FTPCT"
+            ],
+            "player_playoff_advanced_stats": [
+                "TSPCT", "USGPCT", "ORTG", "DRTG", "NRTG",
+                "TRBPCT", "ASTPCT", "PIE"
+            ],
+            "player_playoff_tracking_stats": [
+                "DRIVES", "DRIVE_FGM"
+            ]
+        }
+
+        # Fetch data for each table
+        for table_name, metric_names in playoff_data_sources.items():
+            logger.info(f"Fetching playoff data for {table_name}...")
+
+            table_data = {}
+
+            # Fetch each metric for this table
+            for metric_name in metric_names:
+                try:
+                    data = self._fetch_playoff_metric_data(metric_name, season)
+                    if data:
+                        table_data[metric_name] = data
+                        logger.debug(f"  ✓ {metric_name}: {len(data)} records")
+                    else:
+                        logger.warning(f"  ⚠ No data for {metric_name}")
+                except Exception as e:
+                    logger.error(f"  ✗ Failed to fetch {metric_name}: {str(e)}")
+
+            if table_data:
+                all_data[table_name] = table_data
+                logger.info(f"✅ {table_name}: {len(table_data)} metrics fetched")
+
+        logger.info(f"Successfully fetched playoff data for {len(all_data)} tables")
+        return all_data
+
+    def _fetch_playoff_metric_data(self, metric_name: str, season: str) -> Optional[List[Dict[str, Any]]]:
+        """
+        Fetch playoff data for a specific metric.
+
+        Args:
+            metric_name: Name of the metric to fetch
+            season: Season to fetch data for
+
+        Returns:
+            List of player data records for this metric
+        """
+        try:
+            # Map metric names to appropriate API calls
+            if metric_name in ["GP", "GS", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TOV", "PF", "PLUS_MINUS", "FGPCT", "FG3PCT", "FTPCT"]:
+                # Basic stats
+                response = self.client.get_league_player_playoff_base_stats(season)
+            elif metric_name in ["TSPCT", "USGPCT", "ORTG", "DRTG", "NRTG", "TRBPCT", "ASTPCT", "PIE"]:
+                # Advanced stats
+                response = self.client.get_league_player_playoff_advanced_stats(season)
+            elif metric_name in ["DRIVES", "DRIVE_FGM"]:
+                # Tracking stats
+                response = self.client.get_league_player_playoff_tracking_stats(season)
+            else:
+                logger.warning(f"Unknown metric {metric_name}, skipping")
+                return None
+
+            # Extract the data from the API response
+            if "resultSets" in response and response["resultSets"]:
+                result_set = response["resultSets"][0]
+                headers = result_set.get("headers", [])
+                rows = result_set.get("rowSet", [])
+
+                # Convert to list of dictionaries
+                player_data = []
+                for row in rows:
+                    if len(row) == len(headers):
+                        player_record = dict(zip(headers, row))
+                        # Add the metric value explicitly
+                        player_data.append(player_record)
+
+                return player_data if player_data else None
+            else:
+                logger.warning(f"No resultSets found in response for {metric_name}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Failed to fetch playoff data for {metric_name}: {str(e)}")
+            return None
+
     def get_missing_metrics(self) -> List[str]:
         """Get list of metrics that are missing from the API."""
         return [metric for metric, mapping in self.metric_mappings.items()

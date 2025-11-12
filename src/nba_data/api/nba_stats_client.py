@@ -390,6 +390,183 @@ class NBAStatsClient:
         }
         return self._make_request(endpoint, params)
 
+    # Playoff stats methods
+    def get_league_player_playoff_base_stats(self, season: str = "2024-25") -> Dict[str, Any]:
+        """Get basic player playoff statistics."""
+        endpoint = "leaguedashplayerstats"
+        params = {
+            "College": "",
+            "Conference": "",
+            "Country": "",
+            "DateFrom": "",
+            "DateTo": "",
+            "Division": "",
+            "DraftPick": "",
+            "DraftYear": "",
+            "GameScope": "",
+            "GameSegment": "",
+            "Height": "",
+            "LastNGames": "0",
+            "LeagueID": "00",
+            "Location": "",
+            "MeasureType": "Base",
+            "Month": "0",
+            "OpponentTeamID": "0",
+            "Outcome": "",
+            "PORound": "0",
+            "PaceAdjust": "N",
+            "PerMode": "PerGame",
+            "Period": "0",
+            "PlayerExperience": "",
+            "PlayerPosition": "",
+            "PlusMinus": "N",
+            "Rank": "N",
+            "Season": season,
+            "SeasonSegment": "",
+            "SeasonType": "Playoffs",
+            "ShotClockRange": "",
+            "StarterBench": "",
+            "TeamID": "0",
+            "TwoWay": "0",
+            "VsConference": "",
+            "VsDivision": "",
+            "Weight": ""
+        }
+        return self._make_request(endpoint, params)
+
+    def get_league_player_playoff_advanced_stats(self, season: str = "2024-25") -> Dict[str, Any]:
+        """Get advanced player playoff statistics."""
+        endpoint = "leaguedashplayerstats"
+        params = {
+            "College": "",
+            "Conference": "",
+            "Country": "",
+            "DateFrom": "",
+            "DateTo": "",
+            "Division": "",
+            "DraftPick": "",
+            "DraftYear": "",
+            "GameScope": "",
+            "GameSegment": "",
+            "Height": "",
+            "LastNGames": "0",
+            "LeagueID": "00",
+            "Location": "",
+            "MeasureType": "Advanced",
+            "Month": "0",
+            "OpponentTeamID": "0",
+            "Outcome": "",
+            "PORound": "0",
+            "PaceAdjust": "N",
+            "PerMode": "PerGame",
+            "Period": "0",
+            "PlayerExperience": "",
+            "PlayerPosition": "",
+            "PlusMinus": "N",
+            "Rank": "N",
+            "Season": season,
+            "SeasonSegment": "",
+            "SeasonType": "Playoffs",
+            "ShotClockRange": "",
+            "StarterBench": "",
+            "TeamID": "0",
+            "TwoWay": "0",
+            "VsConference": "",
+            "VsDivision": "",
+            "Weight": ""
+        }
+        return self._make_request(endpoint, params)
+
+    def get_league_player_playoff_tracking_stats(self, season: str = "2024-25", pt_measure_type: str = "Drives") -> Dict[str, Any]:
+        """Get player playoff tracking statistics."""
+        endpoint = "leaguedashptstats"
+        params = {
+            "College": "",
+            "Conference": "",
+            "Country": "",
+            "DateFrom": "",
+            "DateTo": "",
+            "Division": "",
+            "DraftPick": "",
+            "DraftYear": "",
+            "GameScope": "",
+            "GameSegment": "",
+            "Height": "",
+            "LastNGames": "0",
+            "LeagueID": "00",
+            "Location": "",
+            "Month": "0",
+            "OpponentTeamID": "0",
+            "Outcome": "",
+            "PORound": "0",
+            "PaceAdjust": "N",
+            "PerMode": "PerGame",
+            "Period": "0",
+            "PlayerExperience": "",
+            "PlayerPosition": "",
+            "PlusMinus": "N",
+            "PtMeasureType": pt_measure_type,
+            "Rank": "N",
+            "Season": season,
+            "SeasonSegment": "",
+            "SeasonType": "Playoffs",
+            "ShotClockRange": "",
+            "StarterBench": "",
+            "TeamID": "0",
+            "TwoWay": "0",
+            "VsConference": "",
+            "VsDivision": "",
+            "Weight": ""
+        }
+        return self._make_request(endpoint, params)
+
+    def get_league_player_playoff_shot_stats(self, season: str = "2024-25") -> Dict[str, Any]:
+        """Get player playoff shot statistics (from the cURL example provided)."""
+        endpoint = "leaguedashplayerptshot"
+        params = {
+            "CloseDefDistRange": "",
+            "College": "",
+            "Conference": "",
+            "Country": "",
+            "DateFrom": "",
+            "DateTo": "",
+            "Division": "",
+            "DraftPick": "",
+            "DraftYear": "",
+            "DribbleRange": "",
+            "GameScope": "",
+            "GameSegment": "",
+            "GeneralRange": "Overall",
+            "Height": "",
+            "ISTRound": "",
+            "LastNGames": "0",
+            "LeagueID": "00",
+            "Location": "",
+            "Month": "0",
+            "OpponentTeamID": "0",
+            "Outcome": "",
+            "PORound": "0",
+            "PaceAdjust": "N",
+            "PerMode": "PerGame",
+            "Period": "0",
+            "PlayerExperience": "",
+            "PlayerPosition": "",
+            "PlusMinus": "N",
+            "Rank": "N",
+            "Season": season,
+            "SeasonSegment": "",
+            "SeasonType": "Playoffs",
+            "ShotClockRange": "",
+            "ShotDistRange": "",
+            "StarterBench": "",
+            "TeamID": "0",
+            "TouchTimeRange": "",
+            "VsConference": "",
+            "VsDivision": "",
+            "Weight": ""
+        }
+        return self._make_request(endpoint, params)
+
     def get_play_by_play(self, game_id: str, start_period: int = 1, end_period: int = 10) -> Dict[str, Any]:
         """Get play-by-play data for a specific game."""
         endpoint = "playbyplayv2"

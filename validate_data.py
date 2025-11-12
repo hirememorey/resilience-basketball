@@ -83,7 +83,11 @@ class DataValidator:
             "players_with_season_stats": 0,
             "players_with_advanced_stats": 0,
             "players_with_tracking_stats": 0,
+            "players_with_playoff_stats": 0,
+            "players_with_playoff_advanced_stats": 0,
+            "players_with_playoff_tracking_stats": 0,
             "season_coverage": {},
+            "playoff_season_coverage": {},
             "metric_coverage": {}
         }
 
@@ -91,7 +95,7 @@ class DataValidator:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
 
-                # Count players by stat type
+                # Count players by stat type (regular season)
                 cursor.execute("SELECT COUNT(DISTINCT player_id) FROM player_season_stats")
                 completeness["players_with_season_stats"] = cursor.fetchone()[0]
 
@@ -101,9 +105,23 @@ class DataValidator:
                 cursor.execute("SELECT COUNT(DISTINCT player_id) FROM player_tracking_stats")
                 completeness["players_with_tracking_stats"] = cursor.fetchone()[0]
 
+                # Count players by stat type (playoffs)
+                cursor.execute("SELECT COUNT(DISTINCT player_id) FROM player_playoff_stats")
+                completeness["players_with_playoff_stats"] = cursor.fetchone()[0]
+
+                cursor.execute("SELECT COUNT(DISTINCT player_id) FROM player_playoff_advanced_stats")
+                completeness["players_with_playoff_advanced_stats"] = cursor.fetchone()[0]
+
+                cursor.execute("SELECT COUNT(DISTINCT player_id) FROM player_playoff_tracking_stats")
+                completeness["players_with_playoff_tracking_stats"] = cursor.fetchone()[0]
+
                 # Season coverage
                 cursor.execute("SELECT season, COUNT(DISTINCT player_id) FROM player_season_stats GROUP BY season")
                 completeness["season_coverage"] = {row[0]: row[1] for row in cursor.fetchall()}
+
+                # Playoff season coverage
+                cursor.execute("SELECT season, COUNT(DISTINCT player_id) FROM player_playoff_stats GROUP BY season")
+                completeness["playoff_season_coverage"] = {row[0]: row[1] for row in cursor.fetchall()}
 
                 # Metric coverage for season stats
                 cursor.execute("SELECT COUNT(*) FROM player_season_stats WHERE field_goal_percentage IS NOT NULL")
@@ -277,12 +295,24 @@ class DataValidator:
         # Data Completeness
         completeness = results["data_completeness"]
         print(f"\n✅ Data Completeness:")
-        print(f"   Players with season stats: {completeness['players_with_season_stats']}")
-        print(f"   Players with advanced stats: {completeness['players_with_advanced_stats']}")
-        print(f"   Players with tracking stats: {completeness['players_with_tracking_stats']}")
+
+        # Regular Season Data
+        print(f"   Regular Season:")
+        print(f"     Players with season stats: {completeness['players_with_season_stats']}")
+        print(f"     Players with advanced stats: {completeness['players_with_advanced_stats']}")
+        print(f"     Players with tracking stats: {completeness['players_with_tracking_stats']}")
 
         if completeness['season_coverage']:
-            print(f"   Seasons covered: {list(completeness['season_coverage'].keys())}")
+            print(f"     Seasons covered: {list(completeness['season_coverage'].keys())}")
+
+        # Playoff Data
+        print(f"   Playoffs:")
+        print(f"     Players with playoff stats: {completeness['players_with_playoff_stats']}")
+        print(f"     Players with playoff advanced stats: {completeness['players_with_playoff_advanced_stats']}")
+        print(f"     Players with playoff tracking stats: {completeness['players_with_playoff_tracking_stats']}")
+
+        if completeness['playoff_season_coverage']:
+            print(f"     Playoff seasons covered: {list(completeness['playoff_season_coverage'].keys())}")
 
         # Data Quality
         quality = results["data_quality"]

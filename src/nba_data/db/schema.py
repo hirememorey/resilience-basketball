@@ -38,6 +38,9 @@ class NBADatabaseSchema:
             self._create_player_season_stats_table(conn)
             self._create_player_advanced_stats_table(conn)
             self._create_player_tracking_stats_table(conn)
+            self._create_player_playoff_stats_table(conn)
+            self._create_player_playoff_advanced_stats_table(conn)
+            self._create_player_playoff_tracking_stats_table(conn)
             self._create_possessions_table(conn)
             self._create_possession_lineups_table(conn)
             self._create_possession_events_table(conn)
@@ -243,6 +246,121 @@ class NBADatabaseSchema:
         conn.commit()
         print("✓ PlayerTrackingStats table created")
 
+    def _create_player_playoff_stats_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PlayerPlayoffStats table (playoff basic stats)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS player_playoff_stats (
+                player_id INTEGER NOT NULL,
+                season TEXT NOT NULL,
+                team_id INTEGER NOT NULL,
+                games_played INTEGER,
+                games_started INTEGER,
+                minutes_played REAL,
+                field_goals_made INTEGER,
+                field_goals_attempted INTEGER,
+                field_goal_percentage REAL,
+                three_pointers_made INTEGER,
+                three_pointers_attempted INTEGER,
+                three_point_percentage REAL,
+                free_throws_made INTEGER,
+                free_throws_attempted INTEGER,
+                free_throw_percentage REAL,
+                offensive_rebounds INTEGER,
+                defensive_rebounds INTEGER,
+                total_rebounds INTEGER,
+                assists INTEGER,
+                steals INTEGER,
+                blocks INTEGER,
+                turnovers INTEGER,
+                personal_fouls INTEGER,
+                points INTEGER,
+                plus_minus REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (player_id, season, team_id),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id)
+            )
+        """)
+
+        conn.commit()
+        print("✓ PlayerPlayoffStats table created")
+
+    def _create_player_playoff_advanced_stats_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PlayerPlayoffAdvancedStats table (playoff advanced analytics)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS player_playoff_advanced_stats (
+                player_id INTEGER NOT NULL,
+                season TEXT NOT NULL,
+                team_id INTEGER NOT NULL,
+                age INTEGER,
+                games_played INTEGER,
+                wins INTEGER,
+                losses INTEGER,
+                win_percentage REAL,
+                minutes_played REAL,
+                offensive_rating REAL,
+                defensive_rating REAL,
+                net_rating REAL,
+                assist_percentage REAL,
+                assist_to_turnover_ratio REAL,
+                assist_ratio REAL,
+                offensive_rebound_percentage REAL,
+                defensive_rebound_percentage REAL,
+                rebound_percentage REAL,
+                turnover_percentage REAL,
+                effective_field_goal_percentage REAL,
+                true_shooting_percentage REAL,
+                usage_percentage REAL,
+                pace REAL,
+                pie REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (player_id, season, team_id),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id)
+            )
+        """)
+
+        conn.commit()
+        print("✓ PlayerPlayoffAdvancedStats table created")
+
+    def _create_player_playoff_tracking_stats_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PlayerPlayoffTrackingStats table (playoff advanced tracking metrics)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS player_playoff_tracking_stats (
+                player_id INTEGER NOT NULL,
+                season TEXT NOT NULL,
+                team_id INTEGER NOT NULL,
+                minutes_played REAL,
+                drives REAL,
+                drive_field_goals_made REAL,
+                drive_field_goals_attempted REAL,
+                drive_field_goal_percentage REAL,
+                front_court_touches REAL,
+                elbow_touches REAL,
+                post_ups REAL,
+                post_up_field_goals_made REAL,
+                post_up_field_goals_attempted REAL,
+                post_up_field_goal_percentage REAL,
+                paint_touches REAL,
+                catch_shoot_field_goals_made REAL,
+                catch_shoot_field_goals_attempted REAL,
+                catch_shoot_field_goal_percentage REAL,
+                pull_up_field_goals_made REAL,
+                pull_up_field_goals_attempted REAL,
+                pull_up_field_goal_percentage REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (player_id, season, team_id),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id)
+            )
+        """)
+
+        conn.commit()
+        print("✓ PlayerPlayoffTrackingStats table created")
+
     def _create_possessions_table(self, conn: sqlite3.Connection) -> None:
         """Create the Possessions table (for play-by-play analysis)."""
         conn.execute("""
@@ -428,8 +546,9 @@ class NBADatabaseSchema:
         """Verify that all required tables exist."""
         required_tables = [
             'teams', 'games', 'players', 'player_season_stats',
-            'player_advanced_stats', 'player_tracking_stats', 'possessions',
-            'possession_lineups', 'possession_events', 'possession_matchups'
+            'player_advanced_stats', 'player_tracking_stats',
+            'player_playoff_stats', 'player_playoff_advanced_stats', 'player_playoff_tracking_stats',
+            'possessions', 'possession_lineups', 'possession_events', 'possession_matchups'
         ]
 
         with sqlite3.connect(self.db_path) as conn:
