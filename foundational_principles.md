@@ -46,7 +46,43 @@ This is our "Operating System" for the project. The analysis must adhere to thes
     *   Quality of teammates and opponents.
 5.  **Start with a Clear "Why":** Every line of code and every statistical test must be in service of answering the Central Research Question. We will avoid analysis for the sake of analysis.
 
-## 6. Desired Output & Success Criteria
+## 6. Possession-Level Analysis Framework
+
+Recent development has enhanced our research framework with granular possession-level player behavior tracking. This advancement transforms our ability to test the core hypotheses by measuring resilience at the process level rather than just outcomes.
+
+### Enhanced Hypothesis Testing
+
+**Hypothesis 1 (Skill Diversification) Enhanced:**
+- **Traditional View:** Box score metrics showing varied play styles
+- **Possession-Level View:** Actual decision-making diversity within possessions - how many different actions a player attempts when defenders focus on stopping them
+
+**Hypothesis 2 (Over-Specialization Fragility) Enhanced:**
+- **Traditional View:** Reliance on specific shot types or play patterns
+- **Possession-Level View:** Predictability in possession sequences - how often a player defaults to the same decision tree under pressure
+
+**Hypothesis 3 (Adaptability Measurement) Enhanced:**
+- **Traditional View:** Year-over-year statistical changes
+- **Possession-Level View:** Real-time adaptation within games - how quickly a player adjusts their approach when initial actions fail
+
+### Possession-Level Resilience Metrics
+
+The possession tracking infrastructure enables measurement of:
+
+1. **Decision Quality Under Pressure:** Touch efficiency, action success rates when defenders dedicate possessions to stopping the player
+2. **Adaptation Speed:** Time between failed actions and successful adjustments within possessions
+3. **Matchup Resilience:** Performance differentials against elite defenders vs. average defenders
+4. **Possession Flow Dynamics:** How ball and player movement patterns indicate mental acuity
+
+### Implementation Insights
+
+Building the possession-level infrastructure revealed critical insights about resilience analysis:
+
+- **Granular vs. Aggregate:** Resilience manifests in micro-decisions within possessions, not just aggregate game stats
+- **Defensive Context Matters:** The same player action has different resilience implications depending on defensive intensity
+- **Sequence Dependencies:** Player success often depends on the sequence of actions leading to scoring opportunities
+- **Real-Time Adaptation:** True resilience requires measuring how players adjust mid-possession, not just game-to-game
+
+## 7. Desired Output & Success Criteria
 
 The project will be considered successful if we produce two key artifacts:
 

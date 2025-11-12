@@ -390,6 +390,25 @@ class NBAStatsClient:
         }
         return self._make_request(endpoint, params)
 
+    def get_play_by_play(self, game_id: str, start_period: int = 1, end_period: int = 10) -> Dict[str, Any]:
+        """Get play-by-play data for a specific game."""
+        endpoint = "playbyplayv2"
+        params = {
+            "GameID": game_id,
+            "StartPeriod": str(start_period),
+            "EndPeriod": str(end_period)
+        }
+        return self._make_request(endpoint, params)
+
+    def get_game_rotation(self, game_id: str) -> Dict[str, Any]:
+        """Get player rotation data (who was on court when) for a specific game."""
+        endpoint = "gamerotation"
+        params = {
+            "GameID": game_id,
+            "LeagueID": "00"
+        }
+        return self._make_request(endpoint, params)
+
 
 # Convenience functions
 def create_nba_stats_client() -> NBAStatsClient:

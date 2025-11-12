@@ -37,15 +37,5 @@ Please update and/or remove any relevant markdown files based on the changes we'
 ## @CleanupDocs
 I want you to utilize first principles to ensure that only necessary markdown files and markdown content within those files are in this project. I worry about documentation creep and want to make sure that only the minimum amount of content is available for a brand new developer with no context to pick up from where the project was last left off. Do not touch prompts.md
 
-## @Phase3Resilience
-Utilizing first principles, analyze our current data foundation and develop a comprehensive approach to building playoff resilience predictive models. Focus on:
-
-1. **Data Expansion**: How to integrate playoff data and create resilience metrics
-2. **Feature Engineering**: What specific indicators best predict playoff performance
-3. **Model Development**: Statistical approaches for resilience scoring
-4. **Validation Strategy**: How to test resilience predictions against historical outcomes
-
-Walk through your analysis and recommended implementation approach in detail.
-
 ## @WeReady
 I want you to think through first principles and try to answer the question, why might we not actually be ready for this implementation? What are the non obvious failure modes?

@@ -39,6 +39,9 @@ class NBADatabaseSchema:
             self._create_player_advanced_stats_table(conn)
             self._create_player_tracking_stats_table(conn)
             self._create_possessions_table(conn)
+            self._create_possession_lineups_table(conn)
+            self._create_possession_events_table(conn)
+            self._create_possession_matchups_table(conn)
 
             print("✅ All database tables created successfully")
 
@@ -247,16 +250,22 @@ class NBADatabaseSchema:
                 possession_id TEXT PRIMARY KEY,
                 game_id TEXT NOT NULL,
                 period INTEGER,
-                clock_time TEXT,
+                clock_time_start TEXT,
+                clock_time_end TEXT,
                 home_team_id INTEGER NOT NULL,
                 away_team_id INTEGER NOT NULL,
                 offensive_team_id INTEGER NOT NULL,
                 defensive_team_id INTEGER NOT NULL,
                 possession_start REAL,
                 possession_end REAL,
+                duration_seconds REAL,
                 points_scored INTEGER DEFAULT 0,
                 expected_points REAL,
+                possession_type TEXT, -- 'offensive', 'defensive', 'transition', etc.
+                start_reason TEXT, -- 'made_shot', 'rebound', 'steal', 'turnover', etc.
+                end_reason TEXT, -- 'made_shot', 'missed_shot', 'turnover', 'foul', etc.
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (game_id) REFERENCES games(game_id),
                 FOREIGN KEY (home_team_id) REFERENCES teams(team_id),
                 FOREIGN KEY (away_team_id) REFERENCES teams(team_id),
@@ -274,15 +283,153 @@ class NBADatabaseSchema:
             CREATE INDEX IF NOT EXISTS idx_possessions_offensive_team
             ON possessions(offensive_team_id)
         """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_possessions_period
+            ON possessions(game_id, period)
+        """)
+
+        # Update trigger
+        conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS possessions_updated_at
+            AFTER UPDATE ON possessions
+            BEGIN
+                UPDATE possessions SET updated_at = CURRENT_TIMESTAMP
+                WHERE possession_id = NEW.possession_id;
+            END
+        """)
 
         conn.commit()
-        print("✓ Possessions table created")
+        print("✓ Enhanced Possessions table created")
+
+    def _create_possession_lineups_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PossessionLineups table (tracks players on court during possessions)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS possession_lineups (
+                possession_id TEXT NOT NULL,
+                player_id INTEGER NOT NULL,
+                team_id INTEGER NOT NULL,
+                position TEXT, -- Point Guard, Shooting Guard, etc. (for context)
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (possession_id, player_id),
+                FOREIGN KEY (possession_id) REFERENCES possessions(possession_id),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id)
+            )
+        """)
+
+        # Create indexes
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_possession_lineups_player
+            ON possession_lineups(player_id)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_possession_lineups_team
+            ON possession_lineups(team_id)
+        """)
+
+        conn.commit()
+        print("✓ PossessionLineups table created")
+
+    def _create_possession_events_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PossessionEvents table (individual player actions within possessions)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS possession_events (
+                event_id TEXT PRIMARY KEY,
+                possession_id TEXT NOT NULL,
+                event_number INTEGER NOT NULL, -- Sequence within possession
+                clock_time TEXT NOT NULL,
+                elapsed_seconds REAL NOT NULL,
+                player_id INTEGER,
+                team_id INTEGER NOT NULL,
+                opponent_team_id INTEGER NOT NULL,
+                event_type TEXT NOT NULL, -- 'shot', 'pass', 'dribble', 'foul', 'rebound', etc.
+                event_subtype TEXT, -- 'made', 'missed', 'assist', 'steal', etc.
+                shot_type TEXT, -- '2PT', '3PT', 'FT'
+                shot_distance INTEGER,
+                shot_result TEXT, -- 'made', 'missed'
+                points_scored INTEGER DEFAULT 0,
+                assist_player_id INTEGER,
+                block_player_id INTEGER,
+                steal_player_id INTEGER,
+                turnover_type TEXT,
+                foul_type TEXT,
+                rebound_type TEXT, -- 'offensive', 'defensive'
+                location_x REAL, -- Court coordinates (0-94)
+                location_y REAL, -- Court coordinates (0-50)
+                defender_player_id INTEGER, -- Who was guarding the player
+                touches_before_action INTEGER, -- Touches leading to this action
+                dribbles_before_action INTEGER, -- Dribbles leading to this action
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (possession_id) REFERENCES possessions(possession_id),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id),
+                FOREIGN KEY (opponent_team_id) REFERENCES teams(team_id),
+                FOREIGN KEY (assist_player_id) REFERENCES players(player_id),
+                FOREIGN KEY (block_player_id) REFERENCES players(player_id),
+                FOREIGN KEY (steal_player_id) REFERENCES players(player_id),
+                FOREIGN KEY (defender_player_id) REFERENCES players(player_id)
+            )
+        """)
+
+        # Create indexes for performance
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_possession_events_possession
+            ON possession_events(possession_id, event_number)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_possession_events_player
+            ON possession_events(player_id, event_type)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_possession_events_type
+            ON possession_events(event_type, event_subtype)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_possession_events_team
+            ON possession_events(team_id, event_type)
+        """)
+
+        conn.commit()
+        print("✓ PossessionEvents table created")
+
+    def _create_possession_matchups_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PossessionMatchups table (defensive matchups during possessions)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS possession_matchups (
+                possession_id TEXT NOT NULL,
+                offensive_player_id INTEGER NOT NULL,
+                defensive_player_id INTEGER NOT NULL,
+                matchup_start_time TEXT,
+                matchup_end_time TEXT,
+                duration_seconds REAL,
+                switches_during_matchup INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (possession_id, offensive_player_id, defensive_player_id),
+                FOREIGN KEY (possession_id) REFERENCES possessions(possession_id),
+                FOREIGN KEY (offensive_player_id) REFERENCES players(player_id),
+                FOREIGN KEY (defensive_player_id) REFERENCES players(player_id)
+            )
+        """)
+
+        # Create indexes
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_possession_matchups_offensive
+            ON possession_matchups(offensive_player_id)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_possession_matchups_defensive
+            ON possession_matchups(defensive_player_id)
+        """)
+
+        conn.commit()
+        print("✓ PossessionMatchups table created")
 
     def verify_schema(self) -> bool:
         """Verify that all required tables exist."""
         required_tables = [
             'teams', 'games', 'players', 'player_season_stats',
-            'player_advanced_stats', 'player_tracking_stats', 'possessions'
+            'player_advanced_stats', 'player_tracking_stats', 'possessions',
+            'possession_lineups', 'possession_events', 'possession_matchups'
         ]
 
         with sqlite3.connect(self.db_path) as conn:
