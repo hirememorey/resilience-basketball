@@ -322,6 +322,7 @@ class NBAStatsClient:
             "PerMode": "PerGame",
             "Period": "0",
             "PlayerExperience": "",
+            "PlayerOrTeam": "Player",  # CRITICAL: This gets individual player data, not team aggregates
             "PlayerPosition": "",
             "PlusMinus": "N",
             "PtMeasureType": pt_measure_type,
@@ -503,6 +504,7 @@ class NBAStatsClient:
             "PerMode": "PerGame",
             "Period": "0",
             "PlayerExperience": "",
+            "PlayerOrTeam": "Player",  # CRITICAL: This gets individual player data, not team aggregates
             "PlayerPosition": "",
             "PlusMinus": "N",
             "PtMeasureType": pt_measure_type,

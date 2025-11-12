@@ -463,7 +463,7 @@ class DataFetcher:
                 notes="Pace from advanced stats"
             ),
 
-            # Tracking metrics (available ones)
+            # Tracking metrics - Drives
             "DRIVES": MetricMapping(
                 canonical_name="Drives",
                 api_source="leaguedashptstats",
@@ -479,6 +479,776 @@ class DataFetcher:
                 api_column="DRIVE_FGM",
                 endpoint_params={"PtMeasureType": "Drives"},
                 data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_FGA": MetricMapping(
+                canonical_name="Drive Field Goals Attempted",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_FGA",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_FG_PCT": MetricMapping(
+                canonical_name="Drive Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_FG_PCT",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_FTM": MetricMapping(
+                canonical_name="Drive Free Throws Made",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_FTM",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_FTA": MetricMapping(
+                canonical_name="Drive Free Throws Attempted",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_FTA",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_FT_PCT": MetricMapping(
+                canonical_name="Drive Free Throw Percentage",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_FT_PCT",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_PTS": MetricMapping(
+                canonical_name="Drive Points",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_PTS",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_PTS_PCT": MetricMapping(
+                canonical_name="Drive Points Percentage",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_PTS_PCT",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_PASSES": MetricMapping(
+                canonical_name="Drive Passes",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_PASSES",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_PASSES_PCT": MetricMapping(
+                canonical_name="Drive Passes Percentage",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_PASSES_PCT",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_AST": MetricMapping(
+                canonical_name="Drive Assists",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_AST",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_AST_PCT": MetricMapping(
+                canonical_name="Drive Assists Percentage",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_AST_PCT",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_TOV": MetricMapping(
+                canonical_name="Drive Turnovers",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_TOV",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_TOV_PCT": MetricMapping(
+                canonical_name="Drive Turnovers Percentage",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_TOV_PCT",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_PF": MetricMapping(
+                canonical_name="Drive Personal Fouls",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_PF",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "DRIVE_PF_PCT": MetricMapping(
+                canonical_name="Drive Personal Fouls Percentage",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_PF_PCT",
+                endpoint_params={"PtMeasureType": "Drives"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+
+            # Tracking metrics - Catch and Shoot
+            "CATCH_SHOOT_FGM": MetricMapping(
+                canonical_name="Catch Shoot Field Goals Made",
+                api_source="leaguedashptstats",
+                api_column="CATCH_SHOOT_FGM",
+                endpoint_params={"PtMeasureType": "CatchShoot"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "CATCH_SHOOT_FGA": MetricMapping(
+                canonical_name="Catch Shoot Field Goals Attempted",
+                api_source="leaguedashptstats",
+                api_column="CATCH_SHOOT_FGA",
+                endpoint_params={"PtMeasureType": "CatchShoot"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "CATCH_SHOOT_FG_PCT": MetricMapping(
+                canonical_name="Catch Shoot Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="CATCH_SHOOT_FG_PCT",
+                endpoint_params={"PtMeasureType": "CatchShoot"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "CATCH_SHOOT_PTS": MetricMapping(
+                canonical_name="Catch Shoot Points",
+                api_source="leaguedashptstats",
+                api_column="CATCH_SHOOT_PTS",
+                endpoint_params={"PtMeasureType": "CatchShoot"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "CATCH_SHOOT_FG3M": MetricMapping(
+                canonical_name="Catch Shoot Three Pointers Made",
+                api_source="leaguedashptstats",
+                api_column="CATCH_SHOOT_FG3M",
+                endpoint_params={"PtMeasureType": "CatchShoot"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "CATCH_SHOOT_FG3A": MetricMapping(
+                canonical_name="Catch Shoot Three Pointers Attempted",
+                api_source="leaguedashptstats",
+                api_column="CATCH_SHOOT_FG3A",
+                endpoint_params={"PtMeasureType": "CatchShoot"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "CATCH_SHOOT_FG3_PCT": MetricMapping(
+                canonical_name="Catch Shoot Three Point Percentage",
+                api_source="leaguedashptstats",
+                api_column="CATCH_SHOOT_FG3_PCT",
+                endpoint_params={"PtMeasureType": "CatchShoot"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "CATCH_SHOOT_EFG_PCT": MetricMapping(
+                canonical_name="Catch Shoot Effective Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="CATCH_SHOOT_EFG_PCT",
+                endpoint_params={"PtMeasureType": "CatchShoot"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+
+            # Tracking metrics - Pull Up Shots
+            "PULL_UP_FGM": MetricMapping(
+                canonical_name="Pull Up Field Goals Made",
+                api_source="leaguedashptstats",
+                api_column="PULL_UP_FGM",
+                endpoint_params={"PtMeasureType": "PullUpShot"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PULL_UP_FGA": MetricMapping(
+                canonical_name="Pull Up Field Goals Attempted",
+                api_source="leaguedashptstats",
+                api_column="PULL_UP_FGA",
+                endpoint_params={"PtMeasureType": "PullUpShot"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PULL_UP_FG_PCT": MetricMapping(
+                canonical_name="Pull Up Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="PULL_UP_FG_PCT",
+                endpoint_params={"PtMeasureType": "PullUpShot"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PULL_UP_PTS": MetricMapping(
+                canonical_name="Pull Up Points",
+                api_source="leaguedashptstats",
+                api_column="PULL_UP_PTS",
+                endpoint_params={"PtMeasureType": "PullUpShot"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PULL_UP_FG3M": MetricMapping(
+                canonical_name="Pull Up Three Pointers Made",
+                api_source="leaguedashptstats",
+                api_column="PULL_UP_FG3M",
+                endpoint_params={"PtMeasureType": "PullUpShot"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PULL_UP_FG3A": MetricMapping(
+                canonical_name="Pull Up Three Pointers Attempted",
+                api_source="leaguedashptstats",
+                api_column="PULL_UP_FG3A",
+                endpoint_params={"PtMeasureType": "PullUpShot"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PULL_UP_FG3_PCT": MetricMapping(
+                canonical_name="Pull Up Three Point Percentage",
+                api_source="leaguedashptstats",
+                api_column="PULL_UP_FG3_PCT",
+                endpoint_params={"PtMeasureType": "PullUpShot"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PULL_UP_EFG_PCT": MetricMapping(
+                canonical_name="Pull Up Effective Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="PULL_UP_EFG_PCT",
+                endpoint_params={"PtMeasureType": "PullUpShot"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+
+            # Tracking metrics - Touches (appears in multiple PtMeasureTypes, using PaintTouch as primary)
+            "TOUCHES": MetricMapping(
+                canonical_name="Touches",
+                api_source="leaguedashptstats",
+                api_column="TOUCHES",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats - available in PaintTouch, PostTouch, ElbowTouch PtMeasureTypes"
+            ),
+
+            # Tracking metrics - Paint Touches
+            "PAINT_TOUCHES": MetricMapping(
+                canonical_name="Paint Touches",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCHES",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_FGM": MetricMapping(
+                canonical_name="Paint Touch Field Goals Made",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_FGM",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_FGA": MetricMapping(
+                canonical_name="Paint Touch Field Goals Attempted",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_FGA",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_FG_PCT": MetricMapping(
+                canonical_name="Paint Touch Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_FG_PCT",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_FTM": MetricMapping(
+                canonical_name="Paint Touch Free Throws Made",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_FTM",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_FTA": MetricMapping(
+                canonical_name="Paint Touch Free Throws Attempted",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_FTA",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_FT_PCT": MetricMapping(
+                canonical_name="Paint Touch Free Throw Percentage",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_FT_PCT",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_PTS": MetricMapping(
+                canonical_name="Paint Touch Points",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_PTS",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_PTS_PCT": MetricMapping(
+                canonical_name="Paint Touch Points Percentage",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_PTS_PCT",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_PASSES": MetricMapping(
+                canonical_name="Paint Touch Passes",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_PASSES",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_PASSES_PCT": MetricMapping(
+                canonical_name="Paint Touch Passes Percentage",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_PASSES_PCT",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_AST": MetricMapping(
+                canonical_name="Paint Touch Assists",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_AST",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_AST_PCT": MetricMapping(
+                canonical_name="Paint Touch Assists Percentage",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_AST_PCT",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_TOV": MetricMapping(
+                canonical_name="Paint Touch Turnovers",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_TOV",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_TOV_PCT": MetricMapping(
+                canonical_name="Paint Touch Turnovers Percentage",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_TOV_PCT",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_FOULS": MetricMapping(
+                canonical_name="Paint Touch Personal Fouls",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_FOULS",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "PAINT_TOUCH_FOULS_PCT": MetricMapping(
+                canonical_name="Paint Touch Personal Fouls Percentage",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_FOULS_PCT",
+                endpoint_params={"PtMeasureType": "PaintTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+
+            # Tracking metrics - Post Touches
+            "POST_TOUCHES": MetricMapping(
+                canonical_name="Post Touches",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCHES",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_FGM": MetricMapping(
+                canonical_name="Post Touch Field Goals Made",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_FGM",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_FGA": MetricMapping(
+                canonical_name="Post Touch Field Goals Attempted",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_FGA",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_FG_PCT": MetricMapping(
+                canonical_name="Post Touch Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_FG_PCT",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_FTM": MetricMapping(
+                canonical_name="Post Touch Free Throws Made",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_FTM",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_FTA": MetricMapping(
+                canonical_name="Post Touch Free Throws Attempted",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_FTA",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_FT_PCT": MetricMapping(
+                canonical_name="Post Touch Free Throw Percentage",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_FT_PCT",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_PTS": MetricMapping(
+                canonical_name="Post Touch Points",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_PTS",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_PTS_PCT": MetricMapping(
+                canonical_name="Post Touch Points Percentage",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_PTS_PCT",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_PASSES": MetricMapping(
+                canonical_name="Post Touch Passes",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_PASSES",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_PASSES_PCT": MetricMapping(
+                canonical_name="Post Touch Passes Percentage",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_PASSES_PCT",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_AST": MetricMapping(
+                canonical_name="Post Touch Assists",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_AST",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_AST_PCT": MetricMapping(
+                canonical_name="Post Touch Assists Percentage",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_AST_PCT",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_TOV": MetricMapping(
+                canonical_name="Post Touch Turnovers",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_TOV",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_TOV_PCT": MetricMapping(
+                canonical_name="Post Touch Turnovers Percentage",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_TOV_PCT",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_FOULS": MetricMapping(
+                canonical_name="Post Touch Personal Fouls",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_FOULS",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "POST_TOUCH_FOULS_PCT": MetricMapping(
+                canonical_name="Post Touch Personal Fouls Percentage",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_FOULS_PCT",
+                endpoint_params={"PtMeasureType": "PostTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+
+            # Tracking metrics - Elbow Touches
+            "ELBOW_TOUCHES": MetricMapping(
+                canonical_name="Elbow Touches",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCHES",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_FGM": MetricMapping(
+                canonical_name="Elbow Touch Field Goals Made",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_FGM",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_FGA": MetricMapping(
+                canonical_name="Elbow Touch Field Goals Attempted",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_FGA",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_FG_PCT": MetricMapping(
+                canonical_name="Elbow Touch Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_FG_PCT",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_FTM": MetricMapping(
+                canonical_name="Elbow Touch Free Throws Made",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_FTM",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_FTA": MetricMapping(
+                canonical_name="Elbow Touch Free Throws Attempted",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_FTA",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_FT_PCT": MetricMapping(
+                canonical_name="Elbow Touch Free Throw Percentage",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_FT_PCT",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_PTS": MetricMapping(
+                canonical_name="Elbow Touch Points",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_PTS",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_PASSES": MetricMapping(
+                canonical_name="Elbow Touch Passes",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_PASSES",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_AST": MetricMapping(
+                canonical_name="Elbow Touch Assists",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_AST",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_AST_PCT": MetricMapping(
+                canonical_name="Elbow Touch Assists Percentage",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_AST_PCT",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_TOV": MetricMapping(
+                canonical_name="Elbow Touch Turnovers",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_TOV",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_TOV_PCT": MetricMapping(
+                canonical_name="Elbow Touch Turnovers Percentage",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_TOV_PCT",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_FOULS": MetricMapping(
+                canonical_name="Elbow Touch Personal Fouls",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_FOULS",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_PASSES_PCT": MetricMapping(
+                canonical_name="Elbow Touch Passes Percentage",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_PASSES_PCT",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_FOULS_PCT": MetricMapping(
+                canonical_name="Elbow Touch Personal Fouls Percentage",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_FOULS_PCT",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+            "ELBOW_TOUCH_PTS_PCT": MetricMapping(
+                canonical_name="Elbow Touch Points Percentage",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_PTS_PCT",
+                endpoint_params={"PtMeasureType": "ElbowTouch"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Direct mapping from tracking stats"
+            ),
+
+            # Tracking metrics - Efficiency (contains points by play type)
+            "EFF_FG_PCT": MetricMapping(
+                canonical_name="Efficiency Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="EFF_FG_PCT",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.PERCENTAGE,
                 required=False,
                 notes="Direct mapping from tracking stats"
             ),
@@ -767,7 +1537,46 @@ class DataFetcher:
                 "REB_PCT", "AST_PCT", "AST_TO", "AST_RATIO", "OREB_PCT", "DREB_PCT", "TM_TOV_PCT", "EFG_PCT", "PACE", "PIE"
             ],
             "player_playoff_tracking_stats": [
-                "DRIVES", "DRIVE_FGM"
+                # Drive metrics
+                "DRIVES", "DRIVE_FGM", "DRIVE_FGA", "DRIVE_FG_PCT", "DRIVE_FTM", "DRIVE_FTA",
+                "DRIVE_FT_PCT", "DRIVE_PTS", "DRIVE_PTS_PCT", "DRIVE_PASSES", "DRIVE_PASSES_PCT",
+                "DRIVE_AST", "DRIVE_AST_PCT", "DRIVE_TOV", "DRIVE_TOV_PCT", "DRIVE_PF", "DRIVE_PF_PCT",
+
+                # Catch and shoot metrics
+                "CATCH_SHOOT_FGM", "CATCH_SHOOT_FGA", "CATCH_SHOOT_FG_PCT", "CATCH_SHOOT_PTS",
+                "CATCH_SHOOT_FG3M", "CATCH_SHOOT_FG3A", "CATCH_SHOOT_FG3_PCT", "CATCH_SHOOT_EFG_PCT",
+
+                # Pull up shot metrics
+                "PULL_UP_FGM", "PULL_UP_FGA", "PULL_UP_FG_PCT", "PULL_UP_PTS",
+                "PULL_UP_FG3M", "PULL_UP_FG3A", "PULL_UP_FG3_PCT", "PULL_UP_EFG_PCT",
+
+                # Paint touch metrics
+                "PAINT_TOUCHES", "PAINT_TOUCH_FGM", "PAINT_TOUCH_FGA", "PAINT_TOUCH_FG_PCT",
+                "PAINT_TOUCH_FTM", "PAINT_TOUCH_FTA", "PAINT_TOUCH_FT_PCT", "PAINT_TOUCH_PTS",
+                "PAINT_TOUCH_PTS_PCT", "PAINT_TOUCH_PASSES", "PAINT_TOUCH_PASSES_PCT",
+                "PAINT_TOUCH_AST", "PAINT_TOUCH_AST_PCT", "PAINT_TOUCH_TOV", "PAINT_TOUCH_TOV_PCT",
+                "PAINT_TOUCH_FOULS", "PAINT_TOUCH_FOULS_PCT",
+
+                # Post touch metrics
+                "POST_TOUCHES", "POST_TOUCH_FGM", "POST_TOUCH_FGA", "POST_TOUCH_FG_PCT",
+                "POST_TOUCH_FTM", "POST_TOUCH_FTA", "POST_TOUCH_FT_PCT", "POST_TOUCH_PTS",
+                "POST_TOUCH_PTS_PCT", "POST_TOUCH_PASSES", "POST_TOUCH_PASSES_PCT",
+                "POST_TOUCH_AST", "POST_TOUCH_AST_PCT", "POST_TOUCH_TOV", "POST_TOUCH_TOV_PCT",
+                "POST_TOUCH_FOULS", "POST_TOUCH_FOULS_PCT",
+
+                # Elbow touch metrics
+                "ELBOW_TOUCHES", "ELBOW_TOUCH_FGM", "ELBOW_TOUCH_FGA", "ELBOW_TOUCH_FG_PCT",
+                "ELBOW_TOUCH_FTM", "ELBOW_TOUCH_FTA", "ELBOW_TOUCH_FT_PCT", "ELBOW_TOUCH_PTS",
+                "ELBOW_TOUCH_PASSES", "ELBOW_TOUCH_AST", "ELBOW_TOUCH_AST_PCT",
+                "ELBOW_TOUCH_TOV", "ELBOW_TOUCH_TOV_PCT", "ELBOW_TOUCH_FOULS",
+                "ELBOW_TOUCH_PASSES_PCT", "ELBOW_TOUCH_FOULS_PCT", "ELBOW_TOUCH_PTS_PCT",
+
+                # Efficiency metrics
+                "EFF_PTS", "EFF_DRIVE_PTS", "EFF_DRIVE_FG_PCT", "EFF_CATCH_SHOOT_PTS",
+                "EFF_CATCH_SHOOT_FG_PCT", "EFF_PULL_UP_PTS", "EFF_PULL_UP_FG_PCT",
+                "EFF_PAINT_TOUCH_PTS", "EFF_PAINT_TOUCH_FG_PCT", "EFF_POST_TOUCH_PTS",
+                "EFF_POST_TOUCH_FG_PCT", "EFF_ELBOW_TOUCH_PTS", "EFF_ELBOW_TOUCH_FG_PCT",
+                "EFF_EFG_PCT"
             ]
         }
 
@@ -815,9 +1624,30 @@ class DataFetcher:
             elif metric_name in ["AGE", "GP", "W", "L", "W_PCT", "MIN", "TS_PCT", "USG_PCT", "OFF_RATING", "DEF_RATING", "NET_RATING", "REB_PCT", "AST_PCT", "AST_TO", "AST_RATIO", "OREB_PCT", "DREB_PCT", "TM_TOV_PCT", "EFG_PCT", "PACE", "PIE"]:
                 # Advanced stats - includes all available metrics
                 response = self.client.get_league_player_playoff_advanced_stats(season)
-            elif metric_name in ["DRIVES", "DRIVE_FGM"]:
-                # Tracking stats
-                response = self.client.get_league_player_playoff_tracking_stats(season)
+            elif metric_name.startswith(("DRIVE", "CATCH_SHOOT", "PULL_UP", "PAINT_TOUCH", "POST_TOUCH", "ELBOW_TOUCH", "EFF")):
+                # Tracking stats - map metric names to PtMeasureType
+                measure_type_map = {
+                    "DRIVE": "Drives",
+                    "CATCH_SHOOT": "CatchShoot",
+                    "PULL_UP": "PullUpShot",
+                    "PAINT_TOUCH": "PaintTouch",
+                    "POST_TOUCH": "PostTouch",
+                    "ELBOW_TOUCH": "ElbowTouch",
+                    "EFF": "Efficiency"  # This might need different handling
+                }
+
+                # Find the measure type from the metric name
+                measure_type = None
+                for prefix, mt in measure_type_map.items():
+                    if metric_name.startswith(prefix):
+                        measure_type = mt
+                        break
+
+                if measure_type:
+                    response = self.client.get_league_player_playoff_tracking_stats(season, pt_measure_type=measure_type)
+                else:
+                    logger.warning(f"Could not determine measure type for metric {metric_name}")
+                    return None
             else:
                 logger.warning(f"Unknown metric {metric_name}, skipping")
                 return None
