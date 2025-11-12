@@ -189,10 +189,10 @@ class PossessionDataPopulator:
 
 def main():
     """Main execution function."""
-    # Example game IDs for testing (2024-25 season games)
-    # You would typically get these from the games table in your database
+    # Example game IDs for testing (past games that have data)
+    # Using 2023 games that we know have available play-by-play data
     test_game_ids = [
-        "0022400001",  # Example game ID format
+        "0022300001",  # 2023-11-03: CLE vs IND (Pacers win 125-113)
         # Add more game IDs as needed
     ]
 

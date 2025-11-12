@@ -111,14 +111,15 @@ class PossessionFetcher:
         logger.info(f"Fetching possession data for game {game_id}")
 
         try:
-            # Get play-by-play data
-            pbp_data = self.client.get_play_by_play(game_id)
+            # Extract season from game_id (format: 002YY00001 where YY is season)
+            season_year = 2000 + int(game_id[3:5])  # Convert 2-digit year to 4-digit
+            season = f"{season_year}-{season_year + 1}"
 
-            # Get rotation data for lineups
-            rotation_data = self.client.get_game_rotation(game_id)
+            # Get play-by-play data from data.nba.com
+            pbp_data = self._get_pbp_from_data_api(game_id, season)
 
             # Parse into possessions
-            possessions = self._parse_possessions_from_pbp(pbp_data, rotation_data)
+            possessions = self._parse_possessions_from_pbp(pbp_data)
 
             logger.info(f"Successfully parsed {len(possessions)} possessions for game {game_id}")
             return possessions
@@ -127,88 +128,129 @@ class PossessionFetcher:
             logger.error(f"Failed to fetch possessions for game {game_id}: {e}")
             raise
 
-    def _parse_possessions_from_pbp(self, pbp_data: Dict, rotation_data: Dict) -> List[Possession]:
+    def _get_pbp_from_data_api(self, game_id: str, season: str) -> Dict:
         """
-        Parse play-by-play data into possession sequences.
+        Fetch play-by-play data from data.nba.com API.
+
+        Args:
+            game_id: NBA game ID
+            season: Season in format "2023-24"
+
+        Returns:
+            Play-by-play data dictionary
+        """
+        import requests
+
+        url = f"https://data.nba.com/data/10s/v2015/json/mobile_teams/nba/{season[:4]}/scores/pbp/{game_id}_full_pbp.json"
+
+        logger.info(f"Fetching PBP data from: {url}")
+
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+
+        data = response.json()
+        return data
+
+    def _parse_possessions_from_pbp(self, pbp_data: Dict) -> List[Possession]:
+        """
+        Parse play-by-play data from data.nba.com into possession sequences.
 
         This is the core logic that transforms raw play-by-play events
         into meaningful possession units for resilience analysis.
         """
         possessions = []
 
-        # Extract game metadata - handle different response formats
-        game_id = None
-        if "parameters" in pbp_data and "GameID" in pbp_data["parameters"]:
-            game_id = pbp_data["parameters"]["GameID"]
-        elif isinstance(pbp_data, dict) and "GameID" in pbp_data:
-            game_id = pbp_data["GameID"]
+        # Extract game metadata
+        game_data = pbp_data.get('g', {})
+        game_id = game_data.get('gid')
 
         if not game_id:
             logger.warning("Could not extract game_id from PBP data")
             return possessions
 
-        home_team_id = None
-        away_team_id = None
+        # Extract team IDs from play data (they're embedded in individual plays)
+        team_ids = self._extract_team_ids_from_plays(game_data.get('pd', []))
+        home_team_id = team_ids[0] if len(team_ids) > 0 else 0
+        away_team_id = team_ids[1] if len(team_ids) > 1 else 0
 
-        # Get events from play-by-play data
-        events = []
-        if "resultSets" in pbp_data and len(pbp_data["resultSets"]) > 0:
-            events = pbp_data["resultSets"][0].get("rowSet", [])
+        logger.info(f"Parsing possessions for game {game_id} (Home: {home_team_id}, Away: {away_team_id})")
 
-        if events:
-            # Find team IDs from events
-            for event in events:
-                if len(event) >= 7:  # Ensure we have enough fields
-                    if event[6] and home_team_id is None:  # PLAYER1_TEAM_ID
-                        home_team_id = event[6]
-                    if event[9] and away_team_id is None:  # PLAYER2_TEAM_ID
-                        away_team_id = event[9]
+        # Get periods data
+        periods_data = game_data.get('pd', [])
+        if not periods_data:
+            logger.warning("No period data found in PBP response")
+            return possessions
 
-            # If we can't determine teams from events, try to parse from game_id
-            if not home_team_id or not away_team_id:
-                home_team_id, away_team_id = self._get_team_ids_from_game_id(game_id)
+        # Process each period
+        for period_data in periods_data:
+            period_num = period_data.get('p', 0)
+            plays = period_data.get('pla', [])
 
-        # Parse events into possessions
+            logger.info(f"Processing period {period_num} with {len(plays)} plays")
+
+            # Parse plays into possessions
+            possessions.extend(self._parse_period_plays(game_id, period_num, plays, home_team_id, away_team_id))
+
+        logger.info(f"Total possessions parsed: {len(possessions)}")
+        return possessions
+
+    def _extract_team_ids_from_plays(self, periods_data: List[Dict]) -> List[int]:
+        """Extract unique team IDs from play data."""
+        team_ids = set()
+
+        for period_data in periods_data:
+            plays = period_data.get('pla', [])
+            for play in plays:
+                tid = play.get('tid', 0)
+                if tid and tid != 0:  # Skip invalid team IDs
+                    team_ids.add(tid)
+
+        return sorted(list(team_ids))  # Return sorted for consistent home/away assignment
+
+    def _parse_period_plays(self, game_id: str, period: int, plays: List[Dict],
+                           home_team_id: int, away_team_id: int) -> List[Possession]:
+        """
+        Parse plays from a single period into possession sequences.
+        """
+        possessions = []
         current_possession = None
         event_sequence = 0
 
-        for event in events:
-            if len(event) < 10:
-                continue
-
-            event_num = event[0]
-            period = event[3]
-            clock_time = event[5]
+        for play in plays:
+            # Extract play data
+            event_num = play.get('evt', 0)
+            clock_time = play.get('cl', '00:00')
             elapsed_seconds = self._clock_to_seconds(clock_time)
-            event_type_id = event[1]
-            event_description = event[6] if len(event) > 6 else ""
-            player1_id = event[12] if len(event) > 12 else None
-            player1_team_id = event[7] if len(event) > 7 else None
-            player2_id = event[13] if len(event) > 13 else None
-            player2_team_id = event[10] if len(event) > 10 else None
+            description = play.get('de', '')
+            event_type_id = play.get('etype', 0)
+            player_id = play.get('pid', 0) or None
+            team_id = play.get('tid', 0)
+            home_score = play.get('hs', 0)
+            visitor_score = play.get('vs', 0)
+            loc_x = play.get('locX', 0)
+            loc_y = play.get('locY', 0)
+            assist_player_id = play.get('epid') or None
 
-            # Determine event type
-            event_type = self.event_type_map.get(event_type_id, "unknown")
+            # Map event type
+            event_type = self._map_event_type(event_type_id)
 
             # Check if this starts a new possession
-            if self._is_possession_start(event_type, event_description):
+            if self._is_possession_start(event_type, description):
                 # Save previous possession if exists
                 if current_possession:
                     self._finalize_possession(current_possession)
                     possessions.append(current_possession)
 
                 # Start new possession
-                current_possession = self._create_new_possession(
-                    game_id, period, clock_time, elapsed_seconds,
-                    home_team_id, away_team_id, event_type, event_description
+                current_possession = self._create_new_possession_from_play(
+                    game_id, period, clock_time, elapsed_seconds, play, home_team_id, away_team_id
                 )
                 event_sequence = 0
 
             # Add event to current possession
             if current_possession:
-                possession_event = self._parse_event_to_possession_event(
-                    current_possession.possession_id, event, event_sequence,
-                    elapsed_seconds
+                possession_event = self._create_possession_event_from_play(
+                    current_possession.possession_id, play, event_sequence, elapsed_seconds, home_team_id, away_team_id
                 )
                 if possession_event:
                     current_possession.events.append(possession_event)
@@ -220,6 +262,99 @@ class PossessionFetcher:
             possessions.append(current_possession)
 
         return possessions
+
+    def _map_event_type(self, event_type_id: int) -> str:
+        """Map data.nba.com event type IDs to our event types."""
+        # Map the data.nba.com event types to our standard types
+        event_mapping = {
+            1: "shot",      # Made shot
+            2: "shot",      # Missed shot
+            3: "free_throw", # Free throw
+            4: "rebound",   # Rebound
+            5: "turnover",  # Turnover
+            6: "foul",      # Foul
+            7: "violation", # Violation
+            8: "substitution", # Substitution
+            9: "timeout",   # Timeout
+            10: "jump_ball", # Jump ball
+            12: "start_period", # Start period
+            13: "end_period",   # End period
+            18: "foul_technical", # Technical foul
+            20: "stoppage"   # Stoppage
+        }
+        return event_mapping.get(event_type_id, "unknown")
+
+    def _create_new_possession_from_play(self, game_id: str, period: int, clock_time: str,
+                                       elapsed_seconds: float, play: Dict,
+                                       home_team_id: int, away_team_id: int) -> Possession:
+        """Create a new possession object from a play event."""
+        possession_id = f"{game_id}_{period}_{elapsed_seconds}"
+
+        # Determine offensive team (simplified logic)
+        team_id = play.get('tid', 0)
+        offensive_team_id = team_id if team_id else home_team_id
+        defensive_team_id = away_team_id if offensive_team_id == home_team_id else home_team_id
+
+        return Possession(
+            possession_id=possession_id,
+            game_id=game_id,
+            period=period,
+            clock_time_start=clock_time,
+            clock_time_end=clock_time,
+            home_team_id=home_team_id,
+            away_team_id=away_team_id,
+            offensive_team_id=offensive_team_id,
+            defensive_team_id=defensive_team_id,
+            possession_start=elapsed_seconds,
+            possession_end=elapsed_seconds,
+            duration_seconds=0.0,
+            points_scored=0,
+            start_reason=play.get('de', ''),
+            possession_type="offensive"
+        )
+
+    def _create_possession_event_from_play(self, possession_id: str, play: Dict,
+                                         event_number: int, elapsed_seconds: float,
+                                         home_team_id: int, away_team_id: int) -> Optional[PossessionEvent]:
+        """Create a possession event from a play."""
+        event_id = f"{possession_id}_{event_number}"
+        clock_time = play.get('cl', '00:00')
+        description = play.get('de', '')
+
+        # Parse shot details if it's a shot
+        event_type_id = play.get('etype', 0)
+        points_scored = 0
+
+        if event_type_id in [1, 3]:  # Made shot or free throw
+            if 'PTS' in description:
+                if '3PT' in description or '3pt' in description:
+                    points_scored = 3
+                elif 'Free Throw' in description:
+                    points_scored = 1
+                else:
+                    points_scored = 2
+
+        # Determine opponent team
+        team_id = play.get('tid', 0)
+        opponent_team_id = away_team_id if team_id == home_team_id else home_team_id
+
+        return PossessionEvent(
+            event_id=event_id,
+            possession_id=possession_id,
+            event_number=event_number,
+            clock_time=clock_time,
+            elapsed_seconds=elapsed_seconds,
+            player_id=play.get('pid') or None,
+            team_id=team_id,
+            opponent_team_id=opponent_team_id,
+            event_type=self._map_event_type(event_type_id),
+            event_subtype="made" if event_type_id == 1 else "missed" if event_type_id == 2 else None,
+            shot_result="made" if event_type_id == 1 else "missed" if event_type_id == 2 else None,
+            points_scored=points_scored,
+            assist_player_id=play.get('epid') or None,
+            location_x=play.get('locX'),
+            location_y=play.get('locY')
+        )
 
     def _is_possession_start(self, event_type: str, description: str) -> bool:
         """Determine if an event starts a new possession."""
