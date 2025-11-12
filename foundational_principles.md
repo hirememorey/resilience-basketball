@@ -46,41 +46,46 @@ This is our "Operating System" for the project. The analysis must adhere to thes
     *   Quality of teammates and opponents.
 5.  **Start with a Clear "Why":** Every line of code and every statistical test must be in service of answering the Central Research Question. We will avoid analysis for the sake of analysis.
 
-## 6. Possession-Level Analysis Framework
+## 6. Statistical Resilience Framework
 
-Recent development has enhanced our research framework with granular possession-level player behavior tracking. This advancement transforms our ability to test the core hypotheses by measuring resilience at the process level rather than just outcomes.
+**Implementation Reality:** Initial attempts to build possession-level analysis revealed that NBA play-by-play API data is unreliable or unavailable. We successfully pivoted to a statistical resilience framework that measures diversification patterns using existing player data, providing actionable insights for testing our core hypotheses.
 
 ### Enhanced Hypothesis Testing
 
-**Hypothesis 1 (Skill Diversification) Enhanced:**
+**Hypothesis 1 (Skill Diversification) - Statistical Implementation:**
 - **Traditional View:** Box score metrics showing varied play styles
-- **Possession-Level View:** Actual decision-making diversity within possessions - how many different actions a player attempts when defenders focus on stopping them
+- **Statistical View:** Production diversification across points/assists/rebounds/steals/blocks + shot selection diversification across FGA/3PA/FTA
+- **Implementation:** Composite diversification score combining production balance (0-1) and shot balance (0-1)
 
-**Hypothesis 2 (Over-Specialization Fragility) Enhanced:**
+**Hypothesis 2 (Over-Specialization Fragility) - Statistical Implementation:**
 - **Traditional View:** Reliance on specific shot types or play patterns
-- **Possession-Level View:** Predictability in possession sequences - how often a player defaults to the same decision tree under pressure
+- **Statistical View:** Concentration metrics measuring how much a player's production depends on single categories
+- **Implementation:** Concentration scores (inverse of diversification) identify one-dimensional players vulnerable to playoff schemes
 
-**Hypothesis 3 (Adaptability Measurement) Enhanced:**
+**Hypothesis 3 (Adaptability Measurement) - Statistical Implementation:**
 - **Traditional View:** Year-over-year statistical changes
-- **Possession-Level View:** Real-time adaptation within games - how quickly a player adjusts their approach when initial actions fail
+- **Statistical View:** Efficiency stability and production pattern consistency across metrics
+- **Implementation:** Stability metrics measuring consistency in TS%, eFG%, and production distributions
 
-### Possession-Level Resilience Metrics
+### Statistical Resilience Metrics
 
-The possession tracking infrastructure enables measurement of:
+The statistical framework enables measurement of:
 
-1. **Decision Quality Under Pressure:** Touch efficiency, action success rates when defenders dedicate possessions to stopping the player
-2. **Adaptation Speed:** Time between failed actions and successful adjustments within possessions
-3. **Matchup Resilience:** Performance differentials against elite defenders vs. average defenders
-4. **Possession Flow Dynamics:** How ball and player movement patterns indicate mental acuity
+1. **Production Diversification Score:** How evenly a player distributes their impact across statistical categories (0-1 scale, higher = more balanced)
+2. **Shot Selection Diversification:** Balance in shot attempt distribution across FGA/3PA/FTA (0-1 scale, higher = more versatile)
+3. **Efficiency Stability:** Consistency in shooting efficiency across different metrics (lower variance = more stable)
+4. **Composite Resilience Score:** Weighted combination of diversification factors with efficiency stability
+5. **Percentile Rankings:** Relative positioning among all players for comparative analysis
 
 ### Implementation Insights
 
-Building the possession-level infrastructure revealed critical insights about resilience analysis:
+Building the statistical resilience framework revealed critical insights about effective analytics development:
 
-- **Granular vs. Aggregate:** Resilience manifests in micro-decisions within possessions, not just aggregate game stats
-- **Defensive Context Matters:** The same player action has different resilience implications depending on defensive intensity
-- **Sequence Dependencies:** Player success often depends on the sequence of actions leading to scoring opportunities
-- **Real-Time Adaptation:** True resilience requires measuring how players adjust mid-possession, not just game-to-game
+- **Data Availability First:** Always validate data sources before building complex analysis frameworks
+- **Statistical Proxies Work:** Meaningful resilience patterns can be identified through statistical analysis of existing data
+- **Analysis-Driven Development:** Focus on analytical utility rather than data completeness enables faster progress
+- **Pivot Capability:** When ideal data is unavailable, statistical approximations can test core hypotheses effectively
+- **Scalability Matters:** Framework must work with available data while remaining extensible for future data sources
 
 ## 7. Desired Output & Success Criteria
 
