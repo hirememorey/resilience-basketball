@@ -754,12 +754,17 @@ class DataFetcher:
         # Define playoff data sources - mapping table names to API methods
         playoff_data_sources = {
             "player_playoff_stats": [
-                "GP", "GS", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TOV", "PF", "PLUS_MINUS",
+                "GP", "GS", "MIN", "FGM", "FGA", "FG3M", "FG3A", "FTM", "FTA", "OREB", "DREB",
+                "PTS", "REB", "AST", "STL", "BLK", "TOV", "PF", "PLUS_MINUS",
                 "FGPCT", "FG3PCT", "FTPCT"
             ],
             "player_playoff_advanced_stats": [
-                "TSPCT", "USGPCT", "ORTG", "DRTG", "NRTG",
-                "TRBPCT", "ASTPCT", "PIE"
+                # Basic game info
+                "AGE", "GP", "W", "L", "W_PCT", "MIN",
+                # Advanced metrics
+                "TS_PCT", "USG_PCT", "OFF_RATING", "DEF_RATING", "NET_RATING",
+                # Percentage stats
+                "REB_PCT", "AST_PCT", "AST_TO", "AST_RATIO", "OREB_PCT", "DREB_PCT", "TM_TOV_PCT", "EFG_PCT", "PACE", "PIE"
             ],
             "player_playoff_tracking_stats": [
                 "DRIVES", "DRIVE_FGM"
@@ -804,11 +809,11 @@ class DataFetcher:
         """
         try:
             # Map metric names to appropriate API calls
-            if metric_name in ["GP", "GS", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TOV", "PF", "PLUS_MINUS", "FGPCT", "FG3PCT", "FTPCT"]:
+            if metric_name in ["GP", "GS", "MIN", "FGM", "FGA", "FG3M", "FG3A", "FTM", "FTA", "OREB", "DREB", "PTS", "REB", "AST", "STL", "BLK", "TOV", "PF", "PLUS_MINUS", "FGPCT", "FG3PCT", "FTPCT"]:
                 # Basic stats
                 response = self.client.get_league_player_playoff_base_stats(season)
-            elif metric_name in ["TSPCT", "USGPCT", "ORTG", "DRTG", "NRTG", "TRBPCT", "ASTPCT", "PIE"]:
-                # Advanced stats
+            elif metric_name in ["AGE", "GP", "W", "L", "W_PCT", "MIN", "TS_PCT", "USG_PCT", "OFF_RATING", "DEF_RATING", "NET_RATING", "REB_PCT", "AST_PCT", "AST_TO", "AST_RATIO", "OREB_PCT", "DREB_PCT", "TM_TOV_PCT", "EFG_PCT", "PACE", "PIE"]:
+                # Advanced stats - includes all available metrics
                 response = self.client.get_league_player_playoff_advanced_stats(season)
             elif metric_name in ["DRIVES", "DRIVE_FGM"]:
                 # Tracking stats

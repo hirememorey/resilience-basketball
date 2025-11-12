@@ -52,12 +52,17 @@ class PlayoffDataPopulator:
         # Define which metrics go to which playoff tables
         table_mappings = {
             "player_playoff_stats": [
-                "GP", "GS", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TOV", "PF", "PLUS_MINUS",  # Basic counts
+                "GP", "GS", "MIN", "FGM", "FGA", "FG3M", "FG3A", "FTM", "FTA", "OREB", "DREB",  # Shot and rebound stats
+                "PTS", "REB", "AST", "STL", "BLK", "TOV", "PF", "PLUS_MINUS",  # Basic counts
                 "FGPCT", "FG3PCT", "FTPCT"  # Basic percentages
             ],
             "player_playoff_advanced_stats": [
-                "TSPCT", "USGPCT", "ORTG", "DRTG", "NRTG",  # Advanced metrics
-                "TRBPCT", "ASTPCT", "PIE"  # Advanced percentages
+                # Basic game info
+                "AGE", "GP", "W", "L", "W_PCT", "MIN",
+                # Advanced metrics
+                "TS_PCT", "USG_PCT", "OFF_RATING", "DEF_RATING", "NET_RATING",
+                # Percentage stats
+                "REB_PCT", "AST_PCT", "AST_TO", "AST_RATIO", "OREB_PCT", "DREB_PCT", "TM_TOV_PCT", "EFG_PCT", "PACE", "PIE"
             ],
             "player_playoff_tracking_stats": [
                 "DRIVES", "DRIVE_FGM"  # Tracking metrics (will expand as needed)
@@ -199,6 +204,14 @@ class PlayoffDataPopulator:
             "GP": "GP",
             "GS": "GS",
             "MIN": "MIN",
+            "FGM": "FGM",
+            "FGA": "FGA",
+            "FG3M": "FG3M",
+            "FG3A": "FG3A",
+            "FTM": "FTM",
+            "FTA": "FTA",
+            "OREB": "OREB",
+            "DREB": "DREB",
             "PTS": "PTS",
             "REB": "REB",
             "AST": "AST",
@@ -211,14 +224,27 @@ class PlayoffDataPopulator:
             "FG3PCT": "FG3_PCT",
             "FTPCT": "FT_PCT",
 
-            # Advanced stats mappings
-            "TSPCT": "TS_PCT",
-            "USGPCT": "USG_PCT",
-            "ORTG": "OFF_RATING",
-            "DRTG": "DEF_RATING",
-            "NRTG": "NET_RATING",
-            "TRBPCT": "REB_PCT",
-            "ASTPCT": "AST_PCT",
+            # Advanced stats mappings - comprehensive coverage
+            "AGE": "AGE",
+            "GP": "GP",  # Also used for advanced stats
+            "W": "W",
+            "L": "L",
+            "W_PCT": "W_PCT",
+            "MIN": "MIN",  # Also used for advanced stats
+            "TS_PCT": "TS_PCT",
+            "USG_PCT": "USG_PCT",
+            "OFF_RATING": "OFF_RATING",
+            "DEF_RATING": "DEF_RATING",
+            "NET_RATING": "NET_RATING",
+            "REB_PCT": "REB_PCT",
+            "AST_PCT": "AST_PCT",
+            "AST_TO": "AST_TO",
+            "AST_RATIO": "AST_RATIO",
+            "OREB_PCT": "OREB_PCT",
+            "DREB_PCT": "DREB_PCT",
+            "TM_TOV_PCT": "TM_TOV_PCT",
+            "EFG_PCT": "EFG_PCT",
+            "PACE": "PACE",
             "PIE": "PIE",
 
             # Tracking stats mappings
@@ -245,6 +271,14 @@ class PlayoffDataPopulator:
             "GP": "games_played",
             "GS": "games_started",
             "MIN": "minutes_played",
+            "FGM": "field_goals_made",
+            "FGA": "field_goals_attempted",
+            "FG3M": "three_pointers_made",
+            "FG3A": "three_pointers_attempted",
+            "FTM": "free_throws_made",
+            "FTA": "free_throws_attempted",
+            "OREB": "offensive_rebounds",
+            "DREB": "defensive_rebounds",
             "PTS": "points",
             "REB": "total_rebounds",
             "AST": "assists",
@@ -257,14 +291,27 @@ class PlayoffDataPopulator:
             "FG3PCT": "three_point_percentage",
             "FTPCT": "free_throw_percentage",
 
-            # Advanced stats mappings
-            "TSPCT": "true_shooting_percentage",
-            "USGPCT": "usage_percentage",
-            "ORTG": "offensive_rating",
-            "DRTG": "defensive_rating",
-            "NRTG": "net_rating",
-            "TRBPCT": "rebound_percentage",
-            "ASTPCT": "assist_percentage",
+            # Advanced stats mappings - comprehensive coverage
+            "AGE": "age",
+            "GP": "games_played",  # Also used for advanced stats
+            "W": "wins",
+            "L": "losses",
+            "W_PCT": "win_percentage",
+            "MIN": "minutes_played",  # Also used for advanced stats
+            "TS_PCT": "true_shooting_percentage",
+            "USG_PCT": "usage_percentage",
+            "OFF_RATING": "offensive_rating",
+            "DEF_RATING": "defensive_rating",
+            "NET_RATING": "net_rating",
+            "REB_PCT": "rebound_percentage",
+            "AST_PCT": "assist_percentage",
+            "AST_TO": "assist_to_turnover_ratio",
+            "AST_RATIO": "assist_ratio",
+            "OREB_PCT": "offensive_rebound_percentage",
+            "DREB_PCT": "defensive_rebound_percentage",
+            "TM_TOV_PCT": "turnover_percentage",
+            "EFG_PCT": "effective_field_goal_percentage",
+            "PACE": "pace",
             "PIE": "pie",
 
             # Tracking stats mappings
