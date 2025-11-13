@@ -14,7 +14,7 @@ A comprehensive data science project analyzing NBA player performance under play
 - ✅ Database schema with 14 tables (regular season + playoff data)
 - ✅ NBA Stats API + data.nba.com integration with rate limiting and caching
 - ✅ **569 players** with complete 2024-25 season statistics
-- ✅ **569 players** with complete individual tracking statistics (**105+ metrics each**)
+- ✅ **569 players** with complete individual tracking statistics (**140+ metrics each**)
 - ✅ **219 players** with complete 2024-25 playoff statistics
 - ✅ **1,280 games** with complete metadata and scores
 - ✅ **30 NBA teams** with complete team information
@@ -31,13 +31,13 @@ A comprehensive data science project analyzing NBA player performance under play
 
 **CRITICAL API FIXES AND SIMPLIFICATIONS COMPLETED:**
 - ✅ **API Parameter Discovery:** `PlayerOrTeam=Player` unlocks individual player tracking data (not team aggregates)
-- ✅ **Tracking Metrics Expansion:** Complete tracking metrics for both regular season and playoffs (105+ metrics per player)
+- ✅ **Tracking Metrics Expansion:** Complete tracking metrics for both regular season and playoffs (140+ metrics per player)
 - ✅ **Static Data Approach:** Teams table populated using known NBA constants rather than API calls
 - ✅ **Games Data Extraction:** Derived game metadata from existing possession data for reliability
 - ✅ **Schema Optimization:** Made `game_date` nullable to handle API variations
 - ✅ **Complete Regular Season Stats:** All null values resolved in `player_season_stats` (569/569 players)
 - ✅ **Complete Advanced Stats:** All null values resolved in `player_advanced_stats` (569/569 players)
-- ✅ **Complete Tracking Stats:** 105+ granular metrics per player across 6 measure types (569/569 players)
+- ✅ **Complete Tracking Stats:** 140+ granular metrics per player across 9 measure types (569/569 players)
 - ✅ **Complete Playoff Stats:** All available null values resolved (219/219 players with playoffs)
 - ✅ **Complete Playoff Advanced:** All null values resolved (219/219 players)
 - ✅ **Complete Playoff Tracking:** Individual player tracking data breakthrough (219/219 players)
@@ -85,11 +85,14 @@ NBA Stats API → Data Fetcher → SQLite Database → Analysis Models
 - **30 NBA Teams** with complete team information and metadata
 - **1,280 NBA Games** with complete game metadata, scores, and season information
 - **COMPLETE SEASON POSSESSION DATA:** 382,522 possessions and 509,248 events across **1,280 games** (100% coverage)
-- **105+ Statistical Categories** per player including:
+- **140+ Statistical Categories** per player including:
   - Traditional: Points, Rebounds, Assists, Steals, Blocks
   - Advanced: True Shooting %, Usage %, Offensive/Defensive Rating
   - **Comprehensive Individual Tracking**: 17 drive metrics, 8 catch-and-shoot metrics, 8 pull-up metrics, 18 paint touch metrics, 18 post touch metrics, 18 elbow touch metrics
   - **Efficiency Metrics**: 14 efficiency-based metrics per play type (drives, catch-shoot, pull-up, paint touch, post touch, elbow touch)
+  - **Speed & Distance Metrics**: Distance traveled, average speed on offense/defense (7 metrics)
+  - **Passing Metrics**: Passes made/received, secondary assists, assist points created (9 metrics)
+  - **Rebounding Metrics**: Contested/uncontested rebounds, rebound efficiency by distance (24 metrics)
   - **NEW: Synergy Play Type Stats**: 11 play types (Isolation, Transition, Pick & Roll, etc.) with percentiles, PPP, FG%, and possession data
   - **Resilience Ready**: Complete diversification and adaptability metrics available
 
