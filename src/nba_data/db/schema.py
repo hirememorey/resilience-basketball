@@ -43,6 +43,8 @@ class NBADatabaseSchema:
             self._create_player_playoff_tracking_stats_table(conn)
             self._create_player_playtype_stats_table(conn)
             self._create_player_playoff_playtype_stats_table(conn)
+            self._create_player_shot_dashboard_stats_table(conn)
+            self._create_player_playoff_shot_dashboard_stats_table(conn)
             self._create_possessions_table(conn)
             self._create_possession_lineups_table(conn)
             self._create_possession_events_table(conn)
@@ -772,6 +774,162 @@ class NBADatabaseSchema:
 
         conn.commit()
         print("✓ PlayerPlayoffPlaytypeStats table created")
+
+    def _create_player_shot_dashboard_stats_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PlayerShotDashboardStats table (shot stats by closest defender distance)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS player_shot_dashboard_stats (
+                player_id INTEGER NOT NULL,
+                season TEXT NOT NULL,
+                team_id INTEGER NOT NULL,
+                close_def_dist_range TEXT NOT NULL,
+                shot_clock_range TEXT NOT NULL,
+                dribble_range TEXT NOT NULL,
+                shot_dist_range TEXT NOT NULL,
+
+                -- Player info
+                player_name TEXT,
+                team_abbreviation TEXT,
+                team_name TEXT,
+                age REAL,
+
+                -- Game stats
+                gp INTEGER,
+                g INTEGER,
+
+                -- Overall shooting metrics
+                fga_frequency REAL,
+                fgm REAL,
+                fga REAL,
+                fg_pct REAL,
+                efg_pct REAL,
+
+                -- 2-point shooting
+                fg2a_frequency REAL,
+                fg2m REAL,
+                fg2a REAL,
+                fg2_pct REAL,
+
+                -- 3-point shooting
+                fg3a_frequency REAL,
+                fg3m REAL,
+                fg3a REAL,
+                fg3_pct REAL,
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (player_id, season, team_id, close_def_dist_range, shot_clock_range, dribble_range, shot_dist_range),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id)
+            )
+        """)
+
+        # Create indexes for performance
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_shot_dashboard_stats_player_season
+            ON player_shot_dashboard_stats(player_id, season)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_shot_dashboard_stats_def_dist
+            ON player_shot_dashboard_stats(close_def_dist_range)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_shot_dashboard_stats_shot_dist
+            ON player_shot_dashboard_stats(shot_dist_range)
+        """)
+
+        # Update trigger
+        conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS player_shot_dashboard_stats_updated_at
+            AFTER UPDATE ON player_shot_dashboard_stats
+            BEGIN
+                UPDATE player_shot_dashboard_stats SET updated_at = CURRENT_TIMESTAMP
+                WHERE player_id = NEW.player_id AND season = NEW.season AND team_id = NEW.team_id
+                AND close_def_dist_range = NEW.close_def_dist_range AND shot_clock_range = NEW.shot_clock_range
+                AND dribble_range = NEW.dribble_range AND shot_dist_range = NEW.shot_dist_range;
+            END
+        """)
+
+        conn.commit()
+        print("✓ PlayerShotDashboardStats table created")
+
+    def _create_player_playoff_shot_dashboard_stats_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PlayerPlayoffShotDashboardStats table (playoff shot stats by closest defender distance)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS player_playoff_shot_dashboard_stats (
+                player_id INTEGER NOT NULL,
+                season TEXT NOT NULL,
+                team_id INTEGER NOT NULL,
+                close_def_dist_range TEXT NOT NULL,
+                shot_clock_range TEXT NOT NULL,
+                dribble_range TEXT NOT NULL,
+                shot_dist_range TEXT NOT NULL,
+
+                -- Player info
+                player_name TEXT,
+                team_abbreviation TEXT,
+                team_name TEXT,
+                age REAL,
+
+                -- Game stats
+                gp INTEGER,
+                g INTEGER,
+
+                -- Overall shooting metrics
+                fga_frequency REAL,
+                fgm REAL,
+                fga REAL,
+                fg_pct REAL,
+                efg_pct REAL,
+
+                -- 2-point shooting
+                fg2a_frequency REAL,
+                fg2m REAL,
+                fg2a REAL,
+                fg2_pct REAL,
+
+                -- 3-point shooting
+                fg3a_frequency REAL,
+                fg3m REAL,
+                fg3a REAL,
+                fg3_pct REAL,
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (player_id, season, team_id, close_def_dist_range, shot_clock_range, dribble_range, shot_dist_range),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id)
+            )
+        """)
+
+        # Create indexes for performance
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_playoff_shot_dashboard_stats_player_season
+            ON player_playoff_shot_dashboard_stats(player_id, season)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_playoff_shot_dashboard_stats_def_dist
+            ON player_playoff_shot_dashboard_stats(close_def_dist_range)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_playoff_shot_dashboard_stats_shot_dist
+            ON player_playoff_shot_dashboard_stats(shot_dist_range)
+        """)
+
+        # Update trigger
+        conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS player_playoff_shot_dashboard_stats_updated_at
+            AFTER UPDATE ON player_playoff_shot_dashboard_stats
+            BEGIN
+                UPDATE player_playoff_shot_dashboard_stats SET updated_at = CURRENT_TIMESTAMP
+                WHERE player_id = NEW.player_id AND season = NEW.season AND team_id = NEW.team_id
+                AND close_def_dist_range = NEW.close_def_dist_range AND shot_clock_range = NEW.shot_clock_range
+                AND dribble_range = NEW.dribble_range AND shot_dist_range = NEW.shot_dist_range;
+            END
+        """)
+
+        conn.commit()
+        print("✓ PlayerPlayoffShotDashboardStats table created")
 
     def _create_possessions_table(self, conn: sqlite3.Connection) -> None:
         """Create the Possessions table (for play-by-play analysis)."""

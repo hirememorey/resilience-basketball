@@ -41,6 +41,7 @@ This is our "Operating System" for the project. The analysis must adhere to thes
     *   **Spatial Profile:** Location of shots on the court.
     *   **Play Type Distribution:** Usage rates for pick-and-roll, isolation, post-ups, spot-ups, etc.
     *   **Creation Method:** How a shot is generated (e.g., catch-and-shoot vs. pull-up).
+    *   **COMPREHENSIVE SHOT CONTEXT ANALYSIS:** Performance across all shooting scenarios including defender distance, shot clock pressure, and dribble creation ranges.
 4.  **Context is Key:** The model must be able to account for confounding variables. We will need to consider factors such as:
     *   Player's age and career stage.
     *   Changes in team, coaching staff, or role.
