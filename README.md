@@ -76,15 +76,15 @@ NBA Stats API → Data Fetcher → SQLite Database → Analysis Models
   - `possession_matchups`: Defensive matchups between players during possessions
   - `player_shot_locations`: **NEW** Granular x/y coordinates for every shot taken
 
-## 🔬 Experiment: The Method Resilience Score
+## 🔬 Experiment: The Playoff Resilience Score
 
-As a proof of concept, we have developed and tested a script to calculate the "Method Resilience Score." This experiment validates our core hypotheses on a player-by-player basis.
+As a proof of concept, we have developed and tested a script to calculate the initial "Method Resilience Score." This experiment validates our data pipeline and core hypotheses on a player-by-player basis. The next iteration of this score will be a more robust, two-pillar metric.
 
--   **Proof of Concept**: `src/nba_data/scripts/calculate_resilience_scores.py` provides a working implementation of the score calculation.
+-   **Proof of Concept**: `src/nba_data/scripts/calculate_resilience_scores.py` provides a working implementation of the *method* score calculation, which will serve as one half of the final score.
 -   **Benchmark Data**: The script relies on league-average efficiency benchmarks, which are calculated by `src/nba_data/scripts/calculate_league_averages.py`.
--   **Detailed Methodology**: The complete first-principles logic for this calculation is documented in the "Method Resilience Score" section of `foundational_principles.md`.
+-   **Detailed Methodology**: The complete first-principles logic for the refined, two-pillar calculation is documented in `foundational_principles.md`.
 
-This experiment serves as the foundation for the next phase of the project: scaling this analysis across the entire league and building a predictive model.
+This experiment serves as the foundation for the next phase of the project: evolving the score and scaling this analysis across the entire league to build a predictive model.
 
 ## 📈 Data Coverage
 
@@ -221,13 +221,17 @@ resilience-basketball/
 2. **Method Over-Specialization Fragility**: One-dimensional players are more vulnerable to playoff schemes that target their primary strength.
 3. **Adaptability Measurement**: Year-over-year changes in a player's scoring profile indicate playoff readiness.
 
-### The "Method Resilience" Score
-Our primary analytical goal is to move beyond simple box-score stats and quantify a player's offensive adaptability. We will calculate a "Method Resilience Score" based on three pillars of scoring diversity:
-- **Spatial Diversity**: Measures a player's efficiency and volume from different zones on the court (e.g., rim, midrange, multiple three-point zones).
-- **Play-Type Diversity**: Measures a player's efficiency and usage across different offensive sets (e.g., Isolation, P&R Ball Handler, Spot-Up).
-- **Creation Diversity**: Measures a player's ability to score in different ways (e.g., Catch & Shoot, Pull-ups, Drives).
+### The "Playoff Resilience Score": A Two-Pillar Approach
+Our primary analytical goal is to create a holistic measure of playoff resilience. The refined score moves beyond just analyzing a player's style to incorporate their actual performance. It is built on two pillars:
 
-The final score will analyze the *change* in a player's scoring diversity from the regular season to the playoffs, identifying players whose offensive game is most resistant to targeted defensive pressure. For a detailed breakdown of the methodology, see `foundational_principles.md`.
+1.  **Performance Resilience (The "What")**: This pillar answers the most important question: "Does the player's raw effectiveness decline?" It measures the playoff-to-regular-season change in core efficiency metrics like **True Shooting % (TS%)**, **Points Per Possession (PPP)**, and **Turnover % (TOV%)**. It grounds the model in the outcomes that actually matter.
+
+2.  **Method Resilience (The "How")**: This pillar quantifies a player's offensive adaptability and answers the question: "Is the player's offensive process compromised?" It is calculated using a diversity index based on three sub-pillars:
+    - **Spatial Diversity**: Efficiency and volume from different zones on the court.
+    - **Play-Type Diversity**: Efficiency and usage across different offensive sets.
+    - **Creation Diversity**: Ability to score in different ways (Catch & Shoot, Pull-ups, Drives).
+
+The final score will analyze the change in a player's combined performance and method scores from the regular season to the playoffs, identifying players whose game is truly resistant to targeted defensive pressure. For a detailed breakdown of the refined methodology, see `foundational_principles.md`.
 
 **✅ FULLY UNBLOCKED:** Complete individual player tracking data across entire NBA (569 players × 105+ metrics)
 

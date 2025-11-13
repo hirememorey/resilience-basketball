@@ -47,84 +47,60 @@ This is our "Operating System" for the project. The analysis must adhere to thes
     *   Quality of teammates and opponents.
 5.  **Start with a Clear "Why":** Every line of code and every statistical test must be in service of answering the Central Research Question. We will avoid analysis for the sake of analysis.
 
-## 6. The "Method Resilience" Score: A Detailed Framework
+## 6. The "Playoff Resilience Score": A Refined Two-Pillar Framework
 
-This section outlines the experimental, first-principles logic used in the `calculate_resilience_scores.py` script. It serves as a guide for understanding the proof-of-concept model for quantifying an NBA player's playoff resilience.
+This section outlines the refined, first-principles logic for quantifying an NBA player's playoff resilience. The original "Method Resilience" score accurately measured the consistency of a player's offensive *process*, but it did not directly account for the consistency of their actual *performance*. A player could maintain their style perfectly but become significantly less effective.
 
-### Core Concept: The Diversity Score
+To address this, the refined "Playoff Resilience Score" is a composite metric built on two distinct pillars: **Performance Resilience (The "What")** and **Method Resilience (The "How")**.
 
-To quantify versatility, we use a **Diversity Score** for each pillar of offensive play. This score is derived from the **Herfindahl-Hirschman Index (HHI)**, a standard measure of concentration.
+### Pillar 1: Performance Resilience (The "What")
 
-1.  **Calculate HHI**: For a set of offensive categories (e.g., different shot zones), we calculate the proportion of a player's total "weighted volume" that comes from each category. The HHI is the sum of the squares of these proportions.
-    - `HHI = sum(proportion_of_category_1² + proportion_of_category_2² + ...)`
-    - A score near 1.0 means high concentration (specialist). A score near 0 means low concentration (diversified).
+This pillar directly answers the most critical question: **Does the player's raw effectiveness and output decline under playoff pressure?** It measures the change in fundamental efficiency and production metrics that directly impact winning.
 
-2.  **Convert to Diversity Score**: To make the metric intuitive, we invert the HHI.
+1.  **Core Metrics**: We will track the delta (change) between the regular season and playoffs for the following key performance indicators:
+    *   **True Shooting Percentage (TS%)**: The foundational measure of scoring efficiency. A significant drop here indicates a player is missing more shots.
+    *   **Points Per Possession (PPP)**: A comprehensive measure of how effectively a player converts opportunities into points across all their offensive actions.
+    *   **Turnover Percentage (TOV%)**: Measures a player's ball security and decision-making under increased defensive pressure.
+    *   **Usage-Adjusted Efficiency**: We will also analyze the change in efficiency metrics (like TS%) in the context of any change in the player's Usage Rate. This helps distinguish a player whose efficiency drops because they are shouldering a much larger offensive burden from one who simply becomes less effective in the same role.
+
+2.  **Calculation**:
+    *   `Performance Resilience Score = Weighted average of the playoff-to-regular-season deltas of the core metrics.`
+    *   The goal is a score that reflects the stability of a player's tangible offensive output.
+
+### Pillar 2: Method Resilience (The "How")
+
+This pillar, which was the foundation of the original model, remains crucial for diagnosing *why* a player's performance might change. It answers the question: **Is the player's offensive process and versatility compromised by targeted defensive schemes?** It quantifies the stability of a player's offensive style.
+
+#### Core Concept: The Diversity Score
+
+To quantify versatility, we use a **Diversity Score** derived from the **Herfindahl-Hirschman Index (HHI)**.
+
+1.  **Calculate HHI**: For a set of offensive categories, we calculate the proportion of a player's "weighted volume" from each category. The HHI is the sum of the squares of these proportions.
+    - `HHI = sum(proportion_of_category_1² + ...)`
+2.  **Convert to Diversity Score**: We invert the HHI to make it intuitive.
     - `Diversity Score = (1 - HHI) * 100`
-    - This results in a score from 0 to 100, where **100 is perfect diversity** and 0 is complete specialization.
+    - 100 is perfect diversity; 0 is complete specialization.
 
-### The Three Pillars of Resilience
+#### The Three Sub-Pillars of Method Resilience
 
-We break down "offensive versatility" into three distinct, measurable pillars. A critical component for each pillar is **efficiency weighting**: we don't just reward volume; we reward *effective* volume by comparing a player's efficiency in an action to the league average for that same action.
+We break down "offensive versatility" into three distinct, measurable components, weighted by efficiency relative to league average.
 
-#### Pillar 1: Spatial Diversity (Where they score)
+1.  **Spatial Diversity (Where they score)**: Measures a player's ability to score effectively from all over the court, using shot location data.
+2.  **Play-Type Diversity (How they are used)**: Measures effectiveness across different offensive sets (e.g., 'Isolation', 'P&R Ball Handler'), using play-type stats.
+3.  **Creation Diversity (How they create their shot)**: Measures ability to score through different methods (e.g., 'Catch & Shoot', 'Pull-ups', 'Drives'), using tracking data.
 
-This measures a player's ability to score effectively from all over the court.
+### Final Calculation: The Overall Resilience Score and Delta
 
-1.  **Data Source**: `player_shot_locations` table.
-2.  **Categorization**: Every shot is categorized into one of six zones based on its `loc_x` and `loc_y` coordinates:
-    - `Restricted Area`
-    - `In The Paint (Non-RA)`
-    - `Mid-Range`
-    - `Left Corner 3`
-    - `Right Corner 3`
-    - `Above the Break 3`
-3.  **Efficiency Weighting**:
-    - For each zone, the player's Effective Field Goal Percentage (eFG%) is calculated.
-    - This is compared to the pre-calculated league-average eFG% for that *exact same zone*.
-    - `Efficiency Weight = Player's Zone eFG% / League-Average Zone eFG%`
-4.  **Weighted Volume**: For each zone, we calculate:
-    - `Weighted Volume = Total Shots Attempted in Zone * Efficiency Weight`
-5.  **Final Score**: The set of `Weighted Volume` values is used to compute the final **Spatial Diversity Score**.
+The final, comprehensive Playoff Resilience Score combines both pillars into a single, holistic metric.
 
-#### Pillar 2: Play-Type Diversity (How they are used in the offense)
-
-This measures a player's effectiveness across different offensive sets.
-
-1.  **Data Source**: `player_playtype_stats` (and its playoff equivalent).
-2.  **Categorization**: Data is already categorized by `play_type` (e.g., 'Isolation', 'P&R Ball Handler', 'Transition').
-3.  **Efficiency Weighting**:
-    - The player's Points Per Possession (PPP) for each play type is used.
-    - This is compared to the pre-calculated league-average PPP for that *same play type*.
-    - `Efficiency Weight = Player's PPP / League-Average PPP`
-4.  **Weighted Volume**: For each play type, we calculate:
-    - `Weighted Volume = Total Possessions of Play Type * Efficiency Weight`
-5.  **Final Score**: The set of `Weighted Volume` values is used to compute the final **Play-Type Diversity Score**.
-
-#### Pillar 3: Creation Diversity (How they create their shot)
-
-This measures a player's ability to score through different individual creation methods.
-
-1.  **Data Source**: `player_tracking_stats` (and its playoff equivalent).
-2.  **Categorization**: We analyze three fundamental creation types:
-    - **Catch & Shoot**: Volume = `catch_shoot_field_goals_attempted`, Efficiency = `catch_shoot_effective_field_goal_percentage`.
-    - **Pull-Up**: Volume = `pull_up_field_goals_attempted`, Efficiency = `pull_up_effective_field_goal_percentage`.
-    - **Drives**: Volume = `drives`, Efficiency = `drive_points / drives`.
-3.  **Efficiency Weighting**:
-    - The player's efficiency for each creation type is compared to the pre-calculated league average for that *same type*.
-    - `Efficiency Weight = Player's Efficiency / League-Average Efficiency`
-4.  **Weighted Volume**: For each creation type, we calculate:
-    - `Weighted Volume = Volume * Efficiency Weight`
-5.  **Final Score**: The three `Weighted Volume` values are used to compute the final **Creation Diversity Score**.
-
-### Final Calculation: The Overall Score and Delta
-
-1.  **Overall Score**: The three pillar scores are combined into a single weighted average to produce the final Method Resilience Score. This is done for both the regular season and the playoffs.
-    - `Overall Score = (Spatial * 0.4) + (Play-Type * 0.4) + (Creation * 0.2)`
-
-2.  **Resilience Delta**: The definitive metric is the change in the score from the regular season to the playoffs.
+1.  **Calculate Pillar Scores**: First, we calculate the `Performance Resilience Score` and the `Method Resilience Score` for both the regular season and the playoffs.
+2.  **Overall Score**: The two pillar scores are combined into a weighted average.
+    - `Overall Score (Regular Season) = (Performance Score * W_p) + (Method Score * W_m)`
+    - `Overall Score (Playoffs) = (Performance Score * W_p) + (Method Score * W_m)`
+    - The weights (`W_p`, `W_m`) will be determined during the modeling phase, but we can start with a 50/50 or 60/40 split favoring performance.
+3.  **Resilience Delta**: The definitive metric is the change in the score from the regular season to the playoffs.
     - `Delta = Overall Playoff Score - Overall Regular Season Score`
-    - A positive delta indicates a player whose offensive versatility increased under pressure. A negative delta indicates a contraction in their offensive game. A near-zero delta indicates a stable, resilient performer.
+    - A truly resilient player will demonstrate stability in both their raw performance and their offensive versatility, resulting in a near-zero or positive delta.
 
 ## 7. Current Data Pipeline Status
 
