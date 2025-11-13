@@ -91,7 +91,21 @@ class PlayerDataPopulator:
                 "EFF_CATCH_SHOOT_FG_PCT", "EFF_PULL_UP_PTS", "EFF_PULL_UP_FG_PCT",
                 "EFF_PAINT_TOUCH_PTS", "EFF_PAINT_TOUCH_FG_PCT", "EFF_POST_TOUCH_PTS",
                 "EFF_POST_TOUCH_FG_PCT", "EFF_ELBOW_TOUCH_PTS", "EFF_ELBOW_TOUCH_FG_PCT",
-                "EFF_FG_PCT"
+                "EFF_FG_PCT",
+                # Speed and Distance metrics
+                "DIST_FEET", "DIST_MILES", "DIST_MILES_OFF", "DIST_MILES_DEF",
+                "AVG_SPEED", "AVG_SPEED_OFF", "AVG_SPEED_DEF",
+                # Passing metrics
+                "PASSES_MADE", "PASSES_RECEIVED", "FT_AST", "SECONDARY_AST",
+                "POTENTIAL_AST", "AST_POINTS_CREATED", "AST_ADJ", "AST_TO_PASS_PCT",
+                "AST_TO_PASS_PCT_ADJ",
+                # Rebounding metrics
+                "OREB_CONTEST", "OREB_UNCONTEST", "OREB_CONTEST_PCT", "OREB_CHANCES",
+                "OREB_CHANCE_PCT", "OREB_CHANCE_DEFER", "OREB_CHANCE_PCT_ADJ", "AVG_OREB_DIST",
+                "DREB_CONTEST", "DREB_UNCONTEST", "DREB_CONTEST_PCT", "DREB_CHANCES",
+                "DREB_CHANCE_PCT", "DREB_CHANCE_DEFER", "DREB_CHANCE_PCT_ADJ", "AVG_DREB_DIST",
+                "REB_CONTEST", "REB_UNCONTEST", "REB_CONTEST_PCT", "REB_CHANCES",
+                "REB_CHANCE_PCT", "REB_CHANCE_DEFER", "REB_CHANCE_PCT_ADJ", "AVG_REB_DIST"
             ]
         }
 
@@ -356,7 +370,50 @@ class PlayerDataPopulator:
                 "EFF_POST_TOUCH_FG_PCT": "efficiency_post_touch_field_goal_percentage",
                 "EFF_ELBOW_TOUCH_PTS": "efficiency_elbow_touch_points",
                 "EFF_ELBOW_TOUCH_FG_PCT": "efficiency_elbow_touch_field_goal_percentage",
-                "EFF_FG_PCT": "efficiency_effective_field_goal_percentage"
+                "EFF_FG_PCT": "efficiency_effective_field_goal_percentage",
+                # Speed and Distance metrics
+                "DIST_FEET": "dist_feet",
+                "DIST_MILES": "dist_miles",
+                "DIST_MILES_OFF": "dist_miles_off",
+                "DIST_MILES_DEF": "dist_miles_def",
+                "AVG_SPEED": "avg_speed",
+                "AVG_SPEED_OFF": "avg_speed_off",
+                "AVG_SPEED_DEF": "avg_speed_def",
+                # Passing metrics
+                "PASSES_MADE": "passes_made",
+                "PASSES_RECEIVED": "passes_received",
+                "FT_AST": "ft_ast",
+                "SECONDARY_AST": "secondary_ast",
+                "POTENTIAL_AST": "potential_ast",
+                "AST_POINTS_CREATED": "ast_points_created",
+                "AST_ADJ": "ast_adj",
+                "AST_TO_PASS_PCT": "ast_to_pass_pct",
+                "AST_TO_PASS_PCT_ADJ": "ast_to_pass_pct_adj",
+                # Rebounding metrics
+                "OREB_CONTEST": "oreb_contest",
+                "OREB_UNCONTEST": "oreb_uncontest",
+                "OREB_CONTEST_PCT": "oreb_contest_pct",
+                "OREB_CHANCES": "oreb_chances",
+                "OREB_CHANCE_PCT": "oreb_chance_pct",
+                "OREB_CHANCE_DEFER": "oreb_chance_defer",
+                "OREB_CHANCE_PCT_ADJ": "oreb_chance_pct_adj",
+                "AVG_OREB_DIST": "avg_oreb_dist",
+                "DREB_CONTEST": "dreb_contest",
+                "DREB_UNCONTEST": "dreb_uncontest",
+                "DREB_CONTEST_PCT": "dreb_contest_pct",
+                "DREB_CHANCES": "dreb_chances",
+                "DREB_CHANCE_PCT": "dreb_chance_pct",
+                "DREB_CHANCE_DEFER": "dreb_chance_defer",
+                "DREB_CHANCE_PCT_ADJ": "dreb_chance_pct_adj",
+                "AVG_DREB_DIST": "avg_dreb_dist",
+                "REB_CONTEST": "reb_contest",
+                "REB_UNCONTEST": "reb_uncontest",
+                "REB_CONTEST_PCT": "reb_contest_pct",
+                "REB_CHANCES": "reb_chances",
+                "REB_CHANCE_PCT": "reb_chance_pct",
+                "REB_CHANCE_DEFER": "reb_chance_defer",
+                "REB_CHANCE_PCT_ADJ": "reb_chance_pct_adj",
+                "AVG_REB_DIST": "avg_reb_dist"
             }
         }
 

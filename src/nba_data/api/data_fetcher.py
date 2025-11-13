@@ -1370,6 +1370,372 @@ class DataFetcher:
                 notes="Overall efficiency FG% from tracking stats"
             ),
 
+            # Speed and Distance metrics (SpeedDistance PtMeasureType)
+            "DIST_FEET": MetricMapping(
+                canonical_name="Distance Traveled (Feet)",
+                api_source="leaguedashptstats",
+                api_column="DIST_FEET",
+                endpoint_params={"PtMeasureType": "SpeedDistance"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total distance traveled in feet during games"
+            ),
+            "DIST_MILES": MetricMapping(
+                canonical_name="Distance Traveled (Miles)",
+                api_source="leaguedashptstats",
+                api_column="DIST_MILES",
+                endpoint_params={"PtMeasureType": "SpeedDistance"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total distance traveled in miles during games"
+            ),
+            "DIST_MILES_OFF": MetricMapping(
+                canonical_name="Distance Traveled Offense (Miles)",
+                api_source="leaguedashptstats",
+                api_column="DIST_MILES_OFF",
+                endpoint_params={"PtMeasureType": "SpeedDistance"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Distance traveled in miles on offense"
+            ),
+            "DIST_MILES_DEF": MetricMapping(
+                canonical_name="Distance Traveled Defense (Miles)",
+                api_source="leaguedashptstats",
+                api_column="DIST_MILES_DEF",
+                endpoint_params={"PtMeasureType": "SpeedDistance"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Distance traveled in miles on defense"
+            ),
+            "AVG_SPEED": MetricMapping(
+                canonical_name="Average Speed (MPH)",
+                api_source="leaguedashptstats",
+                api_column="AVG_SPEED",
+                endpoint_params={"PtMeasureType": "SpeedDistance"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Average speed in miles per hour"
+            ),
+            "AVG_SPEED_OFF": MetricMapping(
+                canonical_name="Average Speed Offense (MPH)",
+                api_source="leaguedashptstats",
+                api_column="AVG_SPEED_OFF",
+                endpoint_params={"PtMeasureType": "SpeedDistance"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Average speed in miles per hour on offense"
+            ),
+            "AVG_SPEED_DEF": MetricMapping(
+                canonical_name="Average Speed Defense (MPH)",
+                api_source="leaguedashptstats",
+                api_column="AVG_SPEED_DEF",
+                endpoint_params={"PtMeasureType": "SpeedDistance"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Average speed in miles per hour on defense"
+            ),
+
+            # Passing metrics (Passing PtMeasureType)
+            "PASSES_MADE": MetricMapping(
+                canonical_name="Passes Made",
+                api_source="leaguedashptstats",
+                api_column="PASSES_MADE",
+                endpoint_params={"PtMeasureType": "Passing"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total passes made by player"
+            ),
+            "PASSES_RECEIVED": MetricMapping(
+                canonical_name="Passes Received",
+                api_source="leaguedashptstats",
+                api_column="PASSES_RECEIVED",
+                endpoint_params={"PtMeasureType": "Passing"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total passes received by player"
+            ),
+            "FT_AST": MetricMapping(
+                canonical_name="Free Throw Assists",
+                api_source="leaguedashptstats",
+                api_column="FT_AST",
+                endpoint_params={"PtMeasureType": "Passing"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Assists on free throws"
+            ),
+            "SECONDARY_AST": MetricMapping(
+                canonical_name="Secondary Assists",
+                api_source="leaguedashptstats",
+                api_column="SECONDARY_AST",
+                endpoint_params={"PtMeasureType": "Passing"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Secondary assists (passes leading to assists)"
+            ),
+            "POTENTIAL_AST": MetricMapping(
+                canonical_name="Potential Assists",
+                api_source="leaguedashptstats",
+                api_column="POTENTIAL_AST",
+                endpoint_params={"PtMeasureType": "Passing"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Potential assists (passes that could have led to scores)"
+            ),
+            "AST_POINTS_CREATED": MetricMapping(
+                canonical_name="Assist Points Created",
+                api_source="leaguedashptstats",
+                api_column="AST_POINTS_CREATED",
+                endpoint_params={"PtMeasureType": "Passing"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Points created through assists"
+            ),
+            "AST_ADJ": MetricMapping(
+                canonical_name="Adjusted Assists",
+                api_source="leaguedashptstats",
+                api_column="AST_ADJ",
+                endpoint_params={"PtMeasureType": "Passing"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Adjusted assist total accounting for secondary assists"
+            ),
+            "AST_TO_PASS_PCT": MetricMapping(
+                canonical_name="Assist to Pass Percentage",
+                api_source="leaguedashptstats",
+                api_column="AST_TO_PASS_PCT",
+                endpoint_params={"PtMeasureType": "Passing"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Percentage of passes that result in assists"
+            ),
+            "AST_TO_PASS_PCT_ADJ": MetricMapping(
+                canonical_name="Adjusted Assist to Pass Percentage",
+                api_source="leaguedashptstats",
+                api_column="AST_TO_PASS_PCT_ADJ",
+                endpoint_params={"PtMeasureType": "Passing"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Adjusted percentage accounting for secondary assists"
+            ),
+
+            # Rebounding metrics (Rebounding PtMeasureType)
+            "OREB_CONTEST": MetricMapping(
+                canonical_name="Offensive Rebounds Contested",
+                api_source="leaguedashptstats",
+                api_column="OREB_CONTEST",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Contested offensive rebounds"
+            ),
+            "OREB_UNCONTEST": MetricMapping(
+                canonical_name="Offensive Rebounds Uncontested",
+                api_source="leaguedashptstats",
+                api_column="OREB_UNCONTEST",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Uncontested offensive rebounds"
+            ),
+            "OREB_CONTEST_PCT": MetricMapping(
+                canonical_name="Offensive Rebound Contest Percentage",
+                api_source="leaguedashptstats",
+                api_column="OREB_CONTEST_PCT",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Percentage of offensive rebounds that were contested"
+            ),
+            "OREB_CHANCES": MetricMapping(
+                canonical_name="Offensive Rebound Chances",
+                api_source="leaguedashptstats",
+                api_column="OREB_CHANCES",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total offensive rebound opportunities"
+            ),
+            "OREB_CHANCE_PCT": MetricMapping(
+                canonical_name="Offensive Rebound Chance Percentage",
+                api_source="leaguedashptstats",
+                api_column="OREB_CHANCE_PCT",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Percentage of offensive rebound chances converted"
+            ),
+            "OREB_CHANCE_DEFER": MetricMapping(
+                canonical_name="Offensive Rebound Chance Deferrals",
+                api_source="leaguedashptstats",
+                api_column="OREB_CHANCE_DEFER",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Offensive rebound chances deferred to teammates"
+            ),
+            "OREB_CHANCE_PCT_ADJ": MetricMapping(
+                canonical_name="Adjusted Offensive Rebound Chance Percentage",
+                api_source="leaguedashptstats",
+                api_column="OREB_CHANCE_PCT_ADJ",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Adjusted offensive rebound conversion rate"
+            ),
+            "AVG_OREB_DIST": MetricMapping(
+                canonical_name="Average Offensive Rebound Distance",
+                api_source="leaguedashptstats",
+                api_column="AVG_OREB_DIST",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Average distance from basket for offensive rebounds"
+            ),
+            "DREB_CONTEST": MetricMapping(
+                canonical_name="Defensive Rebounds Contested",
+                api_source="leaguedashptstats",
+                api_column="DREB_CONTEST",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Contested defensive rebounds"
+            ),
+            "DREB_UNCONTEST": MetricMapping(
+                canonical_name="Defensive Rebounds Uncontested",
+                api_source="leaguedashptstats",
+                api_column="DREB_UNCONTEST",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Uncontested defensive rebounds"
+            ),
+            "DREB_CONTEST_PCT": MetricMapping(
+                canonical_name="Defensive Rebound Contest Percentage",
+                api_source="leaguedashptstats",
+                api_column="DREB_CONTEST_PCT",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Percentage of defensive rebounds that were contested"
+            ),
+            "DREB_CHANCES": MetricMapping(
+                canonical_name="Defensive Rebound Chances",
+                api_source="leaguedashptstats",
+                api_column="DREB_CHANCES",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total defensive rebound opportunities"
+            ),
+            "DREB_CHANCE_PCT": MetricMapping(
+                canonical_name="Defensive Rebound Chance Percentage",
+                api_source="leaguedashptstats",
+                api_column="DREB_CHANCE_PCT",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Percentage of defensive rebound chances converted"
+            ),
+            "DREB_CHANCE_DEFER": MetricMapping(
+                canonical_name="Defensive Rebound Chance Deferrals",
+                api_source="leaguedashptstats",
+                api_column="DREB_CHANCE_DEFER",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Defensive rebound chances deferred to teammates"
+            ),
+            "DREB_CHANCE_PCT_ADJ": MetricMapping(
+                canonical_name="Adjusted Defensive Rebound Chance Percentage",
+                api_source="leaguedashptstats",
+                api_column="DREB_CHANCE_PCT_ADJ",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Adjusted defensive rebound conversion rate"
+            ),
+            "AVG_DREB_DIST": MetricMapping(
+                canonical_name="Average Defensive Rebound Distance",
+                api_source="leaguedashptstats",
+                api_column="AVG_DREB_DIST",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Average distance from basket for defensive rebounds"
+            ),
+            "REB_CONTEST": MetricMapping(
+                canonical_name="Total Rebounds Contested",
+                api_source="leaguedashptstats",
+                api_column="REB_CONTEST",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total contested rebounds (offensive + defensive)"
+            ),
+            "REB_UNCONTEST": MetricMapping(
+                canonical_name="Total Rebounds Uncontested",
+                api_source="leaguedashptstats",
+                api_column="REB_UNCONTEST",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total uncontested rebounds (offensive + defensive)"
+            ),
+            "REB_CONTEST_PCT": MetricMapping(
+                canonical_name="Total Rebound Contest Percentage",
+                api_source="leaguedashptstats",
+                api_column="REB_CONTEST_PCT",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Percentage of total rebounds that were contested"
+            ),
+            "REB_CHANCES": MetricMapping(
+                canonical_name="Total Rebound Chances",
+                api_source="leaguedashptstats",
+                api_column="REB_CHANCES",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total rebound opportunities (offensive + defensive)"
+            ),
+            "REB_CHANCE_PCT": MetricMapping(
+                canonical_name="Total Rebound Chance Percentage",
+                api_source="leaguedashptstats",
+                api_column="REB_CHANCE_PCT",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Percentage of total rebound chances converted"
+            ),
+            "REB_CHANCE_DEFER": MetricMapping(
+                canonical_name="Total Rebound Chance Deferrals",
+                api_source="leaguedashptstats",
+                api_column="REB_CHANCE_DEFER",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total rebound chances deferred to teammates"
+            ),
+            "REB_CHANCE_PCT_ADJ": MetricMapping(
+                canonical_name="Adjusted Total Rebound Chance Percentage",
+                api_source="leaguedashptstats",
+                api_column="REB_CHANCE_PCT_ADJ",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Adjusted total rebound conversion rate"
+            ),
+            "AVG_REB_DIST": MetricMapping(
+                canonical_name="Average Total Rebound Distance",
+                api_source="leaguedashptstats",
+                api_column="AVG_REB_DIST",
+                endpoint_params={"PtMeasureType": "Rebounding"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Average distance from basket for all rebounds"
+            ),
+
             # Physical attributes (available ones)
             "HEIGHT": MetricMapping(
                 canonical_name="Player Height",

@@ -49,60 +49,82 @@ This is our "Operating System" for the project. The analysis must adhere to thes
 
 ## 6. The "Method Resilience" Score: A Detailed Framework
 
-Based on our core principles, we will calculate a "Method Resilience Score." This score quantifies a player's offensive adaptability by measuring the diversity and efficiency of their scoring methods. A player reliant on a single, predictable method is considered fragile. A player who can generate efficient offense in multiple ways is resilient.
+This section outlines the experimental, first-principles logic used in the `calculate_resilience_scores.py` script. It serves as a guide for understanding the proof-of-concept model for quantifying an NBA player's playoff resilience.
 
-The score is composed of three distinct pillars. For each pillar, we use the Herfindahl-Hirschman Index (HHI), a measure of concentration, to calculate a diversity score. The final score is `(1 - HHI) * 100`, where a higher value indicates greater diversity.
+### Core Concept: The Diversity Score
 
-### Pillar 1: Spatial Diversity (Where on the floor do they score?)
+To quantify versatility, we use a **Diversity Score** for each pillar of offensive play. This score is derived from the **Herfindahl-Hirschman Index (HHI)**, a standard measure of concentration.
 
-This pillar measures a player's ability to score from all over the court, making them geographically unpredictable.
+1.  **Calculate HHI**: For a set of offensive categories (e.g., different shot zones), we calculate the proportion of a player's total "weighted volume" that comes from each category. The HHI is the sum of the squares of these proportions.
+    - `HHI = sum(proportion_of_category_1² + proportion_of_category_2² + ...)`
+    - A score near 1.0 means high concentration (specialist). A score near 0 means low concentration (diversified).
 
-1.  **Data Source:** `player_shot_locations` table.
-2.  **Define Court Zones:** We will segment the court into at least six functionally distinct zones:
-    *   Restricted Area (at the rim)
-    *   In The Paint (Non-RA) (floaters, runners)
-    *   Mid-Range
-    *   Left Corner 3
-    *   Right Corner 3
-    *   Above the Break 3
-3.  **Calculate Distribution:** For each player, we will calculate the percentage of their total shots that come from each of these six zones.
-4.  **Efficiency Weighting (Critical Step):** We don't want to reward a player for simply taking bad shots from all over. Therefore, each zone's percentage will be weighted by the player's efficiency from that zone, measured by their `eFG%` on those shots compared to the league average `eFG%` for that *same zone*. This rewards players who are both versatile and effective.
-5.  **Calculate Score:** Using these efficiency-weighted proportions, we will calculate an HHI score to produce the final `Spatial Diversity Score`.
+2.  **Convert to Diversity Score**: To make the metric intuitive, we invert the HHI.
+    - `Diversity Score = (1 - HHI) * 100`
+    - This results in a score from 0 to 100, where **100 is perfect diversity** and 0 is complete specialization.
 
-### Pillar 2: Play-Type Diversity (How are their scoring chances created?)
+### The Three Pillars of Resilience
 
-This pillar measures a player's versatility within an offensive system. Can they score as the ball-handler, off a screen, in isolation, etc.?
+We break down "offensive versatility" into three distinct, measurable pillars. A critical component for each pillar is **efficiency weighting**: we don't just reward volume; we reward *effective* volume by comparing a player's efficiency in an action to the league average for that same action.
 
-1.  **Data Source:** `player_playtype_stats`.
-2.  **Select Play-Type Categories:** We'll use the core offensive play types tracked by Synergy:
-    *   Isolation
-    *   P&R Ball Handler
-    *   Spot-Up
-    *   Post-Up
-    *   Transition
-    *   Off-Screen
-3.  **Calculate Distribution:** We determine the percentage of a player's total offensive possessions that fall into each of these categories.
-4.  **Efficiency Weighting:** As with the spatial score, we weight each play-type's percentage by the player's efficiency, measured by `Points Per Possession` (PPP) in that play type relative to the league average PPP for that same play type.
-5.  **Calculate Score:** We compute the HHI from these weighted proportions to get the `Play-Type Diversity Score`.
+#### Pillar 1: Spatial Diversity (Where they score)
 
-### Pillar 3: Creation Diversity (How do they generate their own shot?)
+This measures a player's ability to score effectively from all over the court.
 
-This pillar measures a player's individual shot-creation skill. Are they reliant on teammates setting them up, or can they create for themselves in different ways?
+1.  **Data Source**: `player_shot_locations` table.
+2.  **Categorization**: Every shot is categorized into one of six zones based on its `loc_x` and `loc_y` coordinates:
+    - `Restricted Area`
+    - `In The Paint (Non-RA)`
+    - `Mid-Range`
+    - `Left Corner 3`
+    - `Right Corner 3`
+    - `Above the Break 3`
+3.  **Efficiency Weighting**:
+    - For each zone, the player's Effective Field Goal Percentage (eFG%) is calculated.
+    - This is compared to the pre-calculated league-average eFG% for that *exact same zone*.
+    - `Efficiency Weight = Player's Zone eFG% / League-Average Zone eFG%`
+4.  **Weighted Volume**: For each zone, we calculate:
+    - `Weighted Volume = Total Shots Attempted in Zone * Efficiency Weight`
+5.  **Final Score**: The set of `Weighted Volume` values is used to compute the final **Spatial Diversity Score**.
 
-1.  **Data Source:** `player_tracking_stats`.
-2.  **Select Creation Categories:** We use three fundamental creation types:
-    *   **Catch & Shoot:** Purely off-ball, reliant on a pass.
-    *   **Pull-Up:** Off-the-dribble jumpers.
-    *   **Drives:** Attacking the basket.
-3.  **Calculate Distribution:** We determine the percentage of a player's shots that come from each of these three creation types.
-4.  **Efficiency Weighting:** We weight each category's percentage by the player's `eFG%` on that specific action, relative to the league average.
-5.  **Calculate Score:** We compute the HHI from these weighted proportions to get the `Creation Diversity Score`.
+#### Pillar 2: Play-Type Diversity (How they are used in the offense)
 
-### Final Calculation: The Delta
+This measures a player's effectiveness across different offensive sets.
 
-The final **Method Resilience Score** for a player is a weighted average of these three pillar scores (e.g., 40% Spatial, 40% Play-Type, 20% Creation).
+1.  **Data Source**: `player_playtype_stats` (and its playoff equivalent).
+2.  **Categorization**: Data is already categorized by `play_type` (e.g., 'Isolation', 'P&R Ball Handler', 'Transition').
+3.  **Efficiency Weighting**:
+    - The player's Points Per Possession (PPP) for each play type is used.
+    - This is compared to the pre-calculated league-average PPP for that *same play type*.
+    - `Efficiency Weight = Player's PPP / League-Average PPP`
+4.  **Weighted Volume**: For each play type, we calculate:
+    - `Weighted Volume = Total Possessions of Play Type * Efficiency Weight`
+5.  **Final Score**: The set of `Weighted Volume` values is used to compute the final **Play-Type Diversity Score**.
 
-Most importantly, we perform this entire calculation for both the player's regular-season baseline and their playoff performance. The final, critical metric is the **delta**: the change in their Method Resilience Score from the regular season to the playoffs. A player whose score remains high or even increases demonstrates true resilience; their multi-faceted offensive game was resistant to defensive scheming.
+#### Pillar 3: Creation Diversity (How they create their shot)
+
+This measures a player's ability to score through different individual creation methods.
+
+1.  **Data Source**: `player_tracking_stats` (and its playoff equivalent).
+2.  **Categorization**: We analyze three fundamental creation types:
+    - **Catch & Shoot**: Volume = `catch_shoot_field_goals_attempted`, Efficiency = `catch_shoot_effective_field_goal_percentage`.
+    - **Pull-Up**: Volume = `pull_up_field_goals_attempted`, Efficiency = `pull_up_effective_field_goal_percentage`.
+    - **Drives**: Volume = `drives`, Efficiency = `drive_points / drives`.
+3.  **Efficiency Weighting**:
+    - The player's efficiency for each creation type is compared to the pre-calculated league average for that *same type*.
+    - `Efficiency Weight = Player's Efficiency / League-Average Efficiency`
+4.  **Weighted Volume**: For each creation type, we calculate:
+    - `Weighted Volume = Volume * Efficiency Weight`
+5.  **Final Score**: The three `Weighted Volume` values are used to compute the final **Creation Diversity Score**.
+
+### Final Calculation: The Overall Score and Delta
+
+1.  **Overall Score**: The three pillar scores are combined into a single weighted average to produce the final Method Resilience Score. This is done for both the regular season and the playoffs.
+    - `Overall Score = (Spatial * 0.4) + (Play-Type * 0.4) + (Creation * 0.2)`
+
+2.  **Resilience Delta**: The definitive metric is the change in the score from the regular season to the playoffs.
+    - `Delta = Overall Playoff Score - Overall Regular Season Score`
+    - A positive delta indicates a player whose offensive versatility increased under pressure. A negative delta indicates a contraction in their offensive game. A near-zero delta indicates a stable, resilient performer.
 
 ## 7. Current Data Pipeline Status
 

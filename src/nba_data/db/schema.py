@@ -48,6 +48,7 @@ class NBADatabaseSchema:
             self._create_possession_events_table(conn)
             self._create_possession_matchups_table(conn)
             self._create_player_shot_locations_table(conn)
+            self._create_league_averages_table(conn)
 
             print("✅ All database tables created successfully")
 
@@ -335,6 +336,52 @@ class NBADatabaseSchema:
                 efficiency_elbow_touch_field_goal_percentage REAL,
                 efficiency_effective_field_goal_percentage REAL,
 
+                -- Speed and Distance metrics
+                dist_feet REAL,
+                dist_miles REAL,
+                dist_miles_off REAL,
+                dist_miles_def REAL,
+                avg_speed REAL,
+                avg_speed_off REAL,
+                avg_speed_def REAL,
+
+                -- Passing metrics
+                passes_made REAL,
+                passes_received REAL,
+                ft_ast REAL,
+                secondary_ast REAL,
+                potential_ast REAL,
+                ast_points_created REAL,
+                ast_adj REAL,
+                ast_to_pass_pct REAL,
+                ast_to_pass_pct_adj REAL,
+
+                -- Rebounding metrics
+                oreb_contest REAL,
+                oreb_uncontest REAL,
+                oreb_contest_pct REAL,
+                oreb_chances REAL,
+                oreb_chance_pct REAL,
+                oreb_chance_defer REAL,
+                oreb_chance_pct_adj REAL,
+                avg_oreb_dist REAL,
+                dreb_contest REAL,
+                dreb_uncontest REAL,
+                dreb_contest_pct REAL,
+                dreb_chances REAL,
+                dreb_chance_pct REAL,
+                dreb_chance_defer REAL,
+                dreb_chance_pct_adj REAL,
+                avg_dreb_dist REAL,
+                reb_contest REAL,
+                reb_uncontest REAL,
+                reb_contest_pct REAL,
+                reb_chances REAL,
+                reb_chance_pct REAL,
+                reb_chance_defer REAL,
+                reb_chance_pct_adj REAL,
+                avg_reb_dist REAL,
+
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (player_id, season, team_id),
@@ -546,6 +593,52 @@ class NBADatabaseSchema:
                 efficiency_elbow_touch_points REAL,
                 efficiency_elbow_touch_field_goal_percentage REAL,
                 efficiency_effective_field_goal_percentage REAL,
+
+                -- Speed and Distance metrics
+                dist_feet REAL,
+                dist_miles REAL,
+                dist_miles_off REAL,
+                dist_miles_def REAL,
+                avg_speed REAL,
+                avg_speed_off REAL,
+                avg_speed_def REAL,
+
+                -- Passing metrics
+                passes_made REAL,
+                passes_received REAL,
+                ft_ast REAL,
+                secondary_ast REAL,
+                potential_ast REAL,
+                ast_points_created REAL,
+                ast_adj REAL,
+                ast_to_pass_pct REAL,
+                ast_to_pass_pct_adj REAL,
+
+                -- Rebounding metrics
+                oreb_contest REAL,
+                oreb_uncontest REAL,
+                oreb_contest_pct REAL,
+                oreb_chances REAL,
+                oreb_chance_pct REAL,
+                oreb_chance_defer REAL,
+                oreb_chance_pct_adj REAL,
+                avg_oreb_dist REAL,
+                dreb_contest REAL,
+                dreb_uncontest REAL,
+                dreb_contest_pct REAL,
+                dreb_chances REAL,
+                dreb_chance_pct REAL,
+                dreb_chance_defer REAL,
+                dreb_chance_pct_adj REAL,
+                avg_dreb_dist REAL,
+                reb_contest REAL,
+                reb_uncontest REAL,
+                reb_contest_pct REAL,
+                reb_chances REAL,
+                reb_chance_pct REAL,
+                reb_chance_defer REAL,
+                reb_chance_pct_adj REAL,
+                avg_reb_dist REAL,
 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -905,6 +998,23 @@ class NBADatabaseSchema:
         conn.commit()
         print("✓ player_shot_locations table created")
 
+    def _create_league_averages_table(self, conn: sqlite3.Connection) -> None:
+        """Create the league_averages table to store benchmark statistics."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS league_averages (
+                season TEXT NOT NULL,
+                season_type TEXT NOT NULL,
+                metric_type TEXT NOT NULL, -- 'spatial', 'play_type', 'creation'
+                metric_name TEXT NOT NULL, -- e.g., 'Restricted Area', 'Isolation', 'Catch & Shoot'
+                value REAL NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (season, season_type, metric_type, metric_name)
+            )
+        """)
+        conn.commit()
+        print("✓ league_averages table created")
+
     def verify_schema(self) -> bool:
         """Verify that all required tables exist."""
         required_tables = [
@@ -913,7 +1023,7 @@ class NBADatabaseSchema:
             'player_playoff_stats', 'player_playoff_advanced_stats', 'player_playoff_tracking_stats',
             'player_playtype_stats', 'player_playoff_playtype_stats',
             'possessions', 'possession_lineups', 'possession_events', 'possession_matchups',
-            'player_shot_locations'
+            'player_shot_locations', 'league_averages'
         ]
 
         with sqlite3.connect(self.db_path) as conn:
