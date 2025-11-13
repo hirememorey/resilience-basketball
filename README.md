@@ -55,7 +55,7 @@ NBA Stats API → Data Fetcher → SQLite Database → Analysis Models
 - **Validation Layer**: Comprehensive data quality checks and statistical validation
 - **Analytics Ready**: Structured data for machine learning and statistical analysis
 
-### Database Schema (14 Tables)
+### Database Schema (16 Tables)
 - `teams`: Team information and metadata
 - `games`: Game records with scores and seasons
 - `players`: Player profiles and physical attributes
@@ -63,10 +63,12 @@ NBA Stats API → Data Fetcher → SQLite Database → Analysis Models
   - `player_season_stats`: Traditional box score statistics + resilience metrics (PTS, REB, AST, diversification scores, etc.)
   - `player_advanced_stats`: Advanced metrics (TS%, USG%, ORTG/DRTG, etc.)
   - `player_tracking_stats`: Play-type and tracking data (drives, touches, etc.)
+  - `player_playtype_stats`: **NEW** Synergy play type statistics (Isolation, Pick & Roll, Transition, etc.)
 - **Playoff Data:**
   - `player_playoff_stats`: Complete playoff box score statistics
   - `player_playoff_advanced_stats`: Advanced playoff metrics and analytics
   - `player_playoff_tracking_stats`: Playoff play-type and tracking data
+  - `player_playoff_playtype_stats`: **NEW** Playoff synergy play type statistics
 - **Possession-Level Data:**
   - `possessions`: Possession metadata (duration, teams, points scored, game context)
   - `possession_events`: Individual player actions within possessions (shots, passes, rebounds, etc.)
@@ -87,6 +89,7 @@ NBA Stats API → Data Fetcher → SQLite Database → Analysis Models
   - Advanced: True Shooting %, Usage %, Offensive/Defensive Rating
   - **Comprehensive Individual Tracking**: 17 drive metrics, 8 catch-and-shoot metrics, 8 pull-up metrics, 18 paint touch metrics, 18 post touch metrics, 18 elbow touch metrics
   - **Efficiency Metrics**: 14 efficiency-based metrics per play type (drives, catch-shoot, pull-up, paint touch, post touch, elbow touch)
+  - **NEW: Synergy Play Type Stats**: 11 play types (Isolation, Transition, Pick & Roll, etc.) with percentiles, PPP, FG%, and possession data
   - **Resilience Ready**: Complete diversification and adaptability metrics available
 
 ### Sample Statistics
@@ -128,6 +131,12 @@ python src/nba_data/scripts/populate_games_data.py
 # Playoff player data
 python src/nba_data/scripts/populate_playoff_data.py
 
+# **NEW: Synergy playtype data** (Isolation, Pick & Roll, Transition, etc.)
+python src/nba_data/scripts/populate_playtype_data.py
+
+# **NEW: Playoff synergy playtype data**
+python src/nba_data/scripts/populate_playoff_playtype_data.py
+
 # Massive possession-level data (complete season coverage)
 python src/nba_data/scripts/populate_playbyplay_massive.py --season 2023-24 --season-type regular --max-games 100
 ```
@@ -153,16 +162,19 @@ resilience-basketball/
 │       ├── api/              # NBA Stats API clients
 │       │   ├── nba_stats_client.py        # NBA Stats API client with playoff support
 │       │   ├── data_fetcher.py           # Data fetching with playoff metrics
+│       │   ├── synergy_playtypes_client.py  # **NEW** Synergy play type statistics client
 │       │   ├── possession_fetcher.py     # Play-by-play possession parsing
 │       │   ├── game_discovery.py         # Automated game discovery system
 │       │   └── __init__.py
 │       ├── db/               # Database schema and models
-│       │   └── schema.py     # ENHANCED: 14 tables (regular + playoff data)
+│       │   └── schema.py     # ENHANCED: 16 tables (regular + playoff + playtype data)
 │       └── scripts/          # Data population scripts
 │           ├── populate_teams_data.py           # NBA teams static data
 │           ├── populate_player_data.py          # Regular season player data
 │           ├── populate_games_data.py           # Games metadata from possessions
 │           ├── populate_playoff_data.py         # Playoff player data
+│           ├── populate_playtype_data.py       # **NEW** Synergy play type data (regular season)
+│           ├── populate_playoff_playtype_data.py # **NEW** Synergy play type data (playoffs)
 │           ├── populate_playbyplay_massive.py   # MASSIVE possession data collection
 │           ├── populate_possession_data.py      # Legacy single-game possession
 │           └── calculate_resilience_scores.py   # Resilience metrics calculation

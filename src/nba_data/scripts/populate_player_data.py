@@ -87,6 +87,10 @@ class PlayerDataPopulator:
                 "ELBOW_TOUCH_PTS", "ELBOW_TOUCH_PASSES", "ELBOW_TOUCH_AST", "ELBOW_TOUCH_AST_PCT", "ELBOW_TOUCH_TOV", "ELBOW_TOUCH_TOV_PCT",
                 "ELBOW_TOUCH_FOULS", "ELBOW_TOUCH_PASSES_PCT", "ELBOW_TOUCH_FOULS_PCT", "ELBOW_TOUCH_PTS_PCT",
                 # Efficiency metrics
+                "EFF_PTS", "EFF_DRIVE_PTS", "EFF_DRIVE_FG_PCT", "EFF_CATCH_SHOOT_PTS",
+                "EFF_CATCH_SHOOT_FG_PCT", "EFF_PULL_UP_PTS", "EFF_PULL_UP_FG_PCT",
+                "EFF_PAINT_TOUCH_PTS", "EFF_PAINT_TOUCH_FG_PCT", "EFF_POST_TOUCH_PTS",
+                "EFF_POST_TOUCH_FG_PCT", "EFF_ELBOW_TOUCH_PTS", "EFF_ELBOW_TOUCH_FG_PCT",
                 "EFF_FG_PCT"
             ]
         }
@@ -339,6 +343,19 @@ class PlayerDataPopulator:
                 "ELBOW_TOUCH_PTS_PCT": "elbow_touch_points_percentage",
 
                 # Efficiency metrics
+                "EFF_PTS": "efficiency_points",
+                "EFF_DRIVE_PTS": "efficiency_drive_points",
+                "EFF_DRIVE_FG_PCT": "efficiency_drive_field_goal_percentage",
+                "EFF_CATCH_SHOOT_PTS": "efficiency_catch_shoot_points",
+                "EFF_CATCH_SHOOT_FG_PCT": "efficiency_catch_shoot_field_goal_percentage",
+                "EFF_PULL_UP_PTS": "efficiency_pull_up_points",
+                "EFF_PULL_UP_FG_PCT": "efficiency_pull_up_field_goal_percentage",
+                "EFF_PAINT_TOUCH_PTS": "efficiency_paint_touch_points",
+                "EFF_PAINT_TOUCH_FG_PCT": "efficiency_paint_touch_field_goal_percentage",
+                "EFF_POST_TOUCH_PTS": "efficiency_post_touch_points",
+                "EFF_POST_TOUCH_FG_PCT": "efficiency_post_touch_field_goal_percentage",
+                "EFF_ELBOW_TOUCH_PTS": "efficiency_elbow_touch_points",
+                "EFF_ELBOW_TOUCH_FG_PCT": "efficiency_elbow_touch_field_goal_percentage",
                 "EFF_FG_PCT": "efficiency_effective_field_goal_percentage"
             }
         }

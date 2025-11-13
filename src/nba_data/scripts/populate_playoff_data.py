@@ -65,7 +65,46 @@ class PlayoffDataPopulator:
                 "REB_PCT", "AST_PCT", "AST_TO", "AST_RATIO", "OREB_PCT", "DREB_PCT", "TM_TOV_PCT", "EFG_PCT", "PACE", "PIE"
             ],
             "player_playoff_tracking_stats": [
-                "DRIVES", "DRIVE_FGM"  # Tracking metrics (will expand as needed)
+                # Drive metrics
+                "DRIVES", "DRIVE_FGM", "DRIVE_FGA", "DRIVE_FG_PCT", "DRIVE_FTM", "DRIVE_FTA",
+                "DRIVE_FT_PCT", "DRIVE_PTS", "DRIVE_PTS_PCT", "DRIVE_PASSES", "DRIVE_PASSES_PCT",
+                "DRIVE_AST", "DRIVE_AST_PCT", "DRIVE_TOV", "DRIVE_TOV_PCT", "DRIVE_PF", "DRIVE_PF_PCT",
+
+                # Catch and shoot metrics
+                "CATCH_SHOOT_FGM", "CATCH_SHOOT_FGA", "CATCH_SHOOT_FG_PCT", "CATCH_SHOOT_PTS",
+                "CATCH_SHOOT_FG3M", "CATCH_SHOOT_FG3A", "CATCH_SHOOT_FG3_PCT", "CATCH_SHOOT_EFG_PCT",
+
+                # Pull up shot metrics
+                "PULL_UP_FGM", "PULL_UP_FGA", "PULL_UP_FG_PCT", "PULL_UP_PTS",
+                "PULL_UP_FG3M", "PULL_UP_FG3A", "PULL_UP_FG3_PCT", "PULL_UP_EFG_PCT",
+
+                # Paint touch metrics
+                "PAINT_TOUCHES", "PAINT_TOUCH_FGM", "PAINT_TOUCH_FGA", "PAINT_TOUCH_FG_PCT",
+                "PAINT_TOUCH_FTM", "PAINT_TOUCH_FTA", "PAINT_TOUCH_FT_PCT", "PAINT_TOUCH_PTS",
+                "PAINT_TOUCH_PTS_PCT", "PAINT_TOUCH_PASSES", "PAINT_TOUCH_PASSES_PCT",
+                "PAINT_TOUCH_AST", "PAINT_TOUCH_AST_PCT", "PAINT_TOUCH_TOV", "PAINT_TOUCH_TOV_PCT",
+                "PAINT_TOUCH_FOULS", "PAINT_TOUCH_FOULS_PCT",
+
+                # Post touch metrics
+                "POST_TOUCHES", "POST_TOUCH_FGM", "POST_TOUCH_FGA", "POST_TOUCH_FG_PCT",
+                "POST_TOUCH_FTM", "POST_TOUCH_FTA", "POST_TOUCH_FT_PCT", "POST_TOUCH_PTS",
+                "POST_TOUCH_PTS_PCT", "POST_TOUCH_PASSES", "POST_TOUCH_PASSES_PCT",
+                "POST_TOUCH_AST", "POST_TOUCH_AST_PCT", "POST_TOUCH_TOV", "POST_TOUCH_TOV_PCT",
+                "POST_TOUCH_FOULS", "POST_TOUCH_FOULS_PCT",
+
+                # Elbow touch metrics
+                "ELBOW_TOUCHES", "ELBOW_TOUCH_FGM", "ELBOW_TOUCH_FGA", "ELBOW_TOUCH_FG_PCT",
+                "ELBOW_TOUCH_FTM", "ELBOW_TOUCH_FTA", "ELBOW_TOUCH_FT_PCT", "ELBOW_TOUCH_PTS",
+                "ELBOW_TOUCH_PASSES", "ELBOW_TOUCH_AST", "ELBOW_TOUCH_AST_PCT",
+                "ELBOW_TOUCH_TOV", "ELBOW_TOUCH_TOV_PCT", "ELBOW_TOUCH_FOULS",
+                "ELBOW_TOUCH_PASSES_PCT", "ELBOW_TOUCH_FOULS_PCT", "ELBOW_TOUCH_PTS_PCT",
+
+                # Efficiency metrics
+                "EFF_PTS", "EFF_DRIVE_PTS", "EFF_DRIVE_FG_PCT", "EFF_CATCH_SHOOT_PTS",
+                "EFF_CATCH_SHOOT_FG_PCT", "EFF_PULL_UP_PTS", "EFF_PULL_UP_FG_PCT",
+                "EFF_PAINT_TOUCH_PTS", "EFF_PAINT_TOUCH_FG_PCT", "EFF_POST_TOUCH_PTS",
+                "EFF_POST_TOUCH_FG_PCT", "EFF_ELBOW_TOUCH_PTS", "EFF_ELBOW_TOUCH_FG_PCT",
+                "EFF_EFG_PCT"
             ]
         }
 
@@ -247,9 +286,118 @@ class PlayoffDataPopulator:
             "PACE": "PACE",
             "PIE": "PIE",
 
-            # Tracking stats mappings
+            # Tracking stats mappings - comprehensive coverage to match API
+            # Drive metrics
             "DRIVES": "DRIVES",
-            "DRIVE_FGM": "DRIVE_FGM"
+            "DRIVE_FGM": "DRIVE_FGM",
+            "DRIVE_FGA": "DRIVE_FGA",
+            "DRIVE_FG_PCT": "DRIVE_FG_PCT",
+            "DRIVE_FTM": "DRIVE_FTM",
+            "DRIVE_FTA": "DRIVE_FTA",
+            "DRIVE_FT_PCT": "DRIVE_FT_PCT",
+            "DRIVE_PTS": "DRIVE_PTS",
+            "DRIVE_PTS_PCT": "DRIVE_PTS_PCT",
+            "DRIVE_PASSES": "DRIVE_PASSES",
+            "DRIVE_PASSES_PCT": "DRIVE_PASSES_PCT",
+            "DRIVE_AST": "DRIVE_AST",
+            "DRIVE_AST_PCT": "DRIVE_AST_PCT",
+            "DRIVE_TOV": "DRIVE_TOV",
+            "DRIVE_TOV_PCT": "DRIVE_TOV_PCT",
+            "DRIVE_PF": "DRIVE_PF",
+            "DRIVE_PF_PCT": "DRIVE_PF_PCT",
+
+            # Catch and shoot metrics
+            "CATCH_SHOOT_FGM": "CATCH_SHOOT_FGM",
+            "CATCH_SHOOT_FGA": "CATCH_SHOOT_FGA",
+            "CATCH_SHOOT_FG_PCT": "CATCH_SHOOT_FG_PCT",
+            "CATCH_SHOOT_PTS": "CATCH_SHOOT_PTS",
+            "CATCH_SHOOT_FG3M": "CATCH_SHOOT_FG3M",
+            "CATCH_SHOOT_FG3A": "CATCH_SHOOT_FG3A",
+            "CATCH_SHOOT_FG3_PCT": "CATCH_SHOOT_FG3_PCT",
+            "CATCH_SHOOT_EFG_PCT": "CATCH_SHOOT_EFG_PCT",
+
+            # Pull up shot metrics
+            "PULL_UP_FGM": "PULL_UP_FGM",
+            "PULL_UP_FGA": "PULL_UP_FGA",
+            "PULL_UP_FG_PCT": "PULL_UP_FG_PCT",
+            "PULL_UP_PTS": "PULL_UP_PTS",
+            "PULL_UP_FG3M": "PULL_UP_FG3M",
+            "PULL_UP_FG3A": "PULL_UP_FG3A",
+            "PULL_UP_FG3_PCT": "PULL_UP_FG3_PCT",
+            "PULL_UP_EFG_PCT": "PULL_UP_EFG_PCT",
+
+            # Paint touch metrics
+            "PAINT_TOUCHES": "PAINT_TOUCHES",
+            "PAINT_TOUCH_FGM": "PAINT_TOUCH_FGM",
+            "PAINT_TOUCH_FGA": "PAINT_TOUCH_FGA",
+            "PAINT_TOUCH_FG_PCT": "PAINT_TOUCH_FG_PCT",
+            "PAINT_TOUCH_FTM": "PAINT_TOUCH_FTM",
+            "PAINT_TOUCH_FTA": "PAINT_TOUCH_FTA",
+            "PAINT_TOUCH_FT_PCT": "PAINT_TOUCH_FT_PCT",
+            "PAINT_TOUCH_PTS": "PAINT_TOUCH_PTS",
+            "PAINT_TOUCH_PTS_PCT": "PAINT_TOUCH_PTS_PCT",
+            "PAINT_TOUCH_PASSES": "PAINT_TOUCH_PASSES",
+            "PAINT_TOUCH_PASSES_PCT": "PAINT_TOUCH_PASSES_PCT",
+            "PAINT_TOUCH_AST": "PAINT_TOUCH_AST",
+            "PAINT_TOUCH_AST_PCT": "PAINT_TOUCH_AST_PCT",
+            "PAINT_TOUCH_TOV": "PAINT_TOUCH_TOV",
+            "PAINT_TOUCH_TOV_PCT": "PAINT_TOUCH_TOV_PCT",
+            "PAINT_TOUCH_FOULS": "PAINT_TOUCH_FOULS",
+            "PAINT_TOUCH_FOULS_PCT": "PAINT_TOUCH_FOULS_PCT",
+
+            # Post touch metrics
+            "POST_TOUCHES": "POST_TOUCHES",
+            "POST_TOUCH_FGM": "POST_TOUCH_FGM",
+            "POST_TOUCH_FGA": "POST_TOUCH_FGA",
+            "POST_TOUCH_FG_PCT": "POST_TOUCH_FG_PCT",
+            "POST_TOUCH_FTM": "POST_TOUCH_FTM",
+            "POST_TOUCH_FTA": "POST_TOUCH_FTA",
+            "POST_TOUCH_FT_PCT": "POST_TOUCH_FT_PCT",
+            "POST_TOUCH_PTS": "POST_TOUCH_PTS",
+            "POST_TOUCH_PTS_PCT": "POST_TOUCH_PTS_PCT",
+            "POST_TOUCH_PASSES": "POST_TOUCH_PASSES",
+            "POST_TOUCH_PASSES_PCT": "POST_TOUCH_PASSES_PCT",
+            "POST_TOUCH_AST": "POST_TOUCH_AST",
+            "POST_TOUCH_AST_PCT": "POST_TOUCH_AST_PCT",
+            "POST_TOUCH_TOV": "POST_TOUCH_TOV",
+            "POST_TOUCH_TOV_PCT": "POST_TOUCH_TOV_PCT",
+            "POST_TOUCH_FOULS": "POST_TOUCH_FOULS",
+            "POST_TOUCH_FOULS_PCT": "POST_TOUCH_FOULS_PCT",
+
+            # Elbow touch metrics
+            "ELBOW_TOUCHES": "ELBOW_TOUCHES",
+            "ELBOW_TOUCH_FGM": "ELBOW_TOUCH_FGM",
+            "ELBOW_TOUCH_FGA": "ELBOW_TOUCH_FGA",
+            "ELBOW_TOUCH_FG_PCT": "ELBOW_TOUCH_FG_PCT",
+            "ELBOW_TOUCH_FTM": "ELBOW_TOUCH_FTM",
+            "ELBOW_TOUCH_FTA": "ELBOW_TOUCH_FTA",
+            "ELBOW_TOUCH_FT_PCT": "ELBOW_TOUCH_FT_PCT",
+            "ELBOW_TOUCH_PTS": "ELBOW_TOUCH_PTS",
+            "ELBOW_TOUCH_PASSES": "ELBOW_TOUCH_PASSES",
+            "ELBOW_TOUCH_AST": "ELBOW_TOUCH_AST",
+            "ELBOW_TOUCH_AST_PCT": "ELBOW_TOUCH_AST_PCT",
+            "ELBOW_TOUCH_TOV": "ELBOW_TOUCH_TOV",
+            "ELBOW_TOUCH_TOV_PCT": "ELBOW_TOUCH_TOV_PCT",
+            "ELBOW_TOUCH_FOULS": "ELBOW_TOUCH_FOULS",
+            "ELBOW_TOUCH_PASSES_PCT": "ELBOW_TOUCH_PASSES_PCT",
+            "ELBOW_TOUCH_FOULS_PCT": "ELBOW_TOUCH_FOULS_PCT",
+            "ELBOW_TOUCH_PTS_PCT": "ELBOW_TOUCH_PTS_PCT",
+
+            # Efficiency metrics
+            "EFF_PTS": "POINTS",
+            "EFF_DRIVE_PTS": "DRIVE_PTS",
+            "EFF_DRIVE_FG_PCT": "DRIVE_FG_PCT",
+            "EFF_CATCH_SHOOT_PTS": "CATCH_SHOOT_PTS",
+            "EFF_CATCH_SHOOT_FG_PCT": "CATCH_SHOOT_FG_PCT",
+            "EFF_PULL_UP_PTS": "PULL_UP_PTS",
+            "EFF_PULL_UP_FG_PCT": "PULL_UP_FG_PCT",
+            "EFF_PAINT_TOUCH_PTS": "PAINT_TOUCH_PTS",
+            "EFF_PAINT_TOUCH_FG_PCT": "PAINT_TOUCH_FG_PCT",
+            "EFF_POST_TOUCH_PTS": "POST_TOUCH_PTS",
+            "EFF_POST_TOUCH_FG_PCT": "POST_TOUCH_FG_PCT",
+            "EFF_ELBOW_TOUCH_PTS": "ELBOW_TOUCH_PTS",
+            "EFF_ELBOW_TOUCH_FG_PCT": "ELBOW_TOUCH_FG_PCT",
+            "EFF_EFG_PCT": "EFF_FG_PCT"
         }
 
         return api_mappings.get(metric_name, metric_name)
@@ -314,9 +462,118 @@ class PlayoffDataPopulator:
             "PACE": "pace",
             "PIE": "pie",
 
-            # Tracking stats mappings
+            # Tracking stats mappings - comprehensive coverage to match regular season
+            # Drive metrics
             "DRIVES": "drives",
-            "DRIVE_FGM": "drive_field_goals_made"
+            "DRIVE_FGM": "drive_field_goals_made",
+            "DRIVE_FGA": "drive_field_goals_attempted",
+            "DRIVE_FG_PCT": "drive_field_goal_percentage",
+            "DRIVE_FTM": "drive_free_throws_made",
+            "DRIVE_FTA": "drive_free_throws_attempted",
+            "DRIVE_FT_PCT": "drive_free_throw_percentage",
+            "DRIVE_PTS": "drive_points",
+            "DRIVE_PTS_PCT": "drive_points_percentage",
+            "DRIVE_PASSES": "drive_passes",
+            "DRIVE_PASSES_PCT": "drive_passes_percentage",
+            "DRIVE_AST": "drive_assists",
+            "DRIVE_AST_PCT": "drive_assists_percentage",
+            "DRIVE_TOV": "drive_turnovers",
+            "DRIVE_TOV_PCT": "drive_turnovers_percentage",
+            "DRIVE_PF": "drive_personal_fouls",
+            "DRIVE_PF_PCT": "drive_personal_fouls_percentage",
+
+            # Catch and shoot metrics
+            "CATCH_SHOOT_FGM": "catch_shoot_field_goals_made",
+            "CATCH_SHOOT_FGA": "catch_shoot_field_goals_attempted",
+            "CATCH_SHOOT_FG_PCT": "catch_shoot_field_goal_percentage",
+            "CATCH_SHOOT_PTS": "catch_shoot_points",
+            "CATCH_SHOOT_FG3M": "catch_shoot_three_pointers_made",
+            "CATCH_SHOOT_FG3A": "catch_shoot_three_pointers_attempted",
+            "CATCH_SHOOT_FG3_PCT": "catch_shoot_three_point_percentage",
+            "CATCH_SHOOT_EFG_PCT": "catch_shoot_effective_field_goal_percentage",
+
+            # Pull up shot metrics
+            "PULL_UP_FGM": "pull_up_field_goals_made",
+            "PULL_UP_FGA": "pull_up_field_goals_attempted",
+            "PULL_UP_FG_PCT": "pull_up_field_goal_percentage",
+            "PULL_UP_PTS": "pull_up_points",
+            "PULL_UP_FG3M": "pull_up_three_pointers_made",
+            "PULL_UP_FG3A": "pull_up_three_pointers_attempted",
+            "PULL_UP_FG3_PCT": "pull_up_three_point_percentage",
+            "PULL_UP_EFG_PCT": "pull_up_effective_field_goal_percentage",
+
+            # Paint touch metrics
+            "PAINT_TOUCHES": "paint_touches",
+            "PAINT_TOUCH_FGM": "paint_touch_field_goals_made",
+            "PAINT_TOUCH_FGA": "paint_touch_field_goals_attempted",
+            "PAINT_TOUCH_FG_PCT": "paint_touch_field_goal_percentage",
+            "PAINT_TOUCH_FTM": "paint_touch_free_throws_made",
+            "PAINT_TOUCH_FTA": "paint_touch_free_throws_attempted",
+            "PAINT_TOUCH_FT_PCT": "paint_touch_free_throw_percentage",
+            "PAINT_TOUCH_PTS": "paint_touch_points",
+            "PAINT_TOUCH_PTS_PCT": "paint_touch_points_percentage",
+            "PAINT_TOUCH_PASSES": "paint_touch_passes",
+            "PAINT_TOUCH_PASSES_PCT": "paint_touch_passes_percentage",
+            "PAINT_TOUCH_AST": "paint_touch_assists",
+            "PAINT_TOUCH_AST_PCT": "paint_touch_assists_percentage",
+            "PAINT_TOUCH_TOV": "paint_touch_turnovers",
+            "PAINT_TOUCH_TOV_PCT": "paint_touch_turnovers_percentage",
+            "PAINT_TOUCH_FOULS": "paint_touch_fouls",
+            "PAINT_TOUCH_FOULS_PCT": "paint_touch_fouls_percentage",
+
+            # Post touch metrics
+            "POST_TOUCHES": "post_touches",
+            "POST_TOUCH_FGM": "post_touch_field_goals_made",
+            "POST_TOUCH_FGA": "post_touch_field_goals_attempted",
+            "POST_TOUCH_FG_PCT": "post_touch_field_goal_percentage",
+            "POST_TOUCH_FTM": "post_touch_free_throws_made",
+            "POST_TOUCH_FTA": "post_touch_free_throws_attempted",
+            "POST_TOUCH_FT_PCT": "post_touch_free_throw_percentage",
+            "POST_TOUCH_PTS": "post_touch_points",
+            "POST_TOUCH_PTS_PCT": "post_touch_points_percentage",
+            "POST_TOUCH_PASSES": "post_touch_passes",
+            "POST_TOUCH_PASSES_PCT": "post_touch_passes_percentage",
+            "POST_TOUCH_AST": "post_touch_assists",
+            "POST_TOUCH_AST_PCT": "post_touch_assists_percentage",
+            "POST_TOUCH_TOV": "post_touch_turnovers",
+            "POST_TOUCH_TOV_PCT": "post_touch_turnovers_percentage",
+            "POST_TOUCH_FOULS": "post_touch_fouls",
+            "POST_TOUCH_FOULS_PCT": "post_touch_fouls_percentage",
+
+            # Elbow touch metrics
+            "ELBOW_TOUCHES": "elbow_touches",
+            "ELBOW_TOUCH_FGM": "elbow_touch_field_goals_made",
+            "ELBOW_TOUCH_FGA": "elbow_touch_field_goals_attempted",
+            "ELBOW_TOUCH_FG_PCT": "elbow_touch_field_goal_percentage",
+            "ELBOW_TOUCH_FTM": "elbow_touch_free_throws_made",
+            "ELBOW_TOUCH_FTA": "elbow_touch_free_throws_attempted",
+            "ELBOW_TOUCH_FT_PCT": "elbow_touch_free_throw_percentage",
+            "ELBOW_TOUCH_PTS": "elbow_touch_points",
+            "ELBOW_TOUCH_PASSES": "elbow_touch_passes",
+            "ELBOW_TOUCH_AST": "elbow_touch_assists",
+            "ELBOW_TOUCH_AST_PCT": "elbow_touch_assists_percentage",
+            "ELBOW_TOUCH_TOV": "elbow_touch_turnovers",
+            "ELBOW_TOUCH_TOV_PCT": "elbow_touch_turnovers_percentage",
+            "ELBOW_TOUCH_FOULS": "elbow_touch_fouls",
+            "ELBOW_TOUCH_PASSES_PCT": "elbow_touch_passes_percentage",
+            "ELBOW_TOUCH_FOULS_PCT": "elbow_touch_fouls_percentage",
+            "ELBOW_TOUCH_PTS_PCT": "elbow_touch_points_percentage",
+
+            # Efficiency metrics
+            "EFF_PTS": "efficiency_points",
+            "EFF_DRIVE_PTS": "efficiency_drive_points",
+            "EFF_DRIVE_FG_PCT": "efficiency_drive_field_goal_percentage",
+            "EFF_CATCH_SHOOT_PTS": "efficiency_catch_shoot_points",
+            "EFF_CATCH_SHOOT_FG_PCT": "efficiency_catch_shoot_field_goal_percentage",
+            "EFF_PULL_UP_PTS": "efficiency_pull_up_points",
+            "EFF_PULL_UP_FG_PCT": "efficiency_pull_up_field_goal_percentage",
+            "EFF_PAINT_TOUCH_PTS": "efficiency_paint_touch_points",
+            "EFF_PAINT_TOUCH_FG_PCT": "efficiency_paint_touch_field_goal_percentage",
+            "EFF_POST_TOUCH_PTS": "efficiency_post_touch_points",
+            "EFF_POST_TOUCH_FG_PCT": "efficiency_post_touch_field_goal_percentage",
+            "EFF_ELBOW_TOUCH_PTS": "efficiency_elbow_touch_points",
+            "EFF_ELBOW_TOUCH_FG_PCT": "efficiency_elbow_touch_field_goal_percentage",
+            "EFF_EFG_PCT": "efficiency_effective_field_goal_percentage"
         }
 
         return column_mappings.get(metric_name, metric_name.lower())

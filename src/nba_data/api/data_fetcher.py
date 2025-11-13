@@ -1243,6 +1243,123 @@ class DataFetcher:
             ),
 
             # Tracking metrics - Efficiency (contains points by play type)
+            "EFF_PTS": MetricMapping(
+                canonical_name="Efficiency Points",
+                api_source="leaguedashptstats",
+                api_column="POINTS",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Total efficiency points from tracking stats"
+            ),
+            "EFF_DRIVE_PTS": MetricMapping(
+                canonical_name="Efficiency Drive Points",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_PTS",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Drive efficiency points from tracking stats"
+            ),
+            "EFF_DRIVE_FG_PCT": MetricMapping(
+                canonical_name="Efficiency Drive Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="DRIVE_FG_PCT",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Drive efficiency FG% from tracking stats"
+            ),
+            "EFF_CATCH_SHOOT_PTS": MetricMapping(
+                canonical_name="Efficiency Catch Shoot Points",
+                api_source="leaguedashptstats",
+                api_column="CATCH_SHOOT_PTS",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Catch shoot efficiency points from tracking stats"
+            ),
+            "EFF_CATCH_SHOOT_FG_PCT": MetricMapping(
+                canonical_name="Efficiency Catch Shoot Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="CATCH_SHOOT_FG_PCT",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Catch shoot efficiency FG% from tracking stats"
+            ),
+            "EFF_PULL_UP_PTS": MetricMapping(
+                canonical_name="Efficiency Pull Up Points",
+                api_source="leaguedashptstats",
+                api_column="PULL_UP_PTS",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Pull up efficiency points from tracking stats"
+            ),
+            "EFF_PULL_UP_FG_PCT": MetricMapping(
+                canonical_name="Efficiency Pull Up Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="PULL_UP_FG_PCT",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Pull up efficiency FG% from tracking stats"
+            ),
+            "EFF_PAINT_TOUCH_PTS": MetricMapping(
+                canonical_name="Efficiency Paint Touch Points",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_PTS",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Paint touch efficiency points from tracking stats"
+            ),
+            "EFF_PAINT_TOUCH_FG_PCT": MetricMapping(
+                canonical_name="Efficiency Paint Touch Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="PAINT_TOUCH_FG_PCT",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Paint touch efficiency FG% from tracking stats"
+            ),
+            "EFF_POST_TOUCH_PTS": MetricMapping(
+                canonical_name="Efficiency Post Touch Points",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_PTS",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Post touch efficiency points from tracking stats"
+            ),
+            "EFF_POST_TOUCH_FG_PCT": MetricMapping(
+                canonical_name="Efficiency Post Touch Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="POST_TOUCH_FG_PCT",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Post touch efficiency FG% from tracking stats"
+            ),
+            "EFF_ELBOW_TOUCH_PTS": MetricMapping(
+                canonical_name="Efficiency Elbow Touch Points",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_PTS",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Elbow touch efficiency points from tracking stats"
+            ),
+            "EFF_ELBOW_TOUCH_FG_PCT": MetricMapping(
+                canonical_name="Efficiency Elbow Touch Field Goal Percentage",
+                api_source="leaguedashptstats",
+                api_column="ELBOW_TOUCH_FG_PCT",
+                endpoint_params={"PtMeasureType": "Efficiency"},
+                data_type=DataType.PERCENTAGE,
+                required=False,
+                notes="Elbow touch efficiency FG% from tracking stats"
+            ),
             "EFF_FG_PCT": MetricMapping(
                 canonical_name="Efficiency Field Goal Percentage",
                 api_source="leaguedashptstats",
@@ -1250,7 +1367,7 @@ class DataFetcher:
                 endpoint_params={"PtMeasureType": "Efficiency"},
                 data_type=DataType.PERCENTAGE,
                 required=False,
-                notes="Direct mapping from tracking stats"
+                notes="Overall efficiency FG% from tracking stats"
             ),
 
             # Physical attributes (available ones)

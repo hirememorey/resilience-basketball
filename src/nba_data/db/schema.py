@@ -41,6 +41,8 @@ class NBADatabaseSchema:
             self._create_player_playoff_stats_table(conn)
             self._create_player_playoff_advanced_stats_table(conn)
             self._create_player_playoff_tracking_stats_table(conn)
+            self._create_player_playtype_stats_table(conn)
+            self._create_player_playoff_playtype_stats_table(conn)
             self._create_possessions_table(conn)
             self._create_possession_lineups_table(conn)
             self._create_possession_events_table(conn)
@@ -430,23 +432,120 @@ class NBADatabaseSchema:
                 season TEXT NOT NULL,
                 team_id INTEGER NOT NULL,
                 minutes_played REAL,
+
+                -- Drive metrics
                 drives REAL,
                 drive_field_goals_made REAL,
                 drive_field_goals_attempted REAL,
                 drive_field_goal_percentage REAL,
-                front_court_touches REAL,
-                elbow_touches REAL,
-                post_ups REAL,
-                post_up_field_goals_made REAL,
-                post_up_field_goals_attempted REAL,
-                post_up_field_goal_percentage REAL,
-                paint_touches REAL,
+                drive_free_throws_made REAL,
+                drive_free_throws_attempted REAL,
+                drive_free_throw_percentage REAL,
+                drive_points REAL,
+                drive_points_percentage REAL,
+                drive_passes REAL,
+                drive_passes_percentage REAL,
+                drive_assists REAL,
+                drive_assists_percentage REAL,
+                drive_turnovers REAL,
+                drive_turnovers_percentage REAL,
+                drive_personal_fouls REAL,
+                drive_personal_fouls_percentage REAL,
+
+                -- Catch and shoot metrics
                 catch_shoot_field_goals_made REAL,
                 catch_shoot_field_goals_attempted REAL,
                 catch_shoot_field_goal_percentage REAL,
+                catch_shoot_points REAL,
+                catch_shoot_three_pointers_made REAL,
+                catch_shoot_three_pointers_attempted REAL,
+                catch_shoot_three_point_percentage REAL,
+                catch_shoot_effective_field_goal_percentage REAL,
+
+                -- Pull up shot metrics
                 pull_up_field_goals_made REAL,
                 pull_up_field_goals_attempted REAL,
                 pull_up_field_goal_percentage REAL,
+                pull_up_points REAL,
+                pull_up_three_pointers_made REAL,
+                pull_up_three_pointers_attempted REAL,
+                pull_up_three_point_percentage REAL,
+                pull_up_effective_field_goal_percentage REAL,
+
+                -- Paint touch metrics
+                touches REAL,
+                paint_touches REAL,
+                paint_touch_field_goals_made REAL,
+                paint_touch_field_goals_attempted REAL,
+                paint_touch_field_goal_percentage REAL,
+                paint_touch_free_throws_made REAL,
+                paint_touch_free_throws_attempted REAL,
+                paint_touch_free_throw_percentage REAL,
+                paint_touch_points REAL,
+                paint_touch_points_percentage REAL,
+                paint_touch_passes REAL,
+                paint_touch_passes_percentage REAL,
+                paint_touch_assists REAL,
+                paint_touch_assists_percentage REAL,
+                paint_touch_turnovers REAL,
+                paint_touch_turnovers_percentage REAL,
+                paint_touch_fouls REAL,
+                paint_touch_fouls_percentage REAL,
+
+                -- Post touch metrics
+                post_touches REAL,
+                post_touch_field_goals_made REAL,
+                post_touch_field_goals_attempted REAL,
+                post_touch_field_goal_percentage REAL,
+                post_touch_free_throws_made REAL,
+                post_touch_free_throws_attempted REAL,
+                post_touch_free_throw_percentage REAL,
+                post_touch_points REAL,
+                post_touch_points_percentage REAL,
+                post_touch_passes REAL,
+                post_touch_passes_percentage REAL,
+                post_touch_assists REAL,
+                post_touch_assists_percentage REAL,
+                post_touch_turnovers REAL,
+                post_touch_turnovers_percentage REAL,
+                post_touch_fouls REAL,
+                post_touch_fouls_percentage REAL,
+
+                -- Elbow touch metrics
+                elbow_touches REAL,
+                elbow_touch_field_goals_made REAL,
+                elbow_touch_field_goals_attempted REAL,
+                elbow_touch_field_goal_percentage REAL,
+                elbow_touch_free_throws_made REAL,
+                elbow_touch_free_throws_attempted REAL,
+                elbow_touch_free_throw_percentage REAL,
+                elbow_touch_points REAL,
+                elbow_touch_passes REAL,
+                elbow_touch_assists REAL,
+                elbow_touch_assists_percentage REAL,
+                elbow_touch_turnovers REAL,
+                elbow_touch_turnovers_percentage REAL,
+                elbow_touch_fouls REAL,
+                elbow_touch_passes_percentage REAL,
+                elbow_touch_fouls_percentage REAL,
+                elbow_touch_points_percentage REAL,
+
+                -- Efficiency metrics (aggregated)
+                efficiency_points REAL,
+                efficiency_drive_points REAL,
+                efficiency_drive_field_goal_percentage REAL,
+                efficiency_catch_shoot_points REAL,
+                efficiency_catch_shoot_field_goal_percentage REAL,
+                efficiency_pull_up_points REAL,
+                efficiency_pull_up_field_goal_percentage REAL,
+                efficiency_paint_touch_points REAL,
+                efficiency_paint_touch_field_goal_percentage REAL,
+                efficiency_post_touch_points REAL,
+                efficiency_post_touch_field_goal_percentage REAL,
+                efficiency_elbow_touch_points REAL,
+                efficiency_elbow_touch_field_goal_percentage REAL,
+                efficiency_effective_field_goal_percentage REAL,
+
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (player_id, season, team_id),
@@ -457,6 +556,128 @@ class NBADatabaseSchema:
 
         conn.commit()
         print("✓ PlayerPlayoffTrackingStats table created")
+
+    def _create_player_playtype_stats_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PlayerPlaytypeStats table (synergy play type metrics)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS player_playtype_stats (
+                player_id INTEGER NOT NULL,
+                season TEXT NOT NULL,
+                team_id INTEGER NOT NULL,
+                play_type TEXT NOT NULL,
+                type_grouping TEXT NOT NULL,
+
+                -- Performance metrics
+                percentile REAL,
+                games_played INTEGER,
+                possession_percentage REAL,
+                points_per_possession REAL,
+                field_goal_percentage REAL,
+                free_throw_possession_percentage REAL,
+                turnover_possession_percentage REAL,
+                shot_foul_possession_percentage REAL,
+                plus_one_possession_percentage REAL,
+                score_possession_percentage REAL,
+                effective_field_goal_percentage REAL,
+
+                -- Volume metrics
+                possessions REAL,
+                points REAL,
+                field_goals_made REAL,
+                field_goals_attempted REAL,
+                field_goals_missed REAL,
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (player_id, season, team_id, play_type),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id)
+            )
+        """)
+
+        # Create indexes for performance
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_playtype_stats_player_season
+            ON player_playtype_stats(player_id, season)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_playtype_stats_play_type
+            ON player_playtype_stats(play_type)
+        """)
+
+        # Update trigger
+        conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS player_playtype_stats_updated_at
+            AFTER UPDATE ON player_playtype_stats
+            BEGIN
+                UPDATE player_playtype_stats SET updated_at = CURRENT_TIMESTAMP
+                WHERE player_id = NEW.player_id AND season = NEW.season AND team_id = NEW.team_id AND play_type = NEW.play_type;
+            END
+        """)
+
+        conn.commit()
+        print("✓ PlayerPlaytypeStats table created")
+
+    def _create_player_playoff_playtype_stats_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PlayerPlayoffPlaytypeStats table (playoff synergy play type metrics)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS player_playoff_playtype_stats (
+                player_id INTEGER NOT NULL,
+                season TEXT NOT NULL,
+                team_id INTEGER NOT NULL,
+                play_type TEXT NOT NULL,
+                type_grouping TEXT NOT NULL,
+
+                -- Performance metrics
+                percentile REAL,
+                games_played INTEGER,
+                possession_percentage REAL,
+                points_per_possession REAL,
+                field_goal_percentage REAL,
+                free_throw_possession_percentage REAL,
+                turnover_possession_percentage REAL,
+                shot_foul_possession_percentage REAL,
+                plus_one_possession_percentage REAL,
+                score_possession_percentage REAL,
+                effective_field_goal_percentage REAL,
+
+                -- Volume metrics
+                possessions REAL,
+                points REAL,
+                field_goals_made REAL,
+                field_goals_attempted REAL,
+                field_goals_missed REAL,
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (player_id, season, team_id, play_type),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id)
+            )
+        """)
+
+        # Create indexes for performance
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_playoff_playtype_stats_player_season
+            ON player_playoff_playtype_stats(player_id, season)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_playoff_playtype_stats_play_type
+            ON player_playoff_playtype_stats(play_type)
+        """)
+
+        # Update trigger
+        conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS player_playoff_playtype_stats_updated_at
+            AFTER UPDATE ON player_playoff_playtype_stats
+            BEGIN
+                UPDATE player_playoff_playtype_stats SET updated_at = CURRENT_TIMESTAMP
+                WHERE player_id = NEW.player_id AND season = NEW.season AND team_id = NEW.team_id AND play_type = NEW.play_type;
+            END
+        """)
+
+        conn.commit()
+        print("✓ PlayerPlayoffPlaytypeStats table created")
 
     def _create_possessions_table(self, conn: sqlite3.Connection) -> None:
         """Create the Possessions table (for play-by-play analysis)."""
@@ -645,6 +866,7 @@ class NBADatabaseSchema:
             'teams', 'games', 'players', 'player_season_stats',
             'player_advanced_stats', 'player_tracking_stats',
             'player_playoff_stats', 'player_playoff_advanced_stats', 'player_playoff_tracking_stats',
+            'player_playtype_stats', 'player_playoff_playtype_stats',
             'possessions', 'possession_lineups', 'possession_events', 'possession_matchups'
         ]
 

@@ -115,6 +115,13 @@ class DataValidator:
                 cursor.execute("SELECT COUNT(DISTINCT player_id) FROM player_playoff_tracking_stats")
                 completeness["players_with_playoff_tracking_stats"] = cursor.fetchone()[0]
 
+                # Playtype stats
+                cursor.execute("SELECT COUNT(DISTINCT player_id) FROM player_playtype_stats")
+                completeness["players_with_playtype_stats"] = cursor.fetchone()[0]
+
+                cursor.execute("SELECT COUNT(DISTINCT player_id) FROM player_playoff_playtype_stats")
+                completeness["players_with_playoff_playtype_stats"] = cursor.fetchone()[0]
+
                 # Season coverage
                 cursor.execute("SELECT season, COUNT(DISTINCT player_id) FROM player_season_stats GROUP BY season")
                 completeness["season_coverage"] = {row[0]: row[1] for row in cursor.fetchall()}
@@ -301,6 +308,7 @@ class DataValidator:
         print(f"     Players with season stats: {completeness['players_with_season_stats']}")
         print(f"     Players with advanced stats: {completeness['players_with_advanced_stats']}")
         print(f"     Players with tracking stats: {completeness['players_with_tracking_stats']}")
+        print(f"     Players with playtype stats: {completeness['players_with_playtype_stats']}")
 
         if completeness['season_coverage']:
             print(f"     Seasons covered: {list(completeness['season_coverage'].keys())}")
@@ -310,6 +318,7 @@ class DataValidator:
         print(f"     Players with playoff stats: {completeness['players_with_playoff_stats']}")
         print(f"     Players with playoff advanced stats: {completeness['players_with_playoff_advanced_stats']}")
         print(f"     Players with playoff tracking stats: {completeness['players_with_playoff_tracking_stats']}")
+        print(f"     Players with playoff playtype stats: {completeness['players_with_playoff_playtype_stats']}")
 
         if completeness['playoff_season_coverage']:
             print(f"     Playoff seasons covered: {list(completeness['playoff_season_coverage'].keys())}")
