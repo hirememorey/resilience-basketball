@@ -140,9 +140,10 @@ Building the complete-season data pipeline achieved unprecedented results:
 - **Individual Tracking Coverage:** 569 players with complete granular tracking metrics
 - **Infrastructure Robustness:** Parallel processing, error recovery, intelligent batching, and checkpointing
 - **Data Quality:** 100% integrity validation across massive dataset with zero failures
-- **Framework Viability:** Core resilience hypotheses now have complete statistical power for testing
+- **Framework Viability:** Core resilience hypotheses now have complete statistical power for testing.
+- **Shot Location Data:** Added a new data pipeline to collect granular x/y shot coordinates for every player, enriching our analysis of spatial scoring diversity.
 
-**Current Status:** **COMPLETE database population achieved through simplified, direct implementation approach. All critical tables fully populated with comprehensive 2024-25 season data including complete individual player tracking (105+ metrics per player).**
+**Current Status:** **Data Foundation Complete.** All primary data tables are populated. The ongoing population of shot location data will complete the dataset required for the "Method Resilience" score calculation.
 
 **Data Quality Progress - FULLY COMPLETE:**
 - ✅ **teams**: All 30 NBA teams with complete metadata (30/30 teams)
