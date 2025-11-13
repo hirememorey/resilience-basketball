@@ -569,6 +569,33 @@ class NBAStatsClient:
         }
         return self._make_request(endpoint, params)
 
+    def get_player_shot_chart(self, player_id: int, season: str, season_type: str = "Regular Season") -> Dict[str, Any]:
+        """Get shot chart data for a specific player and season."""
+        endpoint = "shotchartdetail"
+        params = {
+            "PlayerID": player_id,
+            "Season": season,
+            "SeasonType": season_type,
+            "TeamID": 0,
+            "GameID": "",
+            "Outcome": "",
+            "Location": "",
+            "Month": 0,
+            "SeasonSegment": "",
+            "DateFrom": "",
+            "DateTo": "",
+            "OpponentTeamID": 0,
+            "VsConference": "",
+            "VsDivision": "",
+            "PlayerPosition": "",
+            "GameSegment": "",
+            "Period": 0,
+            "LastNGames": 0,
+            "ContextMeasure": "FGA",
+            "RookieYear": ""
+        }
+        return self._make_request(endpoint, params)
+
     def get_play_by_play(self, game_id: str, start_period: int = 1, end_period: int = 10) -> Dict[str, Any]:
         """Get play-by-play data for a specific game."""
         endpoint = "playbyplayv2"
@@ -611,6 +638,12 @@ if __name__ == "__main__":
         print("Fetching advanced player stats...")
         data = client.get_league_player_advanced_stats()
         print(f"✅ Successfully fetched advanced data for {len(data.get('resultSets', [{}])[0].get('rowSet', []))} players")
+
+        # Test shot chart data for a specific player
+        print("Fetching shot chart data for LeBron James...")
+        # Note: Using a known player ID for a stable test case
+        data = client.get_player_shot_chart(player_id=2544, season="2023-24")
+        print(f"✅ Successfully fetched {len(data.get('resultSets', [{}])[0].get('rowSet', []))} shots for LeBron James")
 
     except Exception as e:
         print(f"❌ Error testing API client: {e}")

@@ -21,10 +21,10 @@ What are the measurable, observable factors in a player's regular-season perform
 
 Our analysis will be guided by a set of core, testable hypotheses.
 
-*   **Hypothesis 1: Skill Diversification Predicts Resilience.**
-    *   Our central thesis. A player who demonstrates a measurable diversification of their play style (e.g., an expanded shot profile, a wider variety of play types used) year-over-year is more likely to maintain or improve their performance in the subsequent postseason. A more diverse skillset is harder for a dedicated playoff defense to neutralize.
+*   **Hypothesis 1: Method Resilience Predicts Playoff Success.**
+    *   Our central thesis. A player who demonstrates a measurable diversification of their *scoring methods* (e.g., scoring effectively from multiple court locations, in various play types, and through different creation actions) is more likely to maintain or improve their performance in the subsequent postseason. A more diverse and efficient offensive skillset is harder for a dedicated playoff defense to neutralize.
 
-*   **Hypothesis 2: Over-Specialization Creates Fragility.**
+*   **Hypothesis 2: Method Over-Specialization Creates Fragility.**
     *   The corollary to H1. Players who rely on a narrow and predictable set of offensive actions (e.g., a high percentage of shots from one location, extreme reliance on a single play type) are more susceptible to targeted defensive schemes and are therefore more likely to underperform their regular-season baseline in the playoffs.
 
 *   **Hypothesis 3: Adaptability is a Measurable Skill.**
@@ -35,18 +35,76 @@ Our analysis will be guided by a set of core, testable hypotheses.
 This is our "Operating System" for the project. The analysis must adhere to these principles:
 
 1.  **Dynamic Over Static:** Prioritize longitudinal analysis. Year-over-year changes in a player's profile are more important than any single-season snapshot. We are measuring the *trajectory* of a player's skill set, not just its current state.
-2.  **Focus on Leading Indicators:** The goal is to find signals in the regular season that predict future playoff performance. We must be disciplined about not using playoff data to explain itself (i.e., avoid hindsight bias).
+2.  **Focus on Method, Not Just Volume:** The goal is to find signals in how a player produces, not just how much. We must be disciplined about not using playoff data to explain itself (i.e., avoid hindsight bias).
 3.  **Go Beyond the Box Score:** Raw production stats (like points per game) are lagging indicators. We will focus on the underlying process metrics that drive production:
-    *   **Efficiency:** True Shooting %, eFG%, etc.
-    *   **Shot Profile:** Location of shots, type of shots (e.g., catch-and-shoot vs. pull-up).
+    *   **Efficiency:** True Shooting %, eFG%, Points Per Possession.
+    *   **Spatial Profile:** Location of shots on the court.
     *   **Play Type Distribution:** Usage rates for pick-and-roll, isolation, post-ups, spot-ups, etc.
+    *   **Creation Method:** How a shot is generated (e.g., catch-and-shoot vs. pull-up).
 4.  **Context is Key:** The model must be able to account for confounding variables. We will need to consider factors such as:
     *   Player's age and career stage.
     *   Changes in team, coaching staff, or role.
     *   Quality of teammates and opponents.
 5.  **Start with a Clear "Why":** Every line of code and every statistical test must be in service of answering the Central Research Question. We will avoid analysis for the sake of analysis.
 
-## 6. Current Data Pipeline Status
+## 6. The "Method Resilience" Score: A Detailed Framework
+
+Based on our core principles, we will calculate a "Method Resilience Score." This score quantifies a player's offensive adaptability by measuring the diversity and efficiency of their scoring methods. A player reliant on a single, predictable method is considered fragile. A player who can generate efficient offense in multiple ways is resilient.
+
+The score is composed of three distinct pillars. For each pillar, we use the Herfindahl-Hirschman Index (HHI), a measure of concentration, to calculate a diversity score. The final score is `(1 - HHI) * 100`, where a higher value indicates greater diversity.
+
+### Pillar 1: Spatial Diversity (Where on the floor do they score?)
+
+This pillar measures a player's ability to score from all over the court, making them geographically unpredictable.
+
+1.  **Data Source:** `player_shot_locations` table.
+2.  **Define Court Zones:** We will segment the court into at least six functionally distinct zones:
+    *   Restricted Area (at the rim)
+    *   In The Paint (Non-RA) (floaters, runners)
+    *   Mid-Range
+    *   Left Corner 3
+    *   Right Corner 3
+    *   Above the Break 3
+3.  **Calculate Distribution:** For each player, we will calculate the percentage of their total shots that come from each of these six zones.
+4.  **Efficiency Weighting (Critical Step):** We don't want to reward a player for simply taking bad shots from all over. Therefore, each zone's percentage will be weighted by the player's efficiency from that zone, measured by their `eFG%` on those shots compared to the league average `eFG%` for that *same zone*. This rewards players who are both versatile and effective.
+5.  **Calculate Score:** Using these efficiency-weighted proportions, we will calculate an HHI score to produce the final `Spatial Diversity Score`.
+
+### Pillar 2: Play-Type Diversity (How are their scoring chances created?)
+
+This pillar measures a player's versatility within an offensive system. Can they score as the ball-handler, off a screen, in isolation, etc.?
+
+1.  **Data Source:** `player_playtype_stats`.
+2.  **Select Play-Type Categories:** We'll use the core offensive play types tracked by Synergy:
+    *   Isolation
+    *   P&R Ball Handler
+    *   Spot-Up
+    *   Post-Up
+    *   Transition
+    *   Off-Screen
+3.  **Calculate Distribution:** We determine the percentage of a player's total offensive possessions that fall into each of these categories.
+4.  **Efficiency Weighting:** As with the spatial score, we weight each play-type's percentage by the player's efficiency, measured by `Points Per Possession` (PPP) in that play type relative to the league average PPP for that same play type.
+5.  **Calculate Score:** We compute the HHI from these weighted proportions to get the `Play-Type Diversity Score`.
+
+### Pillar 3: Creation Diversity (How do they generate their own shot?)
+
+This pillar measures a player's individual shot-creation skill. Are they reliant on teammates setting them up, or can they create for themselves in different ways?
+
+1.  **Data Source:** `player_tracking_stats`.
+2.  **Select Creation Categories:** We use three fundamental creation types:
+    *   **Catch & Shoot:** Purely off-ball, reliant on a pass.
+    *   **Pull-Up:** Off-the-dribble jumpers.
+    *   **Drives:** Attacking the basket.
+3.  **Calculate Distribution:** We determine the percentage of a player's shots that come from each of these three creation types.
+4.  **Efficiency Weighting:** We weight each category's percentage by the player's `eFG%` on that specific action, relative to the league average.
+5.  **Calculate Score:** We compute the HHI from these weighted proportions to get the `Creation Diversity Score`.
+
+### Final Calculation: The Delta
+
+The final **Method Resilience Score** for a player is a weighted average of these three pillar scores (e.g., 40% Spatial, 40% Play-Type, 20% Creation).
+
+Most importantly, we perform this entire calculation for both the player's regular-season baseline and their playoff performance. The final, critical metric is the **delta**: the change in their Method Resilience Score from the regular season to the playoffs. A player whose score remains high or even increases demonstrates true resilience; their multi-faceted offensive game was resistant to defensive scheming.
+
+## 7. Current Data Pipeline Status
 
 **BREAKTHROUGH ACHIEVEMENT:** COMPLETE 2024-25 NBA analytics dataset assembled with full individual player tracking data. We now have comprehensive coverage of all completed games with unprecedented scale and granularity.
 
@@ -103,7 +161,7 @@ Building the complete-season data pipeline achieved unprecedented results:
 - ⚠️ **Optional Tables**: `possession_lineups` and `possession_matchups` remain empty due to limited rotation data availability (non-critical for core resilience analysis)
 - 🎯 **Next Phase**: Resilience score calculation and hypothesis testing on complete dataset with playtype distribution analysis
 
-## 7. Desired Output & Success Criteria
+## 8. Desired Output & Success Criteria
 
 The project will be considered successful if we produce two key artifacts:
 

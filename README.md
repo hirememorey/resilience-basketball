@@ -74,6 +74,7 @@ NBA Stats API → Data Fetcher → SQLite Database → Analysis Models
   - `possession_events`: Individual player actions within possessions (shots, passes, rebounds, etc.)
   - `possession_lineups`: Players on court during each possession
   - `possession_matchups`: Defensive matchups between players during possessions
+  - `player_shot_locations`: **NEW** Granular x/y coordinates for every shot taken
 
 ## 📈 Data Coverage
 
@@ -137,6 +138,9 @@ python src/nba_data/scripts/populate_playtype_data.py
 # **NEW: Playoff synergy playtype data**
 python src/nba_data/scripts/populate_playoff_playtype_data.py
 
+# **NEW: Granular shot location data**
+python src/nba_data/scripts/populate_shot_location_data.py
+
 # Massive possession-level data (complete season coverage)
 python src/nba_data/scripts/populate_playbyplay_massive.py --season 2023-24 --season-type regular --max-games 100
 ```
@@ -167,7 +171,7 @@ resilience-basketball/
 │       │   ├── game_discovery.py         # Automated game discovery system
 │       │   └── __init__.py
 │       ├── db/               # Database schema and models
-│       │   └── schema.py     # ENHANCED: 16 tables (regular + playoff + playtype data)
+│       │   └── schema.py     # ENHANCED: 17 tables (added shot locations)
 │       └── scripts/          # Data population scripts
 │           ├── populate_teams_data.py           # NBA teams static data
 │           ├── populate_player_data.py          # Regular season player data
@@ -175,6 +179,7 @@ resilience-basketball/
 │           ├── populate_playoff_data.py         # Playoff player data
 │           ├── populate_playtype_data.py       # **NEW** Synergy play type data (regular season)
 │           ├── populate_playoff_playtype_data.py # **NEW** Synergy play type data (playoffs)
+│           ├── populate_shot_location_data.py   # **NEW** Granular shot location data
 │           ├── populate_playbyplay_massive.py   # MASSIVE possession data collection
 │           ├── populate_possession_data.py      # Legacy single-game possession
 │           └── calculate_resilience_scores.py   # Resilience metrics calculation
@@ -192,11 +197,19 @@ resilience-basketball/
 ## 🔬 Research Framework
 
 ### Core Hypotheses (Ready for Testing!)
-1. **Skill Diversification**: Players with varied offensive skills are harder to defend in playoffs
-2. **Over-Specialization Fragility**: One-dimensional players are more vulnerable to playoff schemes
-3. **Adaptability Measurement**: Year-over-year changes indicate playoff readiness
+1. **Method Resilience**: A player's ability to maintain offensive output in the playoffs is tied to the diversity of their scoring methods.
+2. **Method Over-Specialization Fragility**: One-dimensional players are more vulnerable to playoff schemes that target their primary strength.
+3. **Adaptability Measurement**: Year-over-year changes in a player's scoring profile indicate playoff readiness.
 
-**✅ FULLY UNBLOCKED:** Complete individual player tracking data across entire NBA (569 players × 70+ metrics)
+### The "Method Resilience" Score
+Our primary analytical goal is to move beyond simple box-score stats and quantify a player's offensive adaptability. We will calculate a "Method Resilience Score" based on three pillars of scoring diversity:
+- **Spatial Diversity**: Measures a player's efficiency and volume from different zones on the court (e.g., rim, midrange, multiple three-point zones).
+- **Play-Type Diversity**: Measures a player's efficiency and usage across different offensive sets (e.g., Isolation, P&R Ball Handler, Spot-Up).
+- **Creation Diversity**: Measures a player's ability to score in different ways (e.g., Catch & Shoot, Pull-ups, Drives).
+
+The final score will analyze the *change* in a player's scoring diversity from the regular season to the playoffs, identifying players whose offensive game is most resistant to targeted defensive pressure. For a detailed breakdown of the methodology, see `foundational_principles.md`.
+
+**✅ FULLY UNBLOCKED:** Complete individual player tracking data across entire NBA (569 players × 105+ metrics)
 
 ### Guiding Principles (Still Valid)
 - **Dynamic over Static**: Focus on career trajectories vs. single-season snapshots
@@ -310,12 +323,12 @@ resilience-basketball/
 ## 🤝 Contributing
 
 ### For New Developers (Resilience Score Implementation)
-1. **Read Documentation**: Start with `foundational_principles.md` for research vision and statistical resilience methodology
-2. **Understand Current State**: **TRUE complete data pipeline operational - comprehensive debugging resolved all null values with 85+ metrics per player**
-3. **Run Validation**: Execute `python validate_data.py` to verify data integrity (569 players with complete 85+ metric tracking profiles)
-4. **Check Workflows**: Review `prompts.md` for development workflow templates
-5. **Immediate Priority**: Implement resilience score calculation and hypothesis testing using complete dataset
-6. **Development Focus**: Build ML models and statistical analysis on production-ready data foundation
+1. **Read Documentation**: Start with `foundational_principles.md` for research vision and the detailed "Method Resilience" methodology.
+2. **Understand Current State**: A complete data pipeline is operational with comprehensive, granular data for the entire league.
+3. **Run Validation**: Execute `python validate_data.py` to verify data integrity.
+4. **Check Workflows**: Review `prompts.md` for development workflow templates.
+5. **Immediate Priority**: Implement the "Method Resilience Score" calculation and hypothesis testing using the complete dataset.
+6. **Development Focus**: Build ML models and statistical analysis on our production-ready data foundation.
 
 ### Development Workflow for Resilience Score Implementation
 
@@ -371,7 +384,7 @@ The data pipeline is production-ready but can be extended:
   - `possession_fetcher.py`: Play-by-play possession parsing
 - **[Massive Data Collection](src/nba_data/scripts/populate_playbyplay_massive.py)**: Parallel processing for hundreds of games
 - **[Data Validation](validate_data.py)**: Comprehensive validation for regular season + playoff data
-- **[Resilience Analysis](src/nba_data/scripts/calculate_resilience_scores.py)**: Statistical resilience calculation methodology
+- **[Resilience Analysis](src/nba_data/scripts/calculate_resilience_scores.py)**: Statistical resilience calculation methodology- placeholder methodology for now.
 - **[Database Schema](src/nba_data/db/schema.py)**: 14-table schema with regular season, playoff, and possession data
 
 ## ⚖️ License

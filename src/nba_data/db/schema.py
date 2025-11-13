@@ -47,6 +47,7 @@ class NBADatabaseSchema:
             self._create_possession_lineups_table(conn)
             self._create_possession_events_table(conn)
             self._create_possession_matchups_table(conn)
+            self._create_player_shot_locations_table(conn)
 
             print("✅ All database tables created successfully")
 
@@ -860,6 +861,50 @@ class NBADatabaseSchema:
         conn.commit()
         print("✓ PossessionMatchups table created")
 
+    def _create_player_shot_locations_table(self, conn: sqlite3.Connection) -> None:
+        """Create the player_shot_locations table."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS player_shot_locations (
+                shot_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                game_id TEXT NOT NULL,
+                player_id INTEGER NOT NULL,
+                team_id INTEGER NOT NULL,
+                season TEXT NOT NULL,
+                season_type TEXT NOT NULL,
+                period INTEGER,
+                minutes_remaining INTEGER,
+                seconds_remaining INTEGER,
+                event_type TEXT,
+                action_type TEXT,
+                shot_type TEXT,
+                shot_zone_basic TEXT,
+                shot_zone_area TEXT,
+                shot_zone_range TEXT,
+                shot_distance INTEGER,
+                loc_x INTEGER,
+                loc_y INTEGER,
+                shot_attempted_flag INTEGER,
+                shot_made_flag INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (game_id) REFERENCES games(game_id),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id)
+            )
+        """)
+
+        # Create indexes for faster queries
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_shot_locations_player_season
+            ON player_shot_locations(player_id, season, season_type)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_player_shot_locations_game
+            ON player_shot_locations(game_id)
+        """)
+
+        conn.commit()
+        print("✓ player_shot_locations table created")
+
     def verify_schema(self) -> bool:
         """Verify that all required tables exist."""
         required_tables = [
@@ -867,7 +912,8 @@ class NBADatabaseSchema:
             'player_advanced_stats', 'player_tracking_stats',
             'player_playoff_stats', 'player_playoff_advanced_stats', 'player_playoff_tracking_stats',
             'player_playtype_stats', 'player_playoff_playtype_stats',
-            'possessions', 'possession_lineups', 'possession_events', 'possession_matchups'
+            'possessions', 'possession_lineups', 'possession_events', 'possession_matchups',
+            'player_shot_locations'
         ]
 
         with sqlite3.connect(self.db_path) as conn:
