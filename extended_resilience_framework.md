@@ -30,7 +30,7 @@ This document outlines the extended framework to capture these additional dimens
 
 ## Extended Framework: Four New Metrics
 
-### 1. Dominance Score: Measuring Absolute Excellence in Primary Method
+### 1. Primary Method Mastery: Measuring Elite Specialization
 
 #### Core Question
 How efficient is the player's primary offensive method, and is it strong enough to remain effective even when schemed against?
@@ -136,60 +136,48 @@ Can the player maintain efficiency when usage increases in the playoffs?
 
 ---
 
-### 3. Defensive Pressure Resistance: Efficiency Under Contest
+### 3. Dominance Score (Shot Quality-Adjusted Value): Efficiency Under Duress
 
 #### Core Question
-Does the player maintain efficiency when defenses apply pressure (tight defense, shot clock pressure, physicality)?
+Does the player have the ability to create and convert high-difficulty scoring opportunities against dedicated defensive pressure, independent of scheme?
 
-#### Calculation Approach
+This moves beyond simple efficiency to measure a player's true shot-making talent by accounting for the quality of every single shot attempt. It directly addresses the problem that raw percentages don't distinguish between a player hitting wide-open shots created by others and a player creating and hitting tough shots themselves.
 
-**Step 1: Define Pressure Scenarios**
-- **Defender distance**:
-  - Very tight (0-2ft): high pressure
-  - Tight (2-4ft): medium pressure
-  - Open (4-6ft): low pressure
-  - Wide open (6+ft): no pressure
-- **Shot clock pressure**:
-  - Very late (4-0s): high pressure
-  - Late (7-4s): medium pressure
-  - Average (15-7s): normal
-  - Early (24-22s): low pressure
-- **Dribble creation**:
-  - Extensive creation (7+ dribbles): high pressure
-  - Moderate (3-6 dribbles): medium pressure
-  - Low (0-2 dribbles): low pressure
+#### Calculation Approach: Shot Quality-Adjusted Value (SQAV)
 
-**Step 2: Calculate Efficiency by Pressure Level**
-- For each pressure dimension, calculate efficiency (TS% or eFG%) at each level
-- Create efficiency gradient: how much does efficiency drop as pressure increases?
-- Compare to league average gradient: does the player drop more or less than average?
+The Dominance Score is calculated using a Shot Quality-Adjusted Value (SQAV) model, which evaluates every shot against a league-average baseline for that exact shot context.
 
-**Step 3: Measure Pressure Resistance**
-- High-pressure efficiency: efficiency in highest pressure scenarios
-- Efficiency retention: `(High_Pressure_Efficiency / Low_Pressure_Efficiency) × 100`
-- League comparison: player's retention vs. league average retention
-- Final score: percentile rank of efficiency retention
+**Step 1: Establish Baselines for Every Shot Context**
+- Using our comprehensive shot dashboard data (`player_shot_dashboard_stats`), we calculate the league-average Effective Field Goal Percentage (eFG%) for every combination of:
+  - **Defender Distance**: Very Tight (0-2ft), Tight (2-4ft), Open (4-6ft), Wide Open (6+ft)
+  - **Creation Method**: Catch & Shoot (0 dribbles), 1 Dribble, 2 Dribbles, Moderate (3-6), Extensive (7+)
+  - **Shot Clock Pressure**: Very Late (4-0s), Late (7-4s), Average (15-7s), etc.
+- This creates a detailed "Expected eFG%" (xeFG%) for any conceivable shot attempt.
 
-**Step 4: Multi-Dimensional Pressure Score**
-- Calculate pressure resistance for each dimension (defender distance, shot clock, dribbles)
-- Weighted average: defender distance (50%), shot clock (30%), dribbles (20%)
-- Final score: 0-100, where 100 = efficiency doesn't drop under pressure
+**Step 2: Calculate Player's Efficiency vs. Expected Efficiency (eFG% Above Expected)**
+- For each player, we compare their actual eFG% in each specific shot context to the league-average baseline (xeFG%) for that same context.
+- `eFG_Above_Expected = Player_eFG_in_Context - xeFG_in_Context`
+- A positive value indicates better-than-average shot-making for that shot type; a negative value indicates worse.
+
+**Step 3: Weight by Shot Volume and Difficulty**
+- The value generated in each context is weighted by the player's attempt volume in that context. This rewards players who not only make tough shots but do so frequently.
+- `Context_Value = eFG_Above_Expected × Shot_Attempts_in_Context`
+- A "Difficulty Multiplier" can also be applied to give more weight to shots taken under higher pressure (e.g., "Very Tight" defense, "Extensive Creation").
+
+**Step 4: Aggregate to a Single Dominance Score**
+- The final Dominance Score is the sum of the `Context_Value` generated across all shot contexts, representing the total shot-making value a player provides above an average player.
+- `Dominance Score = SUM(all_contexts(Context_Value))`
+- This score is then normalized (e.g., to a 0-100 scale or as a percentile rank) for comparison.
 
 **Mathematical Formulation**
-- `Pressure_Resistance_Dimension = (Efficiency_High_Pressure / Efficiency_Low_Pressure) × 100`
-- `Relative_Resistance = Player_Resistance / League_Avg_Resistance`
-- `Pressure_Score = normalize(Relative_Resistance × 100)`
-
-**Edge Cases**
-- Players who avoid pressure: measure volume in high-pressure scenarios; if too low, score is "not applicable"
-- Method-specific pressure: post-ups vs. pull-ups face different pressure types
-- Sample size: require minimum attempts in each pressure tier
+- `xeFG_c = League_Average_eFG%_in_Context_c`
+- `eFG_vs_x_c = Player_eFG_c - xeFG_c`
+- `Dominance_Score = Σ_c (eFG_vs_x_c * Attempts_c * Difficulty_Multiplier_c)`
 
 **Integration with Existing Framework**
-- Current: Method Resilience measures diversity of methods
-- New: Pressure Resistance measures effectiveness when methods are contested
-- Combined: `Method Resilience × Pressure Resistance → true versatility score`
-- Formula: `True_Versatility = Method_Resilience × (0.7 + Pressure_Resistance × 0.3)`
+- This new Dominance Score replaces the previous "Defensive Pressure Resistance" metric with a more sophisticated and granular approach.
+- It provides a powerful lens into *why* a player's Method Resilience might be robust; a high Dominance Score suggests their methods are effective even when contested.
+- **Combined:** `True_Versatility = Method_Resilience_Score × (1 + (Normalized_Dominance_Score / 100) * Weight)`
 
 ---
 
@@ -250,16 +238,18 @@ Does the player add new skills over time, and do those skills improve in efficie
 
 Resilience is not one-dimensional. Players can achieve playoff success through different pathways:
 
-1. **Pathway 1: Versatility Resilience** (high diversity, maintains under pressure)
-2. **Pathway 2: Dominance Resilience** (elite primary method, maintains in playoffs)
-3. **Pathway 3: Scalability Resilience** (efficient at high usage, role adaptable)
-4. **Pathway 4: Evolution Resilience** (adds skills, improves over time)
+1. **Pathway 1: Versatility Resilience** (high diversity across many methods)
+2. **Pathway 2: Primary Method Mastery** (elite specialization in one method)
+3. **Pathway 3: Shot-Making Dominance** (maintains elite efficiency on high-difficulty shots)
+4. **Pathway 4: Scalability Resilience** (efficient at high usage, role adaptable)
+5. **Pathway 5: Evolution Resilience** (adds skills, improves over time)
 
 ### Unified Score Calculation
 
 **Step 1: Measure Each Pathway**
-- Versatility: `Method Resilience × Pressure Resistance`
-- Dominance: `Dominance Score × Playoff Efficiency Retention`
+- Versatility: `Method Resilience Score`
+- Primary Method Mastery: `Primary_Method_Mastery_Score × Playoff Efficiency Retention`
+- Shot-Making Dominance: `Dominance Score (SQAV)`
 - Scalability: `Role Scalability × Usage-Adjusted Performance`
 - Evolution: `Adaptability Score × Current Skill Portfolio Quality`
 
@@ -277,7 +267,7 @@ Resilience is not one-dimensional. Players can achieve playoff success through d
 **Mathematical Formulation**
 - `Pathway_Scores = {Versatility, Dominance, Scalability, Evolution}`
 - `Primary_Pathway = argmax(Pathway_Scores)`
-- `Pathway_Diversity = count(pathways where score > threshold) / 4`
+- `Pathway_Diversity = count(pathways where score > threshold) / 5`
 - `Unified_Resilience = Primary_Pathway_Score × (1 + Pathway_Diversity × 0.2)`
 
 ---
@@ -286,9 +276,9 @@ Resilience is not one-dimensional. Players can achieve playoff success through d
 
 ### Historical Validation
 Test metrics on known cases:
-- **Shaq**: Should score high on Dominance, low on Versatility
+- **Shaq**: Should score high on Primary Method Mastery, low on Versatility
 - **Butler**: Should score high on Scalability, moderate on Versatility
-- **Harden**: Should score high on Versatility, low on Pressure Resistance
+- **Harden**: Should score high on Versatility, and now we can precisely measure his Shot-Making Dominance on tough shots.
 - **Giannis**: Should score high on Adaptability, improving over time
 
 If metrics don't align with known cases, adjust calculations.
@@ -381,12 +371,12 @@ If metrics don't align with known cases, adjust calculations.
 - Regression analysis for efficiency slopes
 **Dependencies**: Play-by-play data or game-level statistics
 
-### Phase 3: Pressure Resistance (Medium Priority)
-**Why**: Addresses the Harden problem — captures efficiency under contest
+### Phase 3: Dominance Score (Medium Priority)
+**Why**: Addresses the Harden problem — captures efficiency under contest via SQAV
 **Requirements**:
 - Shot dashboard data (already collected)
-- Pressure scenario definitions
-- Efficiency-by-pressure-level calculations
+- League-average calculations for all shot contexts
+- Efficiency vs. expected eFG% calculations
 **Dependencies**: Shot dashboard data (already available)
 
 ### Phase 4: Longitudinal Adaptability (Lower Priority)
@@ -419,9 +409,9 @@ If metrics don't align with known cases, adjust calculations.
 - None currently
 
 ### 📋 To Do
-1. Implement Dominance Score calculation
+1. Implement Primary Method Mastery calculation
 2. Implement Role Scalability calculation
-3. Implement Pressure Resistance calculation
+3. Implement Dominance Score (SQAV) calculation
 4. Collect multi-season data for Adaptability analysis
 5. Implement Unified Resilience Score
 6. Validate metrics against historical cases

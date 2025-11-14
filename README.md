@@ -240,10 +240,9 @@ Our primary analytical goal is to create a holistic measure of playoff resilienc
 
 1.  **Performance Resilience (The "What")**: This pillar answers the most important question: "Does the player's raw effectiveness decline?" It measures the playoff-to-regular-season change in core efficiency metrics like **True Shooting % (TS%)**, **Points Per Possession (PPP)**, and **Turnover % (TOV%)**. It grounds the model in the outcomes that actually matter.
 
-2.  **Method Resilience (The "How")**: This pillar quantifies a player's offensive adaptability and answers the question: "Is the player's offensive process compromised?" It is calculated using a diversity index based on three sub-pillars:
-    - **Spatial Diversity**: Efficiency and volume from different zones on the court.
-    - **Play-Type Diversity**: Efficiency and usage across different offensive sets.
-    - **Creation Diversity**: Ability to score in different ways (Catch & Shoot, Pull-ups, Drives).
+2.  **Method Resilience (The "How")**: This pillar quantifies a player's offensive adaptability and answers the question: "Is the player's offensive process compromised?" It analyzes a player's offensive style from multiple angles:
+    - **Offensive Diversity**: Calculated using a diversity index (HHI) across spatial zones, play-types, and shot creation methods. This measures a player's versatility.
+    - **Shot-Making Dominance**: Moves beyond simple percentages to a "Shot Quality-Adjusted Value" (SQAV) model. It measures a player's ability to make difficult shots by comparing their efficiency on every attempt to the league average for that exact same context (factoring in defender distance, dribbles, and shot clock pressure). This identifies players who can score effectively even when well-defended.
 
 The final score will analyze the change in a player's combined performance and method scores from the regular season to the playoffs, identifying players whose game is truly resistant to targeted defensive pressure. For a detailed breakdown of the refined methodology, see `foundational_principles.md`.
 
