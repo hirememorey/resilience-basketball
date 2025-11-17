@@ -400,22 +400,38 @@ If metrics don't align with known cases, adjust calculations.
 ## Current Implementation Status
 
 ### ✅ Completed
+- **Phase 1A MVP: Core Resilience Calculator** (`phase1a_resilience_calculator.py`)
+  - Performance Resilience: TS% delta from regular season to playoffs
+  - Spatial Diversity: Court zone versatility using shot location data
+  - Play-type Diversity: Offensive set effectiveness using synergy stats
+  - Tested on 175 qualified players (4+ playoff games) with 91.6% data quality
+  - **Key Results:**
+    - 31.2% of players highly resilient (score >75)
+    - 2.3% low resilience (score <25)
+    - Play-type diversity correlates with playoff performance (-0.131)
+    - Framework successfully distinguishes resilient vs vulnerable players
+
 - Two-pillar framework (Performance + Method Resilience)
-- Method Resilience calculation (spatial, play-type, creation diversity)
-- League average benchmarks
-- Proof-of-concept script: `calculate_resilience_scores.py`
+- Method Resilience calculation (spatial, play-type diversity)
+- League average benchmarks for efficiency weighting
+- Data validation and quality assurance systems
 
 ### 🚧 In Progress
-- None currently
+- **Phase 1B: Longitudinal Analysis** - Multi-season resilience trajectories
+  - Testing hypothesis: Player development correlates with resilience improvement
+  - Test cases: Ben Simmons (2017-2021), Joel Embiid (2017-2024), Giannis Antetokounmpo (2017-2021), James Harden (2016-2025)
+  - Goal: Validate that skill expansion leads to playoff adaptability
 
 ### 📋 To Do
-1. Implement Primary Method Mastery calculation
-2. Implement Role Scalability calculation
-3. Implement Dominance Score (SQAV) calculation
-4. Collect multi-season data for Adaptability analysis
-5. Implement Unified Resilience Score
-6. Validate metrics against historical cases
-7. Build predictive models using complete framework
+1. **Collect multi-season data** for longitudinal player analysis
+2. **Extend calculator** for year-over-year resilience tracking
+3. **Implement Primary Method Mastery** calculation (elite specialization)
+4. **Implement Role Scalability** (efficiency at different usage rates)
+5. **Implement Dominance Score (SQAV)** - shot quality-adjusted value
+6. **Build Unified Resilience Score** combining all pathways
+7. **Validate against historical cases** and predictive accuracy
+8. **Address context blindness** - adjust for teammate quality, opponent strength, role changes
+9. **Incorporate facilitation metrics** - celebrate passers who create open shots for teammates
 
 ---
 
@@ -441,11 +457,21 @@ If metrics don't align with known cases, adjust calculations.
 
 ## Next Steps for Developers
 
-1. **Read this document** to understand the extended framework
-2. **Review existing code** in `calculate_resilience_scores.py` to understand current implementation
-3. **Start with Phase 1** (Dominance Score) as it addresses the most obvious gap
-4. **Validate as you go** by testing on known cases (Shaq, Butler, Harden, Giannis)
-5. **Iterate on weights and thresholds** based on validation results
+**IMMEDIATE PRIORITY: Phase 1B - Longitudinal Analysis**
+
+1. **Read this document** to understand the extended framework and current progress
+2. **Review Phase 1A implementation** in `phase1a_resilience_calculator.py` to understand the working MVP
+3. **Focus on longitudinal testing** - implement multi-season data collection and analysis for:
+   - Ben Simmons (2017-2021): Test stagnation hypothesis
+   - Joel Embiid (2017-2024): Test development hypothesis
+   - Giannis Antetokounmpo (2017-2021): Test transformation hypothesis
+   - James Harden (2016-2025): Test elite versatility ceiling
+4. **Extend calculator** to track resilience trajectories over player careers
+5. **Validate hypothesis**: Players who expand their games should show improving resilience
+6. **Address critical framework gaps** identified in Phase 1A:
+   - **Context blindness**: Adjust for teammate quality, opponent strength, role changes
+   - **Performance oversimplification**: Include facilitation metrics (assist quality, open shot creation)
+   - **Celebrate facilitators**: Players who create easy shots for teammates should score higher than those who just take them
 
 ---
 

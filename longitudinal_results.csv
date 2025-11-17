@@ -1,0 +1,22 @@
+player_name,season,expected_trajectory,data_available,overall_resilience,performance_resilience,spatial_diversity,playtype_diversity,method_resilience,data_quality_score
+Ben Simmons,2024-25,insufficient_data,False,,,,,,0.0
+Joel Embiid,2017-18,improving,True,,,,,,0.0
+Joel Embiid,2018-19,improving,True,,,,,,0.0
+Joel Embiid,2019-20,improving,True,,,,,,0.0
+Joel Embiid,2020-21,improving,True,,,,,,0.0
+Joel Embiid,2021-22,improving,True,,,,,,0.0
+Joel Embiid,2022-23,improving,True,,,,,,0.0
+Joel Embiid,2023-24,improving,True,,,,,,0.0
+Giannis Antetokounmpo,2017-18,dramatic_improvement,True,,,,,,0.0
+Giannis Antetokounmpo,2018-19,dramatic_improvement,True,,,,,,0.0
+Giannis Antetokounmpo,2019-20,dramatic_improvement,True,,,,,,0.0
+Giannis Antetokounmpo,2020-21,dramatic_improvement,True,,,,,,0.0
+James Harden,2016-17,high_baseline,True,,,,,,0.0
+James Harden,2017-18,high_baseline,True,,,,,,0.0
+James Harden,2018-19,high_baseline,True,,,,,,0.0
+James Harden,2019-20,high_baseline,True,,,,,,0.0
+James Harden,2020-21,high_baseline,True,,,,,,0.0
+James Harden,2021-22,high_baseline,True,,,,,,0.0
+James Harden,2022-23,high_baseline,True,,,,,,0.0
+James Harden,2023-24,high_baseline,True,,,,,,0.0
+James Harden,2024-25,high_baseline,False,,,,,,0.0
