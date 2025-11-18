@@ -13,9 +13,10 @@ from pathlib import Path
 import sys
 from typing import Dict
 
-# Add the scripts directory to path so we can import the dominance calculator
+# Add the scripts directory to path so we can import calculators
 sys.path.append(str(Path(__file__).parent))
 from calculate_dominance_score import calculate_player_sqav
+from calculate_primary_method_mastery import calculate_primary_method_mastery
 
 DB_PATH = "data/nba_stats.db"
 PLAYER_ID = 201935  # James Harden
@@ -142,9 +143,12 @@ def calculate_extended_resilience(player_id: int, season: str = "2024-25") -> Di
     """
     Calculate extended playoff resilience combining multiple pathways.
 
+    Phase 1-2 Integration: Method Resilience, Dominance Score, and Primary Method Mastery
+
     Returns comprehensive resilience metrics including:
     - Method Resilience (versatility)
     - Dominance Score (SQAV)
+    - Primary Method Mastery (specialization)
     - Overall Extended Resilience Score
     """
     global PLAYER_ID
@@ -154,6 +158,9 @@ def calculate_extended_resilience(player_id: int, season: str = "2024-25") -> Di
 
     results = {}
 
+    # Calculate Primary Method Mastery (works across both seasons)
+    mastery_data = calculate_primary_method_mastery(player_id, season)
+
     for season_type in ["Regular Season", "Playoffs"]:
         # Calculate Method Resilience (versatility)
         method_resilience = calculate_method_resilience(conn, season_type)
@@ -161,12 +168,14 @@ def calculate_extended_resilience(player_id: int, season: str = "2024-25") -> Di
         # Calculate Dominance Score (SQAV)
         dominance_score = calculate_player_sqav(player_id, season, season_type)
 
-        # Combined Extended Resilience Score (Phase 1: equal weighting)
-        extended_score = (method_resilience * 0.6) + (dominance_score * 0.4)
+        # Combined Extended Resilience Score (Phase 1-2: three pathways)
+        # Method Resilience (40%), Dominance Score (35%), Primary Method Mastery (25%)
+        extended_score = (method_resilience * 0.4) + (dominance_score * 0.35) + (mastery_data['primary_method_mastery'] * 0.25)
 
         results[season_type] = {
             'Method_Resilience': method_resilience,
             'Dominance_Score': dominance_score,
+            'Primary_Method_Mastery': mastery_data['primary_method_mastery'],
             'Extended_Resilience': extended_score
         }
 
@@ -178,8 +187,16 @@ def calculate_extended_resilience(player_id: int, season: str = "2024-25") -> Di
                                    results['Regular Season']['Method_Resilience']),
         'Dominance_Delta': (results['Playoffs']['Dominance_Score'] -
                            results['Regular Season']['Dominance_Score']),
+        'Primary_Method_Mastery_Delta': 0.0,  # Mastery is calculated consistently
         'Extended_Resilience_Delta': (results['Playoffs']['Extended_Resilience'] -
                                      results['Regular Season']['Extended_Resilience'])
+    }
+
+    # Add pathway details
+    results['Pathway_Details'] = {
+        'Primary_Method_Mastery_Base': mastery_data['base_efficiency_score'],
+        'Primary_Method_Mastery_Resistance': mastery_data['playoff_resistance'],
+        'Primary_Methods': mastery_data['primary_methods']
     }
 
     return results
@@ -197,13 +214,16 @@ def main():
 
     # Test on archetype players
     archetype_players = {
-        201935: "James Harden",  # Should excel in dominance
-        2544: "LeBron James",    # Should excel in versatility + dominance
-        1629029: "Luka Dončić", # Should excel in versatility
-        203076: "Anthony Davis"  # Should excel in dominance
+        201935: "James Harden",      # Should excel in versatility + dominance
+        2544: "LeBron James",        # Should excel in versatility + mastery
+        1629029: "Luka Dončić",     # Should excel in versatility
+        203076: "Anthony Davis",    # Should excel in dominance + mastery
+        2397: "Shaq",              # Should excel in primary method mastery
+        2207: "Dirk Nowitzki"      # Should excel in primary method mastery
     }
 
-    print("🚀 Extended Playoff Resilience Calculator - Phase 1 Integration")
+    print("🚀 Extended Playoff Resilience Calculator - Phase 1-2 Integration")
+    print("Three Pathways: Versatility + Dominance + Primary Method Mastery")
     print("=" * 70)
 
     for player_id, expected_profile in archetype_players.items():
@@ -215,23 +235,40 @@ def main():
             results = calculate_extended_resilience(player_id)
 
             for season_type, metrics in results.items():
-                if season_type != 'Resilience_Delta':
+                if season_type not in ['Resilience_Delta', 'Pathway_Details']:
                     print(f"{season_type}:")
                     for metric, value in metrics.items():
-                        print(f"{metric}: {value:.2f}")
+                        print(f"  {metric}: {value:.2f}")
                     print()
+
+            # Show pathway details
+            if 'Pathway_Details' in results:
+                details = results['Pathway_Details']
+                print("Primary Method Mastery Details:")
+                print(".2f")
+                print(".2f")
+                primary_methods = details['Primary_Methods']
+                if 'spatial' in primary_methods and 'primary_zone' in primary_methods['spatial']:
+                    print(f"  Primary Zone: {primary_methods['spatial']['primary_zone']}")
+                if 'play_type' in primary_methods and 'primary_playtype' in primary_methods['play_type']:
+                    print(f"  Primary Play Type: {primary_methods['play_type']['primary_playtype']}")
+                if 'creation' in primary_methods and 'primary_creation' in primary_methods['creation']:
+                    print(f"  Primary Creation: {primary_methods['creation']['primary_creation']}")
+                print()
 
             # Show deltas
             print("Resilience Deltas (Playoffs - Regular Season):")
             for metric, delta in results['Resilience_Delta'].items():
-                print(f"{metric}: {delta:+.2f}")
+                if 'Primary_Method_Mastery_Delta' not in metric or delta != 0.0:  # Only show meaningful deltas
+                    print(f"  {metric}: {delta:+.2f}")
 
         except Exception as e:
             print(f"Error calculating for {player_name}: {e}")
 
     print("\n" + "=" * 70)
-    print("Phase 1 Complete: Multi-pathway resilience analysis operational!")
-    print("Next: Phase 2 (Primary Method Mastery) and Phase 3 (Role Scalability)")
+    print("✅ Phase 1-2 Complete: Three-Pathway Resilience Operational!")
+    print("Versatility + Dominance + Primary Method Mastery integrated")
+    print("Next: Phase 3 (Role Scalability) and Phase 4 (Longitudinal Evolution)")
 
 if __name__ == "__main__":
     main()

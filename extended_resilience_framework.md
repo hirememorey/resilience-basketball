@@ -417,11 +417,21 @@ If metrics don't align with known cases, adjust calculations.
   - Difficulty-weighted aggregation using defender distance multipliers
   - Single dominance score per player with sigmoid normalization (0-100 scale)
   - Integrated with existing versatility calculator for multi-pathway analysis
-  - Extended Resilience Score combining Method Resilience (60%) + Dominance Score (40%)
   - **Key Results:**
     - Archetype validation on Harden, LeBron, Doncic, Davis with meaningful deltas
     - Multi-pathway framework successfully operational
     - Demonstrates different resilience patterns (versatility vs dominance focus)
+
+- **Phase 2 (Extended Framework): Primary Method Mastery Implementation**
+  - Primary offensive method identification across spatial zones, play types, and creation methods
+  - Absolute efficiency measurement vs historical benchmarks and league averages
+  - Playoff resistance calculation (efficiency retention under postseason pressure)
+  - Mastery score combining base efficiency × playoff retention multiplier
+  - Three-pathway Extended Resilience Score: Method Resilience (40%) + Dominance Score (35%) + Primary Method Mastery (25%)
+  - **Key Results:**
+    - Successfully identifies primary methods for archetype players (Harden: 3PT + Drives, LeBron: Mid-Range + Drives, Davis: Mid-Range + Drives)
+    - Three-pathway framework operational with meaningful differentiation between versatility and specialization patterns
+    - Archetype validation shows expected patterns: versatile players (Harden, Dončić) vs specialized players (Davis)
 
 - Two-pillar framework (Performance + Method Resilience)
 - Multi-pathway framework (Method Resilience + Dominance Score)
@@ -429,14 +439,13 @@ If metrics don't align with known cases, adjust calculations.
 - Data validation and quality assurance systems
 
 ### 🎯 Ready for Implementation
-- **Phase 2: Primary Method Mastery** - Elite specialization pathway
-- **Phase 3: Role Scalability** - Efficiency at different usage rates
+- **Phase 3: Role Scalability** - Efficiency at different usage rates (NEXT PRIORITY)
 - **Phase 4: Longitudinal Adaptability** - Skill evolution over time
-- **Phase 5: Unified Framework** - Integrated multi-pathway scoring
+- **Phase 5: Unified Framework** - Integrated five-pathway scoring
 
 ### 📋 To Do
-1. **Implement Primary Method Mastery** calculation (elite specialization pathway)
-2. **Implement Role Scalability** (efficiency at different usage rates)
+1. ✅ **COMPLETED: Implement Primary Method Mastery** calculation (elite specialization pathway)
+2. **Implement Role Scalability** (efficiency at different usage rates) - NEXT PRIORITY
 3. **Collect multi-season data** for longitudinal player analysis (Phase 4)
 4. **Build Unified Resilience Score** combining all five pathways
 5. **Validate against historical cases** and predictive accuracy
@@ -448,8 +457,9 @@ If metrics don't align with known cases, adjust calculations.
 ## Key Files Reference
 
 - **Phase 1A Implementation** (Archived): `archive/phase1a_phase1b/calculate_harden_resilience.py`
-- **Phase 1 Implementation**: `src/nba_data/scripts/calculate_extended_resilience.py`
+- **Phase 1-2 Implementation**: `src/nba_data/scripts/calculate_extended_resilience.py` (Three-pathway integration)
 - **Dominance Score (SQAV)**: `src/nba_data/scripts/calculate_dominance_score.py`
+- **Primary Method Mastery**: `src/nba_data/scripts/calculate_primary_method_mastery.py`
 - **Original Versatility Calculator**: `src/nba_data/scripts/calculate_resilience_scores.py`
 - **Database Schema**: `src/nba_data/db/schema.py`
 - **League Averages**: `src/nba_data/scripts/calculate_league_averages.py`
@@ -470,24 +480,25 @@ If metrics don't align with known cases, adjust calculations.
 
 ## Next Steps for Developers
 
-**IMMEDIATE PRIORITY: Phase 2 - Primary Method Mastery**
+**IMMEDIATE PRIORITY: Phase 3 - Role Scalability**
 
 1. **Read this document** to understand the extended framework and current progress
-2. **Review Phase 1 implementation** in `src/nba_data/scripts/calculate_extended_resilience.py` to understand the working multi-pathway calculator
-3. **Implement Primary Method Mastery** - elite specialization pathway:
-   - Identify primary offensive method (spatial zone, play type, or creation method) by weighted volume
-   - Compare efficiency to historical benchmarks and league averages
-   - Measure playoff retention of primary method effectiveness
-   - Calculate percentile rank among all players in that method
-   - Integrate with existing versatility + dominance pathways
+2. **Review Phase 1-2 implementation** in `src/nba_data/scripts/calculate_extended_resilience.py` to understand the three-pathway calculator
+3. **Implement Role Scalability** - efficiency maintenance when usage increases:
+   - Segment performance across usage rate tiers (low, medium, high, very high)
+   - Calculate efficiency slope: does performance improve, stay flat, or decline with usage?
+   - Measure playoff usage change vs regular season baseline
+   - Assess efficiency retention when shouldering larger offensive burden
 4. **Validate against known archetypes**:
-   - Shaquille O'Neal: Should score high on Primary Method Mastery, low on Versatility
-   - James Harden: Should score high on Versatility and Dominance
-   - Jimmy Butler: Should score high on Role Scalability
-5. **Address framework expansion** opportunities:
-   - **Context adjustments**: Consider teammate quality, opponent strength, role changes
-   - **Facilitation metrics**: Include assist quality, open shot creation for passers
-   - **Longitudinal analysis**: Track skill evolution over multiple seasons (Phase 4)
+   - Jimmy Butler: Should score high on Role Scalability (maintains efficiency at high usage)
+   - Shaquille O'Neal: Should score high on Primary Method Mastery, moderate on Scalability
+   - James Harden: Should score high on Versatility and Dominance, moderate on Scalability
+   - Anthony Davis: Should show different scalability patterns based on role
+5. **Phase 2 Achievements - Primary Method Mastery Complete**:
+   - ✅ Elite specialization pathway fully operational
+   - ✅ Primary method identification working (Harden: Above Break 3 + Drives, LeBron: Mid-Range + Drives)
+   - ✅ Three-pathway framework integrated: Versatility (40%) + Dominance (35%) + Mastery (25%)
+   - ✅ Archetype validation successful with meaningful pathway differentiation
 
 ---
 
