@@ -101,31 +101,41 @@ class GamesDataPopulator:
     def _derive_season_info(self, game_id: str) -> tuple[str, str]:
         """Derive season and season_type from game_id.
 
-        NBA game_ids follow format: {season_type}{season}{game_number}
-        - season_type: 0= preseason, 1=regular, 2=playoffs, 4=allstar, 5=playin
-        - season: last 2 digits of starting year (e.g., 23 for 2023-24)
-        - game_number: sequential game number
+        NBA game_ids follow format: {season_type}{season_year}{game_number}
+        - season_type: 3 chars (002=regular, 004=playoffs, 001=preseason, etc.)
+        - season_year: 2 chars (16=2016, 23=2023)
+        - game_number: remaining chars
+
+        Examples:
+        - 0021600001 = Regular Season 2015-16, game 1
+        - 0042300001 = Playoffs 2022-23, game 1
         """
-        if not game_id or len(game_id) < 10:
+        if not game_id or len(game_id) < 7:
             return "2024-25", "Regular Season"
 
-        season_type_code = game_id[0]
-        season_code = game_id[1:3]
+        # Parse NBA game ID format
+        season_type_code = game_id[0:3]
+        season_year_code = game_id[3:5]
 
         # Map season type
         season_type_map = {
-            "0": "Pre Season",
-            "1": "Regular Season",
-            "2": "Playoffs",
-            "4": "All-Star",
-            "5": "Play-In"
+            "001": "Pre Season",
+            "002": "Regular Season",
+            "003": "All-Star",
+            "004": "Playoffs",
+            "005": "Play-In"
         }
         season_type = season_type_map.get(season_type_code, "Regular Season")
 
-        # Convert season code to full season string
+        # Convert season year to full season string
         try:
-            start_year = 2000 + int(season_code)
-            end_year = start_year + 1
+            # season_year_code represents the STARTING year of the season
+            # e.g., "23" = 2023, which means 2022-23 season
+            start_year_code = int(season_year_code)
+            start_year = 2000 + start_year_code
+            # NBA seasons are named by their END year, so 2023 means 2022-23 season
+            end_year = start_year
+            start_year = end_year - 1
             season = f"{start_year}-{str(end_year)[-2:]}"
         except (ValueError, IndexError):
             season = "2024-25"

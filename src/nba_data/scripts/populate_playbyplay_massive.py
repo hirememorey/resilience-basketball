@@ -55,6 +55,7 @@ class ProcessingConfig:
     rate_limit_delay: float = 2.0  # Delay between API calls
     progress_save_interval: int = 10  # Save progress every N games
     checkpoint_file: str = "data/cache/processing_checkpoint.json"
+    historical_mode: bool = False  # Use existing database games instead of API discovery
 
 
 class MassivePlayByPlayProcessor:
@@ -139,19 +140,62 @@ class MassivePlayByPlayProcessor:
             game_ids = self.checkpoint_data['game_ids']
             logger.info(f"📚 Resumed from checkpoint: {len(game_ids)} games")
         else:
-            # Discover new games
-            logger.info(f"🔍 Discovering {season_type} games for {season}...")
-            discovered = discover_nba_games([season], [season_type], max_games)
+            if self.config.historical_mode:
+                # Use existing games from database
+                game_ids = self._get_database_games(season, season_type, max_games)
+            else:
+                # Discover new games from API
+                logger.info(f"🔍 Discovering {season_type} games for {season}...")
+                discovered = discover_nba_games([season], [season_type], max_games)
 
-            key = f"{season}_{season_type}"
-            game_ids = discovered.get(key, [])
-            logger.info(f"🎯 Discovered {len(game_ids)} games")
+                key = f"{season}_{season_type}"
+                game_ids = discovered.get(key, [])
+                logger.info(f"🎯 Discovered {len(game_ids)} games")
 
         # Apply max_games limit
         if max_games and len(game_ids) > max_games:
             game_ids = game_ids[:max_games]
 
         return game_ids
+
+    def _get_database_games(self, season: str, season_type: str, max_games: int = None) -> List[str]:
+        """Get existing games from database for historical processing."""
+        logger.info(f"📚 Getting existing {season_type} games for {season} from database...")
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        try:
+            # Convert season_type to match database format (e.g., 'regular' -> 'Regular Season')
+            if season_type.lower() == 'regular':
+                db_season_type = 'Regular Season'
+            elif season_type.lower() == 'playoffs':
+                db_season_type = 'Playoffs'
+            else:
+                db_season_type = season_type
+
+            # Query games for the specified season and season_type
+            cursor.execute('''
+                SELECT game_id FROM games
+                WHERE season = ? AND season_type = ?
+                ORDER BY game_id
+            ''', (season, db_season_type))
+
+            game_ids = [row[0] for row in cursor.fetchall()]
+            logger.info(f"📋 Found {len(game_ids)} existing games in database")
+
+            # Apply max_games limit if specified
+            if max_games and len(game_ids) > max_games:
+                game_ids = game_ids[:max_games]
+                logger.info(f"📏 Limited to {max_games} games as requested")
+
+            return game_ids
+
+        except Exception as e:
+            logger.error(f"Error querying database games: {e}")
+            return []
+        finally:
+            conn.close()
 
     def _filter_processed_games(self, game_ids: List[str]) -> List[str]:
         """Filter out games that have already been processed."""
@@ -493,13 +537,15 @@ def main():
     parser.add_argument("--workers", type=int, default=4, help="Number of parallel workers")
     parser.add_argument("--batch-size", type=int, default=25, help="Games per batch")
     parser.add_argument("--db-path", default="data/nba_stats.db", help="Database path")
+    parser.add_argument("--historical", action="store_true", help="Use existing database games instead of API discovery")
 
     args = parser.parse_args()
 
     # Configure processing
     config = ProcessingConfig(
         max_workers=args.workers,
-        batch_size=args.batch_size
+        batch_size=args.batch_size,
+        historical_mode=args.historical
     )
 
     # Run massive processing

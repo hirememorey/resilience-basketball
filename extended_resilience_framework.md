@@ -24,12 +24,12 @@ The framework uses a **Herfindahl-Hirschman Index (HHI)** for versatility, **Sho
 ### The Gap: What's Missing
 While the current framework captures four major pathways to playoff success, one pathway remains to be implemented:
 
-- **Longitudinal Evolution**: Players like Giannis who add new skills over time (Phase 4) - **Data Ready, Implementation Pending**
+- **Longitudinal Evolution**: Players like Giannis who add new skills over time (Phase 4) - **Ready for Implementation**
 - **Unified Framework Integration**: Combining all five pathways into final research publication (Phase 5)
 
 **Data Status:**
 - ✅ **Game Logs:** Complete (272,276 records, 10 seasons) - Enables Role Scalability pathway
-- ⏳ **Shot Dashboard Historical:** In progress (36,181 records for 2024-25, historical seasons populating)
+- ✅ **Shot Dashboard Historical:** Complete (59,622 records across 10 seasons) - Enables Dominance pathway
 - ✅ **Tracking Stats:** Complete (10 seasons) - Enables Longitudinal Evolution pathway
 - ✅ **Shot Locations:** Complete (9 seasons) - Enables Versatility pathway
 
@@ -466,10 +466,12 @@ If metrics don't align with known cases, adjust calculations.
 1. ✅ **COMPLETED: Implement Primary Method Mastery** calculation (elite specialization pathway)
 2. ✅ **COMPLETED: Implement Role Scalability** (efficiency at different usage rates)
 3. ✅ **COMPLETED: Collect multi-season data** for longitudinal player analysis (Phase 4)
-4. **Build Unified Resilience Score** combining all five pathways
-5. **Validate against historical cases** and predictive accuracy
-6. **Address context blindness** - adjust for teammate quality, opponent strength, role changes
-7. **Incorporate facilitation metrics** - celebrate passers who create open shots for teammates
+4. ✅ **COMPLETED: Populate historical shot dashboard data** for Dominance pathway
+5. **Implement Phase 4: Longitudinal Evolution Calculator** (Ready for next developer)
+6. **Build Unified Resilience Score** combining all five pathways
+7. **Validate against historical cases** and predictive accuracy
+8. **Address context blindness** - adjust for teammate quality, opponent strength, role changes
+9. **Incorporate facilitation metrics** - celebrate passers who create open shots for teammates
 
 ---
 
