@@ -17,6 +17,7 @@ from typing import Dict
 sys.path.append(str(Path(__file__).parent))
 from calculate_dominance_score import calculate_player_sqav
 from calculate_primary_method_mastery import calculate_primary_method_mastery
+from calculate_role_scalability import calculate_role_scalability_score
 
 DB_PATH = "data/nba_stats.db"
 PLAYER_ID = 201935  # James Harden
@@ -143,12 +144,13 @@ def calculate_extended_resilience(player_id: int, season: str = "2024-25") -> Di
     """
     Calculate extended playoff resilience combining multiple pathways.
 
-    Phase 1-2 Integration: Method Resilience, Dominance Score, and Primary Method Mastery
+    Phase 1-3 Integration: Method Resilience, Dominance Score, Primary Method Mastery, and Role Scalability
 
     Returns comprehensive resilience metrics including:
     - Method Resilience (versatility)
     - Dominance Score (SQAV)
     - Primary Method Mastery (specialization)
+    - Role Scalability (usage adaptability)
     - Overall Extended Resilience Score
     """
     global PLAYER_ID
@@ -168,14 +170,18 @@ def calculate_extended_resilience(player_id: int, season: str = "2024-25") -> Di
         # Calculate Dominance Score (SQAV)
         dominance_score = calculate_player_sqav(player_id, season, season_type)
 
-        # Combined Extended Resilience Score (Phase 1-2: three pathways)
-        # Method Resilience (40%), Dominance Score (35%), Primary Method Mastery (25%)
-        extended_score = (method_resilience * 0.4) + (dominance_score * 0.35) + (mastery_data['primary_method_mastery'] * 0.25)
+        # Calculate Role Scalability (only meaningful for playoffs, but calculate for both for consistency)
+        scalability_data = calculate_role_scalability_score(player_id, season)
+
+        # Combined Extended Resilience Score (Phase 1-3: four pathways)
+        # Method Resilience (30%), Dominance Score (25%), Primary Method Mastery (20%), Role Scalability (25%)
+        extended_score = (method_resilience * 0.3) + (dominance_score * 0.25) + (mastery_data['primary_method_mastery'] * 0.2) + (scalability_data['scalability_score'] * 0.25)
 
         results[season_type] = {
             'Method_Resilience': method_resilience,
             'Dominance_Score': dominance_score,
             'Primary_Method_Mastery': mastery_data['primary_method_mastery'],
+            'Role_Scalability': scalability_data['scalability_score'],
             'Extended_Resilience': extended_score
         }
 
@@ -188,6 +194,7 @@ def calculate_extended_resilience(player_id: int, season: str = "2024-25") -> Di
         'Dominance_Delta': (results['Playoffs']['Dominance_Score'] -
                            results['Regular Season']['Dominance_Score']),
         'Primary_Method_Mastery_Delta': 0.0,  # Mastery is calculated consistently
+        'Role_Scalability_Delta': 0.0,  # Scalability is calculated consistently across seasons
         'Extended_Resilience_Delta': (results['Playoffs']['Extended_Resilience'] -
                                      results['Regular Season']['Extended_Resilience'])
     }
@@ -222,8 +229,8 @@ def main():
         2207: "Dirk Nowitzki"      # Should excel in primary method mastery
     }
 
-    print("🚀 Extended Playoff Resilience Calculator - Phase 1-2 Integration")
-    print("Three Pathways: Versatility + Dominance + Primary Method Mastery")
+    print("🚀 Extended Playoff Resilience Calculator - Phase 1-3 Integration")
+    print("Four Pathways: Versatility + Dominance + Primary Method Mastery + Role Scalability")
     print("=" * 70)
 
     for player_id, expected_profile in archetype_players.items():
@@ -238,7 +245,10 @@ def main():
                 if season_type not in ['Resilience_Delta', 'Pathway_Details']:
                     print(f"{season_type}:")
                     for metric, value in metrics.items():
-                        print(f"  {metric}: {value:.2f}")
+                        if metric in ['Method_Resilience', 'Dominance_Score', 'Primary_Method_Mastery', 'Role_Scalability']:
+                            print(f"  {metric}: {value:.1f}")
+                        else:
+                            print(f"  {metric}: {value:.2f}")
                     print()
 
             # Show pathway details
@@ -266,9 +276,9 @@ def main():
             print(f"Error calculating for {player_name}: {e}")
 
     print("\n" + "=" * 70)
-    print("✅ Phase 1-2 Complete: Three-Pathway Resilience Operational!")
-    print("Versatility + Dominance + Primary Method Mastery integrated")
-    print("Next: Phase 3 (Role Scalability) and Phase 4 (Longitudinal Evolution)")
+    print("✅ Phase 1-3 Complete: Four-Pathway Resilience Operational!")
+    print("Versatility + Dominance + Primary Method Mastery + Role Scalability integrated")
+    print("Next: Phase 4 (Longitudinal Evolution) and Phase 5 (Unified Framework)")
 
 if __name__ == "__main__":
     main()
