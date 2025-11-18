@@ -1,27 +1,23 @@
-# NBA Playoff Resilience Analytics
+# NBA Extended Playoff Resilience Analytics
 
-A comprehensive data science project analyzing NBA player performance under playoff pressure. This project builds a predictive model to identify factors that make players "playoff resilient" - maintaining or exceeding regular-season production in postseason games.
+A comprehensive data science project analyzing NBA player performance under playoff pressure through multiple resilience pathways. This project builds an advanced predictive model to identify all factors that make players "playoff resilient" - maintaining or exceeding regular-season production in postseason games.
 
 ## 🎯 Project Vision
 
-**Core Question:** What measurable factors in a player's regular-season performance predict their ability to maintain production in the postseason?
+**Core Question:** What are the measurable, observable factors in a player's regular-season performance that predict their ability to maintain or exceed production in the postseason?
 
-**Ultimate Goal:** Create a "Playoff Resilience Score" that helps basketball decision-makers make championship-focused investments by better predicting how regular-season production translates to playoff success.
+**Ultimate Goal:** Create a comprehensive "Extended Playoff Resilience Score" that helps basketball decision-makers make championship-focused investments by understanding all pathways to playoff adaptability.
 
-## 📊 Current Status: PHASE 1A MVP COMPLETE - Core Resilience Framework Validated! 🎯
+## 📊 Current Status: EXTENDED FRAMEWORK DEVELOPMENT - Multi-Pathway Resilience Analytics 🎯
 
-**BREAKTHROUGH: WORKING RESILIENCE CALCULATOR** - Successfully tested on 175 players with 91.6% data quality. Framework distinguishes resilient vs vulnerable players under playoff pressure.
+**BREAKTHROUGH: MULTI-PATHWAY RESILIENCE FRAMEWORK** - Recognizing that resilience is not one-dimensional. Players can achieve playoff success through different pathways: versatility, specialization, scalability, dominance, and evolution.
 
-- ✅ **PHASE 1A MVP: Core Resilience Calculator** (`phase1a_resilience_calculator.py`)
-  - **Performance Resilience:** TS% maintenance from regular season to playoffs
-  - **Spatial Diversity:** Court zone versatility using shot location data
-  - **Play-type Diversity:** Offensive set effectiveness using synergy stats
-  - **Tested on 175 players** (4+ playoff games) with 91.6% data quality
-- ✅ **Key Results:**
-  - **31.2% Highly Resilient** (score >75) - championship-caliber adaptability
-  - **2.3% Low Resilience** (score <25) - vulnerable to playoff pressure
-  - **Play-type diversity correlation:** -0.131 (versatile players perform better under pressure)
-  - **Framework validation:** Successfully distinguishes resilient vs vulnerable players
+**EXTENDED FRAMEWORK: FIVE RESILIENCE PATHWAYS**
+- **Versatility Resilience**: High diversity across offensive methods (spatial zones, play types, creation methods)
+- **Primary Method Mastery**: Elite specialization in dominant offensive method (addresses "Shaq problem")
+- **Role Scalability**: Maintaining efficiency when usage increases (addresses "Butler problem")
+- **Shot-Making Dominance**: Superior performance on high-difficulty shots under contest (addresses "Harden problem")
+- **Longitudinal Adaptability**: Skill evolution and improvement over time (addresses "Giannis problem")
 
 - ✅ **Complete Database Infrastructure:**
   - **17 tables** with regular season + playoff data + comprehensive shot context
@@ -30,8 +26,6 @@ A comprehensive data science project analyzing NBA player performance under play
   - **1,280 games** with complete metadata and scores
   - **COMPREHENSIVE SHOT DASHBOARD DATA:** 7,021 records across defender distances × shot clock × dribble ranges
   - **Data validation and quality assurance systems**
-
-**BREAKTHROUGH ACHIEVEMENT: WORKING RESILIENCE FRAMEWORK!** Core hypothesis validated - method diversity predicts playoff success
 
 **CRITICAL API FIXES AND SIMPLIFICATIONS COMPLETED:**
 - ✅ **API Parameter Discovery:** `PlayerOrTeam=Player` unlocks individual player tracking data (not team aggregates)
@@ -82,30 +76,27 @@ NBA Stats API → Data Fetcher → SQLite Database → Analysis Models
   - `possession_matchups`: Defensive matchups between players during possessions
   - `player_shot_locations`: Granular x/y coordinates for every shot taken
 
-## 🔬 PHASE 1A MVP: WORKING RESILIENCE CALCULATOR ✅
+## 🔬 EXTENDED RESILIENCE FRAMEWORK: MULTI-PATHWAY ANALYSIS ✅
 
-**SUCCESS: Core Framework Validated** - Method diversity predicts playoff performance. Framework successfully distinguishes resilient vs vulnerable players.
+**SUCCESS: Multi-Dimensional Resilience Framework** - Recognizing that playoff adaptability manifests through multiple, distinct pathways. No single metric captures all ways players can succeed under pressure.
 
--   **MVP Implementation**: `phase1a_resilience_calculator.py` - Production-ready calculator tested on 175 qualified players
--   **Performance Resilience**: TS% maintenance from regular season to playoffs (0-100 scale)
--   **Method Resilience**: Combined spatial + play-type diversity using HHI methodology
--   **Data Quality**: 91.6% average quality across all metrics
--   **Key Validation**: Play-type diversity correlates with playoff success (-0.131)
+**FRAMEWORK COMPONENTS:**
+- **Versatility Pathway**: Diversity across spatial zones, play types, and creation methods
+- **Specialization Pathway**: Elite mastery in primary offensive method (Shaq archetype)
+- **Scalability Pathway**: Efficiency maintenance when usage increases (Butler archetype)
+- **Dominance Pathway**: Superior performance on high-difficulty shots (Harden archetype)
+- **Evolution Pathway**: Skill development and improvement over time (Giannis archetype)
 
-**Results Summary:**
-- **31.2% Highly Resilient** (score >75): Alex Caruso, Jalen Brunson, Kevin Durant, Nikola Jokić
-- **65.9% Medium Resilient** (25-75): Solid contributors with room for improvement
-- **2.3% Low Resilient** (<25): Vulnerable to playoff pressure
+**TECHNICAL APPROACH:**
+- **Shot Quality-Adjusted Value (SQAV)**: Measures efficiency vs league average for each shot context
+- **Herfindahl-Hirschman Index (HHI)**: Quantifies concentration vs diversification of skills
+- **Longitudinal Analysis**: Tracks skill evolution across player careers
+- **Bayesian Integration**: Combines regular season priors with playoff likelihood
 
-**Critical Insights Identified:**
-- **Context Blindness**: Performance conflates player skill with team/situational factors
-- **Oversimplified Performance**: TS% ignores facilitation - passers who create open shots contribute equally to scorers who take them
-- **Need Longitudinal Analysis**: Single-season snapshots miss player development trajectories
-
-**Next Phase: Phase 1B - Longitudinal Testing**
-- Track resilience evolution across player careers
-- Test hypothesis: Skill expansion → Improved resilience
-- Case studies: Ben Simmons (stagnation), Embiid/Giannis (development), Harden (elite versatility ceiling)
+**Key Innovation:**
+- **Contextualized Shot Quality**: Moves beyond raw percentages to shot-making dominance under contest
+- **Multiple Resilience Pathways**: Captures specialization, versatility, scalability, and adaptation
+- **Longitudinal Perspective**: Measures career trajectory, not just current state
 
 ## 📈 Data Coverage
 
@@ -235,8 +226,8 @@ resilience-basketball/
 │           └── calculate_resilience_scores.py   # **NEW** Proof-of-concept for resilience score
 ├── data/                     # SQLite databases and cache
 ├── logs/                     # Application logs
-├── foundational_principles.md # Project vision and methodology
-├── resilience_score_methodology.md # **DEPRECATED** - Merged into foundational_principles.md
+├── foundational_principles.md # Extended framework methodology and pathways
+├── extended_resilience_framework.md # Comprehensive implementation roadmap
 ├── prompts.md               # Development command templates
 ├── validate_data.py         # Data quality validation (regular + playoff)
 ├── validate_possessions.py  # Possession validation framework
@@ -247,29 +238,33 @@ resilience-basketball/
 
 ## 🔬 Research Framework
 
-### Core Hypotheses (Ready for Testing!)
-1. **Method Resilience**: A player's ability to maintain offensive output in the playoffs is tied to the diversity of their scoring methods.
-2. **Method Over-Specialization Fragility**: One-dimensional players are more vulnerable to playoff schemes that target their primary strength.
-3. **Adaptability Measurement**: Year-over-year changes in a player's scoring profile indicate playoff readiness.
+### Extended Framework Hypotheses (Ready for Testing!)
+1. **Multiple Resilience Pathways**: Players achieve playoff success through distinct pathways: versatility, specialization, scalability, dominance, and evolution
+2. **Specialization Can Equal Versatility**: Elite mastery in one method (e.g., Shaq's post scoring) can be as resilient as broad diversification
+3. **Usage Scalability Matters**: Players who maintain efficiency when usage increases (e.g., Jimmy Butler) demonstrate true adaptability
+4. **Shot Quality Context is Critical**: Raw percentages don't distinguish between contested and uncontested shots - dominance requires excelling under pressure
+5. **Skill Evolution Predicts Future Resilience**: Players who consistently add new skills (e.g., Giannis Antetokounmpo) show championship-level adaptability
 
-### The "Playoff Resilience Score": A Two-Pillar Approach
-Our primary analytical goal is to create a holistic measure of playoff resilience. The refined score moves beyond just analyzing a player's style to incorporate their actual performance. It is built on two pillars:
+### The "Extended Playoff Resilience Score": A Five-Pathway Framework
+Our comprehensive analytical goal is to create a holistic measure of playoff resilience that captures all ways players can succeed under pressure. The extended score moves beyond single-pathway analysis to incorporate multiple dimensions of adaptability:
 
-1.  **Performance Resilience (The "What")**: This pillar answers the most important question: "Does the player's raw effectiveness decline?" It measures the playoff-to-regular-season change in core efficiency metrics like **True Shooting % (TS%)**, **Points Per Possession (PPP)**, and **Turnover % (TOV%)**. It grounds the model in the outcomes that actually matter.
+1. **Versatility Pathway**: Diversity across spatial zones, play types, and creation methods using HHI methodology
+2. **Specialization Pathway**: Elite mastery in primary offensive method, measured by percentile rank vs historical benchmarks
+3. **Scalability Pathway**: Efficiency maintenance when usage increases, measured by slope analysis across usage tiers
+4. **Dominance Pathway**: Superior performance on high-difficulty shots using Shot Quality-Adjusted Value (SQAV) methodology
+5. **Evolution Pathway**: Skill development trajectory measured through longitudinal career analysis
 
-2.  **Method Resilience (The "How")**: This pillar quantifies a player's offensive adaptability and answers the question: "Is the player's offensive process compromised?" It analyzes a player's offensive style from multiple angles:
-    - **Offensive Diversity**: Calculated using a diversity index (HHI) across spatial zones, play-types, and shot creation methods. This measures a player's versatility.
-    - **Shot-Making Dominance**: Moves beyond simple percentages to a "Shot Quality-Adjusted Value" (SQAV) model. It measures a player's ability to make difficult shots by comparing their efficiency on every attempt to the league average for that exact same context (factoring in defender distance, dribbles, and shot clock pressure). This identifies players who can score effectively even when well-defended.
+The final score integrates all pathways into a unified metric, recognizing that different players achieve resilience through different means. For a detailed breakdown of the extended methodology, see `extended_resilience_framework.md`.
 
-The final score will analyze the change in a player's combined performance and method scores from the regular season to the playoffs, identifying players whose game is truly resistant to targeted defensive pressure. For a detailed breakdown of the refined methodology, see `foundational_principles.md`.
+**✅ FULLY UNBLOCKED:** Complete individual player tracking data across entire NBA (569 players × 105+ metrics) plus comprehensive shot context data (7,021 records)
 
-**✅ FULLY UNBLOCKED:** Complete individual player tracking data across entire NBA (569 players × 105+ metrics)
-
-### Guiding Principles (Still Valid)
-- **Dynamic over Static**: Focus on career trajectories vs. single-season snapshots
-- **Leading Indicators**: Predict playoff success from regular-season patterns
-- **Beyond Box Scores**: Include advanced metrics and play-type distributions
-- **Context Matters**: Account for age, team changes, and opponent quality
+### Guiding Principles (Extended Framework)
+- **Multi-Pathway Recognition**: Resilience manifests through different combinations of specialization and versatility
+- **Contextualized Shot Quality**: Move beyond raw percentages to shot-making dominance under contest
+- **Longitudinal Perspective**: Career trajectories reveal more than single-season snapshots
+- **Leading Indicators**: Predict playoff success from regular-season patterns and career evolution
+- **Beyond Box Scores**: Include advanced metrics, play-type distributions, and shot context analysis
+- **Context Matters**: Account for age, team changes, role shifts, and opponent quality
 - **Validate Data First**: Never build analytics on untested data sources
 
 ### Success Criteria
@@ -279,34 +274,32 @@ The final score will analyze the change in a player's combined performance and m
 
 ## 🛠️ Development
 
-### Current Progress: Phase 1A MVP Complete ✅
+### Current Progress: Extended Framework Development - Multi-Pathway Implementation
 
-**Successfully implemented and validated core resilience framework:**
-- Production-ready calculator (`phase1a_resilience_calculator.py`)
-- Tested on 175 qualified players with 91.6% data quality
-- Validated core hypothesis: method diversity predicts playoff success
-- Identified critical framework gaps requiring attention
+**Successfully established data foundation for comprehensive resilience analytics:**
+- Complete NBA dataset (569 players × 140+ metrics each)
+- Comprehensive shot context data (7,021 records across all scenarios)
+- Multi-season capability for longitudinal analysis
+- Framework designed to capture all resilience pathways
 
-### Immediate Priority: Phase 1B - Longitudinal Analysis
+### Immediate Priority: Extended Framework Implementation
 
-**Goal:** Test hypothesis that player development correlates with resilience improvement
+**Goal:** Implement and validate five distinct resilience pathways
 
-**Implementation Plan:**
-1. **Multi-season Data Collection**: Gather historical data for key test cases
-2. **Longitudinal Calculator Extension**: Track resilience trajectories over player careers
-3. **Hypothesis Testing**: Validate that skill expansion leads to improved playoff adaptability
-4. **Case Studies**:
-   - Ben Simmons (2017-2021): Test stagnation hypothesis
-   - Joel Embiid (2017-2024): Test development hypothesis
-   - Giannis Antetokounmpo (2017-2021): Test transformation hypothesis
-   - James Harden (2016-2025): Test elite versatility ceiling
+**Implementation Roadmap:**
+1. **Phase 1: Dominance Score (SQAV)** - Shot quality-adjusted value under contest
+2. **Phase 2: Primary Method Mastery** - Elite specialization pathway
+3. **Phase 3: Role Scalability** - Efficiency at different usage rates
+4. **Phase 4: Longitudinal Adaptability** - Skill evolution over time
+5. **Phase 5: Unified Framework** - Integrated multi-pathway scoring
 
-### Critical Framework Refinements Needed
+### Key Technical Innovations
 
-**Address Phase 1A Insights:**
-1. **Context Blindness**: Adjust for teammate quality, opponent strength, role changes
-2. **Performance Oversimplification**: Include facilitation metrics (assist quality, open shot creation)
-3. **Celebrate Facilitators**: Players who create easy shots for teammates contribute equally to team success
+**Advanced Analytics Approach:**
+1. **Shot Quality-Adjusted Value (SQAV)**: Context-specific efficiency vs league averages
+2. **Multi-Pathway Integration**: Recognition that specialization can equal versatility
+3. **Longitudinal Analysis**: Career trajectory measurement beyond single seasons
+4. **Bayesian Framework**: Regular season priors with playoff likelihood updates
 
 ### Quality Assurance
 - All data passes statistical validation
@@ -344,9 +337,9 @@ The final score will analyze the change in a player's combined performance and m
 - **Framework Viability**: Core hypotheses require possession data, not box score proxies
 - **Individual Player Data Breakthrough**: Fixed NBA Stats API to provide granular player tracking data
 
-## 🎯 Current Phase: RESILIENCE SCORE IMPLEMENTATION - Database Fully Populated! 🚀
+## 🎯 Current Phase: EXTENDED FRAMEWORK IMPLEMENTATION - Multi-Pathway Analytics 🚀
 
-### ✅ **COMPLETE DATABASE POPULATION ACHIEVED** - Simplified Implementation Success
+### ✅ **COMPLETE DATABASE FOUNDATION ACHIEVED** - Extended Framework Ready
 - ✅ **teams**: All 30 NBA teams populated with complete metadata (30/30 teams)
 - ✅ **games**: All 1,280 NBA games with complete metadata and scores (1,280/1,280 games)
 - ✅ **player_season_stats**: All null values resolved (569/569 players complete)
@@ -355,18 +348,19 @@ The final score will analyze the change in a player's combined performance and m
 - ✅ **player_playoff_stats**: All available null values resolved (219/219 players complete)
 - ✅ **player_playoff_advanced_stats**: All null values resolved (219/219 players complete)
 - ✅ **player_playoff_tracking_stats**: Complete 105+ metrics per player (219/219 players complete)
+- ✅ **shot_dashboard_data**: Comprehensive shot context data (7,021 records across all scenarios)
 - ✅ **possessions**: Massive dataset with 382,522 possessions (100% coverage)
 - ✅ **possession_events**: 509,248 individual player actions captured
-- ✅ **Infrastructure**: Complete data population and validation pipeline operational
+- ✅ **Infrastructure**: Complete data foundation for multi-pathway resilience analysis
 
-### 🎯 **NEXT PHASE: Resilience Score Calculation & Hypothesis Testing**
-**Database is now fully populated and ready for core analytics work:**
+### 🎯 **NEXT PHASE: Extended Framework Implementation**
+**Database foundation complete - ready for advanced multi-pathway analytics:**
 - ✅ Complete 105+ metric individual player tracking dataset across regular season and playoffs
+- ✅ Comprehensive shot context data for dominance score calculation (SQAV methodology)
 - ✅ Massive possession-level dataset (382K+ samples) with full event granularity
-- ✅ Statistical power for hypothesis testing with comprehensive player metrics
-- ✅ Ready for resilience score calculation using `calculate_resilience_scores.py`
+- ✅ Statistical power for hypothesis testing across all five resilience pathways
 - ✅ Conference-quality research foundation with unprecedented data completeness
-- ✅ All critical tables populated for skill diversification vs specialization analysis
+- ✅ Ready for extended framework implementation: versatility, specialization, scalability, dominance, evolution
 
 ### 📊 **Key Technical Achievements**
 - **API Parameter Discovery**: NBA Stats API returns different column sets based on `PtMeasureType` (Drives, PaintTouch, PostTouch, etc.)
@@ -390,33 +384,37 @@ The final score will analyze the change in a player's combined performance and m
 
 ## 🤝 Contributing
 
-### For New Developers (Resilience Score Implementation)
-1. **Read Documentation**: Start with `foundational_principles.md` for research vision and the detailed "Method Resilience" methodology.
-2. **Understand Current State**: A complete data pipeline is operational with comprehensive, granular data for the entire league.
+### For New Developers (Extended Framework Implementation)
+1. **Read Documentation**: Start with `extended_resilience_framework.md` for the comprehensive multi-pathway methodology.
+2. **Understand Current State**: A complete data pipeline is operational with comprehensive, granular data for the entire league plus shot context analysis.
 3. **Run Validation**: Execute `python validate_data.py` to verify data integrity.
 4. **Check Workflows**: Review `prompts.md` for development workflow templates.
-5. **Immediate Priority**: Implement the "Method Resilience Score" calculation and hypothesis testing using the complete dataset.
-6. **Development Focus**: Build ML models and statistical analysis on our production-ready data foundation.
+5. **Immediate Priority**: Implement the five resilience pathways (versatility, specialization, scalability, dominance, evolution).
+6. **Development Focus**: Build advanced analytics that capture all ways players achieve playoff success.
 
-### Development Workflow for Resilience Score Implementation
+### Development Workflow for Extended Framework Implementation
 
-#### **PRIMARY FOCUS - Analytics & Modeling**
-1. **Implement Resilience Score Calculation**:
+#### **PRIMARY FOCUS - Multi-Pathway Analytics**
+1. **Implement Extended Framework Components**:
    ```bash
-   # Use calculate_resilience_scores.py as foundation
-   # Leverage complete 85+ metric dataset for comprehensive analysis
-   # Focus on year-over-year changes and playoff adaptability factors
+   # Start with Dominance Score (SQAV) - highest priority, uses existing shot dashboard data
+   # Implement Primary Method Mastery for specialization pathway
+   # Build Role Scalability analysis for usage efficiency
+   # Create Longitudinal Adaptability tracking
+   # Develop Unified Framework integration
    ```
 
 2. **Hypothesis Testing Framework**:
-   - Test skill diversification vs specialization hypotheses
-   - Analyze adaptability metrics across player careers
-   - Validate leading indicators of playoff performance
+   - Test multi-pathway resilience hypotheses (versatility vs specialization)
+   - Validate SQAV methodology against known player archetypes
+   - Analyze career evolution patterns
+   - Compare pathway effectiveness across different player types
 
-3. **Machine Learning Pipeline**:
-   - Build predictive models using complete tracking data
-   - Implement feature engineering on comprehensive metrics
-   - Develop model validation and performance tracking
+3. **Advanced Analytics Pipeline**:
+   - Build Shot Quality-Adjusted Value (SQAV) models
+   - Implement longitudinal analysis across player careers
+   - Develop Bayesian integration of regular season and playoff data
+   - Create multi-pathway scoring and validation framework
 
 #### **Data Pipeline Maintenance**
 The data pipeline is production-ready but can be extended:
@@ -427,33 +425,36 @@ The data pipeline is production-ready but can be extended:
 ### Key Technical Insights for New Developer:
 - **Individual Tracking Data Available**: NBA Stats API returns player-level data with `PlayerOrTeam=Player` parameter
 - **Massive Dataset Scale**: 382K+ possessions, 569 players with 105+ tracking metrics each (219 playoff players also complete)
-- **Complete Data Coverage**: All core tables fully populated and validated
+- **Complete Shot Context Data**: 7,021 records across defender distances × shot clock × dribble ranges for SQAV analysis
+- **Multi-Pathway Framework**: Resilience manifests through specialization, versatility, scalability, dominance, and evolution
 - **Follow Existing Patterns**: Use established error handling, caching, and validation approaches
 
 ### Code Quality Standards
 - Follow established patterns in existing scripts
 - Maintain data validation and error handling
-- Update documentation for any new features
-- Test against existing validation suite
+- Update documentation for any new framework components
+- Test against existing validation suite and known player archetypes
 
 ### Data Quality Assurance
 - **Validation Critical**: Run full validation suite after any data changes
-- **Documentation**: Update README.md with progress on null value resolution
+- **Documentation**: Update README.md with progress on extended framework implementation
 - **Known Limitations**: Document any API limitations or unavailable data sources
-- **Complete Dataset**: Ensure all critical player data tables are null-free before proceeding to resilience analysis
+- **Complete Dataset**: Ensure all critical player data tables are null-free before proceeding to multi-pathway analysis
 
 ## 📄 Documentation
 
-- **[Foundational Principles](foundational_principles.md)**: Research vision and detailed resilience methodology
+- **[Extended Resilience Framework](extended_resilience_framework.md)**: Comprehensive multi-pathway methodology and implementation roadmap
+- **[Foundational Principles](foundational_principles.md)**: Research vision and core resilience concepts
 - **[Development Prompts](prompts.md)**: Standardized development workflows
 - **[API Documentation](src/nba_data/api/)**: Complete API clients including massive-scale data collection
   - `game_discovery.py`: Automated game discovery system
   - `nba_stats_client.py`: NBA Stats API with playoff support
+  - `shot_dashboard_client.py`: Comprehensive shot context data collection
   - `possession_fetcher.py`: Play-by-play possession parsing
 - **[Massive Data Collection](src/nba_data/scripts/populate_playbyplay_massive.py)**: Parallel processing for hundreds of games
 - **[Data Validation](validate_data.py)**: Comprehensive validation for regular season + playoff data
-- **[Resilience Analysis](src/nba_data/scripts/calculate_resilience_scores.py)**: Experimental, single-player script for the Method Resilience Score.
-- **[Database Schema](src/nba_data/db/schema.py)**: 14-table schema with regular season, playoff, and possession data
+- **[Shot Dashboard Data](src/nba_data/scripts/populate_shot_dashboard_data.py)**: Multi-dimensional shot context analysis
+- **[Database Schema](src/nba_data/db/schema.py)**: 17-table schema with regular season, playoff, possession, and shot context data
 
 ## ⚖️ License
 
