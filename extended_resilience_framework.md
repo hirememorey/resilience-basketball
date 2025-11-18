@@ -400,7 +400,7 @@ If metrics don't align with known cases, adjust calculations.
 ## Current Implementation Status
 
 ### ✅ Completed
-- **Phase 1A MVP: Core Resilience Calculator** (`phase1a_resilience_calculator.py`)
+- **Phase 1A MVP: Core Resilience Calculator** (Archived in `archive/phase1a_phase1b/`)
   - Performance Resilience: TS% delta from regular season to playoffs
   - Spatial Diversity: Court zone versatility using shot location data
   - Play-type Diversity: Offensive set effectiveness using synergy stats
@@ -411,33 +411,46 @@ If metrics don't align with known cases, adjust calculations.
     - Play-type diversity correlates with playoff performance (-0.131)
     - Framework successfully distinguishes resilient vs vulnerable players
 
+- **Phase 1 (Extended Framework): Dominance Score (SQAV) Implementation**
+  - League-average baselines calculated for defender distance contexts
+  - Player eFG% above expected calculated for contest scenarios
+  - Difficulty-weighted aggregation using defender distance multipliers
+  - Single dominance score per player with sigmoid normalization (0-100 scale)
+  - Integrated with existing versatility calculator for multi-pathway analysis
+  - Extended Resilience Score combining Method Resilience (60%) + Dominance Score (40%)
+  - **Key Results:**
+    - Archetype validation on Harden, LeBron, Doncic, Davis with meaningful deltas
+    - Multi-pathway framework successfully operational
+    - Demonstrates different resilience patterns (versatility vs dominance focus)
+
 - Two-pillar framework (Performance + Method Resilience)
-- Method Resilience calculation (spatial, play-type diversity)
+- Multi-pathway framework (Method Resilience + Dominance Score)
 - League average benchmarks for efficiency weighting
 - Data validation and quality assurance systems
 
-### 🚧 In Progress
-- **Phase 1B: Longitudinal Analysis** - Multi-season resilience trajectories
-  - Testing hypothesis: Player development correlates with resilience improvement
-  - Test cases: Ben Simmons (2017-2021), Joel Embiid (2017-2024), Giannis Antetokounmpo (2017-2021), James Harden (2016-2025)
-  - Goal: Validate that skill expansion leads to playoff adaptability
+### 🎯 Ready for Implementation
+- **Phase 2: Primary Method Mastery** - Elite specialization pathway
+- **Phase 3: Role Scalability** - Efficiency at different usage rates
+- **Phase 4: Longitudinal Adaptability** - Skill evolution over time
+- **Phase 5: Unified Framework** - Integrated multi-pathway scoring
 
 ### 📋 To Do
-1. **Collect multi-season data** for longitudinal player analysis
-2. **Extend calculator** for year-over-year resilience tracking
-3. **Implement Primary Method Mastery** calculation (elite specialization)
-4. **Implement Role Scalability** (efficiency at different usage rates)
-5. **Implement Dominance Score (SQAV)** - shot quality-adjusted value
-6. **Build Unified Resilience Score** combining all pathways
-7. **Validate against historical cases** and predictive accuracy
-8. **Address context blindness** - adjust for teammate quality, opponent strength, role changes
-9. **Incorporate facilitation metrics** - celebrate passers who create open shots for teammates
+1. **Implement Primary Method Mastery** calculation (elite specialization pathway)
+2. **Implement Role Scalability** (efficiency at different usage rates)
+3. **Collect multi-season data** for longitudinal player analysis (Phase 4)
+4. **Build Unified Resilience Score** combining all five pathways
+5. **Validate against historical cases** and predictive accuracy
+6. **Address context blindness** - adjust for teammate quality, opponent strength, role changes
+7. **Incorporate facilitation metrics** - celebrate passers who create open shots for teammates
 
 ---
 
 ## Key Files Reference
 
-- **Current Implementation**: `src/nba_data/scripts/calculate_resilience_scores.py`
+- **Phase 1A Implementation** (Archived): `archive/phase1a_phase1b/calculate_harden_resilience.py`
+- **Phase 1 Implementation**: `src/nba_data/scripts/calculate_extended_resilience.py`
+- **Dominance Score (SQAV)**: `src/nba_data/scripts/calculate_dominance_score.py`
+- **Original Versatility Calculator**: `src/nba_data/scripts/calculate_resilience_scores.py`
 - **Database Schema**: `src/nba_data/db/schema.py`
 - **League Averages**: `src/nba_data/scripts/calculate_league_averages.py`
 - **Shot Dashboard Data**: `src/nba_data/scripts/populate_shot_dashboard_data.py`
@@ -457,21 +470,24 @@ If metrics don't align with known cases, adjust calculations.
 
 ## Next Steps for Developers
 
-**IMMEDIATE PRIORITY: Phase 1B - Longitudinal Analysis**
+**IMMEDIATE PRIORITY: Phase 2 - Primary Method Mastery**
 
 1. **Read this document** to understand the extended framework and current progress
-2. **Review Phase 1A implementation** in `phase1a_resilience_calculator.py` to understand the working MVP
-3. **Focus on longitudinal testing** - implement multi-season data collection and analysis for:
-   - Ben Simmons (2017-2021): Test stagnation hypothesis
-   - Joel Embiid (2017-2024): Test development hypothesis
-   - Giannis Antetokounmpo (2017-2021): Test transformation hypothesis
-   - James Harden (2016-2025): Test elite versatility ceiling
-4. **Extend calculator** to track resilience trajectories over player careers
-5. **Validate hypothesis**: Players who expand their games should show improving resilience
-6. **Address critical framework gaps** identified in Phase 1A:
-   - **Context blindness**: Adjust for teammate quality, opponent strength, role changes
-   - **Performance oversimplification**: Include facilitation metrics (assist quality, open shot creation)
-   - **Celebrate facilitators**: Players who create easy shots for teammates should score higher than those who just take them
+2. **Review Phase 1 implementation** in `src/nba_data/scripts/calculate_extended_resilience.py` to understand the working multi-pathway calculator
+3. **Implement Primary Method Mastery** - elite specialization pathway:
+   - Identify primary offensive method (spatial zone, play type, or creation method) by weighted volume
+   - Compare efficiency to historical benchmarks and league averages
+   - Measure playoff retention of primary method effectiveness
+   - Calculate percentile rank among all players in that method
+   - Integrate with existing versatility + dominance pathways
+4. **Validate against known archetypes**:
+   - Shaquille O'Neal: Should score high on Primary Method Mastery, low on Versatility
+   - James Harden: Should score high on Versatility and Dominance
+   - Jimmy Butler: Should score high on Role Scalability
+5. **Address framework expansion** opportunities:
+   - **Context adjustments**: Consider teammate quality, opponent strength, role changes
+   - **Facilitation metrics**: Include assist quality, open shot creation for passers
+   - **Longitudinal analysis**: Track skill evolution over multiple seasons (Phase 4)
 
 ---
 
