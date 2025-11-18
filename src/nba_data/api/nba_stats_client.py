@@ -596,6 +596,36 @@ class NBAStatsClient:
         }
         return self._make_request(endpoint, params)
 
+    def get_player_game_logs(self, player_id: int, season: str = "2024-25", season_type: str = "Regular Season") -> Dict[str, Any]:
+        """Get game logs for a specific player."""
+        endpoint = "playergamelogs"
+        params = {
+            "DateFrom": "",
+            "DateTo": "",
+            "GameSegment": "",
+            "LastNGames": "0",
+            "LeagueID": "00",
+            "Location": "",
+            "MeasureType": "Base",
+            "Month": "0",
+            "OpponentTeamID": "0",
+            "Outcome": "",
+            "PORound": "0",
+            "PaceAdjust": "N",
+            "PerMode": "Totals",
+            "Period": "0",
+            "PlayerID": str(player_id),
+            "PlusMinus": "N",
+            "Rank": "N",
+            "Season": season,
+            "SeasonSegment": "",
+            "SeasonType": season_type,
+            "ShotClockRange": "",
+            "VsConference": "",
+            "VsDivision": ""
+        }
+        return self._make_request(endpoint, params)
+
     def get_play_by_play(self, game_id: str, start_period: int = 1, end_period: int = 10) -> Dict[str, Any]:
         """Get play-by-play data for a specific game."""
         endpoint = "playbyplayv2"

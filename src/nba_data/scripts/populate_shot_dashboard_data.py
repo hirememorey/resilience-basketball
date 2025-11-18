@@ -12,6 +12,7 @@ from typing import Dict, List, Any
 import logging
 import sqlite3
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
@@ -19,9 +20,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from nba_data.api.shot_dashboard_client import ShotDashboardClient
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/populate_shot_dashboard.log"),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
+SEASONS = [
+    "2015-16", "2016-17", "2017-18", "2018-19", "2019-20",
+    "2020-21", "2021-22", "2022-23", "2023-24", "2024-25"
+]
 
 class ShotDashboardDataPopulator:
     """Populates player shot dashboard statistics into the database."""
@@ -29,7 +41,14 @@ class ShotDashboardDataPopulator:
     def __init__(self, db_path: str = "data/nba_stats.db"):
         """Initialize with database path."""
         self.db_path = Path(db_path)
-        self.client = ShotDashboardClient()
+        # Client is instantiated per request/thread for safety
+        self._client = None
+
+    @property
+    def client(self):
+        if self._client is None:
+            self._client = ShotDashboardClient()
+        return self._client
 
     def populate_season_shot_dashboard_data(
         self,
@@ -363,6 +382,8 @@ def main():
     parser.add_argument('--db-path', default='data/nba_stats.db', help='Database path (default: data/nba_stats.db)')
     parser.add_argument('--force-refresh', action='store_true', help='Force refresh cached API data')
     parser.add_argument('--summary-only', action='store_true', help='Only show summary, do not populate data')
+    parser.add_argument('--historical', action='store_true', help='Populate all historical seasons')
+    parser.add_argument('--workers', type=int, default=1, help='Number of parallel workers for historical processing')
 
     args = parser.parse_args()
 
@@ -398,8 +419,54 @@ def main():
         for shot_range, count in summary['shot_distance_breakdown']:
             print(f"  {shot_range}: {count:,}")
 
+    elif args.historical:
+        print(f"=== Starting Historical Population ({len(SEASONS)} seasons) ===")
+        print(f"Workers: {args.workers}")
+        
+        # Define worker function
+        def process_season(season):
+            # Create a NEW instance for each thread to ensure thread-safe client
+            thread_populator = ShotDashboardDataPopulator(db_path=args.db_path)
+            logger.info(f"Processing season {season}...")
+            try:
+                # Process Regular Season
+                res_reg = thread_populator.populate_season_shot_dashboard_data(
+                    season_year=season,
+                    season_type="Regular Season",
+                    force_refresh=args.force_refresh
+                )
+                
+                # Process Playoffs
+                res_playoff = thread_populator.populate_season_shot_dashboard_data(
+                    season_year=season,
+                    season_type="Playoffs",
+                    force_refresh=args.force_refresh
+                )
+                
+                return season, True, res_reg, res_playoff
+            except Exception as e:
+                logger.error(f"Error processing season {season}: {e}")
+                return season, False, None, None
+
+        # Run with thread pool
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            futures = {executor.submit(process_season, season): season for season in SEASONS}
+            
+            for future in as_completed(futures):
+                season, success, res_reg, res_playoff = future.result()
+                if success:
+                    logger.info(f"✅ Completed season {season}")
+                    if res_reg:
+                        logger.info(f"  Regular: {res_reg['records_inserted']} inserted")
+                    if res_playoff:
+                        logger.info(f"  Playoffs: {res_playoff['records_inserted']} inserted")
+                else:
+                    logger.error(f"❌ Failed season {season}")
+        
+        print("\n=== Historical Population Complete ===")
+
     else:
-        # Populate data
+        # Populate data for single season
         results = populator.populate_season_shot_dashboard_data(
             season_year=args.season,
             season_type=args.season_type,
