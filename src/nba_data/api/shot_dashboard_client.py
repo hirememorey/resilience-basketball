@@ -360,7 +360,7 @@ class ShotDashboardClient:
 
         return results
 
-    def parse_shot_dashboard_response(self, response_data: Dict[str, Any], close_def_dist_range: str = "", shot_clock_range: str = "", dribble_range: str = "") -> List[Dict[str, Any]]:
+    def parse_shot_dashboard_response(self, response_data: Dict[str, Any], close_def_dist_range: str = "", shot_clock_range: str = "", dribble_range: str = "", season: str = "2024-25") -> List[Dict[str, Any]]:
         """
         Parse the API response into a list of player shot dashboard records.
 
@@ -369,6 +369,7 @@ class ShotDashboardClient:
             close_def_dist_range: Defender distance range filter used
             shot_clock_range: Shot clock range filter used
             dribble_range: Dribble range filter used
+            season: Season year (e.g., "2024-25")
 
         Returns:
             List of dictionaries with standardized field names
@@ -391,7 +392,7 @@ class ShotDashboardClient:
 
             # Convert to our standardized format
             parsed_record = {
-                'season': '2024-25',  # Hardcode for now, can derive from API params later
+                'season': season,
                 'player_id': record.get('PLAYER_ID'),
                 'player_name': record.get('PLAYER_NAME'),
                 'team_id': record.get('PLAYER_LAST_TEAM_ID'),

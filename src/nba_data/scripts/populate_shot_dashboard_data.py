@@ -96,7 +96,11 @@ class ShotDashboardDataPopulator:
                 logger.info(f"Processing {def_dist_range} defender distance...")
 
                 # Parse the response
-                records = self.client.parse_shot_dashboard_response(response_data, close_def_dist_range=def_dist_range)
+                records = self.client.parse_shot_dashboard_response(
+                    response_data, 
+                    close_def_dist_range=def_dist_range,
+                    season=season_year
+                )
 
                 if not records:
                     logger.warning(f"No records found for {def_dist_range}")
@@ -131,7 +135,11 @@ class ShotDashboardDataPopulator:
                 logger.info(f"Processing {shot_clock_range} shot clock range...")
 
                 # Parse the response
-                records = self.client.parse_shot_dashboard_response(response_data, shot_clock_range=shot_clock_range)
+                records = self.client.parse_shot_dashboard_response(
+                    response_data, 
+                    shot_clock_range=shot_clock_range,
+                    season=season_year
+                )
 
                 if not records:
                     logger.warning(f"No records found for {shot_clock_range}")
@@ -166,7 +174,11 @@ class ShotDashboardDataPopulator:
                 logger.info(f"Processing {dribble_range} dribble range...")
 
                 # Parse the response
-                records = self.client.parse_shot_dashboard_response(response_data, dribble_range=dribble_range)
+                records = self.client.parse_shot_dashboard_response(
+                    response_data, 
+                    dribble_range=dribble_range,
+                    season=season_year
+                )
 
                 if not records:
                     logger.warning(f"No records found for {dribble_range}")
