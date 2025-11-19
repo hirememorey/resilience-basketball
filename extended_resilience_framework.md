@@ -22,19 +22,18 @@ We have a **Four-Pathway Resilience Framework** that measures multiple dimension
 The framework uses a **Herfindahl-Hirschman Index (HHI)** for versatility, **Shot Quality-Adjusted Value (SQAV)** for dominance, **efficiency benchmarking** for mastery, and **usage change analysis** for scalability, all converted to 0-100 scales.
 
 ### The Gap: What's Missing
-While the current framework captures four major pathways to playoff success, one pathway remains to be implemented:
+While the current framework captures four major pathways to playoff success, one critical analysis remains:
 
-- **Longitudinal Evolution**: Players like Giannis who add new skills over time (Phase 4) - **Ready for Implementation**
-- **Unified Framework Integration**: Combining all five pathways into final research publication (Phase 5)
+- **Longitudinal Evolution (The "Neuroplasticity Coefficient")**: Testing the hypothesis that early-career learning rate predicts future resilience better than age or athleticism.
 
 **Data Status:**
-- ✅ **Game Logs:** Complete (272,276 records, 10 seasons) - Enables Role Scalability pathway
-- ✅ **Shot Dashboard Historical:** Complete (59,622 records across 10 seasons) - Enables Dominance pathway
-- ✅ **Tracking Stats:** Complete (10 seasons) - Enables Longitudinal Evolution pathway
-- ✅ **Shot Locations:** Complete (9 seasons) - Enables Versatility pathway
-- ✅ **League Averages:** Complete (10 seasons) - **BACKFILL COMPLETE** (2015-16 to 2024-25) - Enables valid historical comparisons
+- ✅ **Game Logs:** Complete (272,276 records, 10 seasons)
+- ✅ **Shot Dashboard Historical:** Complete (59,622 records across 10 seasons)
+- ✅ **Tracking Stats:** Complete (10 seasons)
+- ✅ **Shot Locations:** Complete (9 seasons)
+- ✅ **League Averages:** Complete (10 seasons)
 
-This document outlines the complete five-pathway framework, with four pathways now operational.
+This document outlines the complete framework, including the new implementation plan for the Neuroplasticity analysis.
 
 ---
 
@@ -75,17 +74,6 @@ How efficient is the player's primary offensive method, and is it strong enough 
 - Resilience multiplier: playoff efficiency / regular season efficiency (capped at 1.2)
 - Final score: `Base_Score × Resilience_Multiplier`
 - Interpretation: 80+ = elite dominance; 60-80 = strong; <60 = not dominant enough
-
-**Edge Cases**
-- Players with multiple co-primary methods: average dominance across top 2-3 methods
-- Low-volume specialists: require minimum volume threshold (e.g., 20% of total attempts)
-- Method-specific adjustments: post-ups vs. corner 3s have different efficiency baselines
-
-**Integration with Existing Framework**
-- Current: Diversity Score measures spread across methods
-- New: Dominance Score measures peak capability in best method
-- Combined resilience: `High Diversity OR High Dominance → resilient`
-- Formula: `Resilience = max(Diversity_Score, Dominance_Score) × 0.6 + min(Diversity_Score, Dominance_Score) × 0.4`
 
 ---
 
@@ -128,22 +116,6 @@ Can the player maintain efficiency when usage increases in the playoffs?
   - If actual < expected → not scalable
 - Final score: weighted average of slope score and usage-adjusted performance
 
-**Mathematical Formulation**
-- `Scalability_Score = (Slope_Score × 0.5) + (Usage_Adjusted_Performance × 0.5)`
-- `Slope_Score = normalize(β × 100)` where β is efficiency slope
-- `Usage_Adjusted_Performance = (Actual_Playoff_Efficiency / Expected_Efficiency) × 100`
-
-**Edge Cases**
-- Players with consistent usage: measure efficiency variance, not scalability
-- Small sample sizes: require minimum games per usage tier
-- Role changes: account for position/role shifts, not just usage changes
-
-**Integration with Existing Framework**
-- Current: Performance Resilience measures overall efficiency change
-- New: Role Scalability explains why efficiency changes (usage increase)
-- Combined: `Performance Resilience × Role Scalability → adjusted resilience score`
-- Formula: `Adjusted_Resilience = Performance_Resilience × (1 + Scalability_Bonus)`
-
 ---
 
 ### 3. Dominance Score (Shot Quality-Adjusted Value): Efficiency Under Duress
@@ -151,11 +123,7 @@ Can the player maintain efficiency when usage increases in the playoffs?
 #### Core Question
 Does the player have the ability to create and convert high-difficulty scoring opportunities against dedicated defensive pressure, independent of scheme?
 
-This moves beyond simple efficiency to measure a player's true shot-making talent by accounting for the quality of every single shot attempt. It directly addresses the problem that raw percentages don't distinguish between a player hitting wide-open shots created by others and a player creating and hitting tough shots themselves.
-
 #### Calculation Approach: Shot Quality-Adjusted Value (SQAV)
-
-The Dominance Score is calculated using a Shot Quality-Adjusted Value (SQAV) model, which evaluates every shot against a league-average baseline for that exact shot context.
 
 **Step 1: Establish Baselines for Every Shot Context**
 - Using our comprehensive shot dashboard data (`player_shot_dashboard_stats`), we calculate the league-average Effective Field Goal Percentage (eFG%) for every combination of:
@@ -172,73 +140,53 @@ The Dominance Score is calculated using a Shot Quality-Adjusted Value (SQAV) mod
 **Step 3: Weight by Shot Volume and Difficulty**
 - The value generated in each context is weighted by the player's attempt volume in that context. This rewards players who not only make tough shots but do so frequently.
 - `Context_Value = eFG_Above_Expected × Shot_Attempts_in_Context`
-- A "Difficulty Multiplier" can also be applied to give more weight to shots taken under higher pressure (e.g., "Very Tight" defense, "Extensive Creation").
 
 **Step 4: Aggregate to a Single Dominance Score**
 - The final Dominance Score is the sum of the `Context_Value` generated across all shot contexts, representing the total shot-making value a player provides above an average player.
 - `Dominance Score = SUM(all_contexts(Context_Value))`
 - This score is then normalized (e.g., to a 0-100 scale or as a percentile rank) for comparison.
 
-**Mathematical Formulation**
-- `xeFG_c = League_Average_eFG%_in_Context_c`
-- `eFG_vs_x_c = Player_eFG_c - xeFG_c`
-- `Dominance_Score = Σ_c (eFG_vs_x_c * Attempts_c * Difficulty_Multiplier_c)`
-
-**Integration with Existing Framework**
-- This new Dominance Score replaces the previous "Defensive Pressure Resistance" metric with a more sophisticated and granular approach.
-- It provides a powerful lens into *why* a player's Method Resilience might be robust; a high Dominance Score suggests their methods are effective even when contested.
-- **Combined:** `True_Versatility = Method_Resilience_Score × (1 + (Normalized_Dominance_Score / 100) * Weight)`
-
 ---
 
-### 4. Longitudinal Adaptability: Skill Evolution Over Time
+### 4. Longitudinal Evolution: The "Neuroplasticity Coefficient"
 
 #### Core Question
-Does the player add new skills over time, and do those skills improve in efficiency?
+Does the player's rate of skill acquisition in their first 3 seasons ($N_c$) predict their future playoff resilience better than draft age or athleticism?
 
-#### Calculation Approach
+**Current GM Thinking:** "Potential" is based on age (20 vs 24) and body type.
+**First Principles Reality:** Improvement is a skill. Some players have high "neuroplasticity" (learning rate), others are static.
 
-**Step 1: Track Method Portfolio Over Time**
-- For each season, calculate diversity scores (spatial, play-type, creation)
-- Track which methods are "active" (above minimum volume threshold)
-- Identify new methods added each season
-- Identify methods removed or reduced
+#### Implementation Plan (Refined via Post-Mortem)
 
-**Step 2: Measure Skill Acquisition Rate**
-- New methods per season: count of methods added
-- Method expansion rate: `(Current_Methods / Previous_Methods) - 1`
-- Cumulative skill portfolio: total unique methods used across career
-- Final metric: average new methods per season over career
+**CRITICAL LESSONS LEARNED:**
+1.  **Efficiency Floor:** Volume alone is noise. Ben Simmons "attempted" mid-range shots but didn't "learn" them. A skill is only acquired if Efficiency > (League Avg - 5%).
+2.  **Coordinate Truth:** Do not trust `shot_zone_basic` strings. Use raw `loc_x` and `loc_y` to define zones (e.g., Floater Range vs. Rim).
+3.  **Prodigy Paradox:** Segment "Day 1 Starters" (High Usage Rookies) from "Raw Prospects" (Low Usage). The signal is strongest in the latter.
 
-**Step 3: Measure Skill Improvement Rate**
-- For each method, track efficiency over time
-- Calculate efficiency slope: does efficiency improve, stay flat, or decline?
-- Identify methods with improving efficiency (skill development)
-- Identify methods with declining efficiency (skill decay or role change)
+**Step 1: The "Skill Test" (Unit Test)**
+- **Objective:** Calibrate thresholds before running full analysis.
+- **Test Case:**
+  - **Ben Simmons (2016-2019):** Must show 0 new skills.
+  - **Pascal Siakam (2016-2019):** Must show > 2 new skills.
+- **Pass Condition:** If logic fails these two, do not proceed.
 
-**Step 4: Calculate Adaptability Score**
-- Skill acquisition component: new methods per season (normalized to 0-100)
-- Skill improvement component: average efficiency slope across all methods (normalized to 0-100)
-- Consistency component: variance in year-over-year changes (lower variance = more consistent)
-- Final score: weighted average of acquisition (40%), improvement (40%), consistency (20%)
+**Step 2: Calculate Neuroplasticity Score ($N_c$)**
+- **Cohort:** Rookies from 2015-16 to 2018-19.
+- **Metrics:**
+  - **Method Expansion:** `Unique_Viable_Methods_Year3 - Unique_Viable_Methods_Year1`
+  - **Efficiency Velocity:** Slope of efficiency for primary method.
+- **Weighted Scoring:**
+  - Adding "Self-Created 3s" = 3 points.
+  - Adding "Rim Finishing" = 2 points.
+  - Adding "Spot-up Shooting" = 1 point.
 
-**Mathematical Formulation**
-- `Acquisition_Rate = (New_Methods_This_Season / Career_Avg_Methods) × 100`
-- `Improvement_Rate = average(efficiency_slope for each method) × 100`
-- `Consistency_Score = 100 - (variance(year_over_year_changes) × scaling_factor)`
-- `Adaptability_Score = (Acquisition × 0.4) + (Improvement × 0.4) + (Consistency × 0.2)`
+**Step 3: Define Target Variable ("Prime Value")**
+- We cannot rely solely on playoff data due to survivorship bias (good players on bad teams).
+- **Target:** `Prime_Value_Score` = Regular Season VORP (Years 4-8) + Playoff Resilience Bonus.
 
-**Edge Cases**
-- Young players: require minimum seasons (e.g., 3+) for meaningful trends
-- Role changes: distinguish skill acquisition from role-driven method changes
-- Injury impacts: account for seasons with reduced games/minutes
-- Career stage: different expectations for early career vs. prime vs. decline
-
-**Integration with Existing Framework**
-- Current: Method Resilience measures current-season diversity
-- New: Adaptability measures trajectory of diversity over time
-- Combined: `Current diversity × Adaptability trajectory → predictive resilience`
-- Formula: `Predictive_Resilience = Current_Method_Resilience × (1 + Adaptability_Trend)`
+**Step 4: Validation**
+- **Output:** Scatter plot of $N_c$ vs. Prime Value.
+- **Hypothesis Check:** Does $N_c$ have a higher correlation coefficient ($R^2$) than Draft Age?
 
 ---
 
@@ -274,218 +222,16 @@ Resilience is not one-dimensional. Players can achieve playoff success through d
 - Pathway diversity bonus: bonus for excelling in multiple pathways
 - Final score: `Primary pathway × (1 + Pathway_Diversity_Bonus)`
 
-**Mathematical Formulation**
-- `Pathway_Scores = {Versatility, Dominance, Scalability, Evolution}`
-- `Primary_Pathway = argmax(Pathway_Scores)`
-- `Pathway_Diversity = count(pathways where score > threshold) / 5`
-- `Unified_Resilience = Primary_Pathway_Score × (1 + Pathway_Diversity × 0.2)`
-
----
-
-## Validation and Calibration
-
-### Historical Validation
-Test metrics on known cases:
-- **Shaq**: Should score high on Primary Method Mastery, low on Versatility
-- **Butler**: Should score high on Scalability, moderate on Versatility
-- **Harden**: Should score high on Versatility, and now we can precisely measure his Shot-Making Dominance on tough shots.
-- **Giannis**: Should score high on Adaptability, improving over time
-
-If metrics don't align with known cases, adjust calculations.
-
-### Predictive Validation
-- Use regular-season metrics to predict playoff performance
-- Compare predicted vs. actual playoff efficiency changes
-- Measure correlation: do high resilience scores predict playoff success?
-- Identify false positives/negatives: who scores high but underperforms, or vice versa?
-
-### Sensitivity Analysis
-- Test metric robustness: do small data changes cause large score changes?
-- Test weight sensitivity: how do different weightings affect rankings?
-- Test threshold sensitivity: how do minimum volume thresholds affect scores?
-
-### Calibration
-- Normalize scores to 0-100 scale for interpretability
-- Set meaningful thresholds: what score indicates "resilient"?
-- Create percentile rankings: where does each player rank?
-- Establish confidence intervals: account for sample size and uncertainty
-
----
-
-## Key Design Decisions
-
-### Decision 1: Absolute vs. Relative Metrics
-- **Absolute**: Compare to historical benchmarks (all-time greats)
-- **Relative**: Compare to current league average
-- **Recommendation**: Use both — absolute for dominance, relative for diversity
-
-### Decision 2: Volume vs. Efficiency Weighting
-- **Current approach**: Weight by efficiency relative to league average
-- **Alternative**: Weight by absolute volume
-- **Recommendation**: Efficiency-weighted volume (current approach) is correct — a high-volume, inefficient method shouldn't count as much
-
-### Decision 3: Playoff Sample Size
-- **Problem**: Playoff sample sizes are small (4-28 games vs. 82 regular season)
-- **Solution**: Use Bayesian approach — regular-season prior + playoff likelihood → posterior estimate
-- **Alternative**: Require minimum playoff games for reliability
-
-### Decision 4: Context Adjustment
-- **Problem**: Not all playoff runs are equal (opponent quality, injuries, team context)
-- **Solution**: Adjust for opponent defensive rating, teammate quality, injury status
-- **Challenge**: Requires additional data and assumptions
-
-### Decision 5: Temporal Scope
-- **Single-season**: Current season only
-- **Multi-season**: Career trajectory
-- **Recommendation**: Both — current resilience (single-season) and predictive resilience (multi-season)
-
----
-
-## Implementation Considerations
-
-### Data Requirements
-- **Shot location data**: For spatial diversity and pressure resistance
-- **Play-by-play data**: For usage rate segmentation and pressure scenarios
-- **Multi-season data**: For adaptability and longitudinal analysis
-- **Historical benchmarks**: For dominance score calibration
-
-### Computational Complexity
-- **Dominance Score**: O(n) where n = number of methods
-- **Role Scalability**: O(m) where m = number of games (requires game-level data)
-- **Pressure Resistance**: O(p) where p = number of shots (requires shot-level data)
-- **Adaptability**: O(s × m) where s = seasons, m = methods per season
-
-### Statistical Considerations
-- **Sample size requirements**: Minimum attempts/games for reliability
-- **Confidence intervals**: Account for uncertainty in small samples
-- **Multiple comparisons**: Adjust p-values when testing multiple hypotheses
-- **Causality vs. correlation**: Metrics measure association, not causation
-
----
-
-## Implementation Roadmap
-
-### Phase 1: Dominance Score (Highest Priority)
-**Why**: Addresses the Shaq problem — captures elite specialization
-**Requirements**:
-- Primary method identification logic
-- Historical benchmark database (or percentile calculations)
-- Playoff efficiency comparison
-**Dependencies**: Existing shot location and playtype data
-
-### Phase 2: Role Scalability (High Priority)
-**Why**: Addresses the Butler problem — captures usage efficiency
-**Requirements**:
-- Game-level usage rate data
-- Efficiency-by-usage-tier calculations
-- Regression analysis for efficiency slopes
-**Dependencies**: Play-by-play data or game-level statistics
-
-### Phase 3: Dominance Score (Medium Priority)
-**Why**: Addresses the Harden problem — captures efficiency under contest via SQAV
-**Requirements**:
-- Shot dashboard data (already collected)
-- League-average calculations for all shot contexts
-- Efficiency vs. expected eFG% calculations
-**Dependencies**: Shot dashboard data (already available)
-
-### Phase 4: Longitudinal Adaptability (Lower Priority)
-**Why**: Addresses the Giannis problem — captures skill evolution
-**Requirements**:
-- Multi-season data collection
-- Method portfolio tracking over time
-- Efficiency trend analysis
-**Dependencies**: Historical season data (not yet collected)
-
-### Phase 5: Unified Framework Integration
-**Why**: Combines all pathways into actionable resilience score
-**Requirements**:
-- Pathway identification logic
-- Unified score calculation
-- Validation against historical cases
-**Dependencies**: All previous phases
-
----
-
-## Current Implementation Status
-
-### ✅ Completed
-- **Phase 1A MVP: Core Resilience Calculator** (Archived in `archive/phase1a_phase1b/`)
-- **Phase 1: Dominance Score (SQAV)** - Contest-based shot-making dominance
-- **Phase 2: Primary Method Mastery** - Elite specialization pathway
-- **Phase 3: Role Scalability** - Efficiency at different usage rates
-- **Phase 4: Longitudinal Evolution** - Skill development over time
-  - Implemented `calculate_longitudinal_evolution.py`
-  - Validated against Giannis (High Evolution) vs Simmons (Zero Evolution)
-  - Calibrated volume thresholds for multi-season analysis
-- **Phase 5: Unified Framework** - Integrated five-pathway scoring
-  - Implemented `calculate_unified_resilience.py`
-  - **Dynamic Peak-Bias Weighting**: Primary (35%) / Secondary (25%) / Others (20/10/10%)
-  - **Archetype Validation**: Jokic (Specialist/Versatile), Harden (Versatile/Specialist)
-
-### 📋 To Do
-1. ✅ **COMPLETED: Implement Primary Method Mastery** calculation (elite specialization pathway)
-2. ✅ **COMPLETED: Implement Role Scalability** (efficiency at different usage rates)
-3. ✅ **COMPLETED: Collect multi-season data** for longitudinal player analysis (Phase 4)
-4. ✅ **COMPLETED: Populate historical shot dashboard data** for Dominance pathway
-5. ✅ **COMPLETED: Backfill historical league averages** for all 10 seasons (2015-16 to 2024-25) - Ensures valid historical comparisons
-6. ✅ **COMPLETED: Implement Phase 4: Longitudinal Evolution Calculator**
-7. ✅ **COMPLETED: Build Unified Resilience Score** combining all five pathways
-8. ✅ **COMPLETED: Validate against historical cases** and predictive accuracy
-9. **Address context blindness** - adjust for teammate quality, opponent strength, role changes
-10. **Incorporate facilitation metrics** - celebrate passers who create open shots for teammates
-
----
-
-## Key Files Reference
-
-- **Phase 1A Implementation** (Archived): `archive/phase1a_phase1b/calculate_harden_resilience.py`
-- **Phase 1-2 Implementation**: `src/nba_data/scripts/calculate_extended_resilience.py` (Three-pathway integration)
-- **Dominance Score (SQAV)**: `src/nba_data/scripts/calculate_dominance_score.py`
-- **Primary Method Mastery**: `src/nba_data/scripts/calculate_primary_method_mastery.py`
-- **Original Versatility Calculator**: `src/nba_data/scripts/calculate_resilience_scores.py`
-- **Database Schema**: `src/nba_data/db/schema.py`
-- **League Averages**: `src/nba_data/scripts/calculate_league_averages.py`
-- **Shot Dashboard Data**: `src/nba_data/scripts/populate_shot_dashboard_data.py`
-- **Foundational Principles**: `foundational_principles.md`
-
----
-
-## Questions for Future Development
-
-1. **How do we weight the pathways?** Should all pathways be equal, or should some be weighted more heavily?
-2. **What's the minimum sample size?** How many playoff games/attempts are needed for reliable metrics?
-3. **How do we handle role changes?** Should we adjust for position/role shifts, or treat them as part of adaptability?
-4. **What about team context?** Should we adjust for teammate quality, coaching, or opponent strength?
-5. **How do we validate?** What's the gold standard for "resilient" players, and how do we measure if we're right?
-
 ---
 
 ## Next Steps for Developers
 
-**IMMEDIATE PRIORITY: Phase 4 - Longitudinal Evolution**
+**IMMEDIATE PRIORITY: Implement the Neuroplasticity Experiment**
 
-1. **Read this document** to understand the extended framework and current progress
-2. **Review Phase 1-3 implementation** in `src/nba_data/scripts/calculate_extended_resilience.py` to understand the four-pathway calculator
-3. **Implement Longitudinal Evolution** - skill development over time:
-   - Collect multi-season data for player career trajectories (ALREADY COMPLETE)
-   - Track method portfolio expansion across seasons
-   - Measure skill acquisition and improvement rates
-   - Calculate career adaptability scores
-4. **Validate against known archetypes**:
-   - Giannis Antetokounmpo: Should score high on Longitudinal Evolution (skill development)
-   - LeBron James: Should show consistent high evolution scores
-   - Jimmy Butler: Should show moderate evolution with role adaptation
-   - Anthony Davis: Should show evolution patterns based on career development
-6. **COMPLETE FRAMEWORK ACHIEVEMENTS - Five Pathways Operational**:
-   - ✅ **Historical Data Infrastructure**: Complete 9-season NBA dataset (2015-16 through 2024-25)
-   - ✅ **Five Resilience Pathways**: Versatility (30%) + Dominance (25%) + Mastery (20%) + Scalability (25%) + Evolution
-   - ✅ **Longitudinal Evolution**: Skill development and career trajectory analysis operational
-   - ✅ **Historical Processing Mode**: Database-driven processing eliminates API dependency
-   - ✅ **Archetype Validation**: Comprehensive validation across Jimmy Butler (scalability), LeBron James (adaptability), James Harden (versatility), Giannis Antetokounmpo (evolution)
-   - ✅ **Complete Multi-Season Analytics**: 5,434 players × 140+ metrics × 9 seasons ready for analysis
-
----
-
-*Last Updated: November 19, 2025*
-*Framework Version: 4.1 (Complete Five Pathways + Historical Data + Backfilled Context)*
+1.  **Read the "Post-Mortem" Section Above:** Understand why previous attempts failed (Simmons False Positive).
+2.  **Write `calculate_neuroplasticity.py`:**
+    - Implement `get_zone_from_xy(x, y)` helper.
+    - Implement `check_skill_viability(volume, efficiency)` helper.
+    - Run the Simmons/Siakam unit test.
+3.  **Run the Regression:** Compare $N_c$ vs. Draft Age predicting Prime Value.
+4.  **Visualize:** Generate the "Top Learners" list and Scatter Plot.

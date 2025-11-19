@@ -286,7 +286,7 @@ resilience-basketball/
 2. **Specialization Can Equal Versatility**: Elite mastery in one method (e.g., Shaq's post scoring) can be as resilient as broad diversification
 3. **Usage Scalability Matters**: Players who maintain efficiency when usage increases (e.g., Jimmy Butler) demonstrate true adaptability
 4. **Shot Quality Context is Critical**: Raw percentages don't distinguish between contested and uncontested shots - dominance requires excelling under pressure
-5. **Skill Evolution Predicts Future Resilience**: Players who consistently add new skills (e.g., Giannis Antetokounmpo) show championship-level adaptability
+5. **The "Neuroplasticity Coefficient"**: Improvement is a skill. Future resilience is predicted by the rate of new method acquisition in the first 3 years ($N_c$), not by age or athleticism.
 
 ### The "Extended Playoff Resilience Score": A Five-Pathway Framework
 Our comprehensive analytical goal is to create a holistic measure of playoff resilience that captures all ways players can succeed under pressure. The extended score moves beyond single-pathway analysis to incorporate multiple dimensions of adaptability:
@@ -334,7 +334,7 @@ The final score integrates all pathways into a unified metric, recognizing that 
 1. **Phase 1: Dominance Score (SQAV)** - Shot quality-adjusted value under contest
 2. **Phase 2: Primary Method Mastery** - Elite specialization pathway
 3. **Phase 3: Role Scalability** - Efficiency at different usage rates
-4. **Phase 4: Longitudinal Adaptability** - Skill evolution over time
+4. **Phase 4: Longitudinal Adaptability (Neuroplasticity)** - Skill evolution over time
 5. **Phase 5: Unified Framework** - Integrated multi-pathway scoring
 
 ### Key Technical Innovations

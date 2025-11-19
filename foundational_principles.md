@@ -30,6 +30,10 @@ Our analysis will be guided by a set of core, testable hypotheses.
 *   **Hypothesis 3: Adaptability is a Measurable Skill.**
     *   The ability to adapt is not an abstract concept but can be quantified. We believe changes in a player's statistical profile over time are a proxy for their ability and willingness to evolve their game. This "rate of change" itself is a variable we can test as a predictor of future success under pressure.
 
+*   **Hypothesis 4: The "Neuroplasticity Coefficient" Predicts Future Resilience.**
+    *   **The Insight:** Improvement is a skill, not a function of time. Future resilience is predicted by the **rate of new method acquisition** in the first 3 years ($N_c$), not by age or athleticism.
+    *   **The Paradigm Shift:** Stop drafting for "body type" and start drafting for "learning rate." If a player has not added a statistically significant *new* scoring method (e.g., a floater, a post-fade) in two consecutive seasons, their evolution has stalled, even if they are only 24.
+
 ## 5. Guiding Principles for Analysis
 
 This is our "Operating System" for the project. The analysis must adhere to these principles:
