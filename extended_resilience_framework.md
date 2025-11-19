@@ -411,56 +411,15 @@ If metrics don't align with known cases, adjust calculations.
 
 ### ✅ Completed
 - **Phase 1A MVP: Core Resilience Calculator** (Archived in `archive/phase1a_phase1b/`)
-  - Performance Resilience: TS% delta from regular season to playoffs
-  - Spatial Diversity: Court zone versatility using shot location data
-  - Play-type Diversity: Offensive set effectiveness using synergy stats
-  - Tested on 175 qualified players (4+ playoff games) with 91.6% data quality
-  - **Key Results:**
-    - 31.2% of players highly resilient (score >75)
-    - 2.3% low resilience (score <25)
-    - Play-type diversity correlates with playoff performance (-0.131)
-    - Framework successfully distinguishes resilient vs vulnerable players
-
-- **Phase 1 (Extended Framework): Dominance Score (SQAV) Implementation**
-  - League-average baselines calculated for defender distance contexts
-  - Player eFG% above expected calculated for contest scenarios
-  - Difficulty-weighted aggregation using defender distance multipliers
-  - Single dominance score per player with sigmoid normalization (0-100 scale)
-  - Integrated with existing versatility calculator for multi-pathway analysis
-  - **Key Results:**
-    - Archetype validation on Harden, LeBron, Doncic, Davis with meaningful deltas
-    - Multi-pathway framework successfully operational
-    - Demonstrates different resilience patterns (versatility vs dominance focus)
-
-- **Phase 2 (Extended Framework): Primary Method Mastery Implementation**
-  - Primary offensive method identification across spatial zones, play types, and creation methods
-  - Absolute efficiency measurement vs historical benchmarks and league averages
-  - Playoff resistance calculation (efficiency retention under postseason pressure)
-  - Mastery score combining base efficiency × playoff retention multiplier
-  - Three-pathway Extended Resilience Score: Method Resilience (40%) + Dominance Score (35%) + Primary Method Mastery (25%)
-  - **Key Results:**
-    - Successfully identifies primary methods for archetype players (Harden: Above Break 3 + Drives, LeBron: Mid-Range + Drives, Davis: Mid-Range + Drives)
-    - Three-pathway framework operational with meaningful differentiation between versatility and specialization patterns
-    - Archetype validation shows expected patterns: versatile players (Harden, Dončić) vs specialized players (Davis)
-
-- **Phase 3 (Extended Framework): Role Scalability Implementation**
-  - Usage change analysis between regular season and playoffs
-  - Efficiency maintenance assessment under increased/decreased responsibility
-  - Scalability scoring algorithm with usage-based weighting
-  - Four-pathway Extended Resilience Score: Method Resilience (30%) + Dominance Score (25%) + Primary Method Mastery (20%) + Role Scalability (25%)
-  - **Key Results:**
-    - Archetype validation: Jimmy Butler (55.0 scalability, stable under increased usage), LeBron James (65.0 scalability, excellent adaptability)
-    - Four-pathway framework operational with comprehensive resilience assessment
-    - Successfully addresses "Butler problem" with usage-based efficiency maintenance
-
-- Two-pillar framework (Performance + Method Resilience)
-- Multi-pathway framework (Method Resilience + Dominance Score)
-- Four-pathway framework (Versatility + Dominance + Mastery + Scalability)
-- League average benchmarks for efficiency weighting
-- Data validation and quality assurance systems
+- **Phase 1: Dominance Score (SQAV)** - Contest-based shot-making dominance
+- **Phase 2: Primary Method Mastery** - Elite specialization pathway
+- **Phase 3: Role Scalability** - Efficiency at different usage rates
+- **Phase 4: Longitudinal Evolution** - Skill development over time
+  - Implemented `calculate_longitudinal_evolution.py`
+  - Validated against Giannis (High Evolution) vs Simmons (Zero Evolution)
+  - Calibrated volume thresholds for multi-season analysis
 
 ### 🎯 Ready for Implementation
-- **Phase 4: Longitudinal Adaptability** - Skill evolution over time
 - **Phase 5: Unified Framework** - Integrated five-pathway scoring
 
 ### 📋 To Do
