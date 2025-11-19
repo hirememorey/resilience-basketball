@@ -60,6 +60,7 @@ class ProcessingConfig:
     rate_limit_delay: float = 1.5  # Delay between API calls
     progress_save_interval: int = 5  # Save progress every N batches
     checkpoint_file: str = "data/cache/shot_location_checkpoint.json"
+    target_seasons: Optional[List[str]] = None  # Process only specific seasons if provided
 
 class ShotLocationPopulator:
     """Populates player shot location data with parallel processing."""
@@ -92,6 +93,8 @@ class ShotLocationPopulator:
         """
         self.stats.start_time = datetime.now()
         logger.info(f"🚀 Starting parallel shot location data population with {self.config.max_workers} workers")
+        if self.config.target_seasons:
+            logger.info(f"🎯 Targeting specific seasons: {', '.join(self.config.target_seasons)}")
 
         try:
             # Get combinations to process
@@ -131,7 +134,19 @@ class ShotLocationPopulator:
             logger.info("🔍 Discovering player-season combinations...")
 
             conn = sqlite3.connect(self.db_path)
-            df = pd.read_sql_query("SELECT DISTINCT player_id, season FROM player_season_stats ORDER BY player_id, season", conn)
+            query = "SELECT DISTINCT player_id, season FROM player_season_stats"
+            
+            # Add season filter if target_seasons is set
+            if self.config.target_seasons:
+                placeholders = ','.join(['?'] * len(self.config.target_seasons))
+                query += f" WHERE season IN ({placeholders})"
+                params = tuple(self.config.target_seasons)
+            else:
+                params = ()
+            
+            query += " ORDER BY player_id, season"
+            
+            df = pd.read_sql_query(query, conn, params=params)
             conn.close()
 
             combinations = list(zip(df['player_id'], df['season']))
@@ -148,22 +163,23 @@ class ShotLocationPopulator:
     def _filter_processed_combinations(self, combinations: List[Tuple[int, str]]) -> List[Tuple[int, str]]:
         """Filter out combinations that have already been processed."""
         unprocessed = []
-
+        
         conn = sqlite3.connect(self.db_path)
-        for player_id, season in combinations:
-            # Check if we have data for both Regular Season and Playoffs
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT COUNT(*) FROM player_shot_locations
-                WHERE player_id = ? AND season = ? AND season_type IN ('Regular Season', 'Playoffs')
-            """, (player_id, season))
-
-            count = cursor.fetchone()[0]
-            # If we have fewer than 2 records (one for each season type), we need to process
-            if count < 2:
-                unprocessed.append((player_id, season))
-
+        # Using a set for faster lookups of processed combinations
+        processed_query = """
+            SELECT DISTINCT player_id, season 
+            FROM player_shot_locations 
+            WHERE season_type IN ('Regular Season', 'Playoffs')
+            GROUP BY player_id, season
+            HAVING COUNT(DISTINCT season_type) >= 1
+        """
+        processed_df = pd.read_sql_query(processed_query, conn)
+        processed_set = set(zip(processed_df['player_id'], processed_df['season']))
         conn.close()
+
+        for combo in combinations:
+            if combo not in processed_set:
+                unprocessed.append(combo)
 
         skipped = len(combinations) - len(unprocessed)
         if skipped > 0:
@@ -423,6 +439,8 @@ def main():
                        help="Maximum number of player-season combinations to process")
     parser.add_argument("--rate-limit", type=float, default=1.5,
                        help="Rate limit delay between API calls in seconds (default: 1.5)")
+    parser.add_argument("--seasons", type=str, nargs="+",
+                       help="Specific seasons to process (e.g., '2015-16' '2016-17')")
 
     args = parser.parse_args()
 
@@ -430,7 +448,8 @@ def main():
     config = ProcessingConfig(
         max_workers=args.workers,
         batch_size=args.batch_size,
-        rate_limit_delay=args.rate_limit
+        rate_limit_delay=args.rate_limit,
+        target_seasons=args.seasons
     )
 
     # Create populator
