@@ -418,9 +418,10 @@ If metrics don't align with known cases, adjust calculations.
   - Implemented `calculate_longitudinal_evolution.py`
   - Validated against Giannis (High Evolution) vs Simmons (Zero Evolution)
   - Calibrated volume thresholds for multi-season analysis
-
-### 🎯 Ready for Implementation
 - **Phase 5: Unified Framework** - Integrated five-pathway scoring
+  - Implemented `calculate_unified_resilience.py`
+  - **Dynamic Peak-Bias Weighting**: Primary (35%) / Secondary (25%) / Others (20/10/10%)
+  - **Archetype Validation**: Jokic (Specialist/Versatile), Harden (Versatile/Specialist)
 
 ### 📋 To Do
 1. ✅ **COMPLETED: Implement Primary Method Mastery** calculation (elite specialization pathway)
@@ -428,9 +429,9 @@ If metrics don't align with known cases, adjust calculations.
 3. ✅ **COMPLETED: Collect multi-season data** for longitudinal player analysis (Phase 4)
 4. ✅ **COMPLETED: Populate historical shot dashboard data** for Dominance pathway
 5. ✅ **COMPLETED: Backfill historical league averages** for all 10 seasons (2015-16 to 2024-25) - Ensures valid historical comparisons
-6. **Implement Phase 4: Longitudinal Evolution Calculator** (Ready for next developer)
-7. **Build Unified Resilience Score** combining all five pathways
-8. **Validate against historical cases** and predictive accuracy
+6. ✅ **COMPLETED: Implement Phase 4: Longitudinal Evolution Calculator**
+7. ✅ **COMPLETED: Build Unified Resilience Score** combining all five pathways
+8. ✅ **COMPLETED: Validate against historical cases** and predictive accuracy
 9. **Address context blindness** - adjust for teammate quality, opponent strength, role changes
 10. **Incorporate facilitation metrics** - celebrate passers who create open shots for teammates
 

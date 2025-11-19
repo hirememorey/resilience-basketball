@@ -119,11 +119,12 @@ ORDER BY season;
 
 ## Next Steps for New Developers
 
-1. **Implement Phase 4 Calculator:**
-   - All required data is available
-   - See `extended_resilience_framework.md` for methodology
-   - Create `src/nba_data/scripts/calculate_longitudinal_evolution.py`
+1. **Analyze Case Studies:**
+   - Run `python src/nba_data/scripts/case_study_analysis.py` to see historical narratives (Harden, Giannis, etc.) validated by data.
 
-2. **Validate Data Quality:**
+2. **Run Unified Resilience Score:**
+   - Execute `python src/nba_data/scripts/calculate_unified_resilience.py` to generate the final 5-pathway scores.
+
+3. **Validate Data Quality:**
    - Run `python validate_data.py` to check data integrity
    - Review any null value warnings

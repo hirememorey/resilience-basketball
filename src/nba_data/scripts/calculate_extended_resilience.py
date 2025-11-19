@@ -61,13 +61,13 @@ def calculate_diversity_score(series: pd.Series) -> float:
         return 0
     return (1 - calculate_hhi(series)) * 100
 
-def calculate_spatial_diversity(conn: sqlite3.Connection, season_type: str) -> float:
+def calculate_spatial_diversity(conn: sqlite3.Connection, season_type: str, player_id: int) -> float:
     """Calculate spatial diversity using shot location data."""
     st_query = season_type
     query = f"""
         SELECT loc_x, loc_y, shot_made_flag, shot_type
         FROM player_shot_locations
-        WHERE player_id = {PLAYER_ID} AND season = '2024-25' AND season_type = '{st_query}'
+        WHERE player_id = {player_id} AND season = '2024-25' AND season_type = '{st_query}'
     """
     df = pd.read_sql_query(query, conn)
     if df.empty: return 0
@@ -85,13 +85,13 @@ def calculate_spatial_diversity(conn: sqlite3.Connection, season_type: str) -> f
     stats['weighted_volume'] = stats['attempts'] * stats['efg'].fillna(0.4)
     return calculate_diversity_score(stats['weighted_volume'])
 
-def calculate_play_type_diversity(conn: sqlite3.Connection, season_type: str) -> float:
+def calculate_play_type_diversity(conn: sqlite3.Connection, season_type: str, player_id: int) -> float:
     """Calculate play-type diversity using synergy stats."""
     table = "player_playtype_stats" if season_type == "Regular Season" else "player_playoff_playtype_stats"
     query = f"""
         SELECT play_type, possessions, points_per_possession
         FROM {table}
-        WHERE player_id = {PLAYER_ID} AND season = '2024-25'
+        WHERE player_id = {player_id} AND season = '2024-25'
     """
     df = pd.read_sql_query(query, conn)
     if df.empty: return 0
@@ -100,10 +100,10 @@ def calculate_play_type_diversity(conn: sqlite3.Connection, season_type: str) ->
     df['weighted_volume'] = df['possessions'] * df['points_per_possession'].fillna(0.9)
     return calculate_diversity_score(df.set_index('play_type')['weighted_volume'])
 
-def calculate_creation_diversity(conn: sqlite3.Connection, season_type: str) -> float:
+def calculate_creation_diversity(conn: sqlite3.Connection, season_type: str, player_id: int) -> float:
     """Calculate creation method diversity using tracking stats."""
     table = "player_tracking_stats" if season_type == "Regular Season" else "player_playoff_tracking_stats"
-    query = f"SELECT * FROM {table} WHERE player_id = {PLAYER_ID} AND season = '2024-25'"
+    query = f"SELECT * FROM {table} WHERE player_id = {player_id} AND season = '2024-25'"
     df = pd.read_sql_query(query, conn)
     if df.empty: return 0
 
@@ -129,11 +129,11 @@ def calculate_creation_diversity(conn: sqlite3.Connection, season_type: str) -> 
     creation_data['weighted_volume'] = creation_data['volume'] * creation_data['efficiency'].fillna(0.4)
     return calculate_diversity_score(creation_data['weighted_volume'])
 
-def calculate_method_resilience(conn: sqlite3.Connection, season_type: str) -> float:
+def calculate_method_resilience(conn: sqlite3.Connection, season_type: str, player_id: int) -> float:
     """Calculate overall method resilience (versatility score)."""
-    spatial = calculate_spatial_diversity(conn, season_type)
-    play_type = calculate_play_type_diversity(conn, season_type)
-    creation = calculate_creation_diversity(conn, season_type)
+    spatial = calculate_spatial_diversity(conn, season_type, player_id)
+    play_type = calculate_play_type_diversity(conn, season_type, player_id)
+    creation = calculate_creation_diversity(conn, season_type, player_id)
 
     weights = {'spatial': 0.4, 'play_type': 0.4, 'creation': 0.2}
     return (spatial * weights['spatial'] +
@@ -165,7 +165,7 @@ def calculate_extended_resilience(player_id: int, season: str = "2024-25") -> Di
 
     for season_type in ["Regular Season", "Playoffs"]:
         # Calculate Method Resilience (versatility)
-        method_resilience = calculate_method_resilience(conn, season_type)
+        method_resilience = calculate_method_resilience(conn, season_type, player_id)
 
         # Calculate Dominance Score (SQAV)
         dominance_score = calculate_player_sqav(player_id, season, season_type)

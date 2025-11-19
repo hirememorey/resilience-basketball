@@ -178,7 +178,20 @@ pip install pandas requests tqdm tenacity pydantic
 python src/nba_data/db/schema.py
 ```
 
+### Run Unified Framework
+Calculate the comprehensive 5-pathway resilience scores for key players:
+```bash
+python src/nba_data/scripts/calculate_unified_resilience.py
+```
+
+### Run Historical Case Studies
+Validate the framework against known historical narratives (Harden, Giannis, Simmons, etc.):
+```bash
+python src/nba_data/scripts/case_study_analysis.py
+```
+
 ### Populate Data (2024-25 Season)
+To rebuild the database from scratch:
 ```bash
 # Teams data (static NBA constants)
 python src/nba_data/scripts/populate_teams_data.py
