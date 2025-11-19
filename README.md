@@ -100,7 +100,7 @@ NBA Stats API → Data Fetcher → SQLite Database → Analysis Models
   - `possession_matchups`: Defensive matchups during possessions (empty - optional)
   - `player_shot_locations`: Granular x/y coordinates for every shot taken (889,927 records across 9 seasons)
 - **Analytics Tables:**
-  - `league_averages`: Calculated efficiency benchmarks (26 records)
+  - `league_averages`: Calculated efficiency benchmarks (580+ records across 10 seasons)
   - `player_dominance_scores`: Calculated SQAV scores (563 records)
 
 ## 🔬 EXTENDED RESILIENCE FRAMEWORK: MULTI-PATHWAY ANALYSIS ✅

@@ -55,20 +55,41 @@ def calculate_spatial_averages(conn: sqlite3.Connection, season: str, season_typ
     """
     Calculates the league-average eFG% for each defined court zone.
     """
+    # Handle season_type format (Regular Season vs RegularSeason)
+    # Database stores it as 'Regular Season' but function might receive 'Regular Season'
+    # We want to ensure we match what's in the DB
+    
+    season_type_db = season_type
+    # If we are passing 'Regular Season' (with space) or 'Playoffs' (no space needed usually)
+    # The previous code was removing space: season_type.replace(" ", "") which turned "Regular Season" -> "RegularSeason"
+    # But the DB has "Regular Season" (with space) based on our check.
+    
+    # So we should NOT strip the space if it's Regular Season.
+    # Let's trust the input season_type but ensure it matches DB expectation
+    if season_type == "Regular Season":
+        season_type_db = "Regular Season"
+    elif season_type == "Playoffs":
+        season_type_db = "Playoffs"
+        
     query = f"""
         SELECT loc_x, loc_y, shot_made_flag, shot_type
         FROM player_shot_locations
-        WHERE season = '{season}' AND season_type = '{season_type.replace(" ", "")}'
+        WHERE season = '{season}' AND season_type = '{season_type_db}'
     """
     df = pd.read_sql_query(query, conn)
     df['zone'] = define_court_zones(df)
 
     # Calculate points from each shot
     df['points'] = 0
-    df.loc[df['shot_made_flag'] == 1, 'points'] = df['shot_type'].apply(lambda x: 3 if '3PT' in x else 2)
+    
+    # Filter out rows where shot_type is None before applying lambda
+    # This prevents "argument of type 'NoneType' is not iterable" error
+    valid_shots = df['shot_type'].notna()
+    df.loc[valid_shots & (df['shot_made_flag'] == 1), 'points'] = df.loc[valid_shots, 'shot_type'].apply(lambda x: 3 if '3PT' in x else 2)
     
     # Calculate eFG% = (FGM + 0.5 * 3PM) / FGA
-    three_pointers_made = df[(df['shot_made_flag'] == 1) & (df['shot_type'] == '3PT Field Goal')].groupby('zone').size()
+    # Also ensure shot_type is not null for 3PT check
+    three_pointers_made = df[valid_shots & (df['shot_made_flag'] == 1) & (df['shot_type'].str.contains('3PT'))].groupby('zone').size()
     field_goals_made = df[df['shot_made_flag'] == 1].groupby('zone').size()
     field_goals_attempted = df.groupby('zone').size()
 
@@ -143,23 +164,31 @@ def store_averages(conn: sqlite3.Connection, season: str, season_type: str, aver
 
 def main():
     """Main function to calculate and store all league averages."""
-    season = "2024-25"
+    # List of seasons to backfill
+    seasons = [
+        "2015-16", "2016-17", "2017-18", "2018-19", "2019-20",
+        "2020-21", "2021-22", "2022-23", "2023-24", "2024-25"
+    ]
     conn = get_db_connection()
 
-    for season_type in ["Regular Season", "Playoffs"]:
-        print(f"\nCalculating league averages for {season} {season_type}...")
-        
-        spatial = calculate_spatial_averages(conn, season, season_type)
-        play_type = calculate_play_type_averages(conn, season, season_type)
-        creation = calculate_creation_averages(conn, season, season_type)
+    for season in seasons:
+        for season_type in ["Regular Season", "Playoffs"]:
+            print(f"\nCalculating league averages for {season} {season_type}...")
+            
+            try:
+                spatial = calculate_spatial_averages(conn, season, season_type)
+                play_type = calculate_play_type_averages(conn, season, season_type)
+                creation = calculate_creation_averages(conn, season, season_type)
 
-        all_averages = {
-            'spatial': spatial,
-            'play_type': play_type,
-            'creation': creation
-        }
-        
-        store_averages(conn, season, season_type, all_averages)
+                all_averages = {
+                    'spatial': spatial,
+                    'play_type': play_type,
+                    'creation': creation
+                }
+                
+                store_averages(conn, season, season_type, all_averages)
+            except Exception as e:
+                print(f"❌ Error processing {season} {season_type}: {e}")
 
     conn.close()
 

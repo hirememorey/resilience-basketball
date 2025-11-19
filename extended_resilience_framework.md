@@ -32,6 +32,7 @@ While the current framework captures four major pathways to playoff success, one
 - ✅ **Shot Dashboard Historical:** Complete (59,622 records across 10 seasons) - Enables Dominance pathway
 - ✅ **Tracking Stats:** Complete (10 seasons) - Enables Longitudinal Evolution pathway
 - ✅ **Shot Locations:** Complete (9 seasons) - Enables Versatility pathway
+- ✅ **League Averages:** Complete (10 seasons) - **BACKFILL COMPLETE** (2015-16 to 2024-25) - Enables valid historical comparisons
 
 This document outlines the complete five-pathway framework, with four pathways now operational.
 
@@ -467,11 +468,12 @@ If metrics don't align with known cases, adjust calculations.
 2. ✅ **COMPLETED: Implement Role Scalability** (efficiency at different usage rates)
 3. ✅ **COMPLETED: Collect multi-season data** for longitudinal player analysis (Phase 4)
 4. ✅ **COMPLETED: Populate historical shot dashboard data** for Dominance pathway
-5. **Implement Phase 4: Longitudinal Evolution Calculator** (Ready for next developer)
-6. **Build Unified Resilience Score** combining all five pathways
-7. **Validate against historical cases** and predictive accuracy
-8. **Address context blindness** - adjust for teammate quality, opponent strength, role changes
-9. **Incorporate facilitation metrics** - celebrate passers who create open shots for teammates
+5. ✅ **COMPLETED: Backfill historical league averages** for all 10 seasons (2015-16 to 2024-25) - Ensures valid historical comparisons
+6. **Implement Phase 4: Longitudinal Evolution Calculator** (Ready for next developer)
+7. **Build Unified Resilience Score** combining all five pathways
+8. **Validate against historical cases** and predictive accuracy
+9. **Address context blindness** - adjust for teammate quality, opponent strength, role changes
+10. **Incorporate facilitation metrics** - celebrate passers who create open shots for teammates
 
 ---
 
@@ -525,5 +527,5 @@ If metrics don't align with known cases, adjust calculations.
 
 ---
 
-*Last Updated: November 18, 2025*
-*Framework Version: 4.0 (Complete Five Pathways + Historical Data)*
+*Last Updated: November 19, 2025*
+*Framework Version: 4.1 (Complete Five Pathways + Historical Data + Backfilled Context)*
