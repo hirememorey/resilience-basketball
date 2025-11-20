@@ -1,51 +1,46 @@
 # NBA Extended Playoff Resilience Analytics
 
-A comprehensive data science project analyzing NBA player performance under playoff pressure through multiple resilience pathways. This project builds an advanced predictive model to identify all factors that make players "playoff resilient" - maintaining or exceeding regular-season production in postseason games.
+A data science project to identify the factors that make NBA players "playoff resilient."
 
 ## 🎯 Project Vision
 
 **Core Question:** What are the measurable, observable factors in a player's regular-season performance that predict their ability to maintain or exceed production in the postseason?
 
-**Ultimate Goal:** Create a comprehensive "Extended Playoff Resilience Score" that helps basketball decision-makers make championship-focused investments by understanding all pathways to playoff adaptability.
+**Ultimate Goal:** Create a comprehensive "Extended Playoff Resilience Score" that moves beyond traditional stats to capture the underlying drivers of playoff adaptability.
 
-## 📊 Current Status: PHASE 5 COMPLETE - Unified Framework Operational ✅
+## ❗ Crucial Context for New Developers
 
-**BREAKTHROUGH ACHIEVEMENT:** We have successfully implemented and validated the **Five-Pathway Resilience Framework**. The model now generates a single "Unified Resilience Score" that integrates five distinct dimensions of basketball adaptability, validated against 10 years of historical data (2015-2025).
+This project has recently undergone a **major data integrity overhaul and a philosophical pivot.**
 
-### The 5 Resilience Pathways
-1.  **Versatility Resilience**: Diversity of scoring methods (Spatial, Play-Type, Creation).
-2.  **Specialization Mastery**: Elite efficiency in a primary method (The "Shaq" Pathway).
-3.  **Role Scalability**: Ability to maintain efficiency under increased usage (The "Jimmy Butler" Pathway).
-4.  **Dominance Resilience**: Ability to make high-difficulty shots (The "Shot Quality" Pathway).
-5.  **Longitudinal Evolution**: The "Neuroplasticity Coefficient" - rate of new skill acquisition over time.
+1.  **Data Integrity:** The foundational database was rebuilt to fix critical schema and data population errors. **Only the 2024-25 Regular Season data is currently clean and populated.**
+2.  **Philosophical Pivot:** We have shifted from viewing resilience as an "intrinsic trait" to a "conditional probability."
 
-### Key Findings (Trend Analysis)
-*   **Nikola Jokic** is the "Resilience Gold Standard" with elite scores in Specialization, Scalability, *and* Evolution.
-*   **James Harden's** decline was predicted by the model years in advance due to a critically low **Evolution Score (18.4)**.
-*   **Resilience is Dynamic:** Players shift archetypes over their careers (e.g., KD shifting from Versatility to Specialization).
+**Before you begin, you MUST read the new "Project Pivot" and "Data Integrity Post-Mortem" sections at the top of `extended_resilience_framework.md`.** This document contains the new roadmap and essential context.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 ```bash
-pip install pandas requests tqdm tenacity pydantic matplotlib
+pip install -r requirements.txt
 ```
 
 ### Initialize Database
+This will create the database file with the correct, updated schema.
 ```bash
 python src/nba_data/db/schema.py
 ```
 
-### Run Unified Analysis
-Generate resilience scores for key archetypes:
+### (Ongoing) Repopulate Historical Data
+The database is currently mostly empty. You will need to run the fixed population scripts for each season and season type.
 ```bash
-python src/nba_data/scripts/calculate_unified_resilience.py
+# Example for one season
+python src/nba_data/scripts/populate_historical_data.py --seasons 2023-24
 ```
 
-### Run Trend Analysis (Pre-Mortem)
-Analyze career trajectories across 10 seasons:
+### Validate Data Integrity
+After populating any data, **always** run the validation script.
 ```bash
-python src/nba_data/scripts/analyze_resilience_trends.py
+python src/nba_data/scripts/validate_integrity.py
 ```
 
 ## 📁 Project Structure
@@ -55,30 +50,18 @@ resilience-basketball/
 ├── src/
 │   └── nba_data/
 │       ├── scripts/
-│       │   ├── calculate_unified_resilience.py    # MAIN ENGINE: Combines all 5 pathways
-│       │   ├── calculate_longitudinal_evolution.py # Neuroplasticity/Growth logic
-│       │   ├── calculate_role_scalability.py      # Usage vs Efficiency logic
-│       │   ├── calculate_dominance_score.py       # Shot Quality (SQAV) logic
-│       │   ├── analyze_resilience_trends.py       # Multi-season trend analysis
-│       │   └── ... (Data population scripts)
+│       │   ├── populate_historical_data.py # MAIN SCRIPT for data ingestion
+│       │   ├── validate_integrity.py       # CRITICAL validation script
+│       │   ├── calculate_...               # Analysis scripts (REQUIRE UPDATES)
+│       │   └── ...
 │       ├── db/               # Database schema
 │       └── api/              # NBA Stats API clients
-├── data/                     # SQLite database (nba_stats.db) and CSV results
-├── extended_resilience_framework.md # Detailed methodology documentation
+├── data/                     # SQLite database (nba_stats.db)
+├── extended_resilience_framework.md # ✅ START HERE: Detailed methodology & new roadmap
 └── README.md
 ```
 
-## 🏗️ Architecture
-*   **Data Source:** NBA Stats API (Cached locally).
-*   **Storage:** SQLite (`nba_stats.db`).
-*   **Logic:** Python-based modular calculators for each pathway.
-*   **Validation:** "Historical Processing Mode" ensures all metrics are reproducible across 10 seasons.
-
-## 🤝 Contributing
-This project is research-grade code. If you are picking this up:
-1.  **Start with `extended_resilience_framework.md`** to understand the theory.
-2.  **Run `analyze_resilience_trends.py`** to see the model in action.
-3.  **Focus on the "Dominance" Normalization:** This is the next area for refinement (see TODOs).
-
-## ⚖️ License
-Research and educational purposes. Data sourced from NBA Stats API.
+## Next Steps
+1.  **Start with `extended_resilience_framework.md`** to understand the new project direction.
+2.  **Run the historical data population** to build your dataset.
+3.  **Refactor the analysis scripts** in `src/nba_data/scripts/` to implement the new resilience metrics (Friction Score, Crucible Baseline, etc.).

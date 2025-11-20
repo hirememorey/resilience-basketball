@@ -1,71 +1,99 @@
 # Extended Playoff Resilience Framework
 
-## Current State: Phase 5 Complete - Unified Framework Operational ✅
+## 🚨 Project Pivot: Addressing Critical Feedback & New Philosophy
 
-### Project Overview
-This project analyzes NBA player performance to identify factors that predict playoff resilience—the ability to maintain or exceed regular-season production in the postseason. We have a complete data pipeline with comprehensive player statistics, shot location data, game logs, and both regular-season and playoff metrics across 10 seasons (2015-16 through 2024-25).
+**This project has undergone a critical philosophical pivot.** Initial analysis focused on measuring resilience as an *intrinsic player trait*. Based on critical feedback, we now understand this is flawed. The model's original failure modes stemmed from the gap between *what* happened and *why* it happened.
 
-### The "Extended Playoff Resilience Score"
-We have successfully implemented a **Five-Pathway Resilience Framework** that measures multiple dimensions of playoff adaptability. The core thesis is that resilience is not one-dimensional; players can survive the playoffs through different "survival strategies."
+**New Philosophy: Resilience is a Conditional Probability.** A player's resilience is not a static score; it is a dependent variable contingent on specific constraints like defensive schemes, offensive systems, teammate gravity, and resource consumption (i.e., time of possession).
 
-#### The 5 Pathways (Fully Operational)
+Our new mandate is to measure **Process Independence** over raw production.
+
+### The Five Failure Modes We Must Now Address:
+This new approach is a direct response to five identified blind spots in the original model:
+
+1.  **The Defensive Scheme Blind Spot (Context Vacuum):** The old model rewarded "versatility" without understanding dependencies. A player scoring in three ways that all rely on a single action (e.g., a kick-out from a primary ball-handler) is not versatile, but fragile. **The Fix: We must measure "Creation Independence" by factoring in `% Assisted` data.**
+2.  **The "Heliocentric" Illusion (System vs. Skill):** The old model conflated a player's skill with their coaching system. It couldn't distinguish between "cannot do it" and "is not asked to do it" (e.g., Jalen Brunson in Dallas vs. New York). **The Fix: We will normalize for "Opportunity Density" by measuring `Points Per Touch-Second` to identify latent scalability.**
+3.  **The "League Average" Denominator Flaw:** The old model's "Dominance" score (SQAV) compared players against a regular-season baseline, which is statistically incongruent with playoff intensity. **The Fix: We must create a "Crucible Baseline" by comparing performance against only Top-10 rated defenses.**
+4.  **The "Portfolio Theory" Problem (Actionability Gap):** The old model treated players as independent variables, ignoring that high-usage, high-resilience players cannibalize each other's resources. **The Fix: We will introduce a "Resource Cost" (e.g., High/Low Friction) to each resilience score.**
+5.  **The "Lagging Indicator" of Evolution:** The old model's "Neuroplasticity" metric was too slow, confirming evolution only after a player was already on a max contract. **The Fix: We will detect "Micro-Evolution" by tracking changes in *attempt rates* within a single season.**
+
+---
+## Data Integrity Post-Mortem: A Warning for New Developers
+
+The most significant roadblock in the initial implementation was not complex logic, but **silent data corruption.** A series of shortcuts during initial data population created latent integrity issues that made all downstream analysis unreliable.
+
+**Before writing any new analysis, understand these core lessons:**
+
+1.  **Your Schema is Your Constitution:** The original `player_season_stats` table was missing a `season_type` column in its primary key, causing "Regular Season" and "Playoffs" data to collide. This has been fixed. **Instruction:** Rigorously define uniqueness constraints for any new table. The database should physically prevent you from making data-quality errors.
+2.  **Never Trust, Always Verify:** The initial population scripts ran without crashing but were silently inserting incorrect data. **Instruction:** For every population script, a corresponding validation script (like the new `validate_integrity.py`) is mandatory. It must perform presence, sanity, and joinability checks.
+3.  **Eliminate "Magic Numbers":** The entire data foundation was corrupted by a placeholder `team_id` (`1610612760`). This has been fixed by fetching the real `team_id` from the API. **Instruction:** There is no such thing as a temporary placeholder for a foreign key. A `NULL` value is honest; a fake value is a lie that your code will treat as fact.
+
+---
+## 1. The Goal (The "Why")
+
+The ultimate goal is to build a predictive model that moves beyond traditional box score stats to identify the factors that make an NBA player's performance resilient to postseason pressure. We aim to create a quantifiable "Playoff Resilience Score" that can help basketball decision-makers make more informed, championship-focused investments.
+
+## 2. The Core Problem
+
+Regular-season performance is an imperfect predictor of postseason success. The game changes—defensive intensity increases, rotations shorten, and opponents exploit specific weaknesses. This project addresses the critical gap in understanding the *leading indicators* of playoff adaptability. We are not just asking "who succeeded," but "why did they succeed, and can we predict it in advance?"
+
+## 3. Core Hypotheses
+
+1.  **Method Resilience Predicts Playoff Success:** A player who demonstrates a measurable diversification of their *scoring methods* is more likely to maintain performance. A diverse skillset is harder to neutralize.
+2.  **Method Over-Specialization Creates Fragility:** Players who rely on a narrow set of offensive actions are more susceptible to targeted defensive schemes.
+3.  **Adaptability is a Measurable Skill:** The "rate of change" in a player's statistical profile over time is a variable we can test as a predictor of future success under pressure.
+4.  **The "Neuroplasticity Coefficient" Predicts Future Resilience:** Future resilience is predicted by the **rate of new method acquisition**, not by age or athleticism. Draft for "learning rate."
+
+## 4. The Five-Pathway Framework (As Originally Conceived)
+
+*This section outlines the original five pathways. Note that the "Project Pivot" described above requires us to refine how these are calculated.*
 
 1.  **Versatility Resilience (The "Swiss Army Knife")**
     *   **Concept:** Harder to guard if you can score from everywhere.
     *   **Metric:** **Diversity Score** (Inverse HHI).
-    *   **Archetype:** **Luka Doncic**. High scores across spatial zones and play types.
+    *   **Archetype:** **Luka Doncic**.
 
 2.  **Specialization Mastery (The "Shaq")**
-    *   **Concept:** If you are elite at one thing (3 standard deviations above mean), you don't need to be versatile.
+    *   **Concept:** If you are elite at one thing, you don't need to be versatile.
     *   **Metric:** **Primary Method Mastery**.
-    *   **Archetype:** **Kevin Durant**. Elite efficiency in specific zones (mid-range) that translates to playoffs.
+    *   **Archetype:** **Kevin Durant**.
 
 3.  **Role Scalability (The "Jimmy Butler")**
     *   **Concept:** Can you maintain efficiency when your usage spikes?
     *   **Metric:** **Efficiency Slope** (Correlation between Usage & Efficiency).
-    *   **Archetype:** **Nikola Jokic**. Gets *more* efficient as he shoulders more load.
+    *   **Archetype:** **Nikola Jokic**.
 
 4.  **Dominance Resilience (The "Harden/Kobe")**
     *   **Concept:** Can you make bad shots (high contest, low clock)?
     *   **Metric:** **SQAV (Shot Quality-Adjusted Value)**.
-    *   **Archetype:** **James Harden**. High ability to hit difficult shots, though often fragile if this is the *only* pathway.
+    *   **Archetype:** **James Harden**.
 
 5.  **Longitudinal Evolution (The "Giannis")**
     *   **Concept:** "Neuroplasticity" or Learning Rate. Does the player add new skills over time?
-    *   **Metric:** **Adaptability Score**. Counts new "qualified methods" added year-over-year.
-    *   **Archetype:** **Giannis Antetokounmpo**. Started raw, added driving, then passing, then mid-range.
+    *   **Metric:** **Adaptability Score**.
+    *   **Archetype:** **Giannis Antetokounmpo**.
 
 ---
+## 5. Technical Implementation & Current Status
 
-## Trend Analysis Findings (Pre-Mortem)
-
-We performed a longitudinal analysis (2015-2025) to validate the model. The results confirm that **resilience is a trajectory, not a snapshot.**
-
-| Player | Trend Insight |
-| :--- | :--- |
-| **Nikola Jokic** | **The Ascendant.** Consistent rise from Versatility (62.7) to elite Scalability (69.8). The model identifies him as the most resilient player in the dataset due to elite scores in 3 pathways. |
-| **James Harden** | **The Fragility Curve.** Peaked in 2018 (61.1 - MVP Season) but steadily declined to 55.6 by 2022. His low **Evolution Score (18.4)** successfully predicted his stagnation. |
-| **Kevin Durant** | **The Specialist Shift.** Transformed from a Versatile wing in Golden State (56.3) to a pure Specialist in Phoenix (60.1). |
-| **Luka Doncic** | **The Early Peak?** Peaked in 2021 (67.8) but has regressed to 57.9 in 2025. Suggests he is becoming more static/predictable despite high volume. |
-
----
-
-## Technical Implementation Details
-
-### Data Foundation
+### Data Foundation & Recent Fixes
 - **Scope:** 10 full seasons (2015-16 to 2024-25).
-- **Granularity:**
-    - 272,276 Game Logs.
-    - 889,927 Shot Locations (X/Y coordinates).
-    - Comprehensive Tracking Data (Drives, Touches, Catch & Shoot).
-- **Architecture:** Local SQLite (`nba_stats.db`) with "Historical Processing Mode" for reproducibility.
+- **Architecture:** Local SQLite (`nba_stats.db`).
+- **CRITICAL FIX (Nov 2025):** The data integrity has been overhauled.
+    - The schema for core stats tables (`player_season_stats`, `player_advanced_stats`, `player_tracking_stats`) has been **updated to include `season_type` in the primary key.**
+    - The data population scripts have been **fixed to use actual `team_id`s** instead of placeholders.
+    - The database has been **re-populated with clean data for the 2024-25 Regular Season.** Historical data requires repopulation.
 
 ### Core Scripts
-- **`calculate_unified_resilience.py`**: The main engine. Aggregates all 5 pathways and applies dynamic weighting based on the player's primary archetype.
-- **`calculate_longitudinal_evolution.py`**: Implements the "Neuroplasticity" logic (counting new skills).
-- **`analyze_resilience_trends.py`**: Runs the multi-season analysis to generate career arcs.
+- **`calculate_unified_resilience.py`**: The main engine (aggregates the 5 pathways). **NOTE: This script needs to be updated to reflect the new philosophical pivot.**
+- **Population Scripts:** Reside in `src/nba_data/scripts/` and are used to fetch data from the API.
+- **Validation Script:** `src/nba_data/scripts/validate_integrity.py` **must be run** after any data population to ensure data health.
 
-### Next Steps
-1.  **Refine Dominance Normalization:** The SQAV scores are currently compressed (~50). We need to adjust the sigmoid scaling to differentiate elite shot-makers (KD/Kyrie) more clearly.
-2.  **Visualization:** Generate line charts for the trend data to visualize career arcs.
-3.  **Final Report:** Publish the findings as a research paper/blog post.
+### Next Steps (The New Roadmap)
+1.  **Repopulate Historical Data:** Run the fixed population scripts for all seasons from 2015-16 to 2023-24 for both "Regular Season" and "Playoffs".
+2.  **Implement Team Ratings Ingestion:** Create a script to populate team-level defensive ratings for each season. This is required for the "Crucible Baseline".
+3.  **Refactor Resilience Calculations:** Update the analysis scripts (`calculate_...`) to implement the new logic:
+    - `Dependency-Weighted Versatility Score`
+    - `Friction Score` (Points per Touch-Second)
+    - `Crucible-Adjusted Dominance Score`
+4.  **Visualize:** Generate career arc charts for the new, more robust metrics.
