@@ -75,6 +75,15 @@ def main():
     # 1. Populate Player Data (Season by Season)
     for season in seasons:
         populate_season(season, args.season_types)
+
+        # Populate Games Data for the season
+        try:
+            logger.info(f"Populating Games data for {season}...")
+            games_populator = GamesDataPopulator()
+            for season_type in (args.season_types if args.season_types else ["Regular Season", "Playoffs"]):
+                games_populator.populate_games_for_season(season, season_type)
+        except Exception as e:
+            logger.error(f"Failed to populate games for {season}: {e}")
         
     # 2. Populate Team Data (Derived from players)
     if not args.skip_teams:

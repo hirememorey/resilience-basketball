@@ -81,8 +81,8 @@ Regular-season performance is an imperfect predictor of postseason success. The 
 - **Architecture:** Local SQLite (`nba_stats.db`).
 - **CRITICAL FIX (Nov 2025):** The data integrity has been overhauled.
     - The schema for core stats tables (`player_season_stats`, `player_advanced_stats`, `player_tracking_stats`) has been **updated to include `season_type` in the primary key.**
-    - The data population scripts have been **fixed to use actual `team_id`s** instead of placeholders.
-    - The database has been **re-populated with clean data for the 2024-25 Regular Season.** Historical data requires repopulation.
+    - The data population scripts have been **fixed and executed.**
+    - The database is now **fully populated with clean data for all seasons from 2015-16 to 2024-25,** for both Regular Season and Playoffs.
 
 ### Core Scripts
 - **`calculate_unified_resilience.py`**: The main engine (aggregates the 5 pathways). **NOTE: This script needs to be updated to reflect the new philosophical pivot.**
@@ -90,7 +90,7 @@ Regular-season performance is an imperfect predictor of postseason success. The 
 - **Validation Script:** `src/nba_data/scripts/validate_integrity.py` **must be run** after any data population to ensure data health.
 
 ### Next Steps (The New Roadmap)
-1.  **Repopulate Historical Data:** Run the fixed population scripts for all seasons from 2015-16 to 2023-24 for both "Regular Season" and "Playoffs".
+1.  **✅ Repopulate Historical Data:** Run the fixed population scripts for all seasons from 2015-16 to 2023-24 for both "Regular Season" and "Playoffs".
 2.  **Implement Team Ratings Ingestion:** Create a script to populate team-level defensive ratings for each season. This is required for the "Crucible Baseline".
 3.  **Refactor Resilience Calculations:** Update the analysis scripts (`calculate_...`) to implement the new logic:
     - `Dependency-Weighted Versatility Score`
@@ -101,5 +101,6 @@ Regular-season performance is an imperfect predictor of postseason success. The 
 ---
 ### Implementation Progress
 - **✅ Friction Score Data Pipeline:** The necessary possession metrics (`AVG_SEC_PER_TOUCH`, `AVG_DRIB_PER_TOUCH`, `PTS_PER_TOUCH`, `TIME_OF_POSS`, `FRONT_CT_TOUCHES`) have been successfully integrated. The `player_tracking_stats` and `player_playoff_tracking_stats` tables are now being populated with this data.
+- **✅ Historical Data Backfill:** The database now contains 10 seasons of player and game data.
 - **⏳ Team Ratings:** Data ingestion for team-level defensive ratings is still pending.
 - **⏳ Analysis Scripts:** The core calculation scripts have not yet been refactored to use the new data.

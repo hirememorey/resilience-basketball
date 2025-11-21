@@ -12,9 +12,9 @@ A data science project to identify the factors that make NBA players "playoff re
 
 This project has recently undergone a **major data integrity overhaul and a philosophical pivot.**
 
-1.  **Data Integrity:** The foundational database was rebuilt to fix critical schema and data population errors. **Only the 2024-25 Regular Season data is currently clean and populated.**
+1.  **Data Integrity:** The foundational database was rebuilt to fix critical schema and data population errors. The database is now **fully populated with clean data for 10 seasons (2015-16 to 2024-25).**
 2.  **Philosophical Pivot:** We have shifted from viewing resilience as an "intrinsic trait" to a "conditional probability."
-3.  **Recent Progress (Nov 2025):** The data pipeline for new "Possession" metrics (Time of Possession, Points per Touch, etc.) has been successfully implemented. This is the first step toward calculating the new `Friction Score`.
+3.  **Recent Progress (Nov 2025):** The "Data Bridge" is complete. All historical player and game data has been successfully backfilled.
 
 **Before you begin, you MUST read the new "Project Pivot" and "Data Integrity Post-Mortem" sections at the top of `extended_resilience_framework.md`.** This document contains the new roadmap and essential context.
 
@@ -31,15 +31,16 @@ This will create the database file with the correct, updated schema.
 python src/nba_data/db/schema.py
 ```
 
-### (Ongoing) Repopulate Historical Data
-The database is currently mostly empty. You will need to run the fixed population scripts for each season and season type.
+### Database Status: ✅ POPULATED
+The database is fully populated with 10 seasons of historical data. The main population script (`populate_historical_data.py`) can be re-run if necessary, but is not required for initial setup.
+
 ```bash
-# Example for one season
-python src/nba_data/scripts/populate_historical_data.py --seasons 2023-24
+# Optional: Example for re-populating one season
+python populate_historical_data.py --seasons 2023-24
 ```
 
 ### Validate Data Integrity
-After populating any data, **always** run the validation script.
+After any new data ingestion, **always** run the validation script.
 ```bash
 python src/nba_data/scripts/validate_integrity.py
 ```
@@ -64,5 +65,4 @@ resilience-basketball/
 
 ## Next Steps
 1.  **Start with `extended_resilience_framework.md`** to understand the new project direction.
-2.  **Run the historical data population** to build your dataset.
-3.  **Refactor the analysis scripts** in `src/nba_data/scripts/` to implement the new resilience metrics (Friction Score, Crucible Baseline, etc.).
+2.  **Refactor the analysis scripts** in `src/nba_data/scripts/` to implement the new resilience metrics (Friction Score, Crucible Baseline, etc.). This is the **"Logic Bridge"** and the primary focus of the next phase.

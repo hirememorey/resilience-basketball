@@ -88,7 +88,9 @@ class TeamsDataPopulator:
             logger.info(f"Found {len(existing_team_ids)} unique team_ids in players table")
 
             # Filter NBA_TEAMS to only include teams we have players for
-            teams_to_insert = [team for team in NBA_TEAMS if team["team_id"] in existing_team_ids]
+            # teams_to_insert = [team for team in NBA_TEAMS if team["team_id"] in existing_team_ids]
+            # FORCE INSERT ALL TEAMS - We need them even if no players are currently linked
+            teams_to_insert = NBA_TEAMS
 
             logger.info(f"Will insert {len(teams_to_insert)} teams")
 

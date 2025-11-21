@@ -28,6 +28,101 @@ class GamesDataPopulator:
         self.db_path = Path(db_path)
         self.schema = NBADatabaseSchema(db_path)
 
+    def populate_games_for_season(self, season: str, season_type: str) -> Dict[str, Any]:
+        """
+        Populate games data for a specific season from the NBA API.
+        
+        Args:
+            season: The season to populate (e.g. "2023-24")
+            season_type: The season type (e.g. "Regular Season")
+            
+        Returns:
+            Summary of population results
+        """
+        logger.info(f"Starting games data population for {season} {season_type}")
+        
+        results = {
+            "games_processed": 0,
+            "games_inserted": 0,
+            "errors": []
+        }
+        
+        from src.nba_data.api.nba_stats_client import NBAStatsClient
+        client = NBAStatsClient()
+        
+        try:
+            # Fetch game logs for the season to identify games
+            # We'll use league game log endpoint which gives us all games
+            from nba_api.stats.endpoints import leaguegamelog
+            
+            logger.info(f"Fetching game logs for {season}...")
+            game_log = leaguegamelog.LeagueGameLog(
+                season=season, 
+                season_type_all_star=season_type,
+                player_or_team_abbreviation='T' # Team game logs
+            ).get_data_frames()[0]
+            
+            # Extract unique games
+            # Group by GAME_ID to deduplicate (since we get 2 rows per game, one for each team)
+            unique_games = game_log.drop_duplicates(subset=['GAME_ID'])
+            
+            logger.info(f"Found {len(unique_games)} unique games for {season}")
+            
+            for _, game_row in unique_games.iterrows():
+                try:
+                    game_id = game_row['GAME_ID']
+                    game_date = game_row['GAME_DATE']
+                    
+                    # We need to find both teams for this game
+                    # The current row gives us one team (Team A) and the matchup string helps verify
+                    # But simpler is to filter the original dataframe for this game_id
+                    game_matchup = game_log[game_log['GAME_ID'] == game_id]
+                    
+                    if len(game_matchup) < 2:
+                        logger.warning(f"Incomplete game record for {game_id} - found {len(game_matchup)} teams")
+                        continue
+                        
+                    # Identify home and away
+                    # MATCHUP format is usually "ATL vs. BOS" (Home) or "ATL @ BOS" (Away)
+                    team_a = game_matchup.iloc[0]
+                    team_b = game_matchup.iloc[1]
+                    
+                    # Determine home/away based on matchup string
+                    # If team_a has "vs.", team_a is HOME. If "@", team_a is AWAY.
+                    if "vs." in team_a['MATCHUP']:
+                        home_team = team_a
+                        away_team = team_b
+                    else:
+                        home_team = team_b
+                        away_team = team_a
+                        
+                    game_record = {
+                        "game_id": game_id,
+                        "game_date": game_date,
+                        "home_team_id": int(home_team['TEAM_ID']),
+                        "away_team_id": int(away_team['TEAM_ID']),
+                        "home_team_score": int(home_team['PTS']),
+                        "away_team_score": int(away_team['PTS']),
+                        "season": season,
+                        "season_type": season_type
+                    }
+                    
+                    self._insert_game_data(game_record)
+                    results["games_inserted"] += 1
+                    results["games_processed"] += 1
+                    
+                except Exception as e:
+                    logger.error(f"Error processing game {game_row.get('GAME_ID', 'unknown')}: {e}")
+                    results["errors"].append(f"game_id {game_row.get('GAME_ID', 'unknown')}: {str(e)}")
+                    results["games_processed"] += 1
+                    
+        except Exception as e:
+            logger.error(f"Failed to fetch games for {season}: {e}")
+            results["errors"].append(str(e))
+            
+        logger.info(f"Games population complete for {season}: {results['games_inserted']} inserted")
+        return results
+
     def populate_games_data(self) -> Dict[str, Any]:
         """
         Populate games data from possession records.
