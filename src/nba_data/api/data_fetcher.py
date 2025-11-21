@@ -63,6 +63,15 @@ class DataFetcher:
         # Core metrics that are available and most relevant for playoff resilience
         mappings = {
             # Basic box score stats
+            "TEAM_ID": MetricMapping(
+                canonical_name="Team ID",
+                api_source="leaguedashplayerstats",
+                api_column="TEAM_ID",
+                endpoint_params={"MeasureType": "Base", "PerMode": "Totals", "SeasonType": "Regular Season"},
+                data_type=DataType.COUNT,
+                required=True,
+                notes="Team Identifier"
+            ),
             "GP": MetricMapping(
                 canonical_name="Games Played",
                 api_source="leaguedashplayerstats",
@@ -1736,6 +1745,53 @@ class DataFetcher:
                 notes="Average distance from basket for all rebounds"
             ),
 
+            # Possessions Metrics (For Friction Score)
+            "AVG_SEC_PER_TOUCH": MetricMapping(
+                canonical_name="Average Seconds Per Touch",
+                api_source="leaguedashptstats",
+                api_column="AVG_SEC_PER_TOUCH",
+                endpoint_params={"PtMeasureType": "Possessions"},
+                data_type=DataType.TIME,
+                required=False,
+                notes="Average duration of a touch"
+            ),
+            "AVG_DRIBBLES": MetricMapping(
+                canonical_name="Average Dribbles Per Touch",
+                api_source="leaguedashptstats",
+                api_column="AVG_DRIB_PER_TOUCH",
+                endpoint_params={"PtMeasureType": "Possessions"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Average dribbles per touch"
+            ),
+            "PTS_PER_TOUCH": MetricMapping(
+                canonical_name="Points Per Touch",
+                api_source="leaguedashptstats",
+                api_column="PTS_PER_TOUCH",
+                endpoint_params={"PtMeasureType": "Possessions"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Points generated per touch"
+            ),
+            "TIME_OF_POSS": MetricMapping(
+                canonical_name="Time of Possession",
+                api_source="leaguedashptstats",
+                api_column="TIME_OF_POSS",
+                endpoint_params={"PtMeasureType": "Possessions"},
+                data_type=DataType.TIME,
+                required=False,
+                notes="Total time of possession"
+            ),
+            "FRONT_CT_TOUCHES": MetricMapping(
+                canonical_name="Front Court Touches",
+                api_source="leaguedashptstats",
+                api_column="FRONT_CT_TOUCHES",
+                endpoint_params={"PtMeasureType": "Possessions"},
+                data_type=DataType.COUNT,
+                required=False,
+                notes="Touches in front court"
+            ),
+
             # Physical attributes (available ones)
             "HEIGHT": MetricMapping(
                 canonical_name="Player Height",
@@ -2059,7 +2115,10 @@ class DataFetcher:
                 "EFF_CATCH_SHOOT_FG_PCT", "EFF_PULL_UP_PTS", "EFF_PULL_UP_FG_PCT",
                 "EFF_PAINT_TOUCH_PTS", "EFF_PAINT_TOUCH_FG_PCT", "EFF_POST_TOUCH_PTS",
                 "EFF_POST_TOUCH_FG_PCT", "EFF_ELBOW_TOUCH_PTS", "EFF_ELBOW_TOUCH_FG_PCT",
-                "EFF_EFG_PCT"
+                "EFF_EFG_PCT",
+
+                # Possession metrics
+                "AVG_SEC_PER_TOUCH", "AVG_DRIB_PER_TOUCH", "PTS_PER_TOUCH", "TIME_OF_POSS", "FRONT_CT_TOUCHES"
             ]
         }
 
@@ -2107,6 +2166,9 @@ class DataFetcher:
             elif metric_name in ["AGE", "GP", "W", "L", "W_PCT", "MIN", "TS_PCT", "USG_PCT", "OFF_RATING", "DEF_RATING", "NET_RATING", "REB_PCT", "AST_PCT", "AST_TO", "AST_RATIO", "OREB_PCT", "DREB_PCT", "TM_TOV_PCT", "EFG_PCT", "PACE", "PIE"]:
                 # Advanced stats - includes all available metrics
                 response = self.client.get_league_player_playoff_advanced_stats(season)
+            elif metric_name in ["AVG_SEC_PER_TOUCH", "AVG_DRIB_PER_TOUCH", "PTS_PER_TOUCH", "TIME_OF_POSS", "FRONT_CT_TOUCHES"]:
+                # Possession stats
+                response = self.client.get_league_player_playoff_tracking_stats(season, pt_measure_type="Possessions")
             elif metric_name.startswith(("DRIVE", "CATCH_SHOOT", "PULL_UP", "PAINT_TOUCH", "POST_TOUCH", "ELBOW_TOUCH", "EFF")):
                 # Tracking stats - map metric names to PtMeasureType
                 measure_type_map = {

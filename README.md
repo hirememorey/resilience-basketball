@@ -14,6 +14,7 @@ This project has recently undergone a **major data integrity overhaul and a phil
 
 1.  **Data Integrity:** The foundational database was rebuilt to fix critical schema and data population errors. **Only the 2024-25 Regular Season data is currently clean and populated.**
 2.  **Philosophical Pivot:** We have shifted from viewing resilience as an "intrinsic trait" to a "conditional probability."
+3.  **Recent Progress (Nov 2025):** The data pipeline for new "Possession" metrics (Time of Possession, Points per Touch, etc.) has been successfully implemented. This is the first step toward calculating the new `Friction Score`.
 
 **Before you begin, you MUST read the new "Project Pivot" and "Data Integrity Post-Mortem" sections at the top of `extended_resilience_framework.md`.** This document contains the new roadmap and essential context.
 

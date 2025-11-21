@@ -1,6 +1,6 @@
 # Database Status Report
 
-**Last Updated:** November 20, 2025  
+**Last Updated:** November 21, 2025  
 **Purpose:** Quick reference for new developers to understand current database state.
 
 ## 🚨 High-Level Status: PENDING HISTORICAL REPOPULATION
@@ -28,7 +28,7 @@ The database schema and population logic have been **completely overhauled** to 
 |-------|---------|--------|----------|
 | `player_season_stats` | 569 | ✅ Populated for 2024-25 RS | Historical data pending |
 | `player_advanced_stats` | 569 | ✅ Populated for 2024-25 RS | Historical data pending |
-| `player_tracking_stats` | 569 | ✅ Populated for 2024-25 RS | Historical data pending |
+| `player_tracking_stats` | 569 | ✅ Populated for 2024-25 RS | Includes new possession metrics for Friction Score. Historical data pending. |
 | `player_playtype_stats` | ~4,300 | ⚠️ PENDING | Requires population |
 | `player_shot_locations` | 0 | ⚠️ PENDING | Requires full historical population |
 

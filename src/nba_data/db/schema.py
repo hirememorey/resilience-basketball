@@ -201,6 +201,7 @@ class NBADatabaseSchema:
             CREATE TABLE IF NOT EXISTS player_season_stats (
                 player_id INTEGER NOT NULL,
                 season TEXT NOT NULL,
+                season_type TEXT NOT NULL,
                 team_id INTEGER NOT NULL,
                 games_played INTEGER,
                 games_started INTEGER,
@@ -226,7 +227,7 @@ class NBADatabaseSchema:
                 plus_minus REAL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (player_id, season, team_id),
+                PRIMARY KEY (player_id, season, season_type, team_id),
                 FOREIGN KEY (player_id) REFERENCES players(player_id),
                 FOREIGN KEY (team_id) REFERENCES teams(team_id)
             )
@@ -241,6 +242,7 @@ class NBADatabaseSchema:
             CREATE TABLE IF NOT EXISTS player_advanced_stats (
                 player_id INTEGER NOT NULL,
                 season TEXT NOT NULL,
+                season_type TEXT NOT NULL,
                 team_id INTEGER NOT NULL,
                 age INTEGER,
                 games_played INTEGER,
@@ -265,7 +267,7 @@ class NBADatabaseSchema:
                 pie REAL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (player_id, season, team_id),
+                PRIMARY KEY (player_id, season, season_type, team_id),
                 FOREIGN KEY (player_id) REFERENCES players(player_id),
                 FOREIGN KEY (team_id) REFERENCES teams(team_id)
             )
@@ -280,6 +282,7 @@ class NBADatabaseSchema:
             CREATE TABLE IF NOT EXISTS player_tracking_stats (
                 player_id INTEGER NOT NULL,
                 season TEXT NOT NULL,
+                season_type TEXT NOT NULL,
                 team_id INTEGER NOT NULL,
                 minutes_played REAL,
 
@@ -442,9 +445,16 @@ class NBADatabaseSchema:
                 reb_chance_pct_adj REAL,
                 avg_reb_dist REAL,
 
+                -- Possession Metrics (Friction Score)
+                avg_sec_per_touch REAL,
+                avg_drib_per_touch REAL,
+                pts_per_touch REAL,
+                time_of_poss REAL,
+                front_ct_touches REAL,
+
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (player_id, season, team_id),
+                PRIMARY KEY (player_id, season, season_type, team_id),
                 FOREIGN KEY (player_id) REFERENCES players(player_id),
                 FOREIGN KEY (team_id) REFERENCES teams(team_id)
             )
@@ -700,6 +710,13 @@ class NBADatabaseSchema:
                 reb_chance_pct_adj REAL,
                 avg_reb_dist REAL,
 
+                -- Possession Metrics (Friction Score)
+                avg_sec_per_touch REAL,
+                avg_drib_per_touch REAL,
+                pts_per_touch REAL,
+                time_of_poss REAL,
+                front_ct_touches REAL,
+
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (player_id, season, team_id),
@@ -717,6 +734,7 @@ class NBADatabaseSchema:
             CREATE TABLE IF NOT EXISTS player_playtype_stats (
                 player_id INTEGER NOT NULL,
                 season TEXT NOT NULL,
+                season_type TEXT NOT NULL,
                 team_id INTEGER NOT NULL,
                 play_type TEXT NOT NULL,
                 type_grouping TEXT NOT NULL,
@@ -743,7 +761,7 @@ class NBADatabaseSchema:
 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (player_id, season, team_id, play_type),
+                PRIMARY KEY (player_id, season, season_type, team_id, play_type),
                 FOREIGN KEY (player_id) REFERENCES players(player_id),
                 FOREIGN KEY (team_id) REFERENCES teams(team_id)
             )
@@ -839,6 +857,7 @@ class NBADatabaseSchema:
             CREATE TABLE IF NOT EXISTS player_shot_dashboard_stats (
                 player_id INTEGER NOT NULL,
                 season TEXT NOT NULL,
+                season_type TEXT NOT NULL,
                 team_id INTEGER NOT NULL,
                 close_def_dist_range TEXT NOT NULL,
                 shot_clock_range TEXT NOT NULL,
@@ -876,7 +895,7 @@ class NBADatabaseSchema:
 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (player_id, season, team_id, close_def_dist_range, shot_clock_range, dribble_range, shot_dist_range),
+                PRIMARY KEY (player_id, season, season_type, team_id, close_def_dist_range, shot_clock_range, dribble_range, shot_dist_range),
                 FOREIGN KEY (player_id) REFERENCES players(player_id),
                 FOREIGN KEY (team_id) REFERENCES teams(team_id)
             )

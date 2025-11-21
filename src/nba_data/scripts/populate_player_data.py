@@ -7,7 +7,7 @@ our local database for playoff resilience analysis.
 
 import sys
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import logging
 
 # Add project root to path
@@ -30,29 +30,69 @@ class PlayerDataPopulator:
         self.schema = NBADatabaseSchema(db_path)
         self.fetcher = create_data_fetcher()
 
-    def populate_all_player_data(self, season: str = "2024-25") -> Dict[str, Any]:
+    def _get_player_team_map(self, season: str, season_type: str = "Regular Season") -> Dict[int, int]:
+        """
+        Get a map of player_id -> team_id for the season.
+        This fixes the "Magic Number" issue by using real team IDs.
+        """
+        logger.info(f"Fetching player team map for {season} ({season_type})...")
+        # Fetch base stats which contain TEAM_ID
+        # We use the underlying client directly to get the full record
+        response = self.fetcher.client.get_league_player_base_stats(season=season, season_type=season_type)
+        
+        player_team_map = {}
+        if "resultSets" in response and response["resultSets"]:
+            headers = response["resultSets"][0]["headers"]
+            rows = response["resultSets"][0]["rowSet"]
+            
+            try:
+                player_idx = headers.index("PLAYER_ID")
+                team_idx = headers.index("TEAM_ID")
+                
+                for row in rows:
+                    player_id = row[player_idx]
+                    team_id = row[team_idx]
+                    player_team_map[player_id] = team_id
+                    
+            except ValueError:
+                logger.error("Could not find PLAYER_ID or TEAM_ID in headers")
+                
+        logger.info(f"Found teams for {len(player_team_map)} players")
+        return player_team_map
+
+    def populate_all_player_data(self, season: str = "2024-25", season_type: str = "Regular Season") -> Dict[str, Any]:
         """
         Populate all player data for a given season.
 
         Args:
             season: Season to populate data for
+            season_type: Type of season (Regular Season, Playoffs)
 
         Returns:
             Summary of population results
         """
-        logger.info(f"Starting player data population for season {season}")
+        logger.info(f"Starting player data population for season {season} ({season_type})")
 
         results = {
             "season": season,
+            "season_type": season_type,
             "metrics_populated": 0,
             "players_affected": 0,
             "errors": []
         }
+        
+        # 1. Build the Player -> Team Map (Crucial Step)
+        player_team_map = self._get_player_team_map(season, season_type)
+        if not player_team_map:
+            error_msg = "Failed to fetch player team map. Aborting to prevent data corruption."
+            logger.error(error_msg)
+            results["errors"].append(error_msg)
+            return results
 
         # Define which metrics go to which tables
         table_mappings = {
             "player_season_stats": [
-                "GP", "MIN", "FGM", "FGA", "FG3M", "FG3A", "FTM", "FTA", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "PTS", "PLUS_MINUS",  # Basic counts
+                "TEAM_ID", "GP", "MIN", "FGM", "FGA", "FG3M", "FG3A", "FTM", "FTA", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "PTS", "PLUS_MINUS",  # Basic counts
                 "FGPCT", "FG3PCT", "FTPCT"  # Basic percentages
             ],
             "player_advanced_stats": [
@@ -105,12 +145,18 @@ class PlayerDataPopulator:
                 "DREB_CONTEST", "DREB_UNCONTEST", "DREB_CONTEST_PCT", "DREB_CHANCES",
                 "DREB_CHANCE_PCT", "DREB_CHANCE_DEFER", "DREB_CHANCE_PCT_ADJ", "AVG_DREB_DIST",
                 "REB_CONTEST", "REB_UNCONTEST", "REB_CONTEST_PCT", "REB_CHANCES",
-                "REB_CHANCE_PCT", "REB_CHANCE_DEFER", "REB_CHANCE_PCT_ADJ", "AVG_REB_DIST"
+                "REB_CHANCE_PCT", "REB_CHANCE_DEFER", "REB_CHANCE_PCT_ADJ", "AVG_REB_DIST",
+                # Possession metrics
+                "AVG_SEC_PER_TOUCH", "AVG_DRIB_PER_TOUCH", "PTS_PER_TOUCH", "TIME_OF_POSS", "FRONT_CT_TOUCHES"
             ]
         }
 
         # Fetch all available metrics
         logger.info("Fetching all available metrics from NBA API...")
+        # Note: DataFetcher defaults to Regular Season. If we need Playoffs, we might need to modify DataFetcher 
+        # or ensure the underlying calls support it. 
+        # Currently fetch_all_available_metrics uses the mappings defaults (Regular Season).
+        # TODO: Update DataFetcher to support passing season_type to fetch_all_available_metrics
         all_metric_data = self.fetcher.fetch_all_available_metrics(season)
 
         # Process each table
@@ -118,7 +164,7 @@ class PlayerDataPopulator:
             logger.info(f"Populating {table_name}...")
 
             try:
-                populated_count = self._populate_table(table_name, metric_names, all_metric_data, season)
+                populated_count = self._populate_table(table_name, metric_names, all_metric_data, season, season_type, player_team_map)
                 results["metrics_populated"] += populated_count
                 logger.info(f"✅ {table_name}: {populated_count} metrics populated")
 
@@ -130,7 +176,7 @@ class PlayerDataPopulator:
         # Calculate unique players affected
         try:
             with self.schema.conn.cursor() as cursor:
-                cursor.execute("SELECT COUNT(DISTINCT player_id) FROM player_season_stats WHERE season = ?", (season,))
+                cursor.execute("SELECT COUNT(DISTINCT player_id) FROM player_season_stats WHERE season = ? AND season_type = ?", (season, season_type))
                 results["players_affected"] = cursor.fetchone()[0]
         except Exception as e:
             logger.warning(f"Could not count affected players: {e}")
@@ -140,18 +186,10 @@ class PlayerDataPopulator:
 
         return results
 
-    def _populate_table(self, table_name: str, metric_names: List[str], all_data: Dict[str, Dict], season: str) -> int:
+    def _populate_table(self, table_name: str, metric_names: List[str], all_data: Dict[str, Dict], 
+                       season: str, season_type: str, player_team_map: Dict[int, int]) -> int:
         """
         Populate a specific table with metric data.
-
-        Args:
-            table_name: Name of the table to populate
-            metric_names: List of metric names to include
-            all_data: All fetched metric data
-            season: Season being processed
-
-        Returns:
-            Number of metrics successfully populated
         """
         populated_count = 0
 
@@ -174,7 +212,7 @@ class PlayerDataPopulator:
         for player_id in all_player_ids:
             try:
                 # Build the record for this player
-                record = self._build_player_record(player_id, relevant_metrics, season, table_name)
+                record = self._build_player_record(player_id, relevant_metrics, season, season_type, table_name, player_team_map)
 
                 if record:
                     # Insert or replace the record
@@ -188,28 +226,26 @@ class PlayerDataPopulator:
         self.schema.conn.commit()
         return populated_count
 
-    def _build_player_record(self, player_id: int, metrics_data: Dict[str, Dict], season: str, table_name: str) -> Dict[str, Any]:
+    def _build_player_record(self, player_id: int, metrics_data: Dict[str, Dict], 
+                            season: str, season_type: str, table_name: str, 
+                            player_team_map: Dict[int, int]) -> Optional[Dict[str, Any]]:
         """
         Build a database record for a player.
-
-        Args:
-            player_id: Player ID
-            metrics_data: Metric data for all players
-            season: Season
-            table_name: Target table name
-
-        Returns:
-            Database record as dictionary
         """
+        # Check if we have a team ID for this player
+        team_id = player_team_map.get(player_id)
+        
+        if not team_id:
+            # This often happens for players who didn't play or have anomalous data
+            # We skip them to ensure integrity - no more "Default to OKC"
+            return None
+            
         record = {
             "player_id": player_id,
-            "season": season
+            "season": season,
+            "season_type": season_type,
+            "team_id": team_id
         }
-
-        # Add team_id (we'll need to get this from somewhere - for now use placeholder)
-        # In a full implementation, we'd need to fetch player info to get team_id
-        record["team_id"] = 1610612760  # Default to OKC for now
-
         # Map metric names to database column names
         column_mappings = {
             "player_season_stats": {
@@ -413,7 +449,13 @@ class PlayerDataPopulator:
                 "REB_CHANCE_PCT": "reb_chance_pct",
                 "REB_CHANCE_DEFER": "reb_chance_defer",
                 "REB_CHANCE_PCT_ADJ": "reb_chance_pct_adj",
-                "AVG_REB_DIST": "avg_reb_dist"
+                "AVG_REB_DIST": "avg_reb_dist",
+                # Possession metrics
+                "AVG_SEC_PER_TOUCH": "avg_sec_per_touch",
+                "AVG_DRIB_PER_TOUCH": "avg_drib_per_touch",
+                "PTS_PER_TOUCH": "pts_per_touch",
+                "TIME_OF_POSS": "time_of_poss",
+                "FRONT_CT_TOUCHES": "front_ct_touches"
             }
         }
 
@@ -478,6 +520,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Populate NBA player data")
     parser.add_argument("--season", default="2024-25", help="Season to populate")
+    parser.add_argument("--season-type", default="Regular Season", help="Season Type (Regular Season, Playoffs)")
     parser.add_argument("--db-path", default="data/nba_stats.db", help="Database path")
 
     args = parser.parse_args()
@@ -492,11 +535,11 @@ def main():
 
     # Populate data
     try:
-        results = populator.populate_all_player_data(args.season)
+        results = populator.populate_all_player_data(args.season, args.season_type)
 
         print("\n🎉 Player Data Population Complete!")
         print("=" * 50)
-        print(f"Season: {results['season']}")
+        print(f"Season: {results['season']} ({results['season_type']})")
         print(f"Players affected: {results['players_affected']}")
         print(f"Metrics populated: {results['metrics_populated']}")
 

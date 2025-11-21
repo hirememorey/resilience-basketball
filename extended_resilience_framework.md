@@ -97,3 +97,9 @@ Regular-season performance is an imperfect predictor of postseason success. The 
     - `Friction Score` (Points per Touch-Second)
     - `Crucible-Adjusted Dominance Score`
 4.  **Visualize:** Generate career arc charts for the new, more robust metrics.
+
+---
+### Implementation Progress
+- **✅ Friction Score Data Pipeline:** The necessary possession metrics (`AVG_SEC_PER_TOUCH`, `AVG_DRIB_PER_TOUCH`, `PTS_PER_TOUCH`, `TIME_OF_POSS`, `FRONT_CT_TOUCHES`) have been successfully integrated. The `player_tracking_stats` and `player_playoff_tracking_stats` tables are now being populated with this data.
+- **⏳ Team Ratings:** Data ingestion for team-level defensive ratings is still pending.
+- **⏳ Analysis Scripts:** The core calculation scripts have not yet been refactored to use the new data.
