@@ -153,11 +153,8 @@ class PlayerDataPopulator:
 
         # Fetch all available metrics
         logger.info("Fetching all available metrics from NBA API...")
-        # Note: DataFetcher defaults to Regular Season. If we need Playoffs, we might need to modify DataFetcher 
-        # or ensure the underlying calls support it. 
-        # Currently fetch_all_available_metrics uses the mappings defaults (Regular Season).
-        # TODO: Update DataFetcher to support passing season_type to fetch_all_available_metrics
-        all_metric_data = self.fetcher.fetch_all_available_metrics(season)
+        # Update DataFetcher to support passing season_type to fetch_all_available_metrics
+        all_metric_data = self.fetcher.fetch_all_available_metrics(season, season_type)
 
         # Process each table
         for table_name, metric_names in table_mappings.items():

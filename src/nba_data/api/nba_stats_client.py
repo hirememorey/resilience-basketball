@@ -296,7 +296,7 @@ class NBAStatsClient:
         }
         return self._make_request(endpoint, params)
 
-    def get_league_player_tracking_stats(self, season: str = "2024-25", pt_measure_type: str = "Drives") -> Dict[str, Any]:
+    def get_league_player_tracking_stats(self, season: str = "2024-25", pt_measure_type: str = "Drives", season_type: str = "Regular Season") -> Dict[str, Any]:
         """Get player tracking statistics."""
         endpoint = "leaguedashptstats"
         params = {
@@ -329,7 +329,7 @@ class NBAStatsClient:
             "Rank": "N",
             "Season": season,
             "SeasonSegment": "",
-            "SeasonType": "Regular Season",
+            "SeasonType": season_type,
             "ShotClockRange": "",
             "StarterBench": "",
             "TeamID": "0",

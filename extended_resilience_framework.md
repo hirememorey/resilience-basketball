@@ -100,16 +100,21 @@ Regular-season performance is an imperfect predictor of postseason success. The 
 
 ---
 ### Implementation Progress
-- **✅ Friction Score Data Pipeline:** The necessary possession metrics (`AVG_SEC_PER_TOUCH`, `AVG_DRIB_PER_TOUCH`, `PTS_PER_TOUCH`, `TIME_OF_POSS`, `FRONT_CT_TOUCHES`) have been successfully integrated. The `player_tracking_stats` and `player_playoff_tracking_stats` tables are now being populated with this data.
+- **✅ Friction Score Data Pipeline:** The necessary possession metrics (`AVG_SEC_PER_TOUCH`, `AVG_DRIB_PER_TOUCH`, `PTS_PER_TOUCH`, `TIME_OF_POSS`, `FRONT_CT_TOUCHES`) have been successfully integrated and verified.
 - **✅ Historical Data Backfill:** The database now contains 10 seasons of player and game data.
 - **✅ Team Ratings:** Team defensive ratings data is available in `team_season_stats` table.
+- **✅ Friction Score Resilience:**
+  - **Complete & Validated:** `calculate_friction.py` now correctly measures the delta between Regular Season and Playoff efficiency.
+  - **Data Integrity Fix:** Fixed a critical bug where Playoff tracking data was identical to Regular Season data due to an API client error.
+  - **Results:** successfully identified "Resilient" high-usage players (e.g., Damian Lillard -7.26 Delta) vs. "Fragile" players (e.g., Anthony Edwards +5.15 Delta) for the 2023-24 season.
 - **🔄 Logic Bridge Progress:**
-  - **✅ Friction Score Calculation:** `calculate_friction.py` is working and produces valid results for 2023-24 season.
+  - **✅ Friction Score Calculation:** **COMPLETE & VERIFIED**.
   - **🔄 Crucible Baseline:** Started implementation, data foundation ready.
   - **⏳ Dominance Score:** Shot dashboard data fixed with combinatorial approach (13K+ rows), ready for calculation.
   - **⏳ Unified Resilience:** Integration of all metrics pending.
 
 ### Key Fixes Implemented
+- **Tracking Data Integrity:** Discovered and fixed a silent failure where `NBAStatsClient` was hardcoding `SeasonType="Regular Season"`, causing Playoff data to be corrupted. All 2023-24 tracking data has been repopulated and verified.
 - **Shot Dashboard Data Integrity:** Fixed the "fragmented rows" issue by implementing combinatorial API fetching instead of independent loops. This provides true intersectional data for shot quality analysis.
 - **Player Metadata:** Minimal player table populated (1,437 players) to enable JOIN operations for analysis scripts.
 - **Data Verification:** All foundational data tables are populated and verified to work together.

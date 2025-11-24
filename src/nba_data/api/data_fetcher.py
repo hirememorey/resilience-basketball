@@ -1839,13 +1839,14 @@ class DataFetcher:
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((Exception,))
     )
-    def fetch_metric_data(self, metric: str, season: str = "2024-25") -> Optional[Dict[str, Any]]:
+    def fetch_metric_data(self, metric: str, season: str = "2024-25", season_type: str = "Regular Season") -> Optional[Dict[str, Any]]:
         """
         Fetch data for a specific metric.
 
         Args:
             metric: The canonical metric name
             season: The season to fetch data for
+            season_type: The season type (Regular Season, Playoffs)
 
         Returns:
             Dictionary with player data or None if not available
@@ -1866,9 +1867,9 @@ class DataFetcher:
 
             # Fetch data based on API source
             if mapping.api_source == "leaguedashplayerstats":
-                return self._fetch_player_stats_data(metric, mapping, season)
+                return self._fetch_player_stats_data(metric, mapping, season, season_type)
             elif mapping.api_source == "leaguedashptstats":
-                return self._fetch_tracking_data(metric, mapping, season)
+                return self._fetch_tracking_data(metric, mapping, season, season_type)
             elif mapping.api_source == "commonplayerinfo":
                 return self._fetch_player_info_data(metric, mapping)
             elif mapping.api_source == "leaguehustlestatsplayer":
@@ -1881,18 +1882,23 @@ class DataFetcher:
             logger.error(f"Error fetching {metric}: {e}")
             return None
 
-    def _fetch_player_stats_data(self, metric: str, mapping: MetricMapping, season: str) -> Optional[Dict[str, Any]]:
+    def _fetch_player_stats_data(self, metric: str, mapping: MetricMapping, season: str, season_type: str) -> Optional[Dict[str, Any]]:
         """Fetch data from player stats endpoints."""
         try:
+            # Use passed season_type, unless mapping forces a specific one (rare)
+            # If mapping has specific SeasonType (e.g. for specific advanced filter), use it. 
+            # Otherwise use the passed one.
+            mapped_season_type = mapping.endpoint_params.get("SeasonType", season_type)
+            
             if mapping.endpoint_params.get("MeasureType") == "Base":
                 response = self.client.get_league_player_base_stats(
                     season=season,
-                    season_type=mapping.endpoint_params.get("SeasonType", "Regular Season")
+                    season_type=mapped_season_type
                 )
             else:  # Advanced
                 response = self.client.get_league_player_advanced_stats(
                     season=season,
-                    season_type=mapping.endpoint_params.get("SeasonType", "Regular Season")
+                    season_type=mapped_season_type
                 )
 
             if not response or 'resultSets' not in response:
@@ -1905,13 +1911,14 @@ class DataFetcher:
             logger.error(f"Error fetching player stats for {metric}: {e}")
             return None
 
-    def _fetch_tracking_data(self, metric: str, mapping: MetricMapping, season: str) -> Optional[Dict[str, Any]]:
+    def _fetch_tracking_data(self, metric: str, mapping: MetricMapping, season: str, season_type: str) -> Optional[Dict[str, Any]]:
         """Fetch data from player tracking endpoints."""
         try:
             pt_measure_type = mapping.endpoint_params.get("PtMeasureType", "Drives")
             response = self.client.get_league_player_tracking_stats(
                 season=season,
-                pt_measure_type=pt_measure_type
+                pt_measure_type=pt_measure_type,
+                season_type=season_type
             )
 
             if not response or 'resultSets' not in response:
@@ -2008,17 +2015,18 @@ class DataFetcher:
             logger.error(f"Error extracting player data for {metric}: {e}")
             return {}
 
-    def fetch_all_available_metrics(self, season: str = "2024-25") -> Dict[str, Dict[str, Any]]:
+    def fetch_all_available_metrics(self, season: str = "2024-25", season_type: str = "Regular Season") -> Dict[str, Dict[str, Any]]:
         """
         Fetch data for all available metrics.
 
         Args:
             season: The season to fetch data for
+            season_type: The season type to fetch data for
 
         Returns:
             Dictionary mapping metric names to their player data
         """
-        logger.info("Fetching data for all available metrics...")
+        logger.info(f"Fetching data for all available metrics ({season_type})...")
 
         all_data = {}
         available_metrics = [metric for metric, mapping in self.metric_mappings.items()
@@ -2037,7 +2045,7 @@ class DataFetcher:
             if not TQDM_AVAILABLE:  # Only log if no progress bar
                 logger.info(f"Fetching {metric} ({i}/{len(available_metrics)})")
 
-            data = self.fetch_metric_data(metric, season)
+            data = self.fetch_metric_data(metric, season, season_type)
             if data:
                 all_data[metric] = data
             else:

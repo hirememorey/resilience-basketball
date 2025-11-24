@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 """
-Calculate Friction Score for NBA Players
+Calculate Friction Score & Resilience for NBA Players
 
 The Friction Score measures how efficiently a player converts ball touches into points,
-accounting for the time they spend with the ball. Lower friction = more efficient scoring.
+accounting for the time they spend with the ball.
+
+New "Resilience" Logic:
+1. Calculates Friction for BOTH Regular Season and Playoffs.
+2. Measures the DELTA (Playoff Friction - Regular Season Friction).
+3. Contextualizes by Usage Rate to separate Primary Creators from Finishers.
+4. Filters by ESTIMATED TOTAL TOUCHES (Touches Per Game * Games Played) to ensure sample size.
 
 Formula: friction_score = avg_sec_per_touch / pts_per_touch
-- Higher values indicate more "friction" (inefficiency)
-- Lower values indicate smoother, more efficient scoring
-
-This is part of the "Process Independence" metric in the new resilience framework.
+- Lower is better (more efficient).
+- Resilience = Ability to MAINTAIN or LOWER friction in Playoffs.
 """
 
 import sys
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 import logging
 import sqlite3
 import pandas as pd
-from tqdm import tqdm
+import numpy as np
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
@@ -35,32 +39,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class FrictionCalculator:
-    """Calculates Friction Scores for NBA players based on tracking data."""
+    """Calculates Friction Scores and Resilience Deltas."""
 
     def __init__(self, db_path: str = "data/nba_stats.db"):
-        """Initialize with database path."""
         self.db_path = Path(db_path)
 
-    def calculate_friction_scores(
+    def get_season_data(
         self,
-        season_year: str = "2023-24",
-        season_type: str = "Regular Season",
-        min_touches: int = 50  # Minimum touches to be included
+        season: str,
+        season_type: str,
+        min_total_touches: int = 1000
     ) -> pd.DataFrame:
-        """
-        Calculate friction scores for all qualified players.
-
-        Args:
-            season_year: Season in format "2023-24"
-            season_type: "Regular Season" or "Playoffs"
-            min_touches: Minimum touches required for calculation
-
-        Returns:
-            DataFrame with friction scores and related metrics
-        """
-        logger.info(f"Calculating friction scores for {season_year} {season_type}")
-
-        # Query tracking data
+        """Fetch tracking data for a specific season/type."""
+        
+        # We join with player_season_stats to get games_played for total volume calculation
         query = """
         SELECT
             pts.player_id,
@@ -68,21 +60,25 @@ class FrictionCalculator:
             pts.season_type,
             pts.team_id,
             pts.minutes_played,
-            pts.touches,
+            pts.touches as touches_per_game,
             pts.avg_sec_per_touch,
             pts.pts_per_touch,
             pts.time_of_poss,
-
-            -- Player info for context
+            
+            pss.games_played,
+            
             p.player_name,
             t.team_abbreviation,
-
-            -- Usage rate for context (from advanced stats)
             pa.usage_percentage
-
         FROM player_tracking_stats pts
         JOIN players p ON pts.player_id = p.player_id
         JOIN teams t ON pts.team_id = t.team_id
+        JOIN player_season_stats pss ON (
+            pts.player_id = pss.player_id
+            AND pts.season = pss.season
+            AND pts.season_type = pss.season_type
+            AND pts.team_id = pss.team_id
+        )
         LEFT JOIN player_advanced_stats pa ON (
             pts.player_id = pa.player_id
             AND pts.season = pa.season
@@ -91,161 +87,121 @@ class FrictionCalculator:
         )
         WHERE pts.season = ?
         AND pts.season_type = ?
-        AND pts.touches >= ?
-        AND pts.avg_sec_per_touch > 0  -- Avoid division by zero
-        AND pts.pts_per_touch > 0      -- Avoid infinite friction
-        ORDER BY pts.touches DESC
+        AND pts.avg_sec_per_touch > 0
+        AND pts.pts_per_touch > 0
         """
 
         with sqlite3.connect(self.db_path) as conn:
-            df = pd.read_sql(query, conn, params=[season_year, season_type, min_touches])
-
-        logger.info(f"Query returned {len(df)} rows")
-
+            try:
+                df = pd.read_sql(query, conn, params=[season, season_type])
+            except Exception as e:
+                logger.error(f"Error querying data: {e}")
+                return pd.DataFrame()
+        
         if df.empty:
-            logger.warning(f"No players found with minimum {min_touches} touches")
-            logger.info(f"Query executed: season={season_year}, season_type={season_type}, min_touches={min_touches}")
-            return pd.DataFrame()
+            return df
 
-        logger.info(f"Found {len(df)} players with sufficient tracking data")
+        # Calculate estimated total touches
+        df['total_touches'] = df['touches_per_game'] * df['games_played']
+        
+        # Filter by volume
+        df_filtered = df[df['total_touches'] >= min_total_touches].copy()
+        
+        logger.info(f"Fetched {len(df_filtered)} rows for {season} {season_type} (Min Touches: {min_total_touches})")
+        return df_filtered
 
-        # Calculate friction score
-        # friction_score = time_per_touch / points_per_touch
-        # Higher = more friction (less efficient)
-        df['friction_score'] = df['avg_sec_per_touch'] / df['pts_per_touch']
-
-        # Calculate additional efficiency metrics
-        df['touch_efficiency'] = df['pts_per_touch'] / df['avg_sec_per_touch']  # Inverse of friction
-        df['possession_efficiency'] = df['pts_per_touch'] * (df['touches'] / df['time_of_poss'])
-
-        # Calculate percentiles for ranking
-        df['friction_percentile'] = df['friction_score'].rank(pct=True, ascending=False)  # Lower friction = higher percentile
-        df['touch_efficiency_percentile'] = df['touch_efficiency'].rank(pct=True)
-
-        # Sort by friction score (ascending = most efficient)
-        df = df.sort_values('friction_score')
-
-        logger.info(f"Friction scores calculated for {len(df)} players")
-        logger.info(".2f")
-        logger.info(".2f")
-
-        return df
-
-    def save_friction_scores(
+    def calculate_resilience(
         self,
-        df: pd.DataFrame,
-        output_path: Optional[str] = None
-    ) -> None:
-        """
-        Save friction scores to CSV and optionally to database.
-
-        Args:
-            df: DataFrame with friction scores
-            output_path: Path to save CSV (optional)
-        """
-        if df.empty:
-            logger.warning("No data to save")
-            return
-
-        # Default output path
-        if output_path is None:
-            output_path = f"data/friction_scores_{df['season'].iloc[0].replace('-', '_')}_{df['season_type'].iloc[0].replace(' ', '_').lower()}.csv"
-
-        # Save to CSV
-        df.to_csv(output_path, index=False)
-        logger.info(f"Saved friction scores to {output_path}")
-
-        # Could also save to database table if needed
-        # self._save_to_database(df)
-
-    def get_top_efficient_players(
-        self,
-        df: pd.DataFrame,
-        top_n: int = 20
+        season: str = "2023-24",
+        min_touches_reg: int = 1000,
+        min_touches_playoff: int = 100
     ) -> pd.DataFrame:
         """
-        Get the most efficient players (lowest friction).
-
-        Args:
-            df: DataFrame with friction scores
-            top_n: Number of top players to return
-
-        Returns:
-            DataFrame with top efficient players
+        Calculate Friction Resilience (Delta between Reg Season and Playoffs).
         """
-        if df.empty:
+        logger.info(f"Calculating Friction Resilience for {season}...")
+
+        # 1. Get Regular Season Data
+        df_reg = self.get_season_data(season, "Regular Season", min_touches_reg)
+        if df_reg.empty:
+            logger.warning("No Regular Season data found.")
             return pd.DataFrame()
 
-        return df.head(top_n)[[
-            'player_name', 'team_abbreviation', 'touches', 'friction_score',
-            'touch_efficiency', 'avg_sec_per_touch', 'pts_per_touch',
-            'usage_percentage', 'friction_percentile'
-        ]]
+        # 2. Get Playoff Data
+        df_playoff = self.get_season_data(season, "Playoffs", min_touches_playoff)
+        if df_playoff.empty:
+            logger.warning("No Playoff data found.")
+            # Return just regular season data if no playoffs found?
+            # No, we need resilience (delta), so return empty or just reg season scores.
+            return pd.DataFrame()
 
-    def analyze_friction_by_position(
-        self,
-        df: pd.DataFrame
-    ) -> pd.DataFrame:
-        """
-        Analyze friction scores by player position.
+        # 3. Calculate Base Friction Score (Sec per Touch / Pts per Touch)
+        # Lower = Better
+        df_reg['friction_score'] = df_reg['avg_sec_per_touch'] / df_reg['pts_per_touch']
+        df_playoff['friction_score'] = df_playoff['avg_sec_per_touch'] / df_playoff['pts_per_touch']
 
-        Args:
-            df: DataFrame with friction scores
+        # 4. Merge
+        # We merge on player_id. We keep suffixes.
+        df_merged = pd.merge(
+            df_reg,
+            df_playoff[['player_id', 'friction_score', 'touches_per_game', 'usage_percentage', 'pts_per_touch', 'avg_sec_per_touch']],
+            on='player_id',
+            suffixes=('_reg', '_playoff'),
+            how='inner'
+        )
 
-        Returns:
-            DataFrame with position analysis
-        """
-        # This would require joining with player position data
-        # For now, return basic stats
-        return df.groupby('team_abbreviation').agg({
-            'friction_score': ['mean', 'std', 'count'],
-            'touch_efficiency': 'mean'
-        }).round(3)
+        # 5. Calculate Delta
+        # Friction Delta = Playoff Friction - Regular Season Friction
+        # Positive Delta = Got Worse (More Friction)
+        # Negative Delta = Got Better (Less Friction)
+        df_merged['friction_delta'] = df_merged['friction_score_playoff'] - df_merged['friction_score_reg']
 
+        # 6. Define Usage Tiers (based on Regular Season)
+        def get_tier(usage):
+            if pd.isna(usage): return "Unknown"
+            if usage < 0.18: return "Role"
+            if usage < 0.25: return "Starter"
+            if usage < 0.32: return "Star"
+            return "Heliocentric"
+
+        df_merged['usage_tier'] = df_merged['usage_percentage_reg'].apply(get_tier)
+
+        # 7. Sort and Rank
+        df_merged = df_merged.sort_values('friction_delta') # Most resilient (negative delta) first
+
+        logger.info(f"Calculated resilience for {len(df_merged)} players who played in both Reg Season & Playoffs.")
+        return df_merged
+
+    def save_results(self, df: pd.DataFrame, season: str):
+        if df.empty: return
+        filename = f"data/friction_resilience_{season}.csv"
+        df.to_csv(filename, index=False)
+        logger.info(f"Saved results to {filename}")
 
 def main():
-    """Main execution function."""
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Calculate Friction Scores for NBA players')
-    parser.add_argument('--season', default='2023-24', help='Season year (default: 2023-24)')
-    parser.add_argument('--season-type', choices=['Regular Season', 'Playoffs'], default='Regular Season',
-                        help='Season type (default: Regular Season)')
-    parser.add_argument('--min-touches', type=int, default=50, help='Minimum touches required (default: 50)')
-    parser.add_argument('--output', help='Output CSV path')
-    parser.add_argument('--top-n', type=int, default=20, help='Show top N most efficient players')
-
-    args = parser.parse_args()
-
     calculator = FrictionCalculator()
+    
+    # Run for 2023-24
+    df = calculator.calculate_resilience(season="2023-24")
+    
+    if not df.empty:
+        calculator.save_results(df, "2023-24")
+        
+        # Display Top Resilient High-Usage Players
+        print("\n=== 🏆 Top Resilience (High Usage: >25%) ===")
+        high_usage = df[df['usage_percentage_reg'] > 0.25].head(10)
+        cols = ['player_name', 'team_abbreviation', 'usage_tier', 'friction_score_reg', 'friction_score_playoff', 'friction_delta']
+        print(high_usage[cols].to_string(index=False, float_format="%.3f"))
 
-    # Calculate friction scores
-    df = calculator.calculate_friction_scores(
-        season_year=args.season,
-        season_type=args.season_type,
-        min_touches=args.min_touches
-    )
+        print("\n=== 📉 Biggest Drop-offs (High Usage) ===")
+        high_usage_worst = df[df['usage_percentage_reg'] > 0.25].tail(10)
+        print(high_usage_worst[cols].to_string(index=False, float_format="%.3f"))
 
-    if df.empty:
-        print("No data available for the specified parameters")
-        return
-
-    # Save results
-    calculator.save_friction_scores(df, args.output)
-
-    # Show top players
-    top_players = calculator.get_top_efficient_players(df, args.top_n)
-
-    print(f"\n=== Top {args.top_n} Most Efficient Players ({args.season} {args.season_type}) ===")
-    print(f"Minimum touches: {args.min_touches}")
-    print(top_players.to_string(index=False))
-
-    # Show summary stats
-    print("\n=== Friction Score Summary ===")
-    print(".3f")
-    print(".3f")
-    print(f"Players analyzed: {len(df)}")
-
+        print("\n=== 🔍 Metric Context ===")
+        print("Friction Score = Seconds per Touch / Points per Touch")
+        print("Delta = Playoff - Regular Season")
+        print("Negative Delta = RESILIENT (Maintained or Improved efficiency)")
+        print("Positive Delta = FRAGILE (Efficiency worsened)")
 
 if __name__ == "__main__":
     main()
