@@ -14,7 +14,7 @@ This project has recently undergone a **major data integrity overhaul and a phil
 
 1.  **Data Integrity:** The foundational database was rebuilt to fix critical schema and data population errors. The database is now **fully populated with clean data for 10 seasons (2015-16 to 2024-25).**
 2.  **Philosophical Pivot:** We have shifted from viewing resilience as an "intrinsic trait" to a "conditional probability."
-3.  **Recent Progress (Nov 2025):** The "Data Bridge" is complete. All historical player and game data has been successfully backfilled.
+3.  **Recent Progress (Nov 2025):** The "Data Bridge" is complete with combinatorial shot dashboard data. Friction Score calculation is now working. Next: Crucible Baseline and Dominance Score implementations.
 
 **Before you begin, you MUST read the new "Project Pivot" and "Data Integrity Post-Mortem" sections at the top of `extended_resilience_framework.md`.** This document contains the new roadmap and essential context.
 
@@ -65,4 +65,12 @@ resilience-basketball/
 
 ## Next Steps
 1.  **Start with `extended_resilience_framework.md`** to understand the new project direction.
-2.  **Refactor the analysis scripts** in `src/nba_data/scripts/` to implement the new resilience metrics (Friction Score, Crucible Baseline, etc.). This is the **"Logic Bridge"** and the primary focus of the next phase.
+2.  **Continue Logic Bridge:** Implement remaining metrics:
+   - ✅ Friction Score (`calculate_friction.py`) - **COMPLETE**
+   - 🔄 Crucible Baseline (`calculate_crucible_baseline.py`) - **IN PROGRESS**
+   - ⏳ Dominance Score (`calculate_dominance_score.py`) - **NEXT**
+   - ⏳ Unified Resilience (`calculate_unified_resilience.py`) - **FINAL**
+
+## Current Working Features
+- **Friction Score Calculation:** Working for 2023-24 season. Measures scoring efficiency relative to ball-handling time.
+- **Data Foundation:** Shot dashboard (13K+ rows), tracking stats, team ratings, and player metadata all populated.

@@ -102,5 +102,14 @@ Regular-season performance is an imperfect predictor of postseason success. The 
 ### Implementation Progress
 - **✅ Friction Score Data Pipeline:** The necessary possession metrics (`AVG_SEC_PER_TOUCH`, `AVG_DRIB_PER_TOUCH`, `PTS_PER_TOUCH`, `TIME_OF_POSS`, `FRONT_CT_TOUCHES`) have been successfully integrated. The `player_tracking_stats` and `player_playoff_tracking_stats` tables are now being populated with this data.
 - **✅ Historical Data Backfill:** The database now contains 10 seasons of player and game data.
-- **⏳ Team Ratings:** Data ingestion for team-level defensive ratings is still pending.
-- **⏳ Analysis Scripts:** The core calculation scripts have not yet been refactored to use the new data.
+- **✅ Team Ratings:** Team defensive ratings data is available in `team_season_stats` table.
+- **🔄 Logic Bridge Progress:**
+  - **✅ Friction Score Calculation:** `calculate_friction.py` is working and produces valid results for 2023-24 season.
+  - **🔄 Crucible Baseline:** Started implementation, data foundation ready.
+  - **⏳ Dominance Score:** Shot dashboard data fixed with combinatorial approach (13K+ rows), ready for calculation.
+  - **⏳ Unified Resilience:** Integration of all metrics pending.
+
+### Key Fixes Implemented
+- **Shot Dashboard Data Integrity:** Fixed the "fragmented rows" issue by implementing combinatorial API fetching instead of independent loops. This provides true intersectional data for shot quality analysis.
+- **Player Metadata:** Minimal player table populated (1,437 players) to enable JOIN operations for analysis scripts.
+- **Data Verification:** All foundational data tables are populated and verified to work together.

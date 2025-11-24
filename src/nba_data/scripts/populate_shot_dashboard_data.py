@@ -1,9 +1,12 @@
+
 #!/usr/bin/env python3
 """
 Script to populate player shot dashboard statistics from NBA Stats API.
 
-This script fetches shot statistics filtered by closest defender distance ranges
-for all players in the specified season.
+This script fetches shot statistics using INTERSECTIONAL filters to capture true shot quality context.
+It fetches:
+1. Defender Distance x Shot Clock Range (For Shot Quality/Dominance)
+2. Defender Distance x Dribble Range (For Self-Creation/Isolation)
 """
 
 import sys
@@ -11,8 +14,8 @@ from pathlib import Path
 from typing import Dict, List, Any
 import logging
 import sqlite3
-from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
@@ -41,7 +44,6 @@ class ShotDashboardDataPopulator:
     def __init__(self, db_path: str = "data/nba_stats.db"):
         """Initialize with database path."""
         self.db_path = Path(db_path)
-        # Client is instantiated per request/thread for safety
         self._client = None
 
     @property
@@ -57,20 +59,10 @@ class ShotDashboardDataPopulator:
         force_refresh: bool = False
     ) -> Dict[str, Any]:
         """
-        Populate shot dashboard data for an entire season.
-
-        Args:
-            season_year: Season in format "2024-25"
-            season_type: "Regular Season" or "Playoffs"
-            force_refresh: Whether to force refresh cached data
-
-        Returns:
-            Dictionary with operation results
+        Populate shot dashboard data for an entire season using combinatorial fetching.
         """
         results = {
-            "defender_distances_processed": 0,
-            "shot_clock_ranges_processed": 0,
-            "dribble_ranges_processed": 0,
+            "combinations_processed": 0,
             "records_inserted": 0,
             "records_updated": 0,
             "errors": [],
@@ -78,134 +70,109 @@ class ShotDashboardDataPopulator:
             "season_type": season_type
         }
 
-        logger.info(f"Starting shot dashboard data population for {season_year} {season_type}")
+        logger.info(f"Starting COMBINATORIAL shot dashboard population for {season_year} {season_type}")
 
         # Determine table name based on season type
         table_name = "player_shot_dashboard_stats" if season_type == "Regular Season" else "player_playoff_shot_dashboard_stats"
 
-        # Get data for all defender distance ranges
-        logger.info("Fetching data for all defender distance ranges...")
-        all_defender_data = self.client.get_all_defender_distances_for_season(
-            season_year=season_year,
-            season_type=season_type
-        )
+        # --- BATCH 1: Defender Distance x Shot Clock (Shot Quality Context) ---
+        # This matrix tells us how players perform against tight defense at different clock times.
+        logger.info("--- Processing Batch 1: Defender Distance x Shot Clock ---")
+        
+        for def_dist in self.client.DEFENDER_DISTANCE_RANGES:
+            for shot_clock in self.client.SHOT_CLOCK_RANGES:
+                try:
+                    logger.info(f"Fetching: {def_dist} | {shot_clock}")
+                    
+                    # Fetch Data
+                    response_data = self.client.get_player_shot_dashboard_stats(
+                        season_year=season_year,
+                        season_type=season_type,
+                        close_def_dist_range=def_dist,
+                        shot_clock_range=shot_clock,
+                        dribble_range="", # Explicitly empty
+                        shot_dist_range=">=10.0" # Standardize to shots outside 10ft (Jump Shots mostly) or keep default
+                        # Note: Keeping >=10.0 from original script logic, but maybe we want all shots?
+                        # The original script hardcoded >=10.0 in the parser. Let's stick to that for consistency with "Shot Quality"
+                        # unless we want rim finishes.
+                        # Decision: Pass >=10.0 to match the parser's hardcoded value.
+                    )
 
-        # Process each defender distance range
-        for def_dist_range, response_data in all_defender_data.items():
-            try:
-                logger.info(f"Processing {def_dist_range} defender distance...")
+                    # Parse Data
+                    records = self.client.parse_shot_dashboard_response(
+                        response_data, 
+                        close_def_dist_range=def_dist,
+                        shot_clock_range=shot_clock,
+                        dribble_range="", # IMPORTANT: Must pass empty string to match DB schema expectation
+                        season=season_year
+                    )
 
-                # Parse the response
-                records = self.client.parse_shot_dashboard_response(
-                    response_data, 
-                    close_def_dist_range=def_dist_range,
-                    season=season_year
-                )
+                    if not records:
+                        logger.warning(f"No records for {def_dist} | {shot_clock}")
+                        continue
 
-                if not records:
-                    logger.warning(f"No records found for {def_dist_range}")
-                    continue
+                    # Insert Data
+                    inserted, updated = self._insert_shot_dashboard_records(
+                        records, table_name, season_year, season_type
+                    )
 
-                # Insert/update records in database
-                inserted, updated = self._insert_shot_dashboard_records(
-                    records, table_name, season_year, season_type
-                )
+                    results["records_inserted"] += inserted
+                    results["records_updated"] += updated
+                    results["combinations_processed"] += 1
 
-                results["records_inserted"] += inserted
-                results["records_updated"] += updated
-                results["defender_distances_processed"] += 1
+                except Exception as e:
+                    error_msg = f"Failed Batch 1 ({def_dist}|{shot_clock}): {e}"
+                    logger.error(error_msg)
+                    results["errors"].append(error_msg)
 
-                logger.info(f"Processed {len(records)} records for {def_dist_range}")
 
-            except Exception as e:
-                error_msg = f"Failed to process {def_dist_range}: {e}"
-                logger.error(error_msg)
-                results["errors"].append(error_msg)
+        # --- BATCH 2: Defender Distance x Dribbles (Self-Creation Context) ---
+        # This matrix tells us how players perform against tight defense when self-creating vs spot-up.
+        logger.info("--- Processing Batch 2: Defender Distance x Dribbles ---")
 
-        # Get data for all shot clock ranges
-        logger.info("Fetching data for all shot clock ranges...")
-        all_shot_clock_data = self.client.get_all_shot_clock_ranges_for_season(
-            season_year=season_year,
-            season_type=season_type
-        )
+        for def_dist in self.client.DEFENDER_DISTANCE_RANGES:
+            for dribble in self.client.DRIBBLE_RANGES:
+                try:
+                    logger.info(f"Fetching: {def_dist} | {dribble}")
+                    
+                    # Fetch Data
+                    response_data = self.client.get_player_shot_dashboard_stats(
+                        season_year=season_year,
+                        season_type=season_type,
+                        close_def_dist_range=def_dist,
+                        shot_clock_range="", # Explicitly empty
+                        dribble_range=dribble,
+                        shot_dist_range=">=10.0"
+                    )
 
-        # Process each shot clock range
-        for shot_clock_range, response_data in all_shot_clock_data.items():
-            try:
-                logger.info(f"Processing {shot_clock_range} shot clock range...")
+                    # Parse Data
+                    records = self.client.parse_shot_dashboard_response(
+                        response_data, 
+                        close_def_dist_range=def_dist,
+                        shot_clock_range="", # Empty
+                        dribble_range=dribble,
+                        season=season_year
+                    )
 
-                # Parse the response
-                records = self.client.parse_shot_dashboard_response(
-                    response_data, 
-                    shot_clock_range=shot_clock_range,
-                    season=season_year
-                )
+                    if not records:
+                        logger.warning(f"No records for {def_dist} | {dribble}")
+                        continue
 
-                if not records:
-                    logger.warning(f"No records found for {shot_clock_range}")
-                    continue
+                    # Insert Data
+                    inserted, updated = self._insert_shot_dashboard_records(
+                        records, table_name, season_year, season_type
+                    )
 
-                # Insert/update records in database
-                inserted, updated = self._insert_shot_dashboard_records(
-                    records, table_name, season_year, season_type
-                )
+                    results["records_inserted"] += inserted
+                    results["records_updated"] += updated
+                    results["combinations_processed"] += 1
 
-                results["records_inserted"] += inserted
-                results["records_updated"] += updated
-                results["shot_clock_ranges_processed"] = results.get("shot_clock_ranges_processed", 0) + 1
+                except Exception as e:
+                    error_msg = f"Failed Batch 2 ({def_dist}|{dribble}): {e}"
+                    logger.error(error_msg)
+                    results["errors"].append(error_msg)
 
-                logger.info(f"Processed {len(records)} records for {shot_clock_range}")
-
-            except Exception as e:
-                error_msg = f"Failed to process {shot_clock_range}: {e}"
-                logger.error(error_msg)
-                results["errors"].append(error_msg)
-
-        # Get data for all dribble ranges
-        logger.info("Fetching data for all dribble ranges...")
-        all_dribble_data = self.client.get_all_dribble_ranges_for_season(
-            season_year=season_year,
-            season_type=season_type
-        )
-
-        # Process each dribble range
-        for dribble_range, response_data in all_dribble_data.items():
-            try:
-                logger.info(f"Processing {dribble_range} dribble range...")
-
-                # Parse the response
-                records = self.client.parse_shot_dashboard_response(
-                    response_data, 
-                    dribble_range=dribble_range,
-                    season=season_year
-                )
-
-                if not records:
-                    logger.warning(f"No records found for {dribble_range}")
-                    continue
-
-                # Insert/update records in database
-                inserted, updated = self._insert_shot_dashboard_records(
-                    records, table_name, season_year, season_type
-                )
-
-                results["records_inserted"] += inserted
-                results["records_updated"] += updated
-                results["dribble_ranges_processed"] = results.get("dribble_ranges_processed", 0) + 1
-
-                logger.info(f"Processed {len(records)} records for {dribble_range}")
-
-            except Exception as e:
-                error_msg = f"Failed to process {dribble_range}: {e}"
-                logger.error(error_msg)
-                results["errors"].append(error_msg)
-
-        logger.info(f"Shot dashboard data population completed for {season_year} {season_type}")
-        logger.info(f"Processed {results['defender_distances_processed']} defender distance ranges")
-        logger.info(f"Processed {results.get('shot_clock_ranges_processed', 0)} shot clock ranges")
-        logger.info(f"Processed {results.get('dribble_ranges_processed', 0)} dribble ranges")
-        logger.info(f"Inserted {results['records_inserted']} records, updated {results['records_updated']} records")
-
+        logger.info(f"Completed {season_year} {season_type}. Processed {results['combinations_processed']} combinations.")
         return results
 
     def _insert_shot_dashboard_records(
@@ -217,37 +184,38 @@ class ShotDashboardDataPopulator:
     ) -> tuple[int, int]:
         """
         Insert or update shot dashboard records in the database.
-
-        Args:
-            records: List of parsed shot dashboard records
-            table_name: Target table name
-            season_year: Season year
-            season_type: Season type
-
-        Returns:
-            Tuple of (records_inserted, records_updated)
         """
         inserted = 0
         updated = 0
+
+        logger.info(f"Inserting into table: {table_name}")
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
             for record in records:
                 try:
+                    # Ensure we handle None values for keys that might be missing
+                    # The schema expects TEXT NOT NULL, so we must use empty strings for missing ranges
+                    
                     # Prepare the record data
                     record_data = (
                         record.get('player_id'),
                         record.get('season'),
+                        season_type, # Explicitly pass season_type
                         record.get('team_id'),
-                        record.get('close_def_dist_range'),
-                        record.get('shot_clock_range'),
-                        record.get('dribble_range'),
-                        record.get('shot_dist_range'),
+                        record.get('close_def_dist_range', ''),
+                        record.get('shot_clock_range', ''),
+                        record.get('dribble_range', ''),
+                        record.get('shot_dist_range', ''),
+                        
+                        # Metadata
                         record.get('player_name'),
                         record.get('team_abbreviation'),
                         record.get('team_name'),
                         record.get('age'),
+                        
+                        # Stats
                         record.get('gp'),
                         record.get('g'),
                         record.get('fga_frequency'),
@@ -265,22 +233,24 @@ class ShotDashboardDataPopulator:
                         record.get('fg3_pct')
                     )
 
-                    # Try to insert first (will fail if record exists due to PRIMARY KEY constraint)
+                    # Insert SQL (Matches schema column order)
                     insert_sql = f"""
                         INSERT INTO {table_name} (
-                            player_id, season, team_id, close_def_dist_range, shot_clock_range, dribble_range, shot_dist_range,
-                            player_name, team_abbreviation, team_name, age, gp, g,
+                            player_id, season, season_type, team_id, 
+                            close_def_dist_range, shot_clock_range, dribble_range, shot_dist_range,
+                            player_name, team_abbreviation, team_name, age, 
+                            gp, g,
                             fga_frequency, fgm, fga, fg_pct, efg_pct,
                             fg2a_frequency, fg2m, fg2a, fg2_pct,
                             fg3a_frequency, fg3m, fg3a, fg3_pct
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """
 
                     try:
                         cursor.execute(insert_sql, record_data)
                         inserted += 1
                     except sqlite3.IntegrityError:
-                        # Record exists, update instead
+                        # Update logic (if record exists)
                         update_sql = f"""
                             UPDATE {table_name} SET
                                 player_name = ?, team_abbreviation = ?, team_name = ?, age = ?,
@@ -288,11 +258,19 @@ class ShotDashboardDataPopulator:
                                 fg2a_frequency = ?, fg2m = ?, fg2a = ?, fg2_pct = ?,
                                 fg3a_frequency = ?, fg3m = ?, fg3a = ?, fg3_pct = ?,
                                 updated_at = CURRENT_TIMESTAMP
-                            WHERE player_id = ? AND season = ? AND team_id = ? AND close_def_dist_range = ? AND shot_clock_range = ? AND dribble_range = ? AND shot_dist_range = ?
+                            WHERE player_id = ? AND season = ? AND season_type = ? AND team_id = ? 
+                            AND close_def_dist_range = ? AND shot_clock_range = ? AND dribble_range = ? AND shot_dist_range = ?
                         """
-
-                        update_data = record_data[7:] + record_data[:7]  # Move WHERE clause values to end
-                        cursor.execute(update_sql, update_data)
+                        
+                        # Data for update: Stats first, then WHERE clause params
+                        # Slice indices: 
+                        # 0-7: PK fields (player_id to shot_dist_range)
+                        # 8-26: Stats fields (player_name to fg3_pct)
+                        
+                        stats_data = record_data[8:]
+                        pk_data = record_data[0:8]
+                        
+                        cursor.execute(update_sql, stats_data + pk_data)
                         updated += 1
 
                 except Exception as e:
@@ -303,86 +281,6 @@ class ShotDashboardDataPopulator:
 
         return inserted, updated
 
-    def get_shot_dashboard_stats_summary(
-        self,
-        season_year: str = "2024-25",
-        season_type: str = "Regular Season"
-    ) -> Dict[str, Any]:
-        """
-        Get a summary of shot dashboard data in the database.
-
-        Args:
-            season_year: Season year
-            season_type: Season type
-
-        Returns:
-            Dictionary with data summary
-        """
-        table_name = "player_shot_dashboard_stats" if season_type == "Regular Season" else "player_playoff_shot_dashboard_stats"
-
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-
-            # Count total records
-            cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE season = ?", (season_year,))
-            total_records = cursor.fetchone()[0]
-
-            # Count unique players
-            cursor.execute(f"SELECT COUNT(DISTINCT player_id) FROM {table_name} WHERE season = ?", (season_year,))
-            unique_players = cursor.fetchone()[0]
-
-            # Count by defender distance range
-            cursor.execute(f"""
-                SELECT close_def_dist_range, COUNT(*) as count
-                FROM {table_name}
-                WHERE season = ?
-                GROUP BY close_def_dist_range
-                ORDER BY count DESC
-            """, (season_year,))
-            defender_distance_breakdown = cursor.fetchall()
-
-            # Count by shot clock range
-            cursor.execute(f"""
-                SELECT shot_clock_range, COUNT(*) as count
-                FROM {table_name}
-                WHERE season = ? AND shot_clock_range != ''
-                GROUP BY shot_clock_range
-                ORDER BY count DESC
-            """, (season_year,))
-            shot_clock_breakdown = cursor.fetchall()
-
-            # Count by dribble range
-            cursor.execute(f"""
-                SELECT dribble_range, COUNT(*) as count
-                FROM {table_name}
-                WHERE season = ? AND dribble_range != ''
-                GROUP BY dribble_range
-                ORDER BY count DESC
-            """, (season_year,))
-            dribble_breakdown = cursor.fetchall()
-
-            # Count by shot distance range
-            cursor.execute(f"""
-                SELECT shot_dist_range, COUNT(*) as count
-                FROM {table_name}
-                WHERE season = ?
-                GROUP BY shot_dist_range
-                ORDER BY count DESC
-            """, (season_year,))
-            shot_distance_breakdown = cursor.fetchall()
-
-        return {
-            "season_year": season_year,
-            "season_type": season_type,
-            "total_records": total_records,
-            "unique_players": unique_players,
-            "defender_distance_breakdown": defender_distance_breakdown,
-            "shot_clock_breakdown": shot_clock_breakdown,
-            "dribble_breakdown": dribble_breakdown,
-            "shot_distance_breakdown": shot_distance_breakdown
-        }
-
-
 def main():
     """Main execution function."""
     import argparse
@@ -392,114 +290,49 @@ def main():
     parser.add_argument('--season-type', choices=['Regular Season', 'Playoffs'], default='Regular Season',
                         help='Season type (default: Regular Season)')
     parser.add_argument('--db-path', default='data/nba_stats.db', help='Database path (default: data/nba_stats.db)')
-    parser.add_argument('--force-refresh', action='store_true', help='Force refresh cached API data')
-    parser.add_argument('--summary-only', action='store_true', help='Only show summary, do not populate data')
     parser.add_argument('--historical', action='store_true', help='Populate all historical seasons')
     parser.add_argument('--workers', type=int, default=1, help='Number of parallel workers for historical processing')
 
     args = parser.parse_args()
 
-    populator = ShotDashboardDataPopulator(db_path=args.db_path)
-
-    if args.summary_only:
-        # Show summary only
-        summary = populator.get_shot_dashboard_stats_summary(
-            season_year=args.season,
-            season_type=args.season_type
-        )
-
-        print(f"\n=== Shot Dashboard Data Summary ===")
-        print(f"Season: {summary['season_year']} {summary['season_type']}")
-        print(f"Total Records: {summary['total_records']:,}")
-        print(f"Unique Players: {summary['unique_players']:,}")
-
-        print(f"\nBy Defender Distance:")
-        for dist_range, count in summary['defender_distance_breakdown']:
-            print(f"  {dist_range}: {count:,}")
-
-        if summary['shot_clock_breakdown']:
-            print(f"\nBy Shot Clock Range:")
-            for clock_range, count in summary['shot_clock_breakdown']:
-                print(f"  {clock_range}: {count:,}")
-
-        if summary['dribble_breakdown']:
-            print(f"\nBy Dribble Range:")
-            for dribble_range, count in summary['dribble_breakdown']:
-                print(f"  {dribble_range}: {count:,}")
-
-        print(f"\nBy Shot Distance:")
-        for shot_range, count in summary['shot_distance_breakdown']:
-            print(f"  {shot_range}: {count:,}")
-
-    elif args.historical:
+    if args.historical:
         print(f"=== Starting Historical Population ({len(SEASONS)} seasons) ===")
         print(f"Workers: {args.workers}")
         
-        # Define worker function
         def process_season(season):
-            # Create a NEW instance for each thread to ensure thread-safe client
-            thread_populator = ShotDashboardDataPopulator(db_path=args.db_path)
+            # New instance per thread
+            populator = ShotDashboardDataPopulator(db_path=args.db_path)
             logger.info(f"Processing season {season}...")
             try:
-                # Process Regular Season
-                res_reg = thread_populator.populate_season_shot_dashboard_data(
+                # Regular Season
+                populator.populate_season_shot_dashboard_data(
                     season_year=season,
-                    season_type="Regular Season",
-                    force_refresh=args.force_refresh
+                    season_type="Regular Season"
                 )
-                
-                # Process Playoffs
-                res_playoff = thread_populator.populate_season_shot_dashboard_data(
+                # Playoffs
+                populator.populate_season_shot_dashboard_data(
                     season_year=season,
-                    season_type="Playoffs",
-                    force_refresh=args.force_refresh
+                    season_type="Playoffs"
                 )
-                
-                return season, True, res_reg, res_playoff
+                return season, True
             except Exception as e:
                 logger.error(f"Error processing season {season}: {e}")
-                return season, False, None, None
+                return season, False
 
-        # Run with thread pool
         with ThreadPoolExecutor(max_workers=args.workers) as executor:
             futures = {executor.submit(process_season, season): season for season in SEASONS}
-            
             for future in as_completed(futures):
-                season, success, res_reg, res_playoff = future.result()
-                if success:
-                    logger.info(f"✅ Completed season {season}")
-                    if res_reg:
-                        logger.info(f"  Regular: {res_reg['records_inserted']} inserted")
-                    if res_playoff:
-                        logger.info(f"  Playoffs: {res_playoff['records_inserted']} inserted")
-                else:
-                    logger.error(f"❌ Failed season {season}")
-        
-        print("\n=== Historical Population Complete ===")
-
+                season, success = future.result()
+                status = "✅" if success else "❌"
+                print(f"{status} Processed {season}")
+                
     else:
-        # Populate data for single season
-        results = populator.populate_season_shot_dashboard_data(
+        # Single Season
+        populator = ShotDashboardDataPopulator(db_path=args.db_path)
+        populator.populate_season_shot_dashboard_data(
             season_year=args.season,
-            season_type=args.season_type,
-            force_refresh=args.force_refresh
+            season_type=args.season_type
         )
-
-        print("\n=== Population Results ===")
-        print(f"Season: {results['season_year']} {results['season_type']}")
-        print(f"Defender Distance Ranges Processed: {results['defender_distances_processed']}")
-        print(f"Shot Clock Ranges Processed: {results['shot_clock_ranges_processed']}")
-        print(f"Dribble Ranges Processed: {results['dribble_ranges_processed']}")
-        print(f"Records Inserted: {results['records_inserted']:,}")
-        print(f"Records Updated: {results['records_updated']:,}")
-
-        if results['errors']:
-            print(f"\nErrors ({len(results['errors'])}):")
-            for error in results['errors'][:5]:  # Show first 5 errors
-                print(f"  - {error}")
-            if len(results['errors']) > 5:
-                print(f"  ... and {len(results['errors']) - 5} more")
-
 
 if __name__ == "__main__":
     main()
