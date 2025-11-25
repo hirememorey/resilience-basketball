@@ -1,0 +1,200 @@
+player_name,draft_year,usg_y1,nc_score,new_skills,skill_details
+Kristaps Porziņģis,2015-16,0.243,1.5,1,Zone_Floater(1.5)
+T.J. McConnell,2015-16,0.167,1.0,1,Zone_Corner_3(1.0)
+Jahlil Okafor,2015-16,0.272,0.0,0,
+Tyus Jones,2015-16,0.151,2.0,2,"Method_CatchShoot3(1.5), Zone_Rim(0.5)"
+Delon Wright,2015-16,0.218,4.2,4,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+D'Angelo Russell,2015-16,0.238,1.0,1,Zone_Mid_Range(1.0)
+Karl-Anthony Towns,2015-16,0.243,1.5,1,Method_CatchShoot3(1.5)
+Richaun Holmes,2015-16,0.171,1.5,1,Zone_Floater(1.5)
+Kelly Oubre Jr.,2015-16,0.166,3.0,1,Method_PullUp3(3.0)
+Devin Booker,2015-16,0.228,4.0,2,"Zone_Mid_Range(1.0), Method_PullUp3(3.0)"
+Cameron Payne,2015-16,0.199,4.7,3,"Zone_Rim(0.5), Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+Myles Turner,2015-16,0.207,2.7,2,"Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2)"
+Trey Lyles,2015-16,0.178,1.5,2,"Zone_Mid_Range(1.0), Zone_Rim(0.5)"
+Bobby Portis,2015-16,0.203,4.0,3,"Method_CatchShoot3(1.5), Zone_Mid_Range(1.0), Zone_Floater(1.5)"
+Kevon Looney,2015-16,0.14,1.5,2,"Zone_Mid_Range(1.0), Zone_Rim(0.5)"
+Terry Rozier,2015-16,0.168,6.7,4,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2), Method_PullUp3(3.0)"
+Norman Powell,2015-16,0.174,1.5,1,Zone_Floater(1.5)
+Pat Connaughton,2015-16,0.178,4.7,4,"Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Josh Richardson,2015-16,0.134,3.5,2,"Zone_Mid_Range(1.0), Method_PullUp2(2.5)"
+Larry Nance Jr.,2015-16,0.124,0.0,0,
+Ben Simmons,2017-18,0.219,0.0,0,
+Domantas Sabonis,2016-17,0.156,2.0,2,"Zone_Rim(0.5), Zone_Floater(1.5)"
+Malik Beasley,2016-17,0.216,8.2,6,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Method_PullUp3(3.0), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+Kris Dunn,2016-17,0.139,5.2,3,"Zone_Mid_Range(1.0), Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+Buddy Hield,2016-17,0.209,0.5,1,Zone_Rim(0.5)
+Brandon Ingram,2016-17,0.166,6.2,4,"Zone_Mid_Range(1.0), Zone_Above_Break_3(1.2), Method_PullUp2(2.5), Zone_Floater(1.5)"
+Skal Labissiere,2016-17,0.209,0.0,0,
+Caris LeVert,2016-17,0.161,1.2,1,Zone_Above_Break_3(1.2)
+Dejounte Murray,2016-17,0.23,7.7,6,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Method_PullUp2(2.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+Jamal Murray,2016-17,0.212,5.2,3,"Zone_Mid_Range(1.0), Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+Jakob Poeltl,2016-17,0.117,1.5,1,Zone_Floater(1.5)
+Taurean Prince,2016-17,0.168,4.2,2,"Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+Jaylen Brown,2016-17,0.176,2.2,2,"Zone_Mid_Range(1.0), Zone_Above_Break_3(1.2)"
+Malcolm Brogdon,2016-17,0.182,1.5,2,"Zone_Mid_Range(1.0), Zone_Rim(0.5)"
+Georges Niang,2016-17,0.184,6.7,6,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Pascal Siakam,2016-17,0.129,3.5,3,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5)"
+Guerschon Yabusele,2017-18,0.146,4.2,4,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+Ivica Zubac,2016-17,0.201,0.0,0,
+Markelle Fultz,2017-18,0.218,4.0,3,"Zone_Mid_Range(1.0), Zone_Rim(0.5), Method_PullUp2(2.5)"
+Lonzo Ball,2017-18,0.169,5.7,4,"Zone_Corner_3(1.0), Zone_Rim(0.5), Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+De'Aaron Fox,2017-18,0.227,4.0,3,"Method_CatchShoot3(1.5), Zone_Mid_Range(1.0), Zone_Floater(1.5)"
+Jayson Tatum,2017-18,0.192,0.0,0,
+Malik Monk,2017-18,0.241,2.5,2,"Zone_Mid_Range(1.0), Zone_Floater(1.5)"
+Jonathan Isaac,2017-18,0.149,3.5,2,"Zone_Corner_3(1.0), Method_PullUp2(2.5)"
+Lauri Markkanen,2017-18,0.215,0.0,0,
+Donovan Mitchell,2017-18,0.283,7.7,4,"Zone_Mid_Range(1.0), Method_PullUp3(3.0), Method_PullUp2(2.5), Zone_Above_Break_3(1.2)"
+Luke Kennard,2017-18,0.169,4.5,2,"Method_PullUp3(3.0), Zone_Floater(1.5)"
+Zach Collins,2017-18,0.153,0.0,0,
+John Collins,2017-18,0.174,4.2,3,"Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+OG Anunoby,2017-18,0.121,1.2,1,Zone_Above_Break_3(1.2)
+Jarrett Allen,2017-18,0.162,0.0,0,
+Bam Adebayo,2017-18,0.157,1.5,1,Zone_Floater(1.5)
+Isaiah Hartenstein,2018-19,0.112,2.0,2,"Zone_Rim(0.5), Zone_Floater(1.5)"
+Tony Bradley,2017-18,0.158,0.5,1,Zone_Rim(0.5)
+Kyle Kuzma,2017-18,0.219,0.0,0,
+Derrick White,2017-18,0.146,11.2,7,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Method_PullUp3(3.0), Method_PullUp2(2.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Josh Hart,2017-18,0.133,0.0,0,
+Dillon Brooks,2017-18,0.184,4.0,2,"Zone_Mid_Range(1.0), Method_PullUp3(3.0)"
+Thomas Bryant,2017-18,0.161,5.7,5,"Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Monté Morris,2017-18,0.136,10.7,7,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Method_PullUp3(3.0), Method_PullUp2(2.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+Vlatko Čančar,2019-20,0.177,0.0,0,
+Grayson Allen,2018-19,0.238,7.2,5,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Method_PullUp3(3.0), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+Marvin Bagley III,2018-19,0.237,2.0,2,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0)"
+Mo Bamba,2018-19,0.174,3.0,2,"Method_CatchShoot3(1.5), Zone_Floater(1.5)"
+Mikal Bridges,2018-19,0.119,3.5,3,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Zone_Floater(1.5)"
+Miles Bridges,2018-19,0.147,4.2,2,"Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+Bruce Brown,2018-19,0.113,3.0,3,"Zone_Mid_Range(1.0), Zone_Rim(0.5), Zone_Floater(1.5)"
+Jalen Brunson,2018-19,0.186,3.5,2,"Zone_Corner_3(1.0), Method_PullUp2(2.5)"
+Jevon Carter,2018-19,0.172,3.0,3,"Zone_Mid_Range(1.0), Zone_Rim(0.5), Zone_Floater(1.5)"
+Wendell Carter Jr.,2018-19,0.192,0.0,0,
+Donte DiVincenzo,2018-19,0.145,6.7,4,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2), Method_PullUp3(3.0)"
+Bruno Fernando,2019-20,0.147,0.0,0,
+Shai Gilgeous-Alexander,2018-19,0.182,4.5,2,"Method_PullUp3(3.0), Zone_Floater(1.5)"
+Aaron Holiday,2018-19,0.206,4.0,2,"Zone_Mid_Range(1.0), Method_PullUp3(3.0)"
+Kevin Huerter,2018-19,0.153,5.0,3,"Zone_Mid_Range(1.0), Method_PullUp2(2.5), Zone_Floater(1.5)"
+Jaren Jackson Jr.,2018-19,0.231,0.0,0,
+Kevin Knox II,2018-19,0.219,0.0,0,
+Cody Martin,2019-20,0.131,3.7,3,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2)"
+De'Anthony Melton,2018-19,0.147,8.2,5,"Zone_Mid_Range(1.0), Method_PullUp3(3.0), Method_PullUp2(2.5), Zone_Above_Break_3(1.2), Zone_Rim(0.5)"
+Shake Milton,2018-19,0.147,9.2,7,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Method_PullUp2(2.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Svi Mykhailiuk,2018-19,0.157,7.0,5,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Method_PullUp3(3.0), Zone_Rim(0.5)"
+Josh Okogie,2018-19,0.148,0.0,0,
+Michael Porter Jr.,2019-20,0.211,0.0,0,
+Mitchell Robinson,2018-19,0.119,1.5,1,Zone_Floater(1.5)
+Collin Sexton,2018-19,0.247,5.5,4,"Zone_Mid_Range(1.0), Zone_Rim(0.5), Method_PullUp2(2.5), Zone_Floater(1.5)"
+Landry Shamet,2018-19,0.145,0.0,0,
+Anfernee Simons,2018-19,0.24,7.7,5,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+Gary Trent Jr.,2018-19,0.213,7.2,5,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Method_PullUp3(3.0), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+Jarred Vanderbilt,2018-19,0.179,0.5,1,Zone_Rim(0.5)
+Moritz Wagner,2018-19,0.21,4.7,4,"Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Lonnie Walker IV,2018-19,0.196,4.2,4,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+P.J. Washington,2019-20,0.184,4.5,2,"Method_PullUp3(3.0), Zone_Floater(1.5)"
+Trae Young,2018-19,0.277,2.7,3,"Zone_Mid_Range(1.0), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+Deandre Ayton,2018-19,0.21,1.0,1,Zone_Mid_Range(1.0)
+Luka Dončić,2018-19,0.296,4.7,3,"Zone_Mid_Range(1.0), Zone_Above_Break_3(1.2), Method_PullUp2(2.5)"
+Goga Bitadze,2019-20,0.17,0.5,1,Zone_Rim(0.5)
+Robert Williams III,2018-19,0.101,3.0,3,"Zone_Mid_Range(1.0), Zone_Rim(0.5), Zone_Floater(1.5)"
+Rui Hachimura,2019-20,0.189,5.2,4,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Haywood Highsmith,2018-19,0.115,3.0,3,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5)"
+Terance Mann,2019-20,0.123,5.7,5,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Bol Bol,2019-20,0.206,0.0,0,
+Zion Williamson,2019-20,0.291,0.0,0,
+RJ Barrett,2019-20,0.234,1.2,1,Zone_Above_Break_3(1.2)
+Cam Reddish,2019-20,0.185,3.0,3,"Zone_Corner_3(1.0), Zone_Rim(0.5), Zone_Floater(1.5)"
+Ja Morant,2019-20,0.256,1.2,1,Zone_Above_Break_3(1.2)
+De'Andre Hunter,2019-20,0.173,2.5,2,"Zone_Mid_Range(1.0), Zone_Floater(1.5)"
+Coby White,2019-20,0.235,0.5,1,Zone_Rim(0.5)
+Brandon Clarke,2019-20,0.18,0.0,0,
+Darius Garland,2019-20,0.201,3.0,2,"Method_PullUp2(2.5), Zone_Rim(0.5)"
+Jaxson Hayes,2019-20,0.146,2.7,2,"Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Nickeil Alexander-Walker,2019-20,0.233,0.0,0,
+Tyler Herro,2019-20,0.213,2.0,2,"Zone_Rim(0.5), Zone_Floater(1.5)"
+Keldon Johnson,2019-20,0.164,5.7,5,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Chuma Okeke,2020-21,0.142,0.0,0,
+Kevin Porter Jr.,2019-20,0.202,4.2,2,"Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+Charles Bassey,2021-22,0.152,0.0,0,
+Nic Claxton,2019-20,0.144,0.5,1,Zone_Rim(0.5)
+Daniel Gafford,2019-20,0.131,0.0,0,
+Quentin Grimes,2021-22,0.149,0.0,0,
+Talen Horton-Tucker,2019-20,0.18,0.5,1,Zone_Rim(0.5)
+Ty Jerome,2019-20,0.17,3.5,3,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Zone_Floater(1.5)"
+Cameron Johnson,2019-20,0.151,1.5,1,Zone_Floater(1.5)
+Jalen McDaniels,2019-20,0.131,5.7,5,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Jaylen Nowell,2019-20,0.165,12.2,8,"Zone_Mid_Range(1.0), Method_PullUp3(3.0), Method_PullUp2(2.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5), Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5)"
+Jordan Poole,2019-20,0.2,7.2,5,"Zone_Mid_Range(1.0), Method_PullUp3(3.0), Zone_Above_Break_3(1.2), Method_CatchShoot3(1.5), Zone_Rim(0.5)"
+Neemias Queta,2021-22,0.176,0.0,0,
+Matisse Thybulle,2019-20,0.108,0.0,0,
+Grant Williams,2019-20,0.112,2.7,2,"Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2)"
+Anthony Edwards,2020-21,0.264,0.0,0,
+LaMelo Ball,2020-21,0.247,1.0,1,Zone_Mid_Range(1.0)
+James Wiseman,2020-21,0.231,1.5,1,Zone_Floater(1.5)
+Killian Hayes,2020-21,0.185,1.5,2,"Zone_Mid_Range(1.0), Zone_Rim(0.5)"
+Deni Avdija,2020-21,0.118,1.0,1,Zone_Corner_3(1.0)
+Obi Toppin,2020-21,0.157,2.5,2,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5)"
+Onyeka Okongwu,2020-21,0.141,1.0,1,Zone_Mid_Range(1.0)
+Tyrese Haliburton,2020-21,0.175,0.0,0,
+Devin Vassell,2020-21,0.138,2.2,2,"Zone_Mid_Range(1.0), Zone_Above_Break_3(1.2)"
+Isaac Okoro,2020-21,0.142,3.0,2,"Method_CatchShoot3(1.5), Zone_Floater(1.5)"
+Patrick Williams,2020-21,0.146,0.0,0,
+Precious Achiuwa,2020-21,0.184,0.0,0,
+Aaron Nesmith,2020-21,0.133,3.0,1,Method_PullUp3(3.0)
+Cole Anthony,2020-21,0.235,6.0,4,"Method_CatchShoot3(1.5), Method_PullUp2(2.5), Zone_Rim(0.5), Zone_Floater(1.5)"
+Tyrese Maxey,2020-21,0.222,6.7,4,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+Josh Green,2020-21,0.112,6.7,6,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Jaden McDaniels,2020-21,0.118,1.0,1,Zone_Mid_Range(1.0)
+Jalen Smith,2020-21,0.161,0.5,1,Zone_Rim(0.5)
+Isaiah Stewart,2020-21,0.15,2.5,2,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5)"
+Zeke Nnaji,2020-21,0.126,0.5,1,Zone_Rim(0.5)
+Immanuel Quickley,2020-21,0.246,1.5,2,"Zone_Mid_Range(1.0), Zone_Rim(0.5)"
+Paul Reed,2020-21,0.208,1.5,2,"Zone_Mid_Range(1.0), Zone_Rim(0.5)"
+Isaiah Joe,2020-21,0.163,10.7,7,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Method_PullUp3(3.0), Method_PullUp2(2.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+Tre Jones,2020-21,0.159,1.5,2,"Zone_Mid_Range(1.0), Zone_Rim(0.5)"
+Malachi Flynn,2020-21,0.183,1.0,1,Zone_Corner_3(1.0)
+Payton Pritchard,2020-21,0.162,0.0,0,
+Nick Richards,2020-21,0.111,0.5,1,Zone_Rim(0.5)
+Xavier Tillman,2020-21,0.142,0.0,0,
+Jared Butler,2021-22,0.221,8.2,6,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_PullUp3(3.0), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Desmond Bane,2020-21,0.155,2.5,1,Method_PullUp2(2.5)
+Jalen Green,2021-22,0.234,0.0,0,
+Jonathan Kuminga,2021-22,0.227,2.5,2,"Zone_Corner_3(1.0), Zone_Floater(1.5)"
+KJ Martin,2020-21,0.154,2.5,2,"Zone_Corner_3(1.0), Zone_Floater(1.5)"
+Sam Merrill,2020-21,0.146,0.0,0,
+Ayo Dosunmu,2021-22,0.138,8.2,4,"Method_PullUp2(2.5), Method_PullUp3(3.0), Zone_Floater(1.5), Zone_Above_Break_3(1.2)"
+Vít Krejčí,2021-22,0.125,2.7,2,"Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2)"
+Jeremiah Robinson-Earl,2021-22,0.152,0.0,0,
+Brandon Boston,2021-22,0.212,0.0,0,
+Josh Christopher,2021-22,0.205,0.0,0,
+Herbert Jones,2021-22,0.136,0.0,0,
+Trey Murphy III,2021-22,0.147,3.5,2,"Zone_Rim(0.5), Method_PullUp3(3.0)"
+Jaden Springer,2021-22,0.118,1.5,2,"Zone_Mid_Range(1.0), Zone_Rim(0.5)"
+Franz Wagner,2021-22,0.208,1.0,1,Zone_Mid_Range(1.0)
+Ziaire Williams,2021-22,0.144,1.5,1,Method_CatchShoot3(1.5)
+Chris Duarte,2021-22,0.207,0.0,0,
+Bones Hyland,2021-22,0.231,1.5,1,Zone_Floater(1.5)
+Kai Jones,2021-22,0.15,0.0,0,
+Miles McBride,2021-22,0.137,12.2,8,"Zone_Mid_Range(1.0), Method_PullUp3(3.0), Method_PullUp2(2.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5), Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5)"
+Moses Moody,2021-22,0.148,2.5,2,"Zone_Mid_Range(1.0), Zone_Floater(1.5)"
+Isaiah Jackson,2021-22,0.214,1.5,1,Zone_Floater(1.5)
+Tre Mann,2021-22,0.213,3.0,3,"Zone_Mid_Range(1.0), Zone_Rim(0.5), Zone_Floater(1.5)"
+Day'Ron Sharpe,2021-22,0.205,2.0,2,"Zone_Rim(0.5), Zone_Floater(1.5)"
+JT Thor,2021-22,0.116,3.2,3,"Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2)"
+Jalen Johnson,2021-22,0.183,5.7,5,"Zone_Mid_Range(1.0), Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Keon Johnson,2021-22,0.207,0.0,0,
+Kessler Edwards,2021-22,0.132,0.0,0,
+Corey Kispert,2021-22,0.142,4.2,2,"Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+Davion Mitchell,2021-22,0.202,5.5,3,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Method_PullUp3(3.0)"
+Cam Thomas,2021-22,0.212,6.2,4,"Method_CatchShoot3(1.5), Zone_Rim(0.5), Method_PullUp3(3.0), Zone_Above_Break_3(1.2)"
+Scottie Barnes,2021-22,0.187,2.7,2,"Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2)"
+Luka Garza,2021-22,0.195,0.0,0,
+Sandro Mamukelashvili,2021-22,0.142,0.0,0,
+Alperen Sengun,2021-22,0.214,4.0,3,"Method_CatchShoot3(1.5), Zone_Mid_Range(1.0), Zone_Floater(1.5)"
+Jericho Sims,2021-22,0.068,0.0,0,
+Josh Giddey,2021-22,0.218,3.5,3,"Zone_Corner_3(1.0), Zone_Mid_Range(1.0), Method_CatchShoot3(1.5)"
+Santi Aldama,2021-22,0.174,4.7,4,"Method_CatchShoot3(1.5), Zone_Rim(0.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Jalen Suggs,2021-22,0.244,9.2,6,"Zone_Mid_Range(1.0), Method_PullUp3(3.0), Zone_Above_Break_3(1.2), Zone_Floater(1.5), Zone_Corner_3(1.0), Method_CatchShoot3(1.5)"
+Cade Cunningham,2021-22,0.273,5.0,3,"Method_CatchShoot3(1.5), Zone_Mid_Range(1.0), Method_PullUp2(2.5)"
+Evan Mobley,2021-22,0.201,4.2,3,"Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2), Zone_Floater(1.5)"
+Aaron Wiggins,2021-22,0.149,3.7,3,"Zone_Corner_3(1.0), Method_CatchShoot3(1.5), Zone_Above_Break_3(1.2)"
+Dalano Banton,2021-22,0.159,0.0,0,

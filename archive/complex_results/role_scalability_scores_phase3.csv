@@ -1,0 +1,8 @@
+player_id,player_name,scalability_score,usage_change,usage_change_pct,ts_change,ortg_change,regular_usage,playoff_usage,regular_ts,playoff_ts,data_quality
+202710,Jimmy Butler III,55.0,0.014,6.9,-0.1,-9.7,0.203,0.217,0.6,0.6,good
+201935,James Harden,55.0,,0.0,0.0,0.0,,0.0,,0.0,limited
+2544,LeBron James,65.0,-0.029,-10.0,-0.0,-4.0,0.291,0.262,0.6,0.6,good
+1629029,Luka Dončić,55.0,-0.007,-2.1,0.0,-7.9,0.328,0.321,0.6,0.6,good
+203076,Anthony Davis,65.0,-0.301,-100.0,-0.6,-113.3,0.301,0.0,0.6,0.0,good
+2397,Player 2397,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,insufficient_data
+2207,Player 2207,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,insufficient_data
