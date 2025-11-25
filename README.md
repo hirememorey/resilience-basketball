@@ -12,9 +12,9 @@ A data science project to identify the factors that make NBA players "playoff re
 
 This project has undergone a **major data integrity overhaul and philosophical pivot.**
 
-1.  **Data Integrity:** The foundational database was rebuilt to fix critical schema and data population errors. The database is now **fully populated with comprehensive historical data for 10 seasons (2015-16 to 2024-25).**
+1.  **Data Integrity Crisis (RESOLVED):** A critical data integrity issue was discovered and fixed - 27,931 orphaned game references in player_game_logs. Root cause: 2024-25 season game logs were populated before games table data. **Issue resolved** by running historical population for 2024-25 season.
 2.  **Philosophical Pivot:** We have shifted from viewing resilience as an "intrinsic trait" to a "conditional probability."
-3.  **Historical Data Surge (2025):** The "split-brain" data gap has been resolved. All historical playoff data (2015-2023) has been backfilled, enabling true resilience calculations comparing regular season vs. playoff performance.
+3.  **Complete Historical Coverage:** The database now contains comprehensive historical data for 10 seasons (2015-16 to 2024-25) with both Regular Season and Playoff data.
 
 **Before you begin, you MUST read the "Project Pivot" and "Data Integrity Post-Mortem" sections at the top of `extended_resilience_framework.md`.** This document contains the methodology and essential context.
 
@@ -31,15 +31,18 @@ This will create the database file with the correct, updated schema.
 python src/nba_data/db/schema.py
 ```
 
-### Database Status: ✅ FULLY POPULATED
+### Database Status: ✅ FULLY POPULATED & INTEGRITY VERIFIED
 The database contains comprehensive historical data across all critical tables:
 
 - **Players:** 1,437 players with complete metadata
 - **Seasons:** 10 full seasons (2015-16 to 2024-25) with both Regular Season and Playoff data
-- **Game Logs:** 271K+ game-by-game records for granular analysis
-- **Tracking Stats:** 7K+ possession metrics for friction analysis
-- **Shot Dashboard:** 169K+ combinatorial shot records for dominance analysis
+- **Games:** 12,813 complete game records
+- **Game Logs:** 271,183 game-by-game records for granular analysis
+- **Tracking Stats:** 7,516 possession metrics for friction analysis
+- **Shot Dashboard:** 135,738 combinatorial shot records for dominance analysis
 - **Team Ratings:** Complete defensive ratings for crucible baseline calculations
+
+**Data Integrity:** ✅ All referential integrity checks pass. No orphaned records.
 
 The historical data surge is complete. Individual season re-population is available if needed:
 
@@ -75,15 +78,17 @@ resilience-basketball/
 
 ## Next Steps
 1.  **Start with `extended_resilience_framework.md`** to understand the philosophical pivot and methodology.
-2.  **Execute Resilience Calculations:**
+2.  **Execute Resilience Calculations:** The five-pathway framework is now ready for implementation:
     ```bash
-    # Run the unified resilience calculator
+    # Run the unified resilience calculator (integrates all 5 pathways)
     python src/nba_data/scripts/calculate_unified_resilience.py
 
     # Or run individual pathway calculators:
-    python src/nba_data/scripts/calculate_friction.py
-    python src/nba_data/scripts/calculate_crucible_baseline.py
-    python src/nba_data/scripts/calculate_dominance_score.py
+    python src/nba_data/scripts/calculate_friction.py           # Process independence
+    python src/nba_data/scripts/calculate_crucible_baseline.py  # Top-10 defense performance
+    python src/nba_data/scripts/calculate_dominance_score.py     # Shot quality under pressure
+    python src/nba_data/scripts/calculate_longitudinal_evolution.py # Multi-season adaptability
+    python src/nba_data/scripts/calculate_extended_resilience.py   # Versatility/diversification
     ```
 3.  **Validate Results:** Compare resilience scores against known playoff performers (e.g., Jimmy Butler vs. Anthony Edwards)
 4.  **Visualize:** Generate career arc charts and correlation analysis
@@ -91,13 +96,14 @@ resilience-basketball/
 
 ## Current Working Features
 
-### ✅ Data Foundation (Complete)
+### ✅ Data Foundation (Complete & Verified)
 - **Comprehensive Historical Coverage:** 10 seasons (2015-16 to 2024-25) with both Regular Season and Playoff data
 - **Player Universe:** 1,437 players with complete metadata and historical tracking
-- **Game-Level Granularity:** 271K+ game logs enabling crucible baseline calculations
-- **Possession Metrics:** 7K+ tracking records with friction analysis data
-- **Shot Quality Data:** 169K+ combinatorial shot dashboard records for dominance scoring
+- **Game-Level Granularity:** 271,183 game logs enabling crucible baseline calculations
+- **Possession Metrics:** 7,516 tracking records with friction analysis data
+- **Shot Quality Data:** 135,738 combinatorial shot dashboard records for dominance scoring
 - **Team Defense Ratings:** Complete ratings for all seasons enabling Top-10 defense filtering
+- **Data Integrity:** All foreign key constraints enforced, no orphaned records
 
 ### 🔧 Resilience Framework (Ready for Implementation)
 - **Unified Resilience Score:** Framework designed to aggregate 5 pathways using Z-Score normalization
