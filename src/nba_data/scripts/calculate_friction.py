@@ -166,8 +166,24 @@ class FrictionCalculator:
 
         df_merged['usage_tier'] = df_merged['usage_percentage_reg'].apply(get_tier)
 
-        # 7. Sort and Rank
-        df_merged = df_merged.sort_values('friction_delta') # Most resilient (negative delta) first
+        # 7. Normalize to 0-100 Score (Percentile Rank)
+        # Logic: Lower Delta is BETTER.
+        # - Negative Delta (got better) -> High Score (closer to 100)
+        # - Positive Delta (got worse) -> Low Score (closer to 0)
+        
+        # Rank 'friction_delta' ascending (Lowest/Best is rank 1)
+        # pct=True gives 0.0 to 1.0
+        # We want the lowest delta to be 1.0 (100), so we invert or just rank descending?
+        # Let's use rank(ascending=True). Smallest delta (e.g. -5) gets rank 1 (0.0 percentile).
+        # Wait, if we use ascending=False:
+        # Largest delta (+5, bad) gets rank 1.
+        # Smallest delta (-5, good) gets rank N.
+        # So percentile of ascending=False would give high score to good players.
+        
+        df_merged['friction_resilience_score'] = df_merged['friction_delta'].rank(ascending=False, pct=True) * 100
+        
+        # 8. Sort and Rank
+        df_merged = df_merged.sort_values('friction_resilience_score', ascending=False) # Highest score first
 
         logger.info(f"Calculated resilience for {len(df_merged)} players who played in both Reg Season & Playoffs.")
         return df_merged
@@ -190,7 +206,7 @@ def main():
         # Display Top Resilient High-Usage Players
         print("\n=== 🏆 Top Resilience (High Usage: >25%) ===")
         high_usage = df[df['usage_percentage_reg'] > 0.25].head(10)
-        cols = ['player_name', 'team_abbreviation', 'usage_tier', 'friction_score_reg', 'friction_score_playoff', 'friction_delta']
+        cols = ['player_name', 'team_abbreviation', 'usage_tier', 'friction_score_reg', 'friction_score_playoff', 'friction_delta', 'friction_resilience_score']
         print(high_usage[cols].to_string(index=False, float_format="%.3f"))
 
         print("\n=== 📉 Biggest Drop-offs (High Usage) ===")
@@ -200,6 +216,7 @@ def main():
         print("\n=== 🔍 Metric Context ===")
         print("Friction Score = Seconds per Touch / Points per Touch")
         print("Delta = Playoff - Regular Season")
+        print("Resilience Score (0-100) = Percentile Rank of Delta (Higher is Better)")
         print("Negative Delta = RESILIENT (Maintained or Improved efficiency)")
         print("Positive Delta = FRAGILE (Efficiency worsened)")
 

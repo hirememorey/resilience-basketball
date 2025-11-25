@@ -15,7 +15,7 @@ This new approach is a direct response to five identified blind spots in the ori
 2.  **The "Heliocentric" Illusion (System vs. Skill):** The old model conflated a player's skill with their coaching system. It couldn't distinguish between "cannot do it" and "is not asked to do it" (e.g., Jalen Brunson in Dallas vs. New York). **The Fix: We will normalize for "Opportunity Density" by measuring `Points Per Touch-Second` to identify latent scalability.**
 3.  **The "League Average" Denominator Flaw:** The old model's "Dominance" score (SQAV) compared players against a regular-season baseline, which is statistically incongruent with playoff intensity. **The Fix: We must create a "Crucible Baseline" by comparing performance against only Top-10 rated defenses.**
 4.  **The "Portfolio Theory" Problem (Actionability Gap):** The old model treated players as independent variables, ignoring that high-usage, high-resilience players cannibalize each other's resources. **The Fix: We will introduce a "Resource Cost" (e.g., High/Low Friction) to each resilience score.**
-5.  **The "Lagging Indicator" of Evolution:** The old model's "Neuroplasticity" metric was too slow, confirming evolution only after a player was already on a max contract. **The Fix: We will detect "Micro-Evolution" by tracking changes in *attempt rates* within a single season.**
+5.  **The "Lagging Indicator" of Evolution:** The old model's "Neuroplasticity" metric was too slow. We explored "Micro-Evolution" (within-season changes) but determined that **Macro-Evolution (multi-season adaptability)** provides a stronger signal for true resilience, filtering out short-term noise. **The Fix: We calculate acquisition and efficiency trajectory over a player's full career history.**
 
 ---
 ## Data Integrity Post-Mortem: A Warning for New Developers
@@ -85,14 +85,17 @@ Regular-season performance is an imperfect predictor of postseason success. The 
     - The database is now **fully populated with clean data for all seasons from 2015-16 to 2024-25,** for both Regular Season and Playoffs.
 
 ### Core Scripts
-- **`calculate_unified_resilience.py`**: The main engine (aggregates the 5 pathways). **NOTE: This script needs to be updated to reflect the new philosophical pivot.**
+- **`calculate_unified_resilience.py`**: The main engine. Integrates Friction, Crucible, Evolution, Dominance, and Versatility into a single weighted score.
+- **`calculate_friction.py`**: Calculates the "Resilience Delta" (Playoff vs Regular Season) and normalizes it to a 0-100 score.
+- **`calculate_crucible_baseline.py`**: Calculates performance against Top-10 defenses and the resulting "Crucible Delta".
+- **`calculate_longitudinal_evolution.py`**: Calculates multi-season skill acquisition and efficiency trajectory.
 - **Population Scripts:** Reside in `src/nba_data/scripts/` and are used to fetch data from the API.
 - **Validation Script:** `src/nba_data/scripts/validate_integrity.py` **must be run** after any data population to ensure data health.
 
 ### Next Steps (The New Roadmap)
 1.  **✅ Repopulate Historical Data:** Run the fixed population scripts for all seasons from 2015-16 to 2023-24 for both "Regular Season" and "Playoffs".
-2.  **Implement Team Ratings Ingestion:** Create a script to populate team-level defensive ratings for each season. This is required for the "Crucible Baseline".
-3.  **Refactor Resilience Calculations:** Update the analysis scripts (`calculate_...`) to implement the new logic:
+2.  **✅ Implement Team Ratings Ingestion:** Create a script to populate team-level defensive ratings for each season. This is required for the "Crucible Baseline".
+3.  **✅ Refactor Resilience Calculations:** Update the analysis scripts (`calculate_...`) to implement the new logic:
     - `Dependency-Weighted Versatility Score`
     - `Friction Score` (Points per Touch-Second)
     - `Crucible-Adjusted Dominance Score`
@@ -107,14 +110,14 @@ Regular-season performance is an imperfect predictor of postseason success. The 
   - **Complete & Validated:** `calculate_friction.py` now correctly measures the delta between Regular Season and Playoff efficiency.
   - **Data Integrity Fix:** Fixed a critical bug where Playoff tracking data was identical to Regular Season data due to an API client error.
   - **Results:** successfully identified "Resilient" high-usage players (e.g., Damian Lillard -7.26 Delta) vs. "Fragile" players (e.g., Anthony Edwards +5.15 Delta) for the 2023-24 season.
-- **🔄 Logic Bridge Progress:**
+- **✅ Logic Bridge Progress:**
   - **✅ Friction Score Calculation:** **COMPLETE & VERIFIED**.
   - **✅ Crucible Baseline:** **COMPLETE & VERIFIED**.
     - Implemented `calculate_crucible_baseline.py`.
     - Populated `player_crucible_stats` table using granular game logs (filtered for Top-10 defenses).
     - Validation confirmed significant efficiency drops for role players and resilience for elite creators.
-  - **⏳ Dominance Score:** Shot dashboard data fixed with combinatorial approach (13K+ rows), ready for calculation.
-  - **⏳ Unified Resilience:** Integration of all metrics pending.
+  - **✅ Dominance Score:** Shot dashboard data fixed with combinatorial approach.
+  - **✅ Unified Resilience:** Integration of all metrics complete.
 
 ### Key Fixes Implemented
 - **Tracking Data Integrity:** Discovered and fixed a silent failure where `NBAStatsClient` was hardcoding `SeasonType="Regular Season"`, causing Playoff data to be corrupted. All 2023-24 tracking data has been repopulated and verified.

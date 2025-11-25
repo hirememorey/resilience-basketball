@@ -145,14 +145,6 @@ def calculate_skill_acquisition(portfolio: pd.DataFrame) -> float:
         return 0.0
         
     # Define volume thresholds per type (Total volume per season, not per game)
-    # Raw data shows Giannis has ~250-550 mid-range shots/season.
-    # PlayTypes (e.g. Isolation) are ~3-5 possessions PER GAME. 
-    # We need to handle per-game vs total volume differences.
-    
-    # Currently, spatial data is TOTAL shots (250+).
-    # PlayType data is POSSESSIONS PER GAME (2.7, 3.6, etc).
-    # Tracking data (Drives) is DRIVES PER GAME (8.8, 10.9).
-    
     THRESHOLDS = {
         'Spatial': 150,    # Total shots per season
         'PlayType': 1.5,   # Possessions per game
@@ -254,8 +246,6 @@ def calculate_efficiency_trajectory(portfolio: pd.DataFrame) -> float:
         # Simple linear regression slope
         if len(x) > 1:
             slope, _ = np.polyfit(x, y, 1)
-            # Weight the slope by the average volume of the skill? 
-            # For now, raw efficiency improvement is the signal.
             slopes.append(slope)
             
     if not slopes:
@@ -266,16 +256,9 @@ def calculate_efficiency_trajectory(portfolio: pd.DataFrame) -> float:
     
     # Normalize: A slope of +0.05 (5% efficiency boost per year) is elite
     # A slope of 0 is stagnant. Negative is regression.
-    # Sigmoid normalization centered at 0
-    # 0.05 -> ~100 score? 
-    # Let's use linear scaling for simplicity first: 
-    # Score = avg_slope * 1000 (so 0.01 -> 10, 0.05 -> 50) + 50 baseline?
     
-    # Let's scale it such that 0.05 (5% improvement) = 100
+    # Scale: 0.05 -> 100
     score = max(min(avg_slope * 2000, 100), -100) 
-    
-    # Clip negative scores to 0 for the final metric? 
-    # No, regression should penalize adaptability.
     
     return score
 
@@ -300,7 +283,6 @@ def calculate_longitudinal_evolution(player_id: int) -> Dict[str, float]:
     # 4. Composite Adaptability Score
     # 60% Weight to Acquisition (Can you learn?)
     # 40% Weight to Trajectory (Do you get better?)
-    # If trajectory is negative, it hurts the score.
     
     # Ensure non-negative final score
     trajectory_component = max(trajectory_score, 0) 
@@ -338,4 +320,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

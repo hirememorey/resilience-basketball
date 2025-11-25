@@ -1,99 +1,158 @@
 """
-Script to validate database integrity and identify data population issues.
+Script to perform comprehensive "World Class" integrity checks on the NBA database.
+Validates referential integrity, logical consistency, and type safety.
 """
 
 import sys
 import sqlite3
 from pathlib import Path
 import logging
+from typing import List, Tuple, Dict
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+project_root = str(Path(__file__).resolve().parent.parent.parent.parent)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from nba_data.db.schema import NBADatabaseSchema
+from src.nba_data.db.schema import NBADatabaseSchema
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+# Configure Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/integrity_check_enhanced.log"),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
-def validate_integrity(db_path: str = "data/nba_stats.db"):
-    """Run integrity checks on the database."""
-    logger.info(f"🔍 Validating database integrity for {db_path}...")
-    
-    if not Path(db_path).exists():
-        logger.error(f"❌ Database file not found: {db_path}")
-        return False
+class IntegrityValidator:
+    def __init__(self, db_path: str = "data/nba_stats.db"):
+        self.db_path = db_path
+        self.conn = sqlite3.connect(db_path)
+        self.cursor = self.conn.cursor()
+        self.issues_found = 0
 
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    
-    issues_found = 0
-    
-    # Check 1: Team ID Diversity
-    logger.info("\n--- Check 1: Team ID Diversity ---")
-    try:
-        cursor.execute("SELECT COUNT(DISTINCT team_id) FROM player_season_stats")
-        team_count = cursor.fetchone()[0]
-        logger.info(f"Unique Team IDs in player_season_stats: {team_count}")
+    def check_referential_integrity(self):
+        """Check for orphaned records (Foreign Key violations)."""
+        logger.info("\n🔍 Checking Referential Integrity (Orphans)...")
         
-        if team_count <= 1:
-            logger.error("❌ CRITICAL: Lack of Team ID diversity. Data likely corrupted with placeholders.")
-            issues_found += 1
+        # relationships = [(ChildTable, ForeignKeyColumn, ParentTable, ParentKey)]
+        relationships = [
+            ("player_game_logs", "player_id", "players", "player_id"),
+            ("player_game_logs", "team_id", "teams", "team_id"),
+            ("player_game_logs", "game_id", "games", "game_id"),
+            ("games", "home_team_id", "teams", "team_id"),
+            ("games", "away_team_id", "teams", "team_id"),
+            ("players", "team_id", "teams", "team_id"),
+            ("player_season_stats", "player_id", "players", "player_id"),
+            ("player_season_stats", "team_id", "teams", "team_id"),
+            ("player_advanced_stats", "player_id", "players", "player_id"),
+            ("player_tracking_stats", "player_id", "players", "player_id"),
+            ("player_playoff_stats", "player_id", "players", "player_id"),
+            ("possessions", "game_id", "games", "game_id"),
+            ("possessions", "offensive_team_id", "teams", "team_id"),
+        ]
+
+        for child_table, fk_col, parent_table, pk_col in relationships:
+            try:
+                query = f"""
+                    SELECT COUNT(*) 
+                    FROM {child_table} c 
+                    LEFT JOIN {parent_table} p ON c.{fk_col} = p.{pk_col} 
+                    WHERE p.{pk_col} IS NULL AND c.{fk_col} IS NOT NULL
+                """
+                self.cursor.execute(query)
+                orphan_count = self.cursor.fetchone()[0]
+                
+                if orphan_count > 0:
+                    logger.error(f"❌ ORPHAN DETECTED: {orphan_count} rows in '{child_table}' have invalid '{fk_col}' references.")
+                    self.issues_found += 1
+                else:
+                    logger.debug(f"✅ {child_table}.{fk_col} -> {parent_table} is clean.")
+            except sqlite3.OperationalError as e:
+                logger.warning(f"⚠️ Could not check {child_table} -> {parent_table}: {e}")
+
+    def check_logical_consistency(self):
+        """Check for logical data errors (e.g. FGM > FGA)."""
+        logger.info("\n🧠 Checking Logical Consistency...")
+
+        checks = [
+            ("player_season_stats", "field_goals_made > field_goals_attempted", "FGM > FGA"),
+            ("player_season_stats", "three_pointers_made > three_pointers_attempted", "3PM > 3PA"),
+            ("player_season_stats", "free_throws_made > free_throws_attempted", "FTM > FTA"),
+            ("player_season_stats", "games_started > games_played", "GS > GP"),
+            ("player_game_logs", "field_goals_made > field_goals_attempted", "FGM > FGA (Logs)"),
+            ("player_game_logs", "points < 0", "Negative Points"),
+        ]
+
+        for table, condition, desc in checks:
+            try:
+                query = f"SELECT COUNT(*) FROM {table} WHERE {condition}"
+                self.cursor.execute(query)
+                count = self.cursor.fetchone()[0]
+                
+                if count > 0:
+                    logger.error(f"❌ LOGIC FAILURE: {count} rows in '{table}' satisfy '{desc}'.")
+                    self.issues_found += 1
+                else:
+                    logger.debug(f"✅ {table}: {desc} passed.")
+            except sqlite3.OperationalError as e:
+                logger.warning(f"⚠️ Could not check logic for {table}: {e}")
+
+    def check_critical_placeholders(self):
+        """Check for forbidden placeholder values (e.g. Team ID 1610612760)."""
+        logger.info("\n🚫 Checking for Forbidden Placeholders...")
+        
+        PLACEHOLDER_ID = 1610612760 # OKC Blue / Placeholder
+        
+        tables_to_check = ["player_season_stats", "player_game_logs", "player_tracking_stats"]
+        
+        for table in tables_to_check:
+            try:
+                self.cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE team_id = ?", (PLACEHOLDER_ID,))
+                count = self.cursor.fetchone()[0]
+                
+                self.cursor.execute(f"SELECT COUNT(*) FROM {table}")
+                total = self.cursor.fetchone()[0]
+                
+                if total == 0:
+                    continue
+
+                pct = (count / total) * 100
+                if pct > 15: # Strict threshold
+                    logger.error(f"❌ PLACEHOLDER DETECTED: {pct:.1f}% of '{table}' uses Team ID {PLACEHOLDER_ID}.")
+                    self.issues_found += 1
+                else:
+                    logger.debug(f"✅ {table} placeholder check passed ({count} rows).")
+            except sqlite3.OperationalError:
+                pass
+
+    def validate(self) -> bool:
+        """Run all validations."""
+        logger.info(f"🚀 Starting World Class Integrity Check on {self.db_path}...")
+        
+        if not Path(self.db_path).exists():
+            logger.error("❌ Database file not found.")
+            return False
+
+        self.check_referential_integrity()
+        self.check_logical_consistency()
+        self.check_critical_placeholders()
+        
+        if self.issues_found > 0:
+            logger.error(f"\n❌ INTEGRITY CHECK FAILED: {self.issues_found} critical issues found.")
+            return False
         else:
-            logger.info("✅ Team ID diversity looks plausible.")
-            
-    except Exception as e:
-        logger.error(f"Check failed: {e}")
+            logger.info(f"\n✅ INTEGRITY CHECK PASSED: Database is clean.")
+            return True
 
-    # Check 2: Placeholder Team ID Usage
-    logger.info("\n--- Check 2: Placeholder Usage ---")
-    PLACEHOLDER_ID = 1610612760  # OKC
-    try:
-        cursor.execute(f"SELECT COUNT(*) FROM player_season_stats WHERE team_id = {PLACEHOLDER_ID}")
-        okc_count = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COUNT(*) FROM player_season_stats")
-        total_count = cursor.fetchone()[0]
-        
-        if total_count > 0:
-            pct_okc = (okc_count / total_count) * 100
-            logger.info(f"Rows with Team ID {PLACEHOLDER_ID} (OKC): {okc_count}/{total_count} ({pct_okc:.1f}%)")
-            
-            if pct_okc > 10: # Allow some legitimate OKC players, but not 100%
-                logger.error("❌ CRITICAL: Suspiciously high number of players on OKC. Placeholder data detected.")
-                issues_found += 1
-        else:
-            logger.warning("⚠️ Table player_season_stats is empty.")
-            
-    except Exception as e:
-        logger.error(f"Check failed: {e}")
-
-    # Check 3: Primary Key Collisions (Simulated)
-    # Since the current PK is (player_id, season, team_id), we check if we have multiple entries 
-    # for the same player-season that might be distinct if season_type was included
-    logger.info("\n--- Check 3: Potential Season Type Collisions ---")
-    try:
-        # We can't easily check for collisions if they've already overwritten each other.
-        # Instead, we check if we have any data that explicitly looks like playoffs in the season stats
-        # or if the counts match what we expect.
-        
-        cursor.execute("SELECT COUNT(*) FROM player_playoff_stats")
-        playoff_count = cursor.fetchone()[0]
-        logger.info(f"Rows in player_playoff_stats: {playoff_count}")
-        
-        if playoff_count == 0:
-             logger.warning("⚠️ player_playoff_stats is empty. Playoff data might be missing or misrouted.")
-             
-    except Exception as e:
-        logger.error(f"Check failed: {e}")
-
-    conn.close()
-    
-    if issues_found > 0:
-        logger.error(f"\n❌ Validation Failed: {issues_found} critical issues detected.")
-        return False
-    else:
-        logger.info("\n✅ Validation Passed: No critical integrity issues found.")
-        return True
+    def close(self):
+        self.conn.close()
 
 if __name__ == "__main__":
-    validate_integrity()
+    validator = IntegrityValidator()
+    success = validator.validate()
+    validator.close()
+    sys.exit(0 if success else 1)

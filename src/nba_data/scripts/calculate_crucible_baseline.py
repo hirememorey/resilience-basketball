@@ -12,6 +12,7 @@ This provides a more accurate baseline for Playoff resilience than raw Regular S
 
 import sys
 import sqlite3
+import pandas as pd
 import logging
 from pathlib import Path
 from typing import List, Tuple, Dict
@@ -180,6 +181,88 @@ class CrucibleCalculator:
         self.conn.commit()
         logger.info(f"✅ Inserted {len(records_to_insert)} Crucible records for {season}.")
 
+    def calculate_resilience_score(self, season: str) -> pd.DataFrame:
+        """
+        Calculate Crucible Resilience Score (Delta vs Regular Season).
+        
+        Metrics:
+        1. TS% Delta (Efficiency maintenance)
+        2. PPG/36 Delta (Volume maintenance)
+        """
+        logger.info(f"Calculating Crucible Resilience Score for {season}...")
+        
+        # 1. Fetch Crucible Stats
+        query_crucible = """
+            SELECT 
+                player_id,
+                games_played as gp_crucible,
+                minutes_played as min_crucible,
+                points as pts_crucible,
+                true_shooting_percentage as ts_crucible
+            FROM player_crucible_stats
+            WHERE season = ?
+        """
+        
+        # 2. Fetch Regular Season Stats
+        query_regular = """
+            SELECT 
+                player_id,
+                games_played as gp_reg,
+                minutes_played as min_reg,
+                points as pts_reg,
+                (points / (2.0 * (field_goals_attempted + 0.44 * free_throws_attempted))) as ts_reg
+            FROM player_season_stats
+            WHERE season = ? AND season_type = 'Regular Season'
+        """
+        
+        import pandas as pd
+        
+        try:
+            df_crucible = pd.read_sql(query_crucible, self.conn, params=[season])
+            df_reg = pd.read_sql(query_regular, self.conn, params=[season])
+        except Exception as e:
+            logger.error(f"Error fetching data for resilience calc: {e}")
+            return pd.DataFrame()
+            
+        if df_crucible.empty or df_reg.empty:
+            logger.warning("Missing data for resilience calculation.")
+            return pd.DataFrame()
+
+        # 3. Merge
+        df = pd.merge(df_crucible, df_reg, on='player_id', how='inner')
+        
+        # 4. Filter for significant sample size
+        # e.g., > 100 mins in Crucible games to be meaningful
+        df = df[df['min_crucible'] > 100].copy()
+        
+        # 5. Calculate Per 36 Metrics
+        df['pts36_crucible'] = (df['pts_crucible'] / df['min_crucible']) * 36
+        df['pts36_reg'] = (df['pts_reg'] / df['min_reg']) * 36
+        
+        # 6. Calculate Deltas
+        df['ts_delta'] = df['ts_crucible'] - df['ts_reg']
+        df['pts36_delta'] = df['pts36_crucible'] - df['pts36_reg']
+        
+        # 7. Calculate Resilience Score (Percentile of TS Delta)
+        # Primary driver: Efficiency Maintenance.
+        # Higher Delta (Positive) is better.
+        df['crucible_resilience_score'] = df['ts_delta'].rank(pct=True) * 100
+        
+        # 8. Get Player Names for display
+        names_query = "SELECT player_id, player_name FROM players"
+        df_names = pd.read_sql(names_query, self.conn)
+        df = pd.merge(df, df_names, on='player_id', how='left')
+        
+        # Sort by score
+        df = df.sort_values('crucible_resilience_score', ascending=False)
+        
+        # Save output
+        output_file = f"data/crucible_resilience_{season}.csv"
+        df.to_csv(output_file, index=False)
+        logger.info(f"✅ Saved Crucible Resilience scores to {output_file}")
+        
+        return df
+
     def run(self):
         seasons = [
             "2015-16", "2016-17", "2017-18", "2018-19", "2019-20",
@@ -189,6 +272,8 @@ class CrucibleCalculator:
         for season in seasons:
             try:
                 self.calculate_stats_for_season(season)
+                # Run resilience score calc for the season
+                self.calculate_resilience_score(season)
             except Exception as e:
                 logger.error(f"❌ Error processing {season}: {e}", exc_info=True)
                 
@@ -202,4 +287,5 @@ if __name__ == "__main__":
     calculator = CrucibleCalculator()
     calculator.run()
     calculator.close()
+
 
