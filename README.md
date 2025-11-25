@@ -67,20 +67,14 @@ resilience-basketball/
 1.  **Start with `extended_resilience_framework.md`** to understand the new project direction.
 2.  **Run Unified Analysis:**
     ```bash
-    # 1. Calculate Friction Scores (CSV)
-    python src/nba_data/scripts/calculate_friction.py
-
-    # 2. Calculate Crucible Baseline (CSV)
-    python src/nba_data/scripts/calculate_crucible_baseline.py
-
-    # 3. Generate Unified Scores
+    # The Unified Calculator now handles all sub-calculations internally
     python src/nba_data/scripts/calculate_unified_resilience.py
     ```
 3.  **Visualize:** Generate career arc charts for the new, more robust metrics.
 
 ## Current Working Features
-- **Unified Resilience Score:** Aggregates 5 key pathways (Friction, Crucible, Evolution, Dominance, Versatility) into a single predictive score.
-- **Friction Score Calculation:** Fully implemented and validated. Measures the "Resilience Delta" (Playoff Friction - Regular Season Friction) to quantify process independence.
+- **Unified Resilience Score:** Aggregates 5 key pathways (Friction, Crucible, Evolution, Dominance, Versatility) into a single predictive score using **Z-Score Normalization**.
+- **Friction Score Calculation:** Fully implemented and validated. Measures the "Resilience Delta" (Playoff Friction - Regular Season Friction) to quantify process independence. Now includes **"Engine vs. Finisher" context**.
 - **Crucible Baseline Calculation:** Fully implemented and validated. Filters player performance to games played only against Top-10 defenses, providing a more rigorous baseline for playoff-level intensity.
 - **Data Foundation:**
   - **Tracking Data:** Fixed critical bug in API client; 2023-24 Playoff data now repopulated and accurate.

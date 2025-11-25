@@ -263,6 +263,13 @@ class CrucibleCalculator:
         
         return df
 
+    def get_resilience_dict(self, season: str = "2023-24") -> Dict[int, float]:
+        """Get a dictionary of {player_id: crucible_resilience_score} directly."""
+        df = self.calculate_resilience_score(season)
+        if df.empty:
+            return {}
+        return dict(zip(df['player_id'], df['crucible_resilience_score']))
+
     def run(self):
         seasons = [
             "2015-16", "2016-17", "2017-18", "2018-19", "2019-20",

@@ -144,7 +144,7 @@ class FrictionCalculator:
         # We merge on player_id. We keep suffixes.
         df_merged = pd.merge(
             df_reg,
-            df_playoff[['player_id', 'friction_score', 'touches_per_game', 'usage_percentage', 'pts_per_touch', 'avg_sec_per_touch']],
+            df_playoff[['player_id', 'friction_score', 'touches_per_game', 'usage_percentage', 'pts_per_touch', 'avg_sec_per_touch', 'time_of_poss']],
             on='player_id',
             suffixes=('_reg', '_playoff'),
             how='inner'
@@ -156,15 +156,33 @@ class FrictionCalculator:
         # Negative Delta = Got Better (Less Friction)
         df_merged['friction_delta'] = df_merged['friction_score_playoff'] - df_merged['friction_score_reg']
 
-        # 6. Define Usage Tiers (based on Regular Season)
-        def get_tier(usage):
+        # 6. Define Usage Tiers (based on Regular Season) - Updated "Engine" vs "Finisher" Logic
+        def get_tier(row):
+            usage = row['usage_percentage_reg']
+            time_poss = row['time_of_poss'] # Need to ensure this column is in the merged DF or fetch it
+            
             if pd.isna(usage): return "Unknown"
-            if usage < 0.18: return "Role"
-            if usage < 0.25: return "Starter"
-            if usage < 0.32: return "Star"
-            return "Heliocentric"
+            
+            # High Usage Tiers
+            if usage >= 0.30:
+                return "Heliocentric Engine" if time_poss > 6.0 else "Elite Finisher"
+            
+            if usage >= 0.24:
+                return "Primary Creator" if time_poss > 4.0 else "Secondary Scorer"
+                
+            if usage >= 0.18:
+                return "Connector"
+                
+            return "Role Player"
 
-        df_merged['usage_tier'] = df_merged['usage_percentage_reg'].apply(get_tier)
+        # Ensure 'time_of_poss' is available in merged df (it comes from pts.time_of_poss in query)
+        # In get_season_data, we select pts.time_of_poss. 
+        # In merged df, it will be time_of_poss_reg and time_of_poss_playoff.
+        
+        df_merged['usage_tier'] = df_merged.apply(
+            lambda x: get_tier({'usage_percentage_reg': x['usage_percentage_reg'], 'time_of_poss': x.get('time_of_poss_reg', 0)}), 
+            axis=1
+        )
 
         # 7. Normalize to 0-100 Score (Percentile Rank)
         # Logic: Lower Delta is BETTER.
@@ -187,6 +205,13 @@ class FrictionCalculator:
 
         logger.info(f"Calculated resilience for {len(df_merged)} players who played in both Reg Season & Playoffs.")
         return df_merged
+
+    def get_resilience_dict(self, season: str = "2023-24") -> Dict[int, float]:
+        """Get a dictionary of {player_id: friction_resilience_score} directly."""
+        df = self.calculate_resilience(season)
+        if df.empty:
+            return {}
+        return dict(zip(df['player_id'], df['friction_resilience_score']))
 
     def save_results(self, df: pd.DataFrame, season: str):
         if df.empty: return

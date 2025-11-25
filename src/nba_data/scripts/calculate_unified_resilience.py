@@ -10,7 +10,7 @@ Combines 5 Pathways:
 4. Dominance (SQAV)
 5. Versatility (Method Diversity)
 
-Uses pre-calculated CSVs for batch metrics (Friction, Crucible) to ensure consistency.
+Uses direct class-based calculators and Z-Score normalization for consistent aggregation.
 """
 
 import sqlite3
@@ -19,151 +19,206 @@ import numpy as np
 from pathlib import Path
 import sys
 from typing import Dict, List, Optional
+import logging
 
 # Add the scripts directory to path
 sys.path.append(str(Path(__file__).parent))
+sys.path.append(str(Path(__file__).parent.parent.parent)) # Add src root for utils
+
 from calculate_dominance_score import calculate_player_sqav
 from calculate_longitudinal_evolution import calculate_longitudinal_evolution
 from calculate_extended_resilience import calculate_method_resilience
+from calculate_friction import FrictionCalculator
+from calculate_crucible_baseline import CrucibleCalculator
+from nba_data.utils.normalization import standardize_metric
 
 DB_PATH = "data/nba_stats.db"
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class UnifiedCalculator:
     def __init__(self, season="2023-24"):
         self.season = season
-        self.friction_map = self._load_friction_map()
-        self.crucible_map = self._load_crucible_map()
+        self.friction_calc = FrictionCalculator(DB_PATH)
+        self.crucible_calc = CrucibleCalculator(DB_PATH)
         
-    def _load_friction_map(self) -> Dict[int, float]:
-        """Load Friction Resilience Scores from CSV."""
-        path = f"data/friction_resilience_{self.season}.csv"
-        try:
-            df = pd.read_csv(path)
-            # Ensure column exists
-            if 'friction_resilience_score' not in df.columns:
-                return {}
-            return dict(zip(df['player_id'], df['friction_resilience_score']))
-        except FileNotFoundError:
-            print(f"⚠️ Warning: Friction file {path} not found. Run calculate_friction.py first.")
-            return {}
+        # Cache for batch calculations
+        self._friction_cache = None
+        self._crucible_cache = None
+        
+    def _get_friction_scores(self) -> Dict[int, float]:
+        """Get Friction scores directly from calculator."""
+        if self._friction_cache is None:
+            logger.info("Calculating batch Friction scores...")
+            self._friction_cache = self.friction_calc.get_resilience_dict(self.season)
+        return self._friction_cache
 
-    def _load_crucible_map(self) -> Dict[int, float]:
-        """Load Crucible Resilience Scores from CSV."""
-        path = f"data/crucible_resilience_{self.season}.csv"
-        try:
-            df = pd.read_csv(path)
-            if 'crucible_resilience_score' not in df.columns:
-                return {}
-            return dict(zip(df['player_id'], df['crucible_resilience_score']))
-        except FileNotFoundError:
-            print(f"⚠️ Warning: Crucible file {path} not found. Run calculate_crucible_baseline.py first.")
-            return {}
+    def _get_crucible_scores(self) -> Dict[int, float]:
+        """Get Crucible scores directly from calculator."""
+        if self._crucible_cache is None:
+            logger.info("Calculating batch Crucible scores...")
+            self._crucible_cache = self.crucible_calc.get_resilience_dict(self.season)
+        return self._crucible_cache
 
     def get_db_connection(self):
         return sqlite3.connect(DB_PATH)
 
-    def calculate_score(self, player_id: int) -> Dict:
+    def calculate_batch_scores(self, player_ids: List[int]) -> pd.DataFrame:
         """
-        Calculate the Unified Extended Resilience Score for a player.
+        Calculate Unified Scores for a list of players using Z-Score normalization.
         """
         conn = self.get_db_connection()
         
-        # 1. Fetch Component Scores
-        # -------------------------
+        # 1. Gather Raw Data for All Players
+        # ----------------------------------
+        raw_data = []
+        friction_map = self._get_friction_scores()
+        crucible_map = self._get_crucible_scores()
         
-        # A. Friction Score (Pre-calculated)
-        # Default to 50 (Average) if missing
-        friction_score = self.friction_map.get(player_id, 50.0)
+        logger.info(f"Processing {len(player_ids)} players...")
         
-        # B. Crucible Score (Pre-calculated)
-        crucible_score = self.crucible_map.get(player_id, 50.0)
-        
-        # C. Evolution (Multi-Season / Macro-Evolution)
-        try:
-            # Calculates based on full career history
-            evo_data = calculate_longitudinal_evolution(player_id)
-            evolution_score = evo_data.get('Adaptability_Score', 50.0)
-        except:
-            evolution_score = 50.0
+        for pid in player_ids:
+            # A. Friction
+            friction = friction_map.get(pid, None)
             
-        # D. Dominance (SQAV)
-        # This script returns 0-100
-        try:
-            dominance_score = calculate_player_sqav(player_id, self.season, "Regular Season")
-        except:
-            dominance_score = 50.0
+            # B. Crucible
+            crucible = crucible_map.get(pid, None)
             
-        # E. Versatility (Method Resilience)
-        try:
-            versatility_score = calculate_method_resilience(conn, "Regular Season", player_id)
-        except:
-            versatility_score = 50.0
+            # C. Evolution (Expensive - could optimize batching later)
+            try:
+                evo_data = calculate_longitudinal_evolution(pid)
+                evolution = evo_data.get('Adaptability_Score', 0.0)
+            except:
+                evolution = 0.0
+                
+            # D. Dominance
+            try:
+                dominance = calculate_player_sqav(pid, self.season, "Regular Season")
+            except:
+                dominance = 0.0
+                
+            # E. Versatility
+            try:
+                versatility = calculate_method_resilience(conn, "Regular Season", pid)
+            except:
+                versatility = 0.0
+                
+            raw_data.append({
+                'player_id': pid,
+                'friction': friction,
+                'crucible': crucible,
+                'evolution': evolution,
+                'dominance': dominance,
+                'versatility': versatility
+            })
             
         conn.close()
         
-        # 2. Weighting Logic (The "Unified" Model)
-        # ----------------------------------------
+        df = pd.DataFrame(raw_data)
         
-        scores = {
-            'Friction': friction_score,
-            'Crucible': crucible_score,
-            'Evolution': evolution_score,
-            'Dominance': dominance_score,
-            'Versatility': versatility_score
-        }
+        # 2. Z-Score Normalization (Vectorized)
+        # -------------------------------------
+        # We only normalize if we have valid data.
+        # Missing friction/crucible means player didn't qualify (e.g. missed playoffs).
         
-        # Equal weights for now, or based on philosophy?
-        # Philosophy: Friction and Crucible are the hardest tests.
-        # Let's use the Dynamic Peak-Bias Weighting from previous version.
+        pathways = ['friction', 'crucible', 'evolution', 'dominance', 'versatility']
         
-        sorted_pathways = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-        weights_config = [0.30, 0.25, 0.20, 0.15, 0.10] # Top strength matters most
-        
-        weighted_sum = 0.0
-        final_weights = {}
-        
-        for idx, (pathway, score) in enumerate(sorted_pathways):
-            weight = weights_config[idx]
-            final_weights[pathway] = weight
-            weighted_sum += score * weight
+        # Create Normalized Columns (0-100 scale)
+        for p in pathways:
+            # Filter out None/NaN for calculation stats
+            valid_mask = df[p].notna() & (df[p] != 0)
             
-        return {
-            'Player_ID': player_id,
-            'Unified_Score': weighted_sum,
-            'Pathway_Scores': scores,
-            'Primary_Archetype': sorted_pathways[0][0],
-            'Secondary_Archetype': sorted_pathways[1][0]
-        }
+            if valid_mask.sum() > 1:
+                mean = df.loc[valid_mask, p].mean()
+                std = df.loc[valid_mask, p].std()
+                
+                if std == 0:
+                    df[f'{p}_norm'] = 50.0
+                else:
+                    # Z-Score -> Normalize to Mean=50, Std=15, Cap 0-100
+                    z = (df.loc[valid_mask, p] - mean) / std
+                    df.loc[valid_mask, f'{p}_norm'] = (z * 15 + 50).clip(0, 100)
+                    
+                # Fill missing with low score (penalty for not qualifying)
+                df.loc[~valid_mask, f'{p}_norm'] = 25.0
+            else:
+                df[f'{p}_norm'] = 50.0 # Fallback
+                
+        # 3. Peak-Bias Weighting
+        # ----------------------
+        def calculate_weighted_score(row):
+            scores = {
+                'Friction': row['friction_norm'],
+                'Crucible': row['crucible_norm'],
+                'Evolution': row['evolution_norm'],
+                'Dominance': row['dominance_norm'],
+                'Versatility': row['versatility_norm']
+            }
+            
+            # Sort by score (Dynamic weighting)
+            sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+            weights = [0.30, 0.25, 0.20, 0.15, 0.10]
+            
+            weighted_sum = 0.0
+            for i, (name, score) in enumerate(sorted_scores):
+                weighted_sum += score * weights[i]
+                
+            return pd.Series({
+                'unified_score': weighted_sum,
+                'primary_archetype': sorted_scores[0][0],
+                'secondary_archetype': sorted_scores[1][0]
+            })
+
+        scores_df = df.apply(calculate_weighted_score, axis=1)
+        final_df = pd.concat([df['player_id'], scores_df, df[[f'{p}_norm' for p in pathways]]], axis=1)
+        
+        return final_df.sort_values('unified_score', ascending=False)
+
+def get_player_name(conn, player_id):
+    cur = conn.cursor()
+    cur.execute("SELECT player_name FROM players WHERE player_id = ?", (player_id,))
+    res = cur.fetchone()
+    return res[0] if res else str(player_id)
 
 def main():
-    """Test the Unified Framework."""
+    """Test the Unified Framework with Batch Normalization."""
     calc = UnifiedCalculator(season="2023-24")
     
-    # Test Archetypes
-    # Note: Player IDs must match 2023-24 roster
-    archetypes = {
-        203507: "Giannis Antetokounmpo",
-        201935: "James Harden",
-        2544: "LeBron James",
-        203999: "Nikola Jokic",
-        1629029: "Luka Doncic",
-        1628378: "Desmond Bane" 
-    }
+    # Test with a mix of stars and role players for distribution check
+    test_ids = [
+        203507, # Giannis
+        201935, # Harden
+        2544,   # LeBron
+        203999, # Jokic
+        1629029, # Luka
+        1628378, # Bane (Role/Star bridge)
+        1630162, # Anthony Edwards
+        1628973, # Jalen Brunson
+        1627750, # Jamal Murray
+        201142, # Durant
+        201939, # Curry
+        1628369, # Tatum
+    ]
     
-    print(f"🚀 Unified Playoff Resilience Framework (2023-24)")
-    print("===============================================")
-    print(f"{'Player':<25} {'Score':<6} {'Archetype':<30}")
-    print("-" * 70)
+    print(f"🚀 Unified Resilience Framework (2023-24) - Z-Score Normalized")
+    print("===========================================================")
     
-    for pid, name in archetypes.items():
-        try:
-            res = calc.calculate_score(pid)
-            print(f"{name:<25} {res['Unified_Score']:<6.1f} {res['Primary_Archetype']} + {res['Secondary_Archetype']}")
-            
-            # Debug details
-            # print(res['Pathway_Scores'])
-        except Exception as e:
-            print(f"{name:<25} ERROR: {e}")
+    results = calc.calculate_batch_scores(test_ids)
+    
+    conn = calc.get_db_connection()
+    
+    print(f"{'Player':<20} {'Score':<6} {'Primary Archetype':<20} {'Fric':<5} {'Cruc':<5} {'Evo':<5} {'Dom':<5} {'Vers':<5}")
+    print("-" * 90)
+    
+    for _, row in results.iterrows():
+        name = get_player_name(conn, row['player_id'])
+        print(f"{name:<20} {row['unified_score']:<6.1f} {row['primary_archetype']:<20} "
+              f"{row['friction_norm']:<5.0f} {row['crucible_norm']:<5.0f} {row['evolution_norm']:<5.0f} "
+              f"{row['dominance_norm']:<5.0f} {row['versatility_norm']:<5.0f}")
+              
+    conn.close()
 
 if __name__ == "__main__":
     main()

@@ -101,6 +101,16 @@ Regular-season performance is an imperfect predictor of postseason success. The 
     - `Crucible-Adjusted Dominance Score`
 4.  **Visualize:** Generate career arc charts for the new, more robust metrics.
 
+
+---
+### Technical Hardening & Unified Pipeline (Nov 2025)
+
+The pipeline has been hardened to eliminate brittle CSV dependencies and ensure mathematical consistency across all metrics.
+
+- **Database-First Architecture:** The Unified Calculator now calls calculation classes directly (`FrictionCalculator`, `CrucibleCalculator`) to fetch in-memory data, removing the risk of stale CSV files.
+- **Z-Score Normalization:** All 5 pathways (Friction, Crucible, Evolution, Dominance, Versatility) are now standardized (Z-Scored) before aggregation. This prevents high-variance metrics (like Dominance) from artificially skewing the Unified Score.
+- **Usage Tier Refinement:** The Friction Calculator now distinguishes between "Heliocentric Engines" (High Usage + High Time of Possession) and "Elite Finishers" (High Usage + Low Time of Possession) to accurately measure process independence without penalizing primary creators.
+
 ---
 ### Implementation Progress
 - **✅ Friction Score Data Pipeline:** The necessary possession metrics (`AVG_SEC_PER_TOUCH`, `AVG_DRIB_PER_TOUCH`, `PTS_PER_TOUCH`, `TIME_OF_POSS`, `FRONT_CT_TOUCHES`) have been successfully integrated and verified.
@@ -108,7 +118,7 @@ Regular-season performance is an imperfect predictor of postseason success. The 
 - **✅ Team Ratings:** Team defensive ratings data is available in `team_season_stats` table.
 - **✅ Friction Score Resilience:**
   - **Complete & Validated:** `calculate_friction.py` now correctly measures the delta between Regular Season and Playoff efficiency.
-  - **Data Integrity Fix:** Fixed a critical bug where Playoff tracking data was identical to Regular Season data due to an API client error.
+  - **Logic Update:** "Engine" vs "Finisher" tiers implemented to protect high-usage creators.
   - **Results:** successfully identified "Resilient" high-usage players (e.g., Damian Lillard -7.26 Delta) vs. "Fragile" players (e.g., Anthony Edwards +5.15 Delta) for the 2023-24 season.
 - **✅ Logic Bridge Progress:**
   - **✅ Friction Score Calculation:** **COMPLETE & VERIFIED**.
@@ -117,7 +127,7 @@ Regular-season performance is an imperfect predictor of postseason success. The 
     - Populated `player_crucible_stats` table using granular game logs (filtered for Top-10 defenses).
     - Validation confirmed significant efficiency drops for role players and resilience for elite creators.
   - **✅ Dominance Score:** Shot dashboard data fixed with combinatorial approach.
-  - **✅ Unified Resilience:** Integration of all metrics complete.
+  - **✅ Unified Resilience:** Integration of all metrics complete using **Z-Score Normalization**.
 
 ### Key Fixes Implemented
 - **Tracking Data Integrity:** Discovered and fixed a silent failure where `NBAStatsClient` was hardcoding `SeasonType="Regular Season"`, causing Playoff data to be corrupted. All 2023-24 tracking data has been repopulated and verified.
