@@ -20,9 +20,10 @@ class NBADatabaseSchema:
 
     @property
     def conn(self):
-        """Get database connection."""
+        """Get database connection with strict foreign key enforcement."""
         if self._conn is None:
             self._conn = sqlite3.connect(self.db_path)
+            self._conn.execute("PRAGMA foreign_keys = ON")
         return self._conn
 
     def create_all_tables(self) -> None:
@@ -39,6 +40,7 @@ class NBADatabaseSchema:
             self._create_player_advanced_stats_table(conn)
             self._create_player_tracking_stats_table(conn)
             self._create_player_playoff_stats_table(conn)
+            self._create_player_crucible_stats_table(conn)
             self._create_player_playoff_advanced_stats_table(conn)
             self._create_player_playoff_tracking_stats_table(conn)
             self._create_player_playtype_stats_table(conn)
@@ -123,9 +125,9 @@ class NBADatabaseSchema:
                 team_city TEXT NOT NULL,
                 team_conference TEXT NOT NULL,
                 team_division TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            ) STRICT;
         """)
 
         # Create index for faster queries
@@ -159,11 +161,11 @@ class NBADatabaseSchema:
                 away_team_score INTEGER,
                 season TEXT NOT NULL,
                 season_type TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (home_team_id) REFERENCES teams(team_id),
                 FOREIGN KEY (away_team_id) REFERENCES teams(team_id)
-            )
+            ) STRICT;
         """)
 
         conn.commit()
@@ -186,10 +188,10 @@ class NBADatabaseSchema:
                 team_id INTEGER,
                 wingspan REAL,
                 draft_year TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (team_id) REFERENCES teams(team_id)
-            )
+            ) STRICT;
         """)
 
         conn.commit()
@@ -502,6 +504,46 @@ class NBADatabaseSchema:
 
         conn.commit()
         print("✓ PlayerPlayoffStats table created")
+
+    def _create_player_crucible_stats_table(self, conn: sqlite3.Connection) -> None:
+        """Create the PlayerCrucibleStats table (stats vs Top 10 defenses)."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS player_crucible_stats (
+                player_id INTEGER NOT NULL,
+                season TEXT NOT NULL,
+                team_id INTEGER NOT NULL,
+                games_played INTEGER,
+                minutes_played REAL,
+                
+                -- Scoring
+                points INTEGER,
+                field_goals_made INTEGER,
+                field_goals_attempted INTEGER,
+                three_pointers_made INTEGER,
+                three_pointers_attempted INTEGER,
+                free_throws_made INTEGER,
+                free_throws_attempted INTEGER,
+                
+                -- Advanced/Efficiency (Calculated)
+                true_shooting_percentage REAL,
+                effective_field_goal_percentage REAL,
+                usage_percentage REAL,
+                
+                -- Creation/Friction proxies
+                assists INTEGER,
+                turnovers INTEGER,
+                assist_to_turnover_ratio REAL,
+                
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (player_id, season, team_id),
+                FOREIGN KEY (player_id) REFERENCES players(player_id),
+                FOREIGN KEY (team_id) REFERENCES teams(team_id)
+            )
+        """)
+
+        conn.commit()
+        print("✓ PlayerCrucibleStats table created")
 
     def _create_player_playoff_advanced_stats_table(self, conn: sqlite3.Connection) -> None:
         """Create the PlayerPlayoffAdvancedStats table (playoff advanced analytics)."""
@@ -1255,7 +1297,7 @@ class NBADatabaseSchema:
         required_tables = [
             'teams', 'games', 'players', 'player_season_stats',
             'player_advanced_stats', 'player_tracking_stats',
-            'player_playoff_stats', 'player_playoff_advanced_stats', 'player_playoff_tracking_stats',
+            'player_playoff_stats', 'player_crucible_stats', 'player_playoff_advanced_stats', 'player_playoff_tracking_stats',
             'player_playtype_stats', 'player_playoff_playtype_stats',
             'possessions', 'possession_lineups', 'possession_events', 'possession_matchups',
             'player_shot_locations', 'league_averages'

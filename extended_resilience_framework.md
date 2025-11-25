@@ -109,7 +109,10 @@ Regular-season performance is an imperfect predictor of postseason success. The 
   - **Results:** successfully identified "Resilient" high-usage players (e.g., Damian Lillard -7.26 Delta) vs. "Fragile" players (e.g., Anthony Edwards +5.15 Delta) for the 2023-24 season.
 - **🔄 Logic Bridge Progress:**
   - **✅ Friction Score Calculation:** **COMPLETE & VERIFIED**.
-  - **🔄 Crucible Baseline:** Started implementation, data foundation ready.
+  - **✅ Crucible Baseline:** **COMPLETE & VERIFIED**.
+    - Implemented `calculate_crucible_baseline.py`.
+    - Populated `player_crucible_stats` table using granular game logs (filtered for Top-10 defenses).
+    - Validation confirmed significant efficiency drops for role players and resilience for elite creators.
   - **⏳ Dominance Score:** Shot dashboard data fixed with combinatorial approach (13K+ rows), ready for calculation.
   - **⏳ Unified Resilience:** Integration of all metrics pending.
 

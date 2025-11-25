@@ -66,13 +66,14 @@ resilience-basketball/
 ## Next Steps
 1.  **Start with `extended_resilience_framework.md`** to understand the new project direction.
 2.  **Continue Logic Bridge:** Implement remaining metrics:
-   - ✅ Friction Score (`calculate_friction.py`) - **COMPLETE & VALIDATED** (Fixed critical data integrity issue).
-   - 🔄 Crucible Baseline (`calculate_crucible_baseline.py`) - **IN PROGRESS**
-   - ⏳ Dominance Score (`calculate_dominance_score.py`) - **NEXT**
-   - ⏳ Unified Resilience (`calculate_unified_resilience.py`) - **FINAL**
+   - ✅ Friction Score (`calculate_friction.py`) - **COMPLETE & VALIDATED**.
+   - ✅ Crucible Baseline (`calculate_crucible_baseline.py`) - **COMPLETE & VALIDATED**.
+   - ⏳ Dominance Score (`calculate_dominance_score.py`) - **NEXT**.
+   - ⏳ Unified Resilience (`calculate_unified_resilience.py`) - **FINAL**.
 
 ## Current Working Features
-- **Friction Score Calculation:** fully implemented and validated. Measures the "Resilience Delta" (Playoff Friction - Regular Season Friction) to quantify process independence.
+- **Friction Score Calculation:** Fully implemented and validated. Measures the "Resilience Delta" (Playoff Friction - Regular Season Friction) to quantify process independence.
+- **Crucible Baseline Calculation:** Fully implemented and validated. Filters player performance to games played only against Top-10 defenses, providing a more rigorous baseline for playoff-level intensity.
 - **Data Foundation:**
   - **Tracking Data:** Fixed critical bug in API client; 2023-24 Playoff data now repopulated and accurate.
   - **Shot Dashboard:** Combinatorial data (13K+ rows) ready.
