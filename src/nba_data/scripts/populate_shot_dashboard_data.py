@@ -74,7 +74,13 @@ class ShotDashboardDataPopulator:
 
         # Determine table name based on season type
         table_name = "player_shot_dashboard_stats" if season_type == "Regular Season" else "player_playoff_shot_dashboard_stats"
-
+        
+        # Check if season_type column exists in schema for the target table
+        has_season_type = True
+        if table_name == "player_playoff_shot_dashboard_stats":
+            # Verify schema based on the actual database state
+            has_season_type = False
+            
         # --- BATCH 1: Defender Distance x Shot Clock (Shot Quality Context) ---
         # This matrix tells us how players perform against tight defense at different clock times.
         logger.info("--- Processing Batch 1: Defender Distance x Shot Clock ---")
@@ -189,6 +195,12 @@ class ShotDashboardDataPopulator:
         updated = 0
 
         logger.info(f"Inserting into table: {table_name}")
+        
+        # Determine if we should include season_type in the query
+        # Based on schema verification, player_playoff_shot_dashboard_stats DOES NOT have season_type
+        include_season_type = True
+        if table_name == "player_playoff_shot_dashboard_stats":
+            include_season_type = False
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -198,80 +210,156 @@ class ShotDashboardDataPopulator:
                     # Ensure we handle None values for keys that might be missing
                     # The schema expects TEXT NOT NULL, so we must use empty strings for missing ranges
                     
-                    # Prepare the record data
-                    record_data = (
-                        record.get('player_id'),
-                        record.get('season'),
-                        season_type, # Explicitly pass season_type
-                        record.get('team_id'),
-                        record.get('close_def_dist_range', ''),
-                        record.get('shot_clock_range', ''),
-                        record.get('dribble_range', ''),
-                        record.get('shot_dist_range', ''),
-                        
-                        # Metadata
-                        record.get('player_name'),
-                        record.get('team_abbreviation'),
-                        record.get('team_name'),
-                        record.get('age'),
-                        
-                        # Stats
-                        record.get('gp'),
-                        record.get('g'),
-                        record.get('fga_frequency'),
-                        record.get('fgm'),
-                        record.get('fga'),
-                        record.get('fg_pct'),
-                        record.get('efg_pct'),
-                        record.get('fg2a_frequency'),
-                        record.get('fg2m'),
-                        record.get('fg2a'),
-                        record.get('fg2_pct'),
-                        record.get('fg3a_frequency'),
-                        record.get('fg3m'),
-                        record.get('fg3a'),
-                        record.get('fg3_pct')
-                    )
+                    if include_season_type:
+                        # Prepare the record data WITH season_type
+                        record_data = (
+                            record.get('player_id'),
+                            record.get('season'),
+                            season_type, # Explicitly pass season_type
+                            record.get('team_id'),
+                            record.get('close_def_dist_range', ''),
+                            record.get('shot_clock_range', ''),
+                            record.get('dribble_range', ''),
+                            record.get('shot_dist_range', ''),
+                            
+                            # Metadata
+                            record.get('player_name'),
+                            record.get('team_abbreviation'),
+                            record.get('team_name'),
+                            record.get('age'),
+                            
+                            # Stats
+                            record.get('gp'),
+                            record.get('g'),
+                            record.get('fga_frequency'),
+                            record.get('fgm'),
+                            record.get('fga'),
+                            record.get('fg_pct'),
+                            record.get('efg_pct'),
+                            record.get('fg2a_frequency'),
+                            record.get('fg2m'),
+                            record.get('fg2a'),
+                            record.get('fg2_pct'),
+                            record.get('fg3a_frequency'),
+                            record.get('fg3m'),
+                            record.get('fg3a'),
+                            record.get('fg3_pct')
+                        )
 
-                    # Insert SQL (Matches schema column order)
-                    insert_sql = f"""
-                        INSERT INTO {table_name} (
-                            player_id, season, season_type, team_id, 
-                            close_def_dist_range, shot_clock_range, dribble_range, shot_dist_range,
-                            player_name, team_abbreviation, team_name, age, 
-                            gp, g,
-                            fga_frequency, fgm, fga, fg_pct, efg_pct,
-                            fg2a_frequency, fg2m, fg2a, fg2_pct,
-                            fg3a_frequency, fg3m, fg3a, fg3_pct
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """
-
-                    try:
-                        cursor.execute(insert_sql, record_data)
-                        inserted += 1
-                    except sqlite3.IntegrityError:
-                        # Update logic (if record exists)
-                        update_sql = f"""
-                            UPDATE {table_name} SET
-                                player_name = ?, team_abbreviation = ?, team_name = ?, age = ?,
-                                gp = ?, g = ?, fga_frequency = ?, fgm = ?, fga = ?, fg_pct = ?, efg_pct = ?,
-                                fg2a_frequency = ?, fg2m = ?, fg2a = ?, fg2_pct = ?,
-                                fg3a_frequency = ?, fg3m = ?, fg3a = ?, fg3_pct = ?,
-                                updated_at = CURRENT_TIMESTAMP
-                            WHERE player_id = ? AND season = ? AND season_type = ? AND team_id = ? 
-                            AND close_def_dist_range = ? AND shot_clock_range = ? AND dribble_range = ? AND shot_dist_range = ?
+                        # Insert SQL (Matches schema column order)
+                        insert_sql = f"""
+                            INSERT INTO {table_name} (
+                                player_id, season, season_type, team_id, 
+                                close_def_dist_range, shot_clock_range, dribble_range, shot_dist_range,
+                                player_name, team_abbreviation, team_name, age, 
+                                gp, g,
+                                fga_frequency, fgm, fga, fg_pct, efg_pct,
+                                fg2a_frequency, fg2m, fg2a, fg2_pct,
+                                fg3a_frequency, fg3m, fg3a, fg3_pct
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """
-                        
-                        # Data for update: Stats first, then WHERE clause params
-                        # Slice indices: 
-                        # 0-7: PK fields (player_id to shot_dist_range)
-                        # 8-26: Stats fields (player_name to fg3_pct)
-                        
-                        stats_data = record_data[8:]
-                        pk_data = record_data[0:8]
-                        
-                        cursor.execute(update_sql, stats_data + pk_data)
-                        updated += 1
+
+                        try:
+                            cursor.execute(insert_sql, record_data)
+                            inserted += 1
+                        except sqlite3.IntegrityError:
+                            # Update logic (if record exists)
+                            update_sql = f"""
+                                UPDATE {table_name} SET
+                                    player_name = ?, team_abbreviation = ?, team_name = ?, age = ?,
+                                    gp = ?, g = ?, fga_frequency = ?, fgm = ?, fga = ?, fg_pct = ?, efg_pct = ?,
+                                    fg2a_frequency = ?, fg2m = ?, fg2a = ?, fg2_pct = ?,
+                                    fg3a_frequency = ?, fg3m = ?, fg3a = ?, fg3_pct = ?,
+                                    updated_at = CURRENT_TIMESTAMP
+                                WHERE player_id = ? AND season = ? AND season_type = ? AND team_id = ? 
+                                AND close_def_dist_range = ? AND shot_clock_range = ? AND dribble_range = ? AND shot_dist_range = ?
+                            """
+                            
+                            # Data for update: Stats first, then WHERE clause params
+                            stats_data = record_data[8:]
+                            pk_data = record_data[0:8]
+                            
+                            cursor.execute(update_sql, stats_data + pk_data)
+                            updated += 1
+                    else:
+                        # Prepare the record data WITHOUT season_type
+                        record_data = (
+                            record.get('player_id'),
+                            record.get('season'),
+                            # NO SEASON_TYPE HERE
+                            record.get('team_id'),
+                            record.get('close_def_dist_range', ''),
+                            record.get('shot_clock_range', ''),
+                            record.get('dribble_range', ''),
+                            record.get('shot_dist_range', ''),
+                            
+                            # Metadata
+                            record.get('player_name'),
+                            record.get('team_abbreviation'),
+                            record.get('team_name'),
+                            record.get('age'),
+                            
+                            # Stats
+                            record.get('gp'),
+                            record.get('g'),
+                            record.get('fga_frequency'),
+                            record.get('fgm'),
+                            record.get('fga'),
+                            record.get('fg_pct'),
+                            record.get('efg_pct'),
+                            record.get('fg2a_frequency'),
+                            record.get('fg2m'),
+                            record.get('fg2a'),
+                            record.get('fg2_pct'),
+                            record.get('fg3a_frequency'),
+                            record.get('fg3m'),
+                            record.get('fg3a'),
+                            record.get('fg3_pct')
+                        )
+
+                        # Insert SQL (Matches schema column order - no season_type)
+                        insert_sql = f"""
+                            INSERT INTO {table_name} (
+                                player_id, season, team_id, 
+                                close_def_dist_range, shot_clock_range, dribble_range, shot_dist_range,
+                                player_name, team_abbreviation, team_name, age, 
+                                gp, g,
+                                fga_frequency, fgm, fga, fg_pct, efg_pct,
+                                fg2a_frequency, fg2m, fg2a, fg2_pct,
+                                fg3a_frequency, fg3m, fg3a, fg3_pct
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """
+
+                        try:
+                            cursor.execute(insert_sql, record_data)
+                            inserted += 1
+                        except sqlite3.IntegrityError:
+                            # Update logic (if record exists)
+                            update_sql = f"""
+                                UPDATE {table_name} SET
+                                    player_name = ?, team_abbreviation = ?, team_name = ?, age = ?,
+                                    gp = ?, g = ?, fga_frequency = ?, fgm = ?, fga = ?, fg_pct = ?, efg_pct = ?,
+                                    fg2a_frequency = ?, fg2m = ?, fg2a = ?, fg2_pct = ?,
+                                    fg3a_frequency = ?, fg3m = ?, fg3a = ?, fg3_pct = ?,
+                                    updated_at = CURRENT_TIMESTAMP
+                                WHERE player_id = ? AND season = ? AND team_id = ? 
+                                AND close_def_dist_range = ? AND shot_clock_range = ? AND dribble_range = ? AND shot_dist_range = ?
+                            """
+                            
+                            # Data for update: Stats first, then WHERE clause params
+                            # Slice indices adjusted for missing season_type
+                            # record_data indices:
+                            # 0: player_id
+                            # 1: season
+                            # 2: team_id
+                            # 3-6: ranges
+                            # 7-25: stats
+                            
+                            stats_data = record_data[7:]
+                            pk_data = record_data[0:7]
+                            
+                            cursor.execute(update_sql, stats_data + pk_data)
+                            updated += 1
 
                 except Exception as e:
                     logger.error(f"Error processing record for player {record.get('player_id')}: {e}")

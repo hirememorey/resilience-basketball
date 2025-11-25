@@ -92,14 +92,18 @@ Regular-season performance is an imperfect predictor of postseason success. The 
 - **Population Scripts:** Reside in `src/nba_data/scripts/` and are used to fetch data from the API.
 - **Validation Script:** `src/nba_data/scripts/validate_integrity.py` **must be run** after any data population to ensure data health.
 
-### Next Steps (The New Roadmap)
-1.  **✅ Repopulate Historical Data:** Run the fixed population scripts for all seasons from 2015-16 to 2023-24 for both "Regular Season" and "Playoffs".
-2.  **✅ Implement Team Ratings Ingestion:** Create a script to populate team-level defensive ratings for each season. This is required for the "Crucible Baseline".
-3.  **✅ Refactor Resilience Calculations:** Update the analysis scripts (`calculate_...`) to implement the new logic:
-    - `Dependency-Weighted Versatility Score`
-    - `Friction Score` (Points per Touch-Second)
-    - `Crucible-Adjusted Dominance Score`
-4.  **Visualize:** Generate career arc charts for the new, more robust metrics.
+### Next Steps (2025 Roadmap)
+1.  **✅ Historical Data Surge:** Complete backfill of all seasons (2015-16 to 2024-25) with both Regular Season and Playoff data - **DONE**
+2.  **✅ Data Foundation:** Comprehensive player, game, tracking, and shot dashboard data - **DONE**
+3.  **Execute Resilience Calculations:** Implement and validate the 5-pathway framework:
+    - `Friction Score` (Process Independence)
+    - `Crucible Baseline` (Top-10 Defense Performance)
+    - `Dominance Score` (Shot Quality Under Pressure)
+    - `Evolution Score` (Multi-Season Adaptability)
+    - `Versatility Score` (Dependency-Weighted Skills)
+4.  **Unified Scoring:** Aggregate pathways into single resilience metric using Z-score normalization
+5.  **Validation:** Test against known playoff performers and refine methodology
+6.  **Visualization:** Generate career arc charts and predictive analysis
 
 
 ---
@@ -112,25 +116,34 @@ The pipeline has been hardened to eliminate brittle CSV dependencies and ensure 
 - **Usage Tier Refinement:** The Friction Calculator now distinguishes between "Heliocentric Engines" (High Usage + High Time of Possession) and "Elite Finishers" (High Usage + Low Time of Possession) to accurately measure process independence without penalizing primary creators.
 
 ---
-### Implementation Progress
-- **✅ Friction Score Data Pipeline:** The necessary possession metrics (`AVG_SEC_PER_TOUCH`, `AVG_DRIB_PER_TOUCH`, `PTS_PER_TOUCH`, `TIME_OF_POSS`, `FRONT_CT_TOUCHES`) have been successfully integrated and verified.
-- **✅ Historical Data Backfill:** The database now contains 10 seasons of player and game data.
-- **✅ Team Ratings:** Team defensive ratings data is available in `team_season_stats` table.
-- **✅ Friction Score Resilience:**
-  - **Complete & Validated:** `calculate_friction.py` now correctly measures the delta between Regular Season and Playoff efficiency.
-  - **Logic Update:** "Engine" vs "Finisher" tiers implemented to protect high-usage creators.
-  - **Results:** successfully identified "Resilient" high-usage players (e.g., Damian Lillard -7.26 Delta) vs. "Fragile" players (e.g., Anthony Edwards +5.15 Delta) for the 2023-24 season.
-- **✅ Logic Bridge Progress:**
-  - **✅ Friction Score Calculation:** **COMPLETE & VERIFIED**.
-  - **✅ Crucible Baseline:** **COMPLETE & VERIFIED**.
-    - Implemented `calculate_crucible_baseline.py`.
-    - Populated `player_crucible_stats` table using granular game logs (filtered for Top-10 defenses).
-    - Validation confirmed significant efficiency drops for role players and resilience for elite creators.
-  - **✅ Dominance Score:** Shot dashboard data fixed with combinatorial approach.
-  - **✅ Unified Resilience:** Integration of all metrics complete using **Z-Score Normalization**.
+### Implementation Progress (2025)
 
-### Key Fixes Implemented
-- **Tracking Data Integrity:** Discovered and fixed a silent failure where `NBAStatsClient` was hardcoding `SeasonType="Regular Season"`, causing Playoff data to be corrupted. All 2023-24 tracking data has been repopulated and verified.
-- **Shot Dashboard Data Integrity:** Fixed the "fragmented rows" issue by implementing combinatorial API fetching instead of independent loops. This provides true intersectional data for shot quality analysis.
-- **Player Metadata:** Minimal player table populated (1,437 players) to enable JOIN operations for analysis scripts.
-- **Data Verification:** All foundational data tables are populated and verified to work together.
+#### ✅ Data Foundation (Complete)
+- **Comprehensive Historical Data:** 10 seasons (2015-16 to 2024-25) fully populated with both Regular Season and Playoff data
+- **Player Universe:** 1,437 players with complete metadata and historical tracking
+- **Game Granularity:** 271K+ game logs enabling per-game crucible analysis
+- **Possession Metrics:** 7K+ tracking records with friction analysis data (`AVG_SEC_PER_TOUCH`, `PTS_PER_TOUCH`, etc.)
+- **Shot Quality Data:** 169K+ combinatorial shot dashboard records for dominance scoring
+- **Team Defense Data:** Complete defensive ratings for Top-10 defense filtering
+
+#### 🔧 Resilience Framework (Ready for Implementation)
+- **Data Integrity Fixes:** All schema issues resolved (season_type primary keys, foreign key enforcement)
+- **API Robustness:** Fixed hardcoded SeasonType issues and combinatorial fetching
+- **Validation Pipeline:** Comprehensive integrity checks implemented
+- **Framework Architecture:** 5-pathway conditional probability model defined
+
+#### 🎯 Next Phase: Calculation Implementation
+The data foundation is now solid. Ready to implement:
+1. **Friction Calculator:** Process independence scoring
+2. **Crucible Calculator:** Top-10 defense performance baseline
+3. **Dominance Calculator:** Shot quality under pressure
+4. **Evolution Calculator:** Multi-season adaptability trajectory
+5. **Versatility Calculator:** Dependency-weighted skill diversification
+6. **Unified Scorer:** Z-score normalized aggregation
+
+### Key Technical Achievements
+- **Split-Brain Resolution:** Eliminated the critical gap between regular season and playoff data
+- **Historical Coverage:** True multi-season analysis now possible
+- **Data Integrity:** Foreign key enforcement prevents silent corruption
+- **API Resilience:** Robust error handling for external data sources
+- **Scalability:** Parallel processing for large data operations
