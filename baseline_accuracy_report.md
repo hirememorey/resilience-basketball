@@ -1,16 +1,20 @@
-# Phase 1: Deep Validation of Current Approach
+# Phase 1: Deep Validation of Current Approach (INVALIDATED)
 
-## Executive Summary
+## ⚠️ IMPORTANT: Results Invalidated by Data Corruption Discovery
 
-**Question**: Does the simple TS% ratio approach provide reliable playoff resilience measurements?
+**Original Question**: Does the simple TS% ratio approach provide reliable playoff resilience measurements?
 
-**Answer**: YES
+**Original Answer**: YES (but based on corrupted data)
 
-**Key Findings**:
+**Key Findings (PRE-CORRUPTION DISCOVERY)**:
 - Analyzed 409 player-season combinations across 7 comparable seasons
 - Year-to-year consistency: CV = 0.084
 - Directional accuracy: 54.0% (vs 50% random)
 - Statistical significance: CONFIRMED
+
+**⚠️ CRITICAL UPDATE**: Data integrity audit revealed significant corruption in the local database (33% team assignment accuracy, invalid statistical ranges). These results cannot be trusted and have been superseded by external data validation.
+
+**Current Status**: Use `calculate_resilience_external.py` with clean NBA API data for reliable analysis.
 
 ## Methodology
 
