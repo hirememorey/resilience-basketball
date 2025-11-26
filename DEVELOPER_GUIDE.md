@@ -45,20 +45,25 @@ python calculate_resilience_external.py
 3. **Player Accuracy**: ✅ Star players found with correct teams and realistic stats
 4. **Resilience Ready**: ✅ 51 qualified players analyzed for 2023-24 season
 
-### **Current Approach: Simplified Composite Resilience**
+### **Current Approach: Composite Resilience Metric**
 **Base Layer**: External NBA API data (clean, authoritative, validated)
 
-**Implemented Solution**: Simplified 2-component composite metric:
-- TS% Ratio: Shooting efficiency maintenance
-- Absolute Production Ratio: Total contribution elevation (PTS + 1.5×AST + 0.5×REB)
-- Formula: Simple average of the two ratios
+**Implemented Solution**: 2-component composite metric measuring context adaptation:
+- **TS% Ratio**: Efficiency Maintenance in Harder Context (pure performance, not confounded by usage)
+- **Production Ratio**: Production Scalability Despite Context Change (valuable even when efficiency declines)
+- **Formula**: Simple average of the two ratios
+- **What It Measures**: Context adaptation through dual skills
 
 **Current Scripts**:
-- `calculate_composite_resilience.py` - ✅ Simplified composite calculator (production-ready)
+- `calculate_composite_resilience.py` - ✅ Composite calculator (production-ready)
 - `calculate_resilience_external.py` - TS% baseline (for comparison)
-- `simple_external_test.py` - Data validation
+- `validate_problem_exists.py` - Problem validation (validates Type 1 failures)
+- `test_composite_on_validation_data.py` - Composite validation (tests fix rate)
+- `validate_measurement_assumptions.py` - Measurement validation
+- `analyze_usage_ts_relationship.py` - Usage-TS% relationship analysis
+- `refine_composite_interpretation.py` - Interpretation refinement
 
-**Key Lesson**: We implemented a 5-component approach, then simplified to 2 components after discovering equal accuracy. Always test simpler approaches first.
+**Key Lesson**: We validated what we're actually measuring. The composite measures context adaptation, not just overperformance. Understanding the "why" is as important as the "what".
 
 ## 📋 **Onboarding Plan: From Dependent to Autonomous**
 
@@ -95,14 +100,24 @@ python calculate_resilience_external.py
    - Data: 10 seasons, 271K game logs, playoff data
    - Filtering: ≥25% usage + ≥4 playoff games = reliable analysis
 
-5. **Algorithm Mastery (Simplified)**
+5. **Algorithm Mastery & Interpretation**
    - **Baseline**: `Resilience = Playoff TS% ÷ Regular Season TS%`
-   - **Composite**: `Resilience = (TS% Ratio + Absolute Production Ratio) / 2`
-     - TS% Ratio: `Playoff TS% ÷ Regular Season TS%`
-     - Absolute Production Ratio: `Playoff Production ÷ Regular Season Production`
+     - Measures: Efficiency maintenance in harder context
+     - Not confounded by usage (correlation: 0.046)
+   
+   - **Composite**: `Resilience = (TS% Ratio + Production Ratio) / 2`
+     - TS% Ratio: `Playoff TS% ÷ Regular Season TS%` - Efficiency maintenance
+     - Production Ratio: `Playoff Production ÷ Regular Season Production` - Production scalability
      - Production = `PTS + 1.5×AST + 0.5×REB` (per game)
+     - **What It Measures**: Context adaptation through dual skills
+   
    - **Categories**: >1.0 resilient, <1.0 fragile
-   - **Validation**: ✅ 100% accuracy on known test cases (Butler, Murray, Simmons)
+   - **Validation**: 
+     - ✅ 70.4% fix rate on Type 1 failures (19/27 cases)
+     - ✅ 0 false positives
+     - ✅ Correctly identifies production-scalable players
+   
+   - **Key Insight**: When usage increases, 61% of players see TS% decline. Maintaining production despite efficiency decline is valuable (scalability).
 
 6. **Statistical Rigor**
    - Cross-validation: Never test on training data
@@ -119,10 +134,11 @@ python calculate_resilience_external.py
    ```
 
 8. **Validation Requirements** (Non-negotiable):
-   - **Reality Check**: Must correctly identify championship contributors (Butler, Murray test cases)
-   - **Baseline**: ✅ 100% accuracy on known test cases achieved
-   - **Cross-validation**: Test on additional seasons for broader validation
-   - **Interpretation**: ✅ Simple average of two ratios, easily explainable
+   - **Problem Validation**: Validate that the problem exists (we found 7.3% Type 1 failures)
+   - **Measurement Validation**: Validate what you're actually measuring (we validated usage-TS% relationship)
+   - **Composite Validation**: Test if solution fixes the problem (we found 70.4% fix rate)
+   - **Interpretation**: Understand what the metric measures (we refined to "context adaptation")
+   - **Reality Check**: Must correctly identify known cases (Butler, Murray test cases)
    - **Complexity Cost**: Always test if simpler approaches achieve same results
 
 9. **Decision Framework**:
@@ -163,12 +179,22 @@ python calculate_resilience_external.py
 
 You are fully onboarded when you can:
 
-- **Explain**: Why TS% ratios fail (Murray paradox) and how the simplified composite fixes it
-- **Understand**: The journey from 1 component → 5 components → back to 2 components
+- **Explain**: What the composite measures (context adaptation through dual skills)
+- **Understand**: Why TS% ratio (efficiency maintenance) and Production ratio (scalability) are both valuable
+- **Validate**: What you're measuring, not just that it works (we validated usage-TS% relationship)
 - **Reject**: Enhancement ideas that add complexity without proven value
-- **Teach**: The importance of testing simpler approaches even after complex ones work
-- **Validate**: Against real-world outcomes, not just statistical metrics
+- **Teach**: The importance of validating measurement assumptions
 - **Maintain**: Predictive accuracy while minimizing complexity
+
+## 📚 **Key Validation Reports**
+
+Before starting new work, review these validation reports:
+
+- `data/problem_validation_report.md` - Problem scope (7.3% Type 1 failures)
+- `data/composite_validation_report.md` - Composite fix rate (70.4%)
+- `data/usage_ts_relationship_report.md` - Usage-TS% relationship (61% decline when usage ↑)
+- `data/composite_interpretation_report.md` - What composite measures (context adaptation)
+- `data/measurement_validation_report.md` - Measurement assumptions validation
 
 ## 🚨 **Common Pitfalls to Avoid**
 
