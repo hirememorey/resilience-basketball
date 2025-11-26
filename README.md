@@ -12,17 +12,33 @@ After extensive analysis, we discovered that playoff resilience can be effective
 - **= 1.0**: Maintained efficiency (neutral)
 - **< 1.0**: Declined in playoffs (fragile)
 
-## ✅ Validation Results
+## ⚠️ Current Project Status: Data Integrity Remediation Required
 
-Our validation proves this simple approach works:
+**Phase 1 Validation Completed**: The simple TS% ratio approach shows promising early results with strong year-to-year consistency (CV = 0.084) and directional accuracy (54.0%).
 
-- **High Predictive Power**: Year-to-year playoff consistency is HIGH - past performance predicts future results
-- **Moderate Variability**: ~15-20% coefficient of variation suggests real predictability, not just randomness
-- **Reliable Sample**: 87 players meet ≥25% usage threshold for meaningful analysis
-- **Actionable Insights**: Identifies underperformers like Jimmy Butler's 39.4% playoff TS% vs 60.7% regular season
+**Critical Discovery**: Comprehensive data integrity audit revealed major issues that invalidate current validation results:
+- Team assignment accuracy: Only 33% historically correct
+- Statistical validity: 4,698+ invalid TS% values
+- Historical accuracy: Major discrepancies with known NBA facts
 
-## 🚀 Quick Start
+**Current State**: Cannot proceed with analysis until data integrity issues are resolved. See `data_integrity_remediation_plan.md` for details.
 
+**Next Step**: Begin Phase 1 remediation (team assignment corrections, statistical data fixes).
+
+## 🚀 Current Status & Next Steps
+
+**⚠️ IMPORTANT**: Due to discovered data integrity issues, current scripts may produce unreliable results.
+
+### Immediate Priority: Data Integrity Remediation
+```bash
+# Run comprehensive data integrity audit (already completed)
+python src/nba_data/scripts/audit_data_integrity.py
+
+# Begin Phase 1 remediation (team assignment fixes)
+# See data_integrity_remediation_plan.md for detailed steps
+```
+
+### Scripts Available (After Data Integrity Fixes)
 ```bash
 # Calculate resilience for all qualified players in 2023-24
 python src/nba_data/scripts/calculate_simple_resilience.py
@@ -30,36 +46,49 @@ python src/nba_data/scripts/calculate_simple_resilience.py
 # Validate that the approach actually predicts future performance
 python src/nba_data/scripts/validate_resilience_prediction.py
 
-# Analyze playoff underperformers (simpler version of the above)
+# Analyze playoff underperformers
 python src/nba_data/scripts/analyze_underperformers.py
 ```
 
-## 📊 Key Findings
+## 📊 Preliminary Findings (Pre-Data Integrity Fixes)
 
-### Usage Thresholds Matter
-- **≥15% usage**: 443 players (too noisy)
-- **≥20% usage**: 207 players (reasonable)
-- **≥25% usage**: 87 players (recommended for reliability)
-- **≥30% usage**: 26 players (very high bar)
+### Phase 1 Validation Results (Data Integrity Issues Discovered)
+- **Year-to-year consistency**: CV = 0.084 (exceptionally strong)
+- **Directional accuracy**: 54.0% (beats random guessing)
+- **Statistical significance**: Confirmed (p < 0.000)
+- **Sample size**: 409 player-season combinations across 7 seasons
 
-### Real Predictive Power
-The validation shows **moderate predictability** in playoff performance:
-- Most consistent: Players like [results from validation]
-- Most variable: Players like [results from validation]
-- Overall CV: ~15-20% (not random noise)
+### Critical Data Integrity Issues Identified
+- **Team assignments**: Only 33% historically accurate (e.g., Jimmy Butler incorrectly assigned to Suns)
+- **Statistical validity**: 4,698+ invalid TS% values, 1,827 statistical impossibilities
+- **Historical accuracy**: Major discrepancies with known NBA facts
+- **Cross-consistency**: Some orphaned records but generally acceptable
 
-## 🏗️ Project Structure (Simplified)
+### Remediation Required Before Reliable Analysis
+See `data_integrity_remediation_plan.md` for comprehensive remediation strategy covering:
+- Team assignment corrections (target: ≥90% accuracy)
+- Statistical data validation and fixes
+- Historical accuracy verification
+- Ongoing monitoring setup
+
+## 🏗️ Project Structure
 
 ```
 resilience-basketball/
 ├── src/nba_data/scripts/
-│   ├── calculate_simple_resilience.py    # Core calculator
-│   ├── validate_resilience_prediction.py # Validation tests
-│   └── analyze_underperformers.py        # Simple analysis
+│   ├── calculate_simple_resilience.py          # Core resilience calculator
+│   ├── validate_resilience_prediction.py       # Basic validation tests
+│   ├── phase1_baseline_validation.py           # Comprehensive Phase 1 validation
+│   ├── audit_data_integrity.py                 # Data integrity auditor
+│   └── analyze_underperformers.py              # Underperformer analysis
 ├── data/
-│   ├── nba_stats.db                      # SQLite database
-│   └── simple_resilience_*.csv          # Results
-└── README.md
+│   ├── nba_stats.db                            # SQLite database (has integrity issues)
+│   └── simple_resilience_*.csv                 # Preliminary results (unreliable)
+├── data_integrity_remediation_plan.md          # Comprehensive remediation strategy
+├── baseline_accuracy_report.md                 # Phase 1 validation results
+├── README.md                                   # This file
+├── DEVELOPER_GUIDE.md                          # Development approach and philosophy
+└── prompts.md                                  # AI development command templates
 ```
 
 ## 🎯 Why This Approach Works
@@ -69,15 +98,19 @@ resilience-basketball/
 3. **Actionable**: Clear thresholds for identifying resilient vs fragile players
 4. **Simple**: No complex Z-scores, multi-factor models, or opaque calculations
 
-## 📈 Sample Results (2023-24)
+## 📈 Sample Results (Currently Unreliable - Data Integrity Issues)
 
-**Most Resilient Players:**
-- Players maintaining or improving TS% in playoffs
+**⚠️ WARNING**: Current results cannot be trusted due to data integrity issues.
 
-**Major Underperformers:**
-- Jimmy Butler: 60.7% → 39.4% TS (-21.3% drop)
-- Trae Young: 60.3% → 46.1% TS (-14.2% drop)
-- And other well-known playoff disappointments
+**Preliminary Analysis Example** (for illustration only):
+- Jimmy Butler showed significant statistical shifts across seasons
+- Year-to-year resilience patterns detectable but team assignments incorrect
+- True results available after data integrity remediation
+
+**Expected After Remediation**:
+- Reliable identification of resilient vs. fragile players
+- Accurate year-to-year performance tracking
+- Validated statistical significance and predictive power
 
 ## 🔬 The "Over-Engineering" Lesson
 
@@ -89,39 +122,49 @@ Playoff resilience was already reasonably measurable with basic stats - NBA team
 
 ## 🛠️ Technical Details
 
-- **Database**: SQLite with NBA stats from 2015-16 to 2024-25
+- **Database**: SQLite with NBA stats from 2015-16 to 2024-25 (**⚠️ DATA INTEGRITY ISSUES DISCOVERED**)
 - **Dependencies**: pandas, numpy, scipy
-- **Data Sources**: NBA Stats API historical data
-- **Validation**: Multi-season consistency analysis and variance testing
+- **Data Sources**: NBA Stats API historical data (requires integrity remediation)
+- **Current Status**: Phase 1 validation completed, major data integrity issues identified
+- **Next Phase**: Data integrity remediation (see `data_integrity_remediation_plan.md`)
 
-## 👥 **New Developer Onboarding: First Principles Approach**
+### Data Integrity Issues (Blocking Analysis)
+- **Team Assignments**: Only 33% historically accurate
+- **Statistical Validity**: 4,698+ invalid values, 1,827 impossibilities
+- **Historical Accuracy**: Major discrepancies with known facts
+- **Impact**: Cannot trust any current analysis results
 
-### **Why This Structure Exists**
+## 👥 **New Developer Onboarding: Current State & Critical Context**
 
-From first principles, we recognized that developer psychology and project evolution naturally lead toward complexity creep. Without structured guardrails, even the simplest successful approach gets "improved" into an over-engineered mess. This onboarding plan prevents that by building both technical understanding and cultural discipline.
+### **CRITICAL: Data Integrity Issues Discovered**
 
-### **Phase 1: Experience the Breakthrough (Day 1)**
+**⚠️ IMMEDIATE PRIORITY**: Major data integrity issues block all analysis. Previous "validation results" are unreliable.
 
-**Step 1: Witness the Power of Simplicity**
+**What We Discovered**:
+- Team assignments: Only 33% historically accurate (e.g., Jimmy Butler on wrong teams)
+- Statistical data: 4,698+ invalid values, impossible combinations
+- Historical facts: Major discrepancies with known NBA events
+
+**Your Mission**: Begin Phase 1 remediation to fix these issues before any analysis can proceed.
+
+### **Immediate Onboarding Steps**
+
+**Step 1: Understand the Data Crisis**
 ```bash
-# See the validation that proves simple works
-python demo_simple_approach.py
+# Run the data integrity audit (already completed, but review results)
+python src/nba_data/scripts/audit_data_integrity.py
 
-# Experience the predictive power firsthand
-python src/nba_data/scripts/validate_resilience_prediction.py
-
-# Calculate actual resilience scores
-python src/nba_data/scripts/calculate_simple_resilience.py
+# Read the remediation plan
+cat data_integrity_remediation_plan.md
 ```
 
-**Key Lesson**: Year-to-year consistency is HIGH (CV ~15-20%). The simple TS% ratio has real predictive power.
+**Step 2: Review Phase 1 Validation Results**
+```bash
+# See what we discovered before data integrity issues were found
+cat baseline_accuracy_report.md
+```
 
-**Step 2: Understand the Over-Engineering Mistake**
-- Browse `archive/complex_framework/` - see the 5-pathway calculators we removed
-- Read archived results in `archive/complex_results/` - friction scores, Z-score normalizations
-- Realize: **Complex framework added zero predictive value beyond TS% ratios**
-
-**Emotional Anchor**: Feel the relief of discovering simplicity works, then the embarrassment of over-engineering.
+**Key Context**: We validated that the simple TS% approach works (54% directional accuracy), but discovered critical data integrity issues that invalidate those results.
 
 ### **Phase 2: Master the Simple Foundation (Day 1-2)**
 
