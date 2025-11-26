@@ -1,26 +1,24 @@
-# Simple NBA Playoff Resilience Calculator
+# NBA Playoff Resilience Calculator
 
-**From first principles: Playoff resilience is about maintaining shooting efficiency when the games matter most.**
+**From first principles: Playoff resilience is about maintaining/improving baseline performance when pressure increases and defenses strengthen.**
 
-## 🎯 The Simple Truth
+## 🎯 The Core Challenge
 
-After extensive analysis, we discovered that playoff resilience can be effectively measured using one simple, intuitive metric:
+**Original Question**: *"Does this player maintain shooting efficiency when games matter more?"*
 
-**Resilience Score = Playoff TS% ÷ Regular Season TS%**
+**Reality Check Discovery**: Simple TS% ratios fail real-world validation. Jamal Murray was "more resilient" (better TS% maintenance) in his championship season but contributed far more overall than in his 2023-24 fragile season.
 
-- **> 1.0**: Improved in playoffs (highly resilient)
-- **= 1.0**: Maintained efficiency (neutral)
-- **< 1.0**: Declined in playoffs (fragile)
+**Current State**: TS% delta measures *shooting efficiency maintenance* but not *holistic contribution elevation*. The metric needs enhancement to capture multi-dimensional player impact.
 
-## ✅ Project Status: External Data Approach - Ready for Implementation
+## ✅ Project Status: Architecture Defined - Ready for Enhanced Implementation
 
-**Phase 1 Validation Completed**: The simple TS% ratio approach shows promising early results with strong year-to-year consistency (CV = 0.084) and directional accuracy (54.0%).
+**Phase 1 Findings (2023-24 External Data)**: 51 qualified players analyzed with clean NBA API data.
 
-**Critical Discovery**: External NBA APIs provide clean, validated data superior to our corrupted local database. Data integrity audit revealed local data corruption from processing pipeline bugs, but external sources are authoritative and accurate.
+**Critical Discovery**: External NBA APIs provide clean, authoritative data superior to corrupted local database.
 
-**Current State**: Ready to proceed with external data approach. Local database corruption was caused by data processing issues, not API source problems.
+**Current Architecture**: Composite resilience metric combining TS% efficiency, usage efficiency, and impact efficiency ratios.
 
-**Next Step**: Implement external data pipeline for resilience analysis.
+**Next Step**: Implement enhanced composite metric with deterministic validation.
 
 ## 🚀 Current Status & Next Steps
 
@@ -96,43 +94,55 @@ resilience-basketball/
 └── prompts.md                                  # AI development command templates
 ```
 
-## 🎯 Why This Approach Works
+## 🎯 Why Enhanced Approach Needed
 
-1. **Intuitive**: TS% drop directly measures what matters - shooting efficiency under pressure
-2. **Validated**: Statistical analysis confirms predictive power and moderate consistency
-3. **Actionable**: Clear thresholds for identifying resilient vs fragile players
-4. **Simple**: No complex Z-scores, multi-factor models, or opaque calculations
+**The Murray Paradox**: Simple TS% ratios fail real-world validation:
+- **2022-23**: Murray "resilient" (1.026 TS% ratio) → NBA Championship, elevated performance
+- **2023-24**: Murray "fragile" (0.809 TS% ratio) → Early elimination, poor performance
 
-## 📈 Current Results (External Data - Reliable)
+**Lesson**: TS% maintenance ≠ contribution elevation. Resilience requires measuring holistic impact.
+
+## 📊 Current Architecture: Composite Resilience Metric
+
+**Formula**: `Composite Resilience = (0.4 × TS% Ratio) + (0.3 × Usage Efficiency Ratio) + (0.3 × Impact Efficiency Ratio)`
+
+**Components**:
+- **TS% Ratio**: Shooting efficiency maintenance (current approach)
+- **Usage Efficiency Ratio**: Performance with increased opportunity
+- **Impact Efficiency Ratio**: Overall statistical contribution (PER-based)
+
+**Validation Target**: >65% directional accuracy (vs. 54% current) with deterministic championship predictions.
+
+## 📈 Current Results (External Data - 2023-24 Baseline)
 
 **✅ VALIDATED**: Results based on clean NBA Stats API data.
 
-**2023-24 External Analysis Example**:
+**2023-24 TS% Analysis Example**:
 - **Most Resilient**: Nikola Jokić (1.23), Luka Dončić (1.17), Devin Booker (1.14)
-- **Most Fragile**: Various players with TS% ratios < 0.8
+- **Most Fragile**: Jamal Murray (0.809), Kawhi Leonard (0.757), Brandon Ingram (0.778)
 - **Distribution**: 43% Fragile, 33% Neutral, 8% Resilient, 2% Highly Resilient
 - **Sample Size**: 51 qualified players (high usage + playoff minutes)
 
 **Key Insights**:
+- TS% approach shows patterns but fails real-world validation (Murray paradox)
 - External API provides complete, accurate playoff data
-- Resilience patterns clearly detectable with clean data
-- Ready for multi-season analysis and statistical validation
+- Composite enhancement needed for deterministic predictions
 
-## 🔬 The "Over-Engineering" Lesson
+## 🔬 The "Over-Engineering" Lesson (Evolved)
 
-This project started with a complex 5-pathway framework (Friction, Crucible, Evolution, Dominance, Versatility). After first-principles analysis and validation, we discovered:
+**Original Lesson**: Complex 5-pathway framework added zero value beyond simple TS% analysis.
 
-**The complex approach added no meaningful predictive value beyond simple TS% analysis.**
+**New Discovery**: Even simple TS% analysis fails real-world validation (Murray paradox). The metric measures *shooting efficiency maintenance* but not *holistic contribution elevation*.
 
-Playoff resilience was already reasonably measurable with basic stats - NBA teams have been evaluating this way for decades. The complex framework was rediscovering this wisdom with more math but less clarity.
+**Enhanced Lesson**: Start with what works, but validate against real-world outcomes. Simplicity without reality-check is just naive. Complexity without proven value is over-engineering. The sweet spot is systematic enhancement with strict validation guardrails.
 
 ## 🛠️ Technical Details
 
 - **Data Source**: NBA Stats API (clean, validated, real-time)
 - **Dependencies**: pandas, numpy, scipy, tenacity
 - **Infrastructure**: Complete API client with caching, retries, rate limiting
-- **Current Status**: External data approach validated and working
-- **Next Phase**: Multi-season analysis, statistical validation, research expansion
+- **Current Status**: External data validated, composite metric architecture defined
+- **Next Phase**: Implement composite resilience calculator with deterministic validation
 
 ### Data Integrity Issues (Blocking Analysis)
 - **Team Assignments**: Only 33% historically accurate
@@ -252,17 +262,27 @@ You are ready when you can:
 
 **Success Metric**: Can you maintain predictive accuracy while reducing code complexity? If yes, you're succeeding. If complexity grows without accuracy gains, you're failing.
 
-## 📋 Future Enhancements (Only If Validation Proves Valuable)
+## 📋 Implementation Roadmap: Composite Resilience Metric
 
-Any enhancement must pass the Complexity Tax test:
+**Phase 1: Enhanced Calculator (Week 1-2)**
+- Implement composite resilience formula
+- Add usage efficiency and impact efficiency ratios
+- Maintain backward compatibility with TS% baseline
 
-- **Quantitative**: >3% accuracy improvement over simple TS% baseline
-- **Qualitative**: Simpler interpretation than current approach
-- **Validated**: Cross-validation on multiple seasons
-- **Documented**: Clear before/after comparison
+**Phase 2: Deterministic Validation (Week 3-4)**
+- Test against championship performances (Murray paradox resolution)
+- Achieve >65% directional accuracy target
+- Cross-validate across 3+ seasons
 
-Potential areas (unproven until validated):
-- **Contextual Factors**: Defense quality, teammate changes, pace effects
-- **Longitudinal Tracking**: Career trajectory analysis
-- **Usage Pattern Analysis**: When/how players get their shots in playoffs
-- **Comparative Analysis**: How different player archetypes perform
+**Phase 3: Optimization & Expansion (Week 5-6)**
+- Performance optimization (reduce API calls)
+- Multi-season historical analysis
+- Statistical significance testing
+
+**Success Criteria**:
+- **Quantitative**: >5% accuracy improvement over TS% baseline
+- **Qualitative**: Correctly identifies championship contributors
+- **Validation**: Passes Jamal Murray reality check
+- **Simplicity**: Explainable in plain English to coaches
+
+**Complexity Tax**: Any future enhancement must prove >3% accuracy improvement with simpler interpretation.

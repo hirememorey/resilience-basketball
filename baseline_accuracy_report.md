@@ -1,20 +1,19 @@
-# Phase 1: Deep Validation of Current Approach (INVALIDATED)
+# Phase 1: TS% Baseline Analysis (DOUBLE INVALIDATED)
 
-## ⚠️ IMPORTANT: Results Invalidated by Data Corruption Discovery
+## ⚠️ IMPORTANT: Results Invalidated by Both Data Corruption AND Reality-Check Failure
 
 **Original Question**: Does the simple TS% ratio approach provide reliable playoff resilience measurements?
 
 **Original Answer**: YES (but based on corrupted data)
 
-**Key Findings (PRE-CORRUPTION DISCOVERY)**:
-- Analyzed 409 player-season combinations across 7 comparable seasons
-- Year-to-year consistency: CV = 0.084
-- Directional accuracy: 54.0% (vs 50% random)
-- Statistical significance: CONFIRMED
+**⚠️ CRITICAL UPDATE 1**: Data integrity audit revealed significant corruption in the local database (33% team assignment accuracy, invalid statistical ranges).
 
-**⚠️ CRITICAL UPDATE**: Data integrity audit revealed significant corruption in the local database (33% team assignment accuracy, invalid statistical ranges). These results cannot be trusted and have been superseded by external data validation.
+**⚠️ CRITICAL UPDATE 2**: Even with clean external data, TS% ratios fail real-world validation:
+- Jamal Murray was "more resilient" (better TS% maintenance) in championship year
+- But contributed far more overall than in his "fragile" 2023-24 season
+- TS% measures *shooting efficiency maintenance* not *holistic contribution elevation*
 
-**Current Status**: Use `calculate_resilience_external.py` with clean NBA API data for reliable analysis.
+**Current Status**: TS% baseline documented for historical context. Use composite resilience architecture for enhanced analysis.
 
 ## Methodology
 

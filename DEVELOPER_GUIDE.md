@@ -1,22 +1,24 @@
 # 🧠 **Developer Guide: First Principles Approach to NBA Resilience**
 
-## 🎯 **The Core Philosophy**
+## 🎯 **The Core Philosophy (Evolved)**
 
-**First Principle**: Start with what works, not what impresses.
+**First Principle**: Start with what works, validate against reality, enhance systematically.
 
-This project exists because we over-engineered a simple problem. Playoff resilience fundamentally asks: *"Does this player maintain shooting efficiency when games matter more?"* The answer requires TS% ratios, not 5-pathway frameworks.
+**Original Lesson**: We over-engineered a simple problem with 5-pathway frameworks.
 
-## 🚨 **The Over-Engineering Warning**
+**New Discovery**: Even simple TS% ratios fail real-world validation (Jamal Murray paradox).
 
-**Historical Context**: This project started with a sophisticated 5-pathway model (Friction, Crucible, Evolution, Dominance, Versatility) involving:
-- 6 complex calculators with Z-score normalization
-- Extensive validation infrastructure
-- Multi-factor statistical models
-- 1,000+ lines of "advanced analytics" code
+**Enhanced Philosophy**: Simplicity without reality-check is naive. Complexity without proven value is over-engineering. The path forward: systematic enhancement with strict validation guardrails.
 
-**The Discovery**: After validation, the complex framework added **zero predictive value** beyond simple TS% ratios. NBA teams have been evaluating resilience this way for decades.
+## 🚨 **The Over-Engineering Warning (Evolved)**
 
-**Your Mission**: Don't repeat this mistake. Approach every enhancement with structured skepticism.
+**Historical Context**: Started with complex 5-pathway framework - added zero value.
+
+**New Discovery**: Even simple TS% ratios fail real-world validation:
+- Jamal Murray was "more resilient" in championship year but contributed far more
+- TS% measures *shooting maintenance* not *contribution elevation*
+
+**Enhanced Mission**: Avoid both over-engineering AND under-validation. Every enhancement must prove value against real-world outcomes, not just statistical metrics.
 
 ## ✅ **EXTERNAL DATA APPROACH: Clean, Validated Analysis**
 
@@ -43,10 +45,19 @@ python calculate_resilience_external.py
 3. **Player Accuracy**: ✅ Star players found with correct teams and realistic stats
 4. **Resilience Ready**: ✅ 51 qualified players analyzed for 2023-24 season
 
-### **Current Approach**
-Use `calculate_resilience_external.py` for all playoff resilience analysis. No remediation needed - external APIs provide exactly what we require.
+### **Current Approach: Composite Resilience Architecture**
+**Base Layer**: External NBA API data (clean, authoritative, validated)
 
-**Your Role**: Leverage the external data infrastructure for reliable, validated research.
+**Enhancement Path**: Composite resilience metric combining:
+- TS% efficiency ratio (0.4 weight)
+- Usage efficiency ratio (0.3 weight)
+- Impact efficiency ratio (0.3 weight)
+
+**Current Scripts**:
+- `calculate_resilience_external.py` - TS% baseline calculator
+- `simple_external_test.py` - Data validation
+
+**Your Role**: Implement composite metric with deterministic validation against championship performances.
 
 ## 📋 **Onboarding Plan: From Dependent to Autonomous**
 
@@ -83,30 +94,31 @@ Use `calculate_resilience_external.py` for all playoff resilience analysis. No r
    - Data: 10 seasons, 271K game logs, playoff data
    - Filtering: ≥25% usage + ≥4 playoff games = reliable analysis
 
-5. **Algorithm Mastery**
-   - Formula: `Resilience = Playoff TS% ÷ Regular Season TS%`
-   - Categories: >1.0 resilient, <1.0 fragile, weighted by usage
-   - Validation: Year-to-year consistency HIGH, CV ~15-20%
+5. **Algorithm Mastery (Enhanced)**
+   - **Baseline**: `Resilience = Playoff TS% ÷ Regular Season TS%`
+   - **Composite**: `(0.4 × TS% Ratio) + (0.3 × Usage Efficiency Ratio) + (0.3 × Impact Efficiency Ratio)`
+   - **Categories**: >1.0 resilient, <1.0 fragile, weighted by usage
+   - **Validation**: Reality-check vs. championship performances (Murray paradox)
 
 6. **Statistical Rigor**
    - Cross-validation: Never test on training data
    - Thresholds: 87 players at ≥25% usage (recommended)
    - Variance: ~15-20% year-to-year (predictable, not random)
 
-### **Phase 2: Structured Enhancement Protocol**
+### **Phase 2: Structured Enhancement Protocol (Enhanced)**
 
-**The Complexity Tax**: Every enhancement costs maintenance burden and must prove >3% accuracy improvement.
+**The Complexity Tax**: Every enhancement must prove >5% accuracy improvement + resolve real-world paradoxes (e.g., Murray).
 
 7. **Enhancement Pipeline** (Mandatory for any new feature):
    ```
-   Idea → Simple Prototype (≤2 days) → Validation → Decision Gate → Keep/Archive
+   Idea → Simple Prototype (≤2 days) → Reality Validation → Statistical Validation → Decision Gate → Keep/Archive
    ```
 
 8. **Validation Requirements** (Non-negotiable):
-   - **Baseline**: Current simple approach accuracy on 3+ seasons
-   - **Cross-validation**: Multiple train/test splits
-   - **Statistical tests**: Significance testing, not just correlation
-   - **Interpretation**: Must be simpler than current approach
+   - **Reality Check**: Must correctly identify championship contributors (Murray paradox test)
+   - **Baseline**: Composite approach accuracy on 3+ seasons (>65% target)
+   - **Cross-validation**: Multiple train/test splits with statistical significance
+   - **Interpretation**: Must be explainable in plain English to coaches
 
 9. **Decision Framework**:
    - **Quantitative**: >3% accuracy improvement?
@@ -142,15 +154,16 @@ Use `calculate_resilience_external.py` for all playoff resilience analysis. No r
     - **Quarterly**: Audit complexity vs value
     - **Annually**: Consider full re-simplification
 
-## 🎯 **Success Criteria**
+## 🎯 **Success Criteria (Enhanced)**
 
 You are fully onboarded when you can:
 
-- **Explain**: "Why TS% ratios beat complex frameworks"
+- **Explain**: Why TS% ratios fail (Murray paradox) and need composite enhancement
+- **Implement**: Composite resilience metric with deterministic validation
 - **Reject**: 2+ "enhancement" ideas after validation shows no improvement
-- **Teach**: The over-engineering lesson to new team members
-- **Choose**: Simplicity over sophistication by default
-- **Maintain**: Predictive accuracy while minimizing code complexity
+- **Teach**: The evolution from over-engineering to systematic enhancement
+- **Validate**: Against real-world outcomes, not just statistical metrics
+- **Maintain**: Predictive accuracy while resolving reality-check paradoxes
 
 ## 🚨 **Common Pitfalls to Avoid**
 

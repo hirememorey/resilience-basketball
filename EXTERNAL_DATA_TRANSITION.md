@@ -26,28 +26,31 @@
 - ✅ Data validation and filtering logic working
 - ✅ CSV export and result analysis ready
 
-## 🚀 Next Phase Ready
+## 🚀 Next Phase: Composite Resilience Implementation
 
-### **Immediate Next Steps**
-1. **Run Multi-Season Analysis**
+### **Immediate Next Steps (Week 1-2)**
+1. **Implement Composite Metric**
    ```bash
-   # Test across multiple seasons
-   python calculate_resilience_external.py  # 2023-24 (done)
-   # Extend to 2022-23, 2021-22, etc.
+   # Create enhanced resilience calculator
+   # Formula: (0.4 × TS% Ratio) + (0.3 × Usage Efficiency) + (0.3 × Impact Efficiency)
    ```
 
-2. **Enhance Analysis Features**
-   - Add year-to-year consistency validation
-   - Implement statistical significance testing
-   - Create comparative visualizations
+2. **Reality-Check Validation**
+   - Test against Jamal Murray paradox resolution
+   - Validate against championship performances
+   - Achieve >65% directional accuracy target
 
-3. **Optimize Performance**
-   - Reduce redundant API calls (currently fetching data multiple times)
-   - Implement better caching strategy
-   - Add progress indicators for long analyses
+3. **Multi-Season Expansion**
+   - Extend analysis to 2022-23, 2021-22 seasons
+   - Cross-validate composite approach
+
+### **Performance Optimization (Week 3-4)**
+- Reduce redundant API calls
+- Implement better caching strategy
+- Add progress indicators for long analyses
 
 ### **Available Scripts**
-- `calculate_resilience_external.py` - Main resilience calculator
+- `calculate_resilience_external.py` - TS% baseline calculator
 - `simple_external_test.py` - Quick validation test
 - `test_external_data.py` - Comprehensive API testing
 
@@ -57,15 +60,16 @@
 - Real-time data freshness
 - Proper error handling and retries
 
-## 💡 Key Insights
+## 💡 Key Insights (Updated)
 
-1. **Over-Engineering Avoided**: Saved 4+ weeks vs complex remediation
-2. **Simple Solution Works**: External APIs provide exactly what we need
-3. **Data Quality Priority**: Authoritative sources > complex fixes
-4. **Infrastructure Leverage**: Existing API clients worked perfectly
+1. **Over-Engineering Avoided**: External APIs solved data corruption without complex remediation
+2. **Simple Enhancement Needed**: TS% ratios fail reality-check (Murray paradox)
+3. **Composite Approach**: Systematic enhancement with usage and impact efficiency
+4. **Reality-First Validation**: Statistical metrics must pass real-world outcome tests
+5. **Deterministic Target**: >65% directional accuracy with championship prediction capability
 
-## 🎯 Ready for Resilience Research
+## 🎯 Ready for Enhanced Resilience Research
 
-The external data approach is validated and ready for serious playoff resilience analysis. The foundation is solid, the data is clean, and the methodology proven.
+The external data foundation is solid and the composite architecture is defined. Ready for implementation of more deterministic playoff resilience predictions.
 
-**Status: Ready for implementation and research expansion.**
+**Status: Architecture defined, implementation ready.**
