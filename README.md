@@ -10,9 +10,16 @@
 
 **Current State**: TS% delta measures *shooting efficiency maintenance* but not *holistic contribution elevation*. The metric needs enhancement to capture multi-dimensional player impact.
 
-## ✅ Project Status: Validated & Interpreted - Ready for Next Developer
+## 🚨 Project Status: Critical Issue Discovered - Needs Resolution
 
-**Latest Validation (Nov 2025)**: 
+**Latest Discovery (Dec 2025)**: 
+- **CRITICAL**: Metric systematically penalizes elite regular season performers
+- 65% of elite regular season players (TS% ≥ 0.60) marked as "fragile"
+- 80% of very high regular season players (TS% ≥ 0.63) marked as "fragile"
+- Examples: Shai Gilgeous-Alexander (champion), Nikola Jokić marked as "fragile"
+- See `CRITICAL_ISSUE_SHAI_PATTERN.md` for full analysis
+
+**Previous Validation (Nov 2025)**: 
 - Problem validated: 7.3% Type 1 failures (TS% fragile, Production resilient)
 - Composite validated: 70.4% fix rate on Type 1 failures
 - Measurement validated: Usage-TS% relationship confirmed (61% decline when usage ↑)
@@ -22,7 +29,7 @@
 
 **Current Architecture**: Composite resilience metric combining TS% ratio (efficiency maintenance) and production ratio (scalability).
 
-**Implementation Status**: ✅ Validated, interpreted, and ready for next phase.
+**Implementation Status**: 🚨 **Critical issue discovered - metric needs adjustment for elite players**
 
 ## 🚀 Current Status & Next Steps
 
@@ -178,9 +185,15 @@ resilience-basketball/
 
 ## 👥 **New Developer Onboarding: Current State & Critical Context**
 
-### **CRITICAL: Data Integrity Issues Discovered**
+### **🚨 CRITICAL: Systematic Bias Against Elite Players**
 
-**⚠️ IMMEDIATE PRIORITY**: Major data integrity issues block all analysis. Previous "validation results" are unreliable.
+**⚠️ IMMEDIATE PRIORITY**: The composite metric systematically penalizes elite regular season performers. Players like Shai Gilgeous-Alexander (champion) and Nikola Jokić are marked as "fragile" despite being clearly great playoff performers.
+
+**See**: `CRITICAL_ISSUE_SHAI_PATTERN.md` for full analysis and potential solutions.
+
+### **Data Integrity Issues (Historical)**
+
+**Note**: Data integrity issues were discovered but resolved by using external NBA APIs. Current analysis uses clean external data.
 
 **What We Discovered**:
 - Team assignments: Only 33% historically accurate (e.g., Jimmy Butler on wrong teams)

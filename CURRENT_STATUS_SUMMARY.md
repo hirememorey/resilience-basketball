@@ -1,7 +1,7 @@
 # Current Status Summary: NBA Playoff Resilience Calculator
 
-**Date**: November 2025
-**Status**: ✅ Validated & Interpreted - Ready for Next Developer
+**Date**: December 2025
+**Status**: 🚨 **CRITICAL ISSUE DISCOVERED** - Systematic Bias Against Elite Players
 
 ## 🎯 **Key Discovery: Context Adaptation Through Dual Skills**
 
@@ -135,5 +135,70 @@ The composite measures **context adaptation** through two complementary skills:
 - Measurement validation: Usage-TS% relationship confirmed (61% decline when usage ↑)
 - Interpretation refinement: Composite measures context adaptation
 
-**Current Status**: ✅ Composite metric validated and interpreted. Ready for next phase of development.
-**Key Lesson**: Always validate what you're measuring, not just that it works. Understanding the "why" is as important as the "what".
+## 🚨 **CRITICAL DISCOVERY: Systematic Bias Against Elite Regular Season Performers**
+
+**Date**: December 2025
+
+### **The Shai Pattern Discovery**
+
+**Initial Observation**: Shai Gilgeous-Alexander (2024-25 champion) was marked as "Fragile" (composite 0.923) despite being a clearly great playoff performer.
+
+**Investigation**: Analyzed 2024-25 data to see if Shai was an exception or a pattern.
+
+**Finding**: **Shai is NOT an exception - this is a systematic pattern.**
+
+### **The Numbers**
+
+- **6 players (11.8%)** show the "Shai-like" pattern:
+  - High regular season TS% (≥0.60)
+  - TS% declined in playoffs (ratio <0.95)
+  - But playoff TS% still good (≥0.55)
+  - Marked as "Fragile" by composite
+
+- **65% of elite regular season players** (RS TS% ≥ 0.60) are marked as fragile
+- **80% of very high regular season players** (RS TS% ≥ 0.63) are marked as fragile
+
+**Examples of "Shai-like" players marked as fragile:**
+- **Nikola Jokić**: 0.663 → 0.587 TS% (composite 0.877) - Clearly great playoff performer
+- **Shai Gilgeous-Alexander**: 0.637 → 0.574 TS% (composite 0.923) - Won championship
+- **Karl-Anthony Towns**: 0.630 → 0.589 TS% (composite 0.879)
+
+### **The Root Problem**
+
+**What the metric measures**: "Maintenance of regular season performance"
+- If you have elite regular season TS% (0.60+), maintaining it in playoffs is extremely difficult
+- Declining from 0.637 to 0.574 is still excellent playoff performance
+- But the metric treats this as "fragile" because it's a decline from baseline
+
+**What we need**: "Great playoff performer"
+- Elite players can "decline" from very high baselines and still be great
+- The metric systematically penalizes players with high regular season baselines
+
+### **The Gap**
+
+The composite metric measures **context adaptation** (efficiency maintenance + production scalability), but:
+- It penalizes elite regular season performers who decline slightly
+- It doesn't account for the difficulty of maintaining very high baselines
+- It measures "maintenance" not "greatness"
+
+### **Next Steps for Next Developer**
+
+1. **Understand the Problem**:
+   - Read `analyze_shai_pattern.py` results
+   - Review `data/composite_resilience_2024_25.csv` for examples
+   - See that elite players are systematically penalized
+
+2. **Potential Solutions**:
+   - **Baseline adjustment**: Don't penalize elite regular season performers as much
+   - **Absolute vs. relative**: Consider absolute playoff TS% not just ratio
+   - **Tier-based thresholds**: Different thresholds for different baseline levels
+   - **Accept limitation**: Document that metric measures "maintenance" not "greatness"
+
+3. **Validation Approach**:
+   - Validate against individual playoff performance, not team outcomes
+   - Test if adjusted metric correctly identifies known great playoff performers
+   - Ensure elite players aren't systematically penalized
+
+**Current Status**: 🚨 **CRITICAL ISSUE** - Metric systematically penalizes elite regular season performers. Needs adjustment or acceptance of limitation.
+
+**Key Lesson**: Always validate what you're measuring, not just that it works. Understanding the "why" is as important as the "what". And sometimes the simplest validation (looking at one case) reveals systematic problems.
