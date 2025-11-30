@@ -95,7 +95,7 @@ The interaction term (RS_Metric × Def_Context_Score) captures that high-skill p
 Run player's regular season stats + opponent defensive context through trained models.
 
 **Step 2: Calculate Actual Performance**
-From playoff play-by-play (with garbage time filtered):
+From playoff game logs (robust fallback to play-by-play):
 - Actual TS%
 - Actual Points per 75
 - Actual AST%
@@ -127,15 +127,11 @@ Composite_Resilience = 0.35×Z_Efficiency + 0.25×Z_Volume + 0.25×Z_Creation + 
 
 ## Phase 5: Contextual Adjustments
 
-### Garbage Time Filter
-**Remove possessions where:**
-- Game is in 4th quarter or overtime
-- Score differential ≥ 15 points
-- Time remaining ≤ 5 minutes
+### Garbage Time Filter (Deferred to V2)
+**Original Plan:** Remove possessions where game outcome is decided.
+**Current Status:** Deferred. The pivot to `playergamelogs` (due to API instability) means we currently analyze full-game box scores. Garbage time filtering requires granular play-by-play data, which is currently unreliable.
 
-This focuses analysis on competitive basketball only.
-
-### Leverage Weighting (Optional for V1)
+### Leverage Weighting (Optional for V2)
 Weight close-game performance more heavily:
 - Score within 5 points in last 5 minutes = 1.5× weight
 - All other possessions = 1.0× weight
@@ -250,7 +246,7 @@ Every additional feature adds complexity. Require proof of improvement (>3% accu
 ### Primary: NBA Stats API
 - Regular season stats: `stats.nba.com/stats/leaguedashplayerstats`
 - Defensive ratings: `stats.nba.com/stats/leaguedashteamstats`
-- Playoff play-by-play: `stats.nba.com/stats/playbyplayv2`
+- Playoff data: `stats.nba.com/stats/playergamelogs` (replaced unreliable `playbyplayv2`)
 
 ### Existing Infrastructure
 - API client: `src/nba_data/api/nba_stats_client.py`

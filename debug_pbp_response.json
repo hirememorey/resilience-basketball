@@ -1,4 +1,1 @@
-// NBA Play-by-Play API Response for Game ID 0022400001
-// This empty response demonstrates why possession-level analysis is impossible
-// The NBA Stats API returns HTTP 200 OK but with empty data
-// This blocks all possession-based resilience analysis frameworks
+{}

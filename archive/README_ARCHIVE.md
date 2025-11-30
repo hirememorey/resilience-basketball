@@ -35,3 +35,4 @@ When considering complex solutions, ask:
 - Could external sources provide what we need more reliably?
 
 If the answer suggests over-engineering, look for simpler alternatives first.
+
