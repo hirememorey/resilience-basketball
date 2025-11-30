@@ -2,29 +2,41 @@
 
 ## Overview
 
-This document specifies the data needed for the resilience model. The pipeline uses a **Merge Strategy** where multiple API endpoints are fetched and joined to construct complete player profiles.
+This document specifies the exact data needed for the regression-based playoff resilience model.
 
 ## Data Collection Phases
 
 ### Phase 1: Regular Season Player Stats
 
-#### Endpoints
-1.  `leaguedashplayerstats` (MeasureType='Base') -> PTS, GP, MIN
-2.  `leaguedashplayerstats` (MeasureType='Advanced') -> TS%, AST%, USG%
+#### Endpoint
+`stats.nba.com/stats/leaguedashplayerstats`
 
-#### Merging Strategy
-- Fetch both endpoints for the season.
-- Join on `PLAYER_ID`.
-- Filter for `GP >= 50` and `MIN >= 20.0`.
+#### Parameters
+- `Season`: 2018-19, 2019-20, 2020-21, 2021-22, 2022-23, 2023-24, 2024-25
+- `SeasonType`: Regular Season
+- `PerMode`: Per100Possessions (for pace adjustment) and `PerGame`
+- `MeasureType`: `Base` and `Advanced` (must be fetched separately and merged)
 
 #### Required Fields
-| Field | Source | Description |
-|-------|--------|-------------|
-| Player ID | Both | Unique identifier |
-| TS% | Advanced | True Shooting % |
-| Points | Base | Total Points (calculate per 75) |
-| AST% | Advanced | Assist percentage |
-| Usage% | Advanced | Usage rate |
+| Field | NBA API Name | Description | Usage |
+|-------|--------------|-------------|-------|
+| Player ID | PLAYER_ID | Unique identifier | Join key |
+| Player Name | PLAYER_NAME | Display name | Output |
+| Team | TEAM_ABBREVIATION | Team abbreviation | Context |
+| Games Played | GP | Games in season | Filter (≥50) |
+| Minutes per Game | MIN | Average minutes | Filter (≥20) |
+| TS% | TS_PCT | True Shooting % | Model input |
+| Usage% | USG_PCT | Usage rate | Model input |
+| Points (Per100) | PTS | Points per 100 possessions | Model input |
+
+#### Filtering
+```python
+# Apply these filters
+df = df[
+    (df['GP'] >= 50) &
+    (df['MIN'] >= 20.0)
+]
+```
 
 #### Storage Format
 `data/regular_season_{season}.csv`
@@ -33,18 +45,60 @@ This document specifies the data needed for the resilience model. The pipeline u
 
 ### Phase 2: Opponent Defensive Metrics
 
-#### Endpoints
-1.  `leaguedashteamstats` (MeasureType='Advanced') -> DEF_RATING
-2.  `leaguedashteamstats` (MeasureType='Opponent') -> OPP_FGM, OPP_FGA, OPP_FTA
+#### Endpoint
+`stats.nba.com/stats/leaguedashteamstats`
 
-#### Calculation Strategy
-- `DEF_RATING`: Direct from Advanced stats.
-- `OPP_EFG_PCT`: Calculated from Opponent stats: `(FGM + 0.5 * 3PM) / FGA`
-- `OPP_FTA_RATE`: Calculated from Opponent stats: `FTA / FGA`
+#### Parameters
+- `Season`: Same as Phase 1
+- `SeasonType`: Both Regular Season AND Playoffs
+- `MeasureType`: `Advanced` (for `DEF_RATING`) and `Opponent` (for base opponent stats)
+
+#### Required Fields
+| Field | NBA API Name | Description | Usage |
+|-------|--------------|-------------|-------|
+| Team ID | TEAM_ID | Unique identifier | Join key |
+| Team Name | TEAM_NAME | Display name | Output |
+| Season Type | SEASON_TYPE | Regular/Playoff | Dynamic weighting |
+| Defensive Rating | DEF_RATING | Pts allowed per 100 | Primary context |
+| Opponent eFG% | OPP_EFG_PCT | eFG% allowed | Secondary context (Calculated) |
+| Opponent FT Rate | OPP_FTA_RATE | FTA/FGA allowed | Secondary context (Calculated) |
+| Games Played | GP | Sample size | Weighting factor |
 
 #### Composite Defensive Context Score (DCS)
+The `OPP_EFG_PCT` and `OPP_FTA_RATE` metrics are not provided directly by the `Opponent` `MeasureType`. They must be calculated manually from the base opponent stats:
+- `OPP_EFG_PCT = (OPP_FGM + 0.5 * OPP_FG3M) / OPP_FGA`
+- `OPP_FTA_RATE = OPP_FTA / OPP_FGA`
+
 ```python
-dcs = 0.60 * scaled_dr + 0.25 * scaled_efg + 0.15 * scaled_ftr
+# Normalize each component to 0-100 scale
+def calculate_dcs(def_rating, opp_efg, opp_ft_rate):
+    # Lower defensive rating = better defense
+    # Lower opponent shooting = better defense
+    
+    # Scale defensive rating (league avg ~110)
+    dr_score = 100 * (130 - def_rating) / 40
+    
+    # Scale opponent eFG% (league avg ~0.52)
+    efg_score = 100 * (0.60 - opp_efg) / 0.20
+    
+    # Scale opponent FT rate (league avg ~0.25)
+    ftr_score = 100 * (0.35 - opp_ft_rate) / 0.20
+    
+    # Weighted composite (60% DRTG, 25% eFG, 15% FTR)
+    dcs = 0.60 * dr_score + 0.25 * efg_score + 0.15 * ftr_score
+    
+    # Clamp to 0-100
+    return max(0, min(100, dcs))
+```
+
+#### Dynamic Playoff Adjustment
+```python
+# Use playoff-specific if sample is large enough
+if playoff_games >= 10:
+    dcs = calculate_dcs(playoff_def_rating, playoff_opp_efg, playoff_opp_ft_rate)
+else:
+    # Use regular season metrics
+    dcs = calculate_dcs(regular_season_def_rating, regular_season_opp_efg, regular_season_opp_ft_rate)
 ```
 
 #### Storage Format
@@ -52,52 +106,214 @@ dcs = 0.60 * scaled_dr + 0.25 * scaled_efg + 0.15 * scaled_ftr
 
 ---
 
-### Phase 3: Playoff Data (Game Logs)
+### Phase 3: Playoff Player Game Logs
 
-**Note:** Replaces `playbyplayv2` due to API instability.
+#### Endpoint
+`stats.nba.com/stats/playergamelogs`
 
-#### Endpoints
-1.  `playergamelogs` (MeasureType='Base') -> PTS, MIN, FGM, FGA, FTA
-2.  `playergamelogs` (MeasureType='Advanced') -> POSS, USG%, AST%
+#### Important Note
+This replaces the previously used `playbyplayv2` endpoint, which was found to be unreliable. This change means **we no longer filter for garbage time**. The analysis is performed on full-game statistics.
 
-#### Collection Strategy
-1.  Fetch list of playoff players from `leaguedashplayerstats`.
-2.  For each player, fetch Base and Advanced logs.
-3.  Merge on `GAME_ID`.
+#### Parameters
+- `PlayerID`: Called per-player.
+- `Season`: Target season.
+- `SeasonType`: Playoffs
+- `MeasureType`: `Base` and `Advanced` (must be fetched separately and merged per player, per game).
 
-#### Aggregation (Assembly Phase)
-- Parse `MATCHUP` to determine Opponent (e.g., "DEN vs. LAL" -> Opponent is LAL).
-- Group by `PLAYER_ID` and `OPPONENT`.
-- Sum counting stats (PTS, FGA, etc.).
-- Calculate weighted averages for rates (AST%, USG%).
-- Recalculate TS% from summed attempts.
+#### Required Fields
+| Field | NBA API Name | Description | Usage |
+|-------|--------------|-------------|-------|
+| Game ID | GAME_ID | Unique game identifier | Join key |
+| Player ID | PLAYER_ID | Acting player | Join key |
+| Matchup | MATCHUP | e.g., "DEN vs. LAL" | Opponent parsing |
+| Base Stats | PTS, FGA, FTA, etc. | For calculating series totals | Aggregation |
+| Advanced Stats | POSS, USG_PCT, AST_PCT | For calculating series averages | Aggregation |
+
+#### Aggregation to Player-Series Stats
+After collection, game logs must be aggregated to the series level.
+```python
+# 1. Parse opponent from MATCHUP string
+df['OPPONENT'] = df.apply(lambda row: parse_opponent(row['MATCHUP'], row['TEAM_ABBREVIATION']), axis=1)
+
+# 2. Group by Player and Opponent
+series = df.groupby(['PLAYER_ID', 'OPPONENT'])
+
+# 3. Aggregate stats
+#    - Sum totals (PTS, FGA, FTA, POSS)
+#    - Recalculate TS% from totals
+#    - Calculate weighted average for USG%/AST% by possessions or minutes
+```
 
 #### Storage Format
 `data/playoff_logs_{season}.csv`
 
 ---
 
-## Training Dataset Schema
-
-The final `training_dataset.csv` contains one row per Player-Series:
-
-| Column | Description | Source |
-|--------|-------------|--------|
-| `PLAYER_ID` | Player ID | RS/PO |
-| `SEASON` | Season Year | RS/PO |
-| `OPPONENT_ABBREV`| Opponent Team | PO Logs |
-| `rs_ts_pct` | Regular Season TS% | RS |
-| `rs_ppg_per75` | RS Points per 75 Poss | RS |
-| `rs_ast_pct` | RS Assist % | RS |
-| `opp_def_context_score` | Opponent Defense Score | Def Context |
-| `po_ts_pct` | Playoff Series TS% | PO Logs |
-| `po_ppg_per75` | PO Series Points per 75 | PO Logs |
-| `po_ast_pct` | PO Series Assist % | PO Logs |
+### Phase 4: Playoff Series Information
+This phase is no longer required as a separate data source. Opponent information is derived directly from the `MATCHUP` field in the playoff game logs.
 
 ---
 
-## API Notes
+## Data Assembly for Model Training
 
-- **Rate Limiting:** The client handles 429 errors with exponential backoff.
-- **Caching:** All API responses are cached in `data/cache/`.
-- **Parallelism:** Data collection can be run in parallel for different seasons to speed up the process.
+### Training Dataset Structure
+
+Combine all phases into single training dataset:
+
+```python
+# Pseudo-code for data assembly
+training_data = []
+
+for season in seasons:
+    # Load regular season stats
+    regular_season = pd.read_csv(f'data/regular_season_{season}.csv')
+    
+    # Load defensive context
+    defensive_context = pd.read_csv(f'data/defensive_context_{season}.csv')
+    
+    # Load playoff performance (aggregated from play-by-play)
+    playoff_stats = pd.read_csv(f'data/playoff_playbyplay_{season}_clean.csv')
+    
+    # Load series information
+    series_info = pd.read_csv(f'data/playoff_series_{season}.csv')
+    
+    # Join everything
+    merged = regular_season.merge(
+        playoff_stats, on=['PLAYER_ID'], suffixes=('_RS', '_PO')
+    ).merge(
+        series_info, on=['TEAM_ID', 'SEASON']
+    ).merge(
+        defensive_context, left_on=['OPPONENT_TEAM_ID'], right_on=['TEAM_ID']
+    )
+    
+    training_data.append(merged)
+
+# Combine all seasons
+full_training_data = pd.concat(training_data)
+```
+
+### Final Training Dataset Schema
+
+| Column | Type | Description |
+|--------|------|-------------|
+| player_id | int | Unique player identifier |
+| player_name | str | Player display name |
+| season | str | NBA season (e.g., "2023-24") |
+| series_round | int | Playoff round (1-4) |
+| opponent_team | str | Opponent team abbreviation |
+| rs_ts_pct | float | Regular season TS% |
+| rs_ppg_per75 | float | Regular season points per 75 |
+| rs_ast_pct | float | Regular season AST% |
+| rs_usg_pct | float | Regular season usage% |
+| opp_def_context_score | float | Opponent defensive context (0-100) |
+| po_ts_pct | float | Playoff TS% (target) |
+| po_ppg_per75 | float | Playoff points per 75 (target) |
+| po_ast_pct | float | Playoff AST% (target) |
+| po_games_played | int | Sample size |
+| po_minutes_total | float | Total playoff minutes |
+
+### Data Quality Checks
+
+Before training, validate:
+```python
+# Check for missing values
+assert training_data.isnull().sum().sum() == 0, "Missing values found"
+
+# Check value ranges
+assert (training_data['rs_ts_pct'] >= 0).all() and (training_data['rs_ts_pct'] <= 1.0).all()
+assert (training_data['po_ts_pct'] >= 0).all() and (training_data['po_ts_pct'] <= 1.0).all()
+assert (training_data['opp_def_context_score'] >= 0).all() and (training_data['opp_def_context_score'] <= 100).all()
+
+# Check minimum samples
+assert (training_data['po_games_played'] >= 4).all(), "Players with <4 playoff games found"
+
+# Check for outliers
+from scipy import stats
+z_scores = np.abs(stats.zscore(training_data[['rs_ts_pct', 'po_ts_pct']]))
+assert (z_scores < 5).all().all(), "Extreme outliers detected (>5 SD)"
+```
+
+---
+
+## Data Caching Strategy
+
+### API Rate Limiting
+- NBA Stats API: ~20 requests per minute
+- Implement exponential backoff with retries
+- Cache all responses locally
+
+### Caching Implementation
+```python
+import pickle
+from pathlib import Path
+import hashlib
+
+def get_cached_or_fetch(endpoint, params, fetch_function):
+    """
+    Check cache first, fetch if not exists.
+    """
+    # Create cache key from params
+    cache_key = hashlib.md5(str(params).encode()).hexdigest()
+    cache_file = Path(f'data/cache/{endpoint}_{cache_key}.pkl')
+    
+    if cache_file.exists():
+        with open(cache_file, 'rb') as f:
+            return pickle.load(f)
+    
+    # Fetch from API
+    data = fetch_function(params)
+    
+    # Save to cache
+    cache_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(cache_file, 'wb') as f:
+        pickle.dump(data, f)
+    
+    return data
+```
+
+---
+
+## Estimated Data Volumes
+
+### Per Season
+- Regular season players: ~450 qualified players
+- Playoff players: ~200 players
+- Playoff games: ~80-90 games
+- Play-by-play rows: ~300k rows (before filtering)
+
+### Total for 5 Seasons
+- Training samples: ~800-1000 player-series combinations
+- Storage requirement: ~500 MB (with caching)
+- API calls: ~400-500 total (with efficient caching)
+
+---
+
+## Data Collection Scripts
+
+### Quick Start
+```bash
+# Step 1: Collect regular season data
+python src/nba_data/scripts/collect_regular_season_stats.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
+
+# Step 2: Collect defensive metrics
+python src/nba_data/scripts/collect_defensive_context.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
+
+# Step 3: Collect playoff play-by-play (slow, ~2-3 hours)
+python src/nba_data/scripts/collect_playoff_playbyplay.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
+
+# Step 4: Assemble training dataset
+python src/nba_data/scripts/assemble_training_data.py --output data/training_dataset.csv
+```
+
+---
+
+## Next Steps
+
+1. **Implement:** Data collection scripts (see `IMPLEMENTATION_GUIDE.md`)
+2. **Validate:** Run data quality checks on collected data
+3. **Train:** Build regression models using training dataset
+4. **Score:** Generate resilience scores for target season
+
+---
+
+**Note:** All scripts should use existing infrastructure in `src/nba_data/api/` for API access and caching.
