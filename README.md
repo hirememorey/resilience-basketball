@@ -8,6 +8,7 @@
 *   ✅ **Mechanistic Engine (The Sloan Breakthrough):** **CONFIRMED.** We have identified the mechanism of resilience: **Counter-Punch Efficiency**.
     *   Resilience Correlation: **+0.381 (P < 0.0001)**.
     *   Key Insight: Resilient players are those who maintain efficiency in the *new* zones that playoff defenses force them into.
+*   🔄 **Dual-Grade Archetypes (Phase 5b):** We have pivoted to a "Dual-Grade" system that separates **Adaptability** (Efficiency) from **Dominance** (Volume) to correctly classify outliers like Luka Dončić and Ben Simmons. See `LUKA_SIMMONS_PARADOX_UPDATE.md`.
 
 ---
 

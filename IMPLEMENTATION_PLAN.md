@@ -52,12 +52,21 @@ We discovered two critical paradoxes that threatened the model's validity:
 
 ### Step 3: The "Fragility Taxonomy" Clustering
 **Objective:** Formally cluster players into the 4 archetypes we discovered.
-**Status: ON HOLD pending review of Step 2 fixes.**
+**Status: REDEFINED (Dec 2025).**
 
-*   **The Tank (Jokic):** Displaced $\to$ Hits New Shots.
-*   **The Sniper (Durant):** Not Displaced $\to$ Hits Same Shots.
-*   **The Engine (Luka):** Displaced $\to$ Efficiency Drops, Volume Spikes.
-*   **The Crumble (Simmons/Gobert):** Displaced $\to$ Efficiency Drops OR Volume Drops.
+We have moved away from K-Means clustering (Black Box) to a transparent "Dual-Grade" Classification System (Glass Box).
+
+*   **The Logic:** Resilience is the tension between **Adaptability** (Skill/Efficiency) and **Dominance** (Will/Volume).
+*   **The Fix for Luka/Simmons:**
+    *   We normalized Adaptability and Dominance scores by **Usage Tier** (High, Mid, Low) to ensure fair comparisons.
+    *   **Critical Pivot:** We determined that "Delta" metrics (Playoff vs RS) are flawed for Dominance because they reward stability over magnitude. We are moving towards **Absolute Playoff Value** (Points Created Per 75) as the true measure of Dominance.
+*   **The New Archetypes:**
+    *   **The Master:** High Adaptability, High Dominance (Giannis '21).
+    *   **The Bulldozer:** Low Adaptability, High Dominance (Luka '24).
+    *   **The Reluctant Sniper:** High Adaptability, Low Dominance (Simmons '21).
+    *   **The Crumble:** Low Adaptability, Low Dominance.
+
+See `src/nba_data/scripts/proof_of_concept_archetypes.py` for the working prototype.
 
 ---
 
