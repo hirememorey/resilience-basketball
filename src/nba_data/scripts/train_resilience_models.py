@@ -61,6 +61,13 @@ def train_model(X, y, model_name):
 
 def main():
     df = pd.read_csv('data/training_dataset.csv')
+    
+    # Filter out small sample sizes (garbage time)
+    initial_len = len(df)
+    df = df[df['po_minutes_total'] >= 50]
+    filtered_len = len(df)
+    logger.info(f"Filtered small samples (<50 mins): {initial_len} -> {filtered_len} rows")
+    
     logger.info(f"Training on {len(df)} samples...")
     
     metadata = {}

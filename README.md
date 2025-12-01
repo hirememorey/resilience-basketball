@@ -1,275 +1,91 @@
-# NBA Playoff Resilience Calculator
+# NBA Playoff Resilience Engine
 
-**Goal:** Identify players who consistently perform better than expected in the playoffs, accounting for their regular-season abilities and the quality of opponent defenses.
+**Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-This project is fully implemented and the results are trustworthy.
+**Current Status:**
+*   ✅ **Descriptive Engine:** Fully functional. Calculates "Resilience Scores" for historical playoffs based on performance vs. expectation (accounting for defensive context).
+*   ✅ **Predictive Engine:** Fully functional. Predicts future resilience with positive R² using "Performance vs. Top-10 Defenses" and "Consistency" metrics.
+*   🚧 **Mechanistic Engine (The Sloan Path):** In progress. Developing "Shot Diet Plasticity" metrics to explain *how* resilient players adapt their game.
+
+---
 
 ## Quick Start for New Developers
 
 ### 1. Understand the Vision
-- **`README.md`**: You're here! This provides the high-level overview, key results, and next steps.
-- **`HISTORICAL_CONTEXT.md`**: (Optional but Recommended) Explains *why* the project is designed this way and the lessons learned from past mistakes.
+*   **`README.md`**: You're here! High-level overview.
+*   **`IMPLEMENTATION_PLAN.md`**: **CRITICAL.** Read this to understand the "Sloan Path" and your specific next steps.
+*   **`HISTORICAL_CONTEXT.md`**: (Optional) Lessons learned from past failures (why we don't use simple ratios anymore).
 
 ### 2. Set Up Environment
 ```bash
-# It is recommended to use a virtual environment
-# python3 -m venv venv
-# source venv/bin/activate
-
 # Install dependencies
-pip install pandas numpy scikit-learn scipy tenacity requests
+pip install pandas numpy scikit-learn scipy tenacity requests xgboost tqdm
 
 # Create required directories
 mkdir -p data/cache models results logs
 ```
 
-### 3. Run the Full Pipeline
-The data pipeline is designed to be run end-to-end. The following commands will collect 6 seasons of data, train the models, and generate the final resilience report.
+### 3. Run the Predictive Pipeline
+This pipeline collects data, generates features, trains the predictive model, and outputs resilience scores.
 
 ```bash
-# Phase 1: Collect data for all seasons (approx. 45-60 minutes)
-# Note: These can be run in parallel to speed up collection.
-python src/nba_data/scripts/collect_regular_season_stats.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
-python src/nba_data/scripts/collect_defensive_context.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
-python src/nba_data/scripts/collect_playoff_logs.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
+# 1. Collect Data (Regular Season Game Logs) - Takes ~20 mins for 6 seasons
+python src/nba_data/scripts/collect_rs_game_logs.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24 --workers 5
 
-# Phase 2: Assemble, train, score, and report (approx. 1 minute)
-python src/nba_data/scripts/assemble_training_data.py
-python src/nba_data/scripts/train_resilience_models.py
-python src/nba_data/scripts/calculate_resilience_scores.py
-python src/nba_data/scripts/validate_face_validity.py
-python src/nba_data/scripts/generate_report.py
+# 2. Generate Predictive Features (Consistency, vs Top-10)
+python src/nba_data/scripts/generate_predictive_features.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
+
+# 3. Assemble Training Data
+python src/nba_data/scripts/assemble_predictive_dataset.py
+
+# 4. Train Model & Evaluate
+python src/nba_data/scripts/train_predictive_model.py
 ```
-
-**Total time:** 45-60 minutes (mostly unattended API calls).
 
 ---
 
-## What This Project Does
+## The "Sloan Path" (Next Phase)
 
-### The Core Question
-"Given a player's demonstrated abilities and the specific defensive context they faced, how does their actual playoff performance compare to what we would statistically expect?"
+We are aiming for a paper worthy of the **MIT Sloan Sports Analytics Conference**. To do this, we must move beyond *prediction* to *explanation*.
 
-### The Approach
-1. **Player Ability Baseline:** Regular season TS%, Points per 75, AST%, Usage%
-2. **Defensive Context:** Opponent defensive quality (Defensive Rating, eFG% allowed, etc.)
-3. **Expected Performance Model:** Regression models predicting playoff performance given #1 and #2
-4. **Resilience Score:** (Actual Performance - Expected Performance) in standard deviations
+**Core Hypothesis:** Resilience is "Shot Diet Plasticity"—the ability to change *where* and *how* you shoot when playoff defenses take away your primary options.
 
-### Why This Approach?
-- **Context-aware:** Accounts for opponent quality
-- **Fair to elite players:** No penalty for high baselines
-- **Interpretable:** Z-scores show how many standard deviations better/worse than expected
-- **Statistically grounded:** Regression models capture non-linear relationships
+**Your Mission:**
+1.  Collect Shot Chart data for RS vs. Playoffs.
+2.  Quantify the "Shot Diet Shift" (e.g., Hellinger Distance between heatmaps).
+3.  Correlate this shift with our existing Resilience Scores.
+
+See **`IMPLEMENTATION_PLAN.md`** for the detailed roadmap.
 
 ---
 
 ## Project Structure
 
 ```
-├── IMPLEMENTATION_PLAN.md          # Conceptual overview (START HERE)
-├── DATA_REQUIREMENTS.md            # Data specifications
-├── IMPLEMENTATION_GUIDE.md         # Step-by-step coding guide
-├── HISTORICAL_CONTEXT.md           # Project evolution (optional reading)
-├── prompts.md                      # AI development commands
+├── IMPLEMENTATION_PLAN.md          # **START HERE** - The Roadmap
+├── DATA_REQUIREMENTS.md            # Data specifications (updated for Shot Charts)
 ├── src/
 │   └── nba_data/
-│       ├── api/                    # NBA Stats API client (already built)
+│       ├── api/                    # NBA Stats API client
 │       └── scripts/                # All implementation scripts
 ├── data/                           # Data storage
-│   ├── cache/                      # API response cache
-│   ├── regular_season_*.csv
-│   ├── defensive_context_*.csv
-│   ├── playoff_logs_*.csv          # Replaced unreliable play-by-play data
-│   └── training_dataset.csv
-├── models/                         # Trained regression models
-│   ├── ts_pct_model.pkl
-│   ├── ppg_per75_model.pkl
-│   ├── ast_pct_model.pkl
-│   └── model_metadata.pkl
-└── results/                        # Output files
-    ├── resilience_scores_all.csv
-    └── resilience_report.md
+│   ├── rs_game_logs_*.csv          # Granular RS data
+│   ├── predictive_features_*.csv   # Feature engineering output
+│   └── predictive_model_training_data.csv
+├── models/                         # Trained XGBoost models
+└── results/                        # Final Resilience Scores
 ```
-
----
-
-## Key Concepts
-
-### 1. Garbage Time Filter
-Removes possessions where game outcome is no longer in doubt:
-- 4th quarter or overtime
-- Score differential ≥ 15 points
-- Time remaining ≤ 5 minutes
-
-### 2. Defensive Context Score (DCS)
-Composite metric (0-100) measuring opponent defensive quality:
-- 60% Defensive Rating
-- 25% Opponent eFG%
-- 15% Opponent FT Rate
-
-### 3. Regression Models
-Three separate models for:
-- **TS%:** Efficiency maintenance
-- **Points per 75:** Volume scoring
-- **AST%:** Playmaking creation
-
-Each model uses:
-- Regular season metric
-- Defensive context score
-- Usage %
-- Interaction term (captures skill elasticity)
-
-### 4. Resilience Score Interpretation
-- **+2.0:** Elite playoff riser (2 SD above expected)
-- **+1.0:** Strong playoff performer (1 SD above expected)
-- **0.0:** Exactly as expected
-- **-1.0:** Underperformed expectations
-- **-2.0:** Significant playoff decline
-
----
-
-## Success Criteria
-
-### Minimum Viable Product (MVP)
-- [ ] Data collected for 3+ seasons
-- [ ] Models trained with R² ≥ 0.3
-- [ ] Face validity passes (known elite performers score high)
-- [ ] Output CSV generated with all required fields
-
-### Validation Checkpoints
-- [ ] LeBron James (2012-2018) scores positive
-- [ ] Kawhi Leonard (2019) scores positive
-- [ ] Nikola Jokić (2023) scores positive
-- [ ] Model residuals approximately normal
-- [ ] No systematic bias by baseline performance level
-
----
-
-## Optional: Historical Context
-
-**Why did we design it this way?**
-
-The project went through several iterations:
-1. Over-engineered complex framework (abandoned)
-2. Simple TS% ratios (failed reality checks)
-3. Composite metric (systematic bias against elite players)
-4. **Current:** Regression-based expected performance (synthesizes all lessons)
-
-**Read `HISTORICAL_CONTEXT.md` for full story** (optional but informative).
 
 ---
 
 ## Key Principles
 
-### 1. First Principles Thinking
-Start with the core question: "Who performs better than expected given context?"
-
-### 2. Simplicity with Rigor
-Simple enough to interpret, complex enough to capture reality.
-
-### 3. Validate Continuously
-Statistical significance ≠ practical validity. Test against known cases.
-
-### 4. Measure What Matters
-"Better than expected" (useful) vs "maintained baseline" (biased against elite players).
-
-### 5. Reality Check Everything
-One counterexample (champion marked as fragile) reveals systematic issues.
-
----
-
-## Development Workflow
-
-### AI-Assisted Development
-Use commands from `prompts.md`:
-- `@NewSession` - Understand project state
-- `@Plan` - Design implementation approach
-- `@PreMortem` - Identify failure modes
-- `@Implement` - Begin coding
-- `@UpdateDocs` - Keep documentation current
-
-### Iteration Protocol
-1. Implement minimal version
-2. Validate against reality
-3. Measure improvement (>3% accuracy gain required)
-4. Document or archive
-5. Repeat
-
----
-
-## Common Pitfalls to Avoid
-
-❌ **Over-fitting to recent data** → Use multiple seasons, validate on held-out data
-❌ **Ignoring context** → Always account for opponent defensive quality
-❌ **Small sample bias** → Filter out player-series with fewer than 50 total minutes.
-❌ **Adding features without validation** → Require proof of improvement
-❌ **Ratio metrics without context** → Use expected performance models instead
-❌ **API Unreliability:** Do not trust API documentation. Verify endpoints before building dependencies. The `playbyplayv2` endpoint is non-functional; `playergamelogs` is the robust alternative.
-❌ **Data Completeness:** Collect both "Base" and "Advanced" stats and merge them to get a complete set of metrics (e.g., PTS from Base, USG% from Advanced).
-
----
-
-## Data Sources
-
-### Primary: NBA Stats API
-- Clean, authoritative, validated data
-- Built-in caching and error handling
-- Client already implemented: `src/nba_data/api/nba_stats_client.py`
-
-### No Local Database Required
-Previous versions used local SQLite database (corrupted). Current approach uses external API exclusively.
-
----
-
-## FAQ
-
-**Q: Why doesn't Anthony Davis score higher?**
-A: The model is currently offense-only. It correctly identifies that his offensive output is roughly what's expected, but it does not yet account for his elite defensive value. Adding a defensive component is the next major step for this project.
-
-**Q: Why was the `playbyplayv2` endpoint abandoned?**
-A: During development, it was found to be unreliable, frequently returning empty data. The `playergamelogs` endpoint was chosen as a more robust and stable alternative for playoff data. See `HISTORICAL_CONTEXT.md` for details.
-
-**Q: How is "garbage time" handled?**
-A: The original plan was to filter play-by-play data. The current, more robust approach is to filter out any player-series with fewer than 50 total minutes played. This effectively removes noise from players who only had brief, inconsequential appearances.
-
-**Q: How long does the full pipeline take to run?**
-A: Approximately 45-60 minutes, most of which is unattended data collection. The analysis and scoring steps take less than a minute.
-
----
-
-## Next Steps
-
-1. **Read:** `IMPLEMENTATION_PLAN.md` (conceptual overview)
-2. **Review:** `DATA_REQUIREMENTS.md` (data specs)
-3. **Start:** `IMPLEMENTATION_GUIDE.md` (step-by-step instructions)
-4. **Code:** Follow implementation guide to build data pipeline and models
-5. **Validate:** Run face validity checks and statistical tests
-6. **Iterate:** Refine based on results
-
----
-
-## Contributing Philosophy
-
-**Build what matters, not what impresses.**
-
-This project values:
-- Clear thinking over complex models
-- Practical validity over statistical sophistication
-- Interpretability over accuracy gains
-- Reality checks over theoretical elegance
-
-If you can achieve the same results with simpler code, that's success.
+1.  **First Principles Thinking:** Don't just measure *what* happened. Ask *why* it happened given the context.
+2.  **Mechanism over Correlation:** For Sloan, we need to explain the *mechanism* (e.g., "He stopped driving and started pulling up").
+3.  **Simplicity in Execution:** Don't build a complex framework until a simple metric (like Shot Distance Delta) fails.
 
 ---
 
 ## Support
-
-- **Technical questions:** Review `IMPLEMENTATION_GUIDE.md`
-- **Conceptual questions:** Review `IMPLEMENTATION_PLAN.md`
-- **Historical questions:** Review `HISTORICAL_CONTEXT.md`
-- **AI commands:** Review `prompts.md`
-
----
-
-**Let's build something useful.** 🏀
+*   **Technical questions:** Review `src/nba_data/api/nba_stats_client.py` to see how we handle rate limits.
+*   **Conceptual questions:** Review `IMPLEMENTATION_PLAN.md`.

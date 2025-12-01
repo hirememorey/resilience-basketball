@@ -35,6 +35,13 @@ def main():
         return
 
     df = pd.read_csv('data/training_dataset.csv')
+    
+    # Filter out small sample sizes (garbage time)
+    # We apply the same filter as training to ensure scores are meaningful
+    initial_len = len(df)
+    df = df[df['po_minutes_total'] >= 50]
+    logger.info(f"Filtered small samples (<50 mins) for scoring: {initial_len} -> {len(df)} rows")
+    
     results = []
     
     for _, row in df.iterrows():
@@ -57,6 +64,7 @@ def main():
         composite = (0.35 * z_ts) + (0.25 * z_ppg) + (0.25 * z_ast)
         
         results.append({
+            'PLAYER_ID': row['PLAYER_ID'],
             'PLAYER_NAME': row['PLAYER_NAME'],
             'SEASON': row['SEASON'],
             'OPPONENT': row['OPPONENT_ABBREV'],

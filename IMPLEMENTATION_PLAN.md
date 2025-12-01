@@ -1,264 +1,77 @@
-# NBA Playoff Resilience: First Principles Implementation Plan
+# NBA Playoff Resilience: The Sloan Path Implementation Plan
 
 ## Executive Summary
 
-**Goal:** Identify "16-game players" who perform better than expected in the playoffs given their abilities and defensive context.
+**Goal:** Identify "16-game players" who perform better than expected in the playoffs and **explain why** using mechanistic data (Shot Diet Plasticity).
 
-**Approach:** Regression-based expected performance model that compares actual playoff performance to statistical expectations.
-
-**Core Question:** "Given a player's demonstrated abilities and the specific defensive context they faced, how does their actual playoff performance compare to what we would statistically expect?"
-
-## The Three-Component System
-
-### 1. Player Ability Baseline
-Regular season performance metrics representing their "true skill" without playoff pressure.
-
-### 2. Contextual Difficulty
-Quantified defensive quality of opponents faced in playoffs.
-
-### 3. Expected Performance Model
-Statistical model predicting playoff performance given #1 and #2.
-
-## Phase 1: Player Ability Baseline
-
-### Data to Collect (Regular Season)
-For each player, calculate:
-- **Efficiency:** TS% (True Shooting Percentage)
-- **Volume:** Points per 75 possessions (pace-adjusted)
-- **Playmaking:** AST% (Assist Percentage)
-- **Usage:** Usage% (measure of role/responsibility)
-
-### Filtering Criteria
-- Minimum 50 games played in regular season
-- Minimum 20 MPG average
-- Ensures statistical significance
-
-### Storage Format
-CSV with columns: `player_id, season, regular_season_TS%, regular_season_PPG_per75, regular_season_AST%, regular_season_Usage%`
-
-## Phase 2: Defensive Context Quantification
-
-### For Each Opponent Team's Defense
-
-Calculate:
-- **Defensive Rating:** Points allowed per 100 possessions
-- **Opponent eFG%:** Effective Field Goal % allowed
-- **Opponent FT Rate:** Opponent Free Throw Rate (FTA/FGA allowed)
-
-### Dynamic Playoff Adjustment
-
-**Key Insight:** Regular season defense ≠ playoff defense
-
-**Approach:**
-- If playoff sample < 10 games: Use regular season defensive metrics
-- If playoff sample ≥ 10 games: Use playoff-specific defensive metrics
-- This creates dynamic defensive context
-
-### Output
-Defensive Context Score (DCS) for each opponent team: Composite of defensive metrics, scaled 0-100 (league average = 50)
-
-## Phase 3: Expected Performance Model
-
-### Statistical Approach: Multiple Linear Regression
-
-Build **three separate models** for key metrics:
-
-**Model 1: Playoff TS%**
-```
-Expected_Playoff_TS% = β₀ + β₁(RS_TS%) + β₂(Def_Context_Score) + β₃(Usage%) + β₄(RS_TS% × Def_Context_Score) + ε
-```
-
-**Model 2: Playoff Points per 75 Possessions**
-```
-Expected_Playoff_PPG = β₀ + β₁(RS_PPG) + β₂(Def_Context_Score) + β₃(Usage%) + β₄(RS_PPG × Def_Context_Score) + ε
-```
-
-**Model 3: Playoff AST%**
-```
-Expected_Playoff_AST% = β₀ + β₁(RS_AST%) + β₂(Def_Context_Score) + β₃(Usage%) + β₄(RS_AST% × Def_Context_Score) + ε
-```
-
-### Why Interaction Terms?
-The interaction term (RS_Metric × Def_Context_Score) captures that high-skill players maintain performance better against good defenses than low-skill players.
-
-### Training Requirements
-- Historical playoff data: Last 5-10 seasons
-- Minimum: 100 player-series observations
-- Train/test split: 80/20
-- Cross-validate on held-out seasons
-
-## Phase 4: Calculate Resilience Scores
-
-### For Each Player-Series Combination
-
-**Step 1: Generate Expected Performance**
-Run player's regular season stats + opponent defensive context through trained models.
-
-**Step 2: Calculate Actual Performance**
-From playoff game logs (robust fallback to play-by-play):
-- Actual TS%
-- Actual Points per 75
-- Actual AST%
-
-**Step 3: Calculate Residuals**
-```
-Efficiency_Residual = Actual_TS% - Expected_TS%
-Volume_Residual = Actual_PPG - Expected_PPG
-Creation_Residual = Actual_AST% - Expected_AST%
-```
-
-**Step 4: Standardize to Z-scores**
-```
-Z_Score = (Actual - Expected) / Standard_Error_of_Model
-```
-
-**Step 5: Composite Score**
-```
-Composite_Resilience = 0.35×Z_Efficiency + 0.25×Z_Volume + 0.25×Z_Creation + 0.15×Z_Stability
-```
-- Stability = inverse of game-to-game variance
-
-### Interpretation
-- **0.0** = Exactly as expected
-- **+1.0** = 1 standard deviation better than expected
-- **+2.0** = Elite playoff riser
-- **-1.0** = Underperformed expectations
-- **-2.0** = Significant playoff decline
-
-## Phase 5: Contextual Adjustments
-
-### Garbage Time Filter (Deferred to V2)
-**Original Plan:** Remove possessions where game outcome is decided.
-**Current Status:** Deferred. The pivot to `playergamelogs` (due to API instability) means we currently analyze full-game box scores. Garbage time filtering requires granular play-by-play data, which is currently unreliable.
-
-### Leverage Weighting (Optional for V2)
-Weight close-game performance more heavily:
-- Score within 5 points in last 5 minutes = 1.5× weight
-- All other possessions = 1.0× weight
-
-## Phase 6: Validation
-
-### Face Validity Test
-**Known elite playoff performers should score high:**
-- LeBron James (2012-2018)
-- Kawhi Leonard (2019)
-- Nikola Jokić (2023)
-- Dirk Nowitzki (2011)
-
-**Test:** Run model on historical data and verify these players have positive resilience scores.
-
-### Statistical Validation
-- Check model residuals are normally distributed
-- Verify no systematic biases by position or team
-- Ensure R² ≥ 0.3 for predictive power
-
-## Phase 7: Output Format
-
-### Final CSV Structure
-```
-player_id, player_name, season, series_round, opponent_team,
-regular_season_TS%, regular_season_PPG_per75, regular_season_AST%, regular_season_Usage%,
-opponent_def_rating, opponent_def_context_score,
-expected_playoff_TS%, expected_playoff_PPG_per75, expected_playoff_AST%,
-actual_playoff_TS%, actual_playoff_PPG_per75, actual_playoff_AST%,
-efficiency_resilience_zscore, volume_resilience_zscore, creation_resilience_zscore,
-composite_resilience_score, 
-confidence_interval_lower, confidence_interval_upper,
-games_played, minutes_played
-```
-
-## Implementation Sequence
-
-### Week 1: Data Collection
-1. Fetch regular season player stats (5+ seasons)
-2. Fetch opponent defensive metrics
-3. Fetch playoff play-by-play data
-4. Apply garbage time filter
-5. Store in structured format
-
-### Week 2: Model Training
-1. Prepare training dataset (player baselines + defensive context + actual playoff performance)
-2. Train three regression models (TS%, PPG, AST%)
-3. Validate models on held-out season
-4. Document model coefficients and R² values
-
-### Week 3: Scoring System
-1. Generate expected performance for all player-series
-2. Calculate residuals
-3. Standardize to Z-scores
-4. Calculate composite scores
-5. Generate output CSV
-
-### Week 4: Validation
-1. Face validity checks (known cases)
-2. Statistical validation (residual analysis)
-3. Documentation of results
-4. Refinement based on findings
-
-## Key Principles
-
-### 1. Simplicity First
-Start with the minimal viable model. Don't add complexity without proven value.
-
-### 2. Validate Continuously
-Test assumptions at each step. If something seems wrong, investigate before proceeding.
-
-### 3. Interpretability Matters
-A GM should understand what the score means. Complex black-box models fail this test.
-
-### 4. Reality Check Required
-Statistical significance doesn't equal practical validity. Test against known cases.
-
-## Common Pitfalls to Avoid
-
-### ❌ Over-fitting to Recent Data
-Use multiple seasons for training, validate on held-out seasons.
-
-### ❌ Ignoring Context
-Defensive quality matters. A player facing elite defenses should get credit for maintaining performance.
-
-### ❌ Ratio-Based Metrics Without Context
-Simple ratios (Playoff TS% / Regular Season TS%) penalize elite performers. Use expected performance instead.
-
-### ❌ Small Sample Bias
-Players with 2-3 playoff games produce unreliable scores. Set minimum thresholds.
-
-### ❌ Adding Features Without Validation
-Every additional feature adds complexity. Require proof of improvement (>3% accuracy gain).
-
-## Success Criteria
-
-### Minimum Viable Product (V1)
-- [ ] Models trained on 5+ seasons
-- [ ] R² ≥ 0.3 for primary metrics
-- [ ] Passes face validity test (known cases)
-- [ ] Produces interpretable scores
-- [ ] CSV output generated
-
-### Stretch Goals (V2)
-- [ ] Leverage weighting implemented
-- [ ] Teammate quality adjustment
-- [ ] Predictive validation (early playoff → later playoff)
-- [ ] Confidence intervals calculated
-
-## Data Sources
-
-### Primary: NBA Stats API
-- Regular season stats: `stats.nba.com/stats/leaguedashplayerstats`
-- Defensive ratings: `stats.nba.com/stats/leaguedashteamstats`
-- Playoff data: `stats.nba.com/stats/playergamelogs` (replaced unreliable `playbyplayv2`)
-
-### Existing Infrastructure
-- API client: `src/nba_data/api/nba_stats_client.py`
-- Caching: Implemented with tenacity retries
-- Error handling: Built-in with rate limiting
-
-## Next Steps
-
-1. **Read:** `DATA_REQUIREMENTS.md` for detailed data specifications
-2. **Review:** `HISTORICAL_CONTEXT.md` for project evolution (optional)
-3. **Start:** `IMPLEMENTATION_GUIDE.md` for step-by-step coding instructions
+**Target:** Submission to MIT Sloan Sports Analytics Conference.
 
 ---
 
-**Philosophy:** This approach measures what matters—performance relative to expectations—rather than arbitrary thresholds or ratios. It's grounded in statistical principles, validated against reality, and interpretable for decision-makers.
+## ✅ Completed Phases (The Foundation)
+
+We have successfully built the Descriptive and Predictive engines. **Do not re-invent these.**
+
+*   **Phase 1: Data Integrity:** ✅ Solved via `collect_rs_game_logs.py` (Granular data).
+*   **Phase 2: Descriptive Resilience:** ✅ Solved via `calculate_resilience_scores.py`. We have ground-truth scores based on performance vs. expectation.
+*   **Phase 3: Predictive Engine:** ✅ Solved via `train_predictive_model.py`. We can predict resilience with positive R² using "Performance vs. Top-10 Defenses".
+
+---
+
+## 🚀 Phase 4: The Sloan Path (Shot Diet Plasticity)
+
+**The Problem:** Our predictive model knows *who* is resilient (e.g., players with high usage vs. Top-10 defenses), but it doesn't explain *how* they adapt.
+**The Hypothesis:** Resilience is the ability to fundamentally change your shot profile in response to playoff defenses (e.g., "taking what the defense gives you" but actually making it).
+
+### Step 1: Collect Shot Chart Data
+**Objective:** Get X,Y coordinates for every shot taken by relevant players in both RS and PO.
+*   **Source:** `shotchartdetail` endpoint (Already in `NBAStatsClient`).
+*   **Task:** Create `src/nba_data/scripts/collect_shot_charts.py`.
+*   **Scope:** Same 6 seasons (2018-24).
+*   **Storage:** `data/shot_charts_{season}.csv`.
+
+### Step 2: Feature Engineering (The "Plasticity" Metrics)
+**Objective:** Quantify the difference between a player's RS and PO shot profile.
+*   **Task:** Create `src/nba_data/scripts/calculate_shot_plasticity.py`.
+*   **Key Metrics to Prototype:**
+    1.  **Shot Distance Shift:** `Avg_Shot_Dist_PO` - `Avg_Shot_Dist_RS`. (Do they get pushed out?)
+    2.  **Zone Migration:** Change in % of shots at Rim, Mid-Range, Corner 3, Above Break 3.
+    3.  **Self-Creation Delta:** Change in `% Unassisted` (if available in shot chart, otherwise merge with logs).
+    4.  **Hellinger Distance:** (Advanced) A statistical measure of the divergence between two 2D spatial distributions (RS Heatmap vs. PO Heatmap).
+
+### Step 3: Correlation Analysis
+**Objective:** Prove that "Plasticity" correlates with "Resilience."
+*   **Task:** Merge `plasticity_features` with `resilience_scores_all.csv`.
+*   **Hypothesis Check:**
+    *   Do high-resilience players have *higher* plasticity (adaptability)?
+    *   Or do they have *lower* plasticity (imposing their will)?
+    *   *Note:* It likely varies by archetype (Bigs vs. Guards).
+
+### Step 4: The "Fragility Taxonomy"
+**Objective:** Cluster non-resilient players into failure modes.
+*   **Analysis:** Using the new metrics, identify:
+    1.  **The Shrinker:** Volume drops, locations stay same.
+    2.  **The Pushed-Out:** Volume stays same, shot distance increases significantly (forced into bad shots).
+    3.  **The Bricklayer:** Volume/Locations same, Efficiency drops (just missing open shots?).
+
+---
+
+## Implementation Guide for New Developer
+
+1.  **Start with Data:** Run `collect_shot_charts.py` (you need to write this).
+    *   *Tip:* Use the `NBAStatsClient.get_player_shot_chart` method.
+    *   *Tip:* Re-use the `ThreadPool` pattern from `collect_rs_game_logs.py` to speed it up.
+
+2.  **Build the Metric:** Start simple. Just calculate **"Change in % of shots taken from Mid-Range."**
+    *   If Resilient players take *more* mid-range shots in playoffs (counter-intuitive to Moreyball), that is a Sloan-worthy finding.
+
+3.  **Validate:** Check this metric against **Kawhi Leonard (2019)**. He is the prototype of "Mid-Range Resilience."
+
+---
+
+## Success Criteria for Phase 4
+
+*   [ ] Shot chart data collected for 2018-24.
+*   [ ] "Shot Plasticity" metrics calculated for all qualified players.
+*   [ ] Correlation analysis showing relationship between Plasticity and Resilience.
+*   [ ] A clear narrative: "Resilient players adapt by [doing X], while Fragile players fail by [doing Y]."
