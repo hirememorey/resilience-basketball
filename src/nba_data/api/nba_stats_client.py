@@ -596,7 +596,7 @@ class NBAStatsClient:
         }
         return self._make_request(endpoint, params)
 
-    def get_player_game_logs(self, player_id: int, season: str = "2024-25", season_type: str = "Regular Season", measure_type: str = "Base") -> Dict[str, Any]:
+    def get_player_game_logs(self, player_id: int, season: str = "2024-25", season_type: str = "Regular Season") -> Dict[str, Any]:
         """Get game logs for a specific player."""
         endpoint = "playergamelogs"
         params = {
@@ -606,7 +606,7 @@ class NBAStatsClient:
             "LastNGames": "0",
             "LeagueID": "00",
             "Location": "",
-            "MeasureType": measure_type,
+            "MeasureType": "Base",
             "Month": "0",
             "OpponentTeamID": "0",
             "Outcome": "",

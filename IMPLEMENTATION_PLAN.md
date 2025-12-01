@@ -40,18 +40,24 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
     3.  **Metric:** Calculate the `RS_STRESS_COUNTER_PUNCH` (Efficiency in zones where volume increases against Top-5 defenses).
     4.  **Validation:** Correlate `RS_STRESS_COUNTER_PUNCH` with actual `PLAYOFF_RESILIENCE`.
 
-### Step 2: Shot Quality Context
-**Objective:** Differentiate between "Bad Decisions" and "Missed Opportunities."
-*   **Task:** Integrate `CLOSE_DEF_DIST` (Closest Defender Distance) into the plasticity model.
-*   **Hypothesis:** Resilient players don't just take shots in new zones; they generate *open* shots in new zones.
-*   **Action:** Update `calculate_shot_plasticity.py` to fetch and merge shot quality data.
+### Step 2: Addressing Critical Failure Modes (Luka & Simmons)
+**Status: Implemented (Dec 2025) but requires Review.**
+We discovered two critical paradoxes that threatened the model's validity:
+1.  **The Luka Paradox:** High volume/usage players were penalized for efficiency drops even if they carried the offense.
+    *   *Fix Attempted:* **Production Resilience** (Per-Minute Volume Scaling).
+2.  **The Simmons Paradox:** Passive players maintained efficiency by refusing to shoot.
+    *   *Fix Attempted:* **Abdication Tax** (Penalizing low volume per minute).
+
+**See `LUKA_SIMMONS_PARADOX.md` for the full First Principles analysis before proceeding.**
 
 ### Step 3: The "Fragility Taxonomy" Clustering
 **Objective:** Formally cluster players into the 4 archetypes we discovered.
+**Status: ON HOLD pending review of Step 2 fixes.**
+
 *   **The Tank (Jokic):** Displaced $\to$ Hits New Shots.
 *   **The Sniper (Durant):** Not Displaced $\to$ Hits Same Shots.
-*   **The Crumble (Gobert):** Displaced $\to$ Misses New Shots.
-*   **The Force (Inefficient Volume):** Not Displaced $\to$ Misses Same Shots.
+*   **The Engine (Luka):** Displaced $\to$ Efficiency Drops, Volume Spikes.
+*   **The Crumble (Simmons/Gobert):** Displaced $\to$ Efficiency Drops OR Volume Drops.
 
 ---
 
