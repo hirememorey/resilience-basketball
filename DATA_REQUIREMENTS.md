@@ -2,7 +2,15 @@
 
 ## Overview
 
-This document specifies the exact data needed for the regression-based playoff resilience model.
+This document specifies the exact data sources for the regression-based playoff resilience model. It reflects the final, working implementation after discovering and correcting for inconsistencies in the NBA Stats API.
+
+## Data Collection Strategy: Merge "Base" and "Advanced"
+
+A key lesson learned is that no single `MeasureType` provides all required columns. The standard practice for this project is to **fetch both "Base" and "Advanced" stats** for a given endpoint and merge them.
+- **Base:** Provides foundational stats like `PTS`, `FGM`, `FGA`, `FTM`, `FTA`, `MIN`.
+- **Advanced:** Provides rate stats like `TS%`, `AST%`, `USG%`, and possession counts (`POSS`).
+
+---
 
 ## Data Collection Phases
 
@@ -12,34 +20,25 @@ This document specifies the exact data needed for the regression-based playoff r
 `stats.nba.com/stats/leaguedashplayerstats`
 
 #### Parameters
-- `Season`: 2018-19, 2019-20, 2020-21, 2021-22, 2022-23, 2023-24, 2024-25
 - `SeasonType`: Regular Season
-- `PerMode`: Per100Possessions (for pace adjustment) and `PerGame`
-- `MeasureType`: `Base` and `Advanced` (must be fetched separately and merged)
+- `PerMode`: `PerGame` for Base, `PerGame` for Advanced (we will calculate pace-adjusted stats manually).
+- **`MeasureType`: `Base` and `Advanced` (two separate calls).**
 
-#### Required Fields
-| Field | NBA API Name | Description | Usage |
-|-------|--------------|-------------|-------|
-| Player ID | PLAYER_ID | Unique identifier | Join key |
-| Player Name | PLAYER_NAME | Display name | Output |
-| Team | TEAM_ABBREVIATION | Team abbreviation | Context |
-| Games Played | GP | Games in season | Filter (≥50) |
-| Minutes per Game | MIN | Average minutes | Filter (≥20) |
-| TS% | TS_PCT | True Shooting % | Model input |
-| Usage% | USG_PCT | Usage rate | Model input |
-| Points (Per100) | PTS | Points per 100 possessions | Model input |
-
-#### Filtering
-```python
-# Apply these filters
-df = df[
-    (df['GP'] >= 50) &
-    (df['MIN'] >= 20.0)
-]
-```
+#### Required Fields (Post-Merge)
+| Field             | Source     | Description             |
+|-------------------|------------|-------------------------|
+| `PLAYER_ID`       | Both       | Unique identifier       |
+| `PLAYER_NAME`     | Both       | Display name            |
+| `TEAM_ABBREVIATION` | Base       | Team abbreviation       |
+| `GP`              | Base       | Games Played (Filter ≥50) |
+| `MIN`             | Base       | Minutes (Filter ≥20)    |
+| `PTS`             | Base       | Points                  |
+| `TS_PCT`          | Advanced   | True Shooting %         |
+| `AST_PCT`         | Advanced   | Assist Percentage       |
+| `USG_PCT`         | Advanced   | Usage Rate              |
 
 #### Storage Format
-`data/regular_season_{season}.csv`
+`data/regular_season_{season}.csv` (Contains the merged and filtered data)
 
 ---
 
@@ -48,101 +47,46 @@ df = df[
 #### Endpoint
 `stats.nba.com/stats/leaguedashteamstats`
 
-#### Parameters
-- `Season`: Same as Phase 1
-- `SeasonType`: Both Regular Season AND Playoffs
-- `MeasureType`: `Advanced` (for `DEF_RATING`) and `Opponent` (for base opponent stats)
+#### Parameters & Method
+Requires two separate API calls per season, which are then merged.
+1.  **`MeasureType`: `Advanced`**
+    -   **Purpose:** To get `DEF_RATING`.
+2.  **`MeasureType`: `Opponent`**
+    -   **Purpose:** To get opponent shooting stats (`OPP_FGM`, `OPP_FGA`, etc.) needed to manually calculate `OPP_EFG_PCT` and `OPP_FTA_RATE`.
 
-#### Required Fields
-| Field | NBA API Name | Description | Usage |
-|-------|--------------|-------------|-------|
-| Team ID | TEAM_ID | Unique identifier | Join key |
-| Team Name | TEAM_NAME | Display name | Output |
-| Season Type | SEASON_TYPE | Regular/Playoff | Dynamic weighting |
-| Defensive Rating | DEF_RATING | Pts allowed per 100 | Primary context |
-| Opponent eFG% | OPP_EFG_PCT | eFG% allowed | Secondary context (Calculated) |
-| Opponent FT Rate | OPP_FTA_RATE | FTA/FGA allowed | Secondary context (Calculated) |
-| Games Played | GP | Sample size | Weighting factor |
-
-#### Composite Defensive Context Score (DCS)
-The `OPP_EFG_PCT` and `OPP_FTA_RATE` metrics are not provided directly by the `Opponent` `MeasureType`. They must be calculated manually from the base opponent stats:
-- `OPP_EFG_PCT = (OPP_FGM + 0.5 * OPP_FG3M) / OPP_FGA`
-- `OPP_FTA_RATE = OPP_FTA / OPP_FGA`
-
-```python
-# Normalize each component to 0-100 scale
-def calculate_dcs(def_rating, opp_efg, opp_ft_rate):
-    # Lower defensive rating = better defense
-    # Lower opponent shooting = better defense
-    
-    # Scale defensive rating (league avg ~110)
-    dr_score = 100 * (130 - def_rating) / 40
-    
-    # Scale opponent eFG% (league avg ~0.52)
-    efg_score = 100 * (0.60 - opp_efg) / 0.20
-    
-    # Scale opponent FT rate (league avg ~0.25)
-    ftr_score = 100 * (0.35 - opp_ft_rate) / 0.20
-    
-    # Weighted composite (60% DRTG, 25% eFG, 15% FTR)
-    dcs = 0.60 * dr_score + 0.25 * efg_score + 0.15 * ftr_score
-    
-    # Clamp to 0-100
-    return max(0, min(100, dcs))
-```
-
-#### Dynamic Playoff Adjustment
-```python
-# Use playoff-specific if sample is large enough
-if playoff_games >= 10:
-    dcs = calculate_dcs(playoff_def_rating, playoff_opp_efg, playoff_opp_ft_rate)
-else:
-    # Use regular season metrics
-    dcs = calculate_dcs(regular_season_def_rating, regular_season_opp_efg, regular_season_opp_ft_rate)
-```
-
-#### Storage Format
-`data/defensive_context_{season}.csv`
+#### Required Fields & Calculations
+| Field             | Source                | Description                             |
+|-------------------|-----------------------|-----------------------------------------|
+| `TEAM_ID`         | Both                  | Unique identifier                       |
+| `DEF_RATING`      | Advanced              | Points allowed per 100 possessions      |
+| `OPP_EFG_PCT`     | **Calculated**        | `(OPP_FGM + 0.5 * OPP_FG3M) / OPP_FGA`    |
+| `OPP_FTA_RATE`    | **Calculated**        | `OPP_FTA / OPP_FGA`                     |
 
 ---
 
 ### Phase 3: Playoff Player Game Logs
 
-#### Endpoint
+#### ⚠️ Deprecated Endpoint: `playbyplayv2`
+The `playbyplayv2` endpoint, originally planned for this phase, was found to be **unreliable and is no longer used**. It frequently returns empty data.
+
+#### Primary Endpoint
 `stats.nba.com/stats/playergamelogs`
 
-#### Important Note
-This replaces the previously used `playbyplayv2` endpoint, which was found to be unreliable. This change means **we no longer filter for garbage time**. The analysis is performed on full-game statistics.
+#### Parameters & Method
+Requires two separate API calls **per player, per season**, which are then merged.
+1.  **`MeasureType`: `Base`**
+    -   **Purpose:** Provides per-game totals like `PTS`, `MIN`, `FGA`, `FTA`, `MATCHUP`.
+2.  **`MeasureType`: `Advanced`**
+    -   **Purpose:** Provides per-game rate stats like `TS_PCT`, `AST_PCT`, `USG_PCT`, and `POSS`.
 
-#### Parameters
-- `PlayerID`: Called per-player.
-- `Season`: Target season.
-- `SeasonType`: Playoffs
-- `MeasureType`: `Base` and `Advanced` (must be fetched separately and merged per player, per game).
-
-#### Required Fields
-| Field | NBA API Name | Description | Usage |
-|-------|--------------|-------------|-------|
-| Game ID | GAME_ID | Unique game identifier | Join key |
-| Player ID | PLAYER_ID | Acting player | Join key |
-| Matchup | MATCHUP | e.g., "DEN vs. LAL" | Opponent parsing |
-| Base Stats | PTS, FGA, FTA, etc. | For calculating series totals | Aggregation |
-| Advanced Stats | POSS, USG_PCT, AST_PCT | For calculating series averages | Aggregation |
-
-#### Aggregation to Player-Series Stats
-After collection, game logs must be aggregated to the series level.
-```python
-# 1. Parse opponent from MATCHUP string
-df['OPPONENT'] = df.apply(lambda row: parse_opponent(row['MATCHUP'], row['TEAM_ABBREVIATION']), axis=1)
-
-# 2. Group by Player and Opponent
-series = df.groupby(['PLAYER_ID', 'OPPONENT'])
-
-# 3. Aggregate stats
-#    - Sum totals (PTS, FGA, FTA, POSS)
-#    - Recalculate TS% from totals
-#    - Calculate weighted average for USG%/AST% by possessions or minutes
-```
+#### Required Fields (Post-Merge)
+| Field             | Source   | Description                         |
+|-------------------|----------|-------------------------------------|
+| `PLAYER_ID`       | Both     | Unique identifier                   |
+| `GAME_ID`         | Both     | Unique game identifier              |
+| `MATCHUP`         | Base     | e.g., "DEN vs. LAL" (used to find opponent) |
+| All "Base" stats  | Base     | `PTS`, `MIN`, `FGA`, `FTA`, etc.    |
+| All "Advanced" stats| Advanced | `POSS`, `USG_PCT`, `AST_PCT`, etc.|
 
 #### Storage Format
 `data/playoff_logs_{season}.csv`
@@ -150,7 +94,21 @@ series = df.groupby(['PLAYER_ID', 'OPPONENT'])
 ---
 
 ### Phase 4: Playoff Series Information
-This phase is no longer required as a separate data source. Opponent information is derived directly from the `MATCHUP` field in the playoff game logs.
+
+#### Endpoint
+`stats.nba.com/stats/playoffpicture` or manual data entry
+
+#### Required Fields
+| Field | Description | Usage |
+|-------|-------------|-------|
+| Season | NBA season | Join key |
+| Round | Playoff round (1-4) | Context |
+| Team 1 | First team | Join key |
+| Team 2 | Opponent team | Defensive context |
+| Winner | Series winner | Validation |
+
+#### Storage Format
+`data/playoff_series_{season}.csv`
 
 ---
 
@@ -194,44 +152,32 @@ full_training_data = pd.concat(training_data)
 
 ### Final Training Dataset Schema
 
-| Column | Type | Description |
-|--------|------|-------------|
-| player_id | int | Unique player identifier |
-| player_name | str | Player display name |
-| season | str | NBA season (e.g., "2023-24") |
-| series_round | int | Playoff round (1-4) |
-| opponent_team | str | Opponent team abbreviation |
-| rs_ts_pct | float | Regular season TS% |
-| rs_ppg_per75 | float | Regular season points per 75 |
-| rs_ast_pct | float | Regular season AST% |
-| rs_usg_pct | float | Regular season usage% |
-| opp_def_context_score | float | Opponent defensive context (0-100) |
-| po_ts_pct | float | Playoff TS% (target) |
-| po_ppg_per75 | float | Playoff points per 75 (target) |
-| po_ast_pct | float | Playoff AST% (target) |
-| po_games_played | int | Sample size |
-| po_minutes_total | float | Total playoff minutes |
+| Column                  | Type  | Description                               |
+|-------------------------|-------|-------------------------------------------|
+| player_id               | int   | Unique player identifier                  |
+| player_name             | str   | Player display name                       |
+| season                  | str   | NBA season (e.g., "2023-24")              |
+| opponent_abbrev         | str   | Opponent team abbreviation                |
+| rs_ts_pct               | float | Regular season TS%                        |
+| rs_ppg_per75            | float | Regular season points per 75 possessions  |
+| rs_ast_pct              | float | Regular season AST%                       |
+| rs_usg_pct              | float | Regular season usage%                     |
+| opp_def_context_score   | float | Opponent defensive context score (0-100)    |
+| po_ts_pct               | float | Playoff TS% (aggregated from logs)        |
+| po_ppg_per75            | float | Playoff points per 75 (aggregated)      |
+| po_ast_pct              | float | Playoff AST% (weighted average)           |
+| po_games_played         | int   | Games played in the series                |
+| po_minutes_total        | float | Total minutes played in the series        |
 
 ### Data Quality Checks
 
-Before training, validate:
+Before training, the `assemble_training_data.py` script aggregates game logs into player-series and merges them with regular season and defensive data. The `train_resilience_models.py` and `calculate_resilience_scores.py` scripts then apply a crucial filter:
+
 ```python
-# Check for missing values
-assert training_data.isnull().sum().sum() == 0, "Missing values found"
-
-# Check value ranges
-assert (training_data['rs_ts_pct'] >= 0).all() and (training_data['rs_ts_pct'] <= 1.0).all()
-assert (training_data['po_ts_pct'] >= 0).all() and (training_data['po_ts_pct'] <= 1.0).all()
-assert (training_data['opp_def_context_score'] >= 0).all() and (training_data['opp_def_context_score'] <= 100).all()
-
-# Check minimum samples
-assert (training_data['po_games_played'] >= 4).all(), "Players with <4 playoff games found"
-
-# Check for outliers
-from scipy import stats
-z_scores = np.abs(stats.zscore(training_data[['rs_ts_pct', 'po_ts_pct']]))
-assert (z_scores < 5).all().all(), "Extreme outliers detected (>5 SD)"
+# Filter out any player-series with less than 50 total minutes
+df = df[df['po_minutes_total'] >= 50]
 ```
+This step is critical for removing small-sample-size noise from the analysis.
 
 ---
 

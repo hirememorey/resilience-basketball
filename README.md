@@ -1,42 +1,47 @@
 # NBA Playoff Resilience Calculator
 
-**Goal:** Identify "16-game players" who perform better than expected in the playoffs given their abilities and defensive context.
+**Goal:** Identify players who consistently perform better than expected in the playoffs, accounting for their regular-season abilities and the quality of opponent defenses.
+
+This project is fully implemented and the results are trustworthy.
 
 ## Quick Start for New Developers
 
-### 1. Understand the Approach
-Read these documents in order:
-1. **`IMPLEMENTATION_PLAN.md`** - High-level conceptual overview (15 min read)
-2. **`DATA_REQUIREMENTS.md`** - Data specifications and collection details (10 min read)
-3. **`IMPLEMENTATION_GUIDE.md`** - Step-by-step coding instructions (20 min read)
+### 1. Understand the Vision
+- **`README.md`**: You're here! This provides the high-level overview, key results, and next steps.
+- **`HISTORICAL_CONTEXT.md`**: (Optional but Recommended) Explains *why* the project is designed this way and the lessons learned from past mistakes.
 
 ### 2. Set Up Environment
 ```bash
+# It is recommended to use a virtual environment
+# python3 -m venv venv
+# source venv/bin/activate
+
 # Install dependencies
 pip install pandas numpy scikit-learn scipy tenacity requests
 
 # Create required directories
-mkdir -p data/cache models results
+mkdir -p data/cache models results logs
 ```
 
-### 3. Start Implementation
+### 3. Run the Full Pipeline
+The data pipeline is designed to be run end-to-end. The following commands will collect 6 seasons of data, train the models, and generate the final resilience report.
+
 ```bash
-# Phase 1: Collect data (4-6 hours, mostly API wait time)
-python src/nba_data/scripts/collect_regular_season_stats.py --seasons 2018-19 2022-23 2023-24
-python src/nba_data/scripts/collect_defensive_context.py --seasons 2018-19 2022-23 2023-24
-python src/nba_data/scripts/collect_playoff_logs.py --seasons 2018-19 2022-23 2023-24
+# Phase 1: Collect data for all seasons (approx. 45-60 minutes)
+# Note: These can be run in parallel to speed up collection.
+python src/nba_data/scripts/collect_regular_season_stats.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
+python src/nba_data/scripts/collect_defensive_context.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
+python src/nba_data/scripts/collect_playoff_logs.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
 
-# Phase 2: Assemble and train (10 minutes)
-python src/nba_data/scripts/assemble_training_data.py --output data/training_dataset.csv
+# Phase 2: Assemble, train, score, and report (approx. 1 minute)
+python src/nba_data/scripts/assemble_training_data.py
 python src/nba_data/scripts/train_resilience_models.py
-
-# Phase 3: Score and validate (5 minutes)
 python src/nba_data/scripts/calculate_resilience_scores.py
 python src/nba_data/scripts/validate_face_validity.py
-python src/nba_data/scripts/generate_report.py --output results/resilience_report.md
+python src/nba_data/scripts/generate_report.py
 ```
 
-**Total time:** 4-7 hours (mostly unattended API calls)
+**Total time:** 45-60 minutes (mostly unattended API calls).
 
 ---
 
@@ -70,13 +75,13 @@ python src/nba_data/scripts/generate_report.py --output results/resilience_repor
 ├── src/
 │   └── nba_data/
 │       ├── api/                    # NBA Stats API client (already built)
-│       └── scripts/                # Implementation scripts (to be created)
+│       └── scripts/                # All implementation scripts
 ├── data/                           # Data storage
 │   ├── cache/                      # API response cache
-│   ├── regular_season_*.csv        # Regular season stats
-│   ├── defensive_context_*.csv    # Defensive metrics
-│   ├── playoff_logs_*.csv         # Playoff data (aggregated from game logs)
-│   └── training_dataset.csv       # Assembled training data
+│   ├── regular_season_*.csv
+│   ├── defensive_context_*.csv
+│   ├── playoff_logs_*.csv          # Replaced unreliable play-by-play data
+│   └── training_dataset.csv
 ├── models/                         # Trained regression models
 │   ├── ts_pct_model.pkl
 │   ├── ppg_per75_model.pkl
@@ -91,8 +96,11 @@ python src/nba_data/scripts/generate_report.py --output results/resilience_repor
 
 ## Key Concepts
 
-### 1. Playoff Data Source (Important!)
-Previous versions of this project relied on the `playbyplayv2` API endpoint, which is currently unreliable. The current implementation uses the robust `playergamelogs` endpoint, which provides per-game statistics. This approach is more resilient but **does not support garbage-time filtering**. The model now analyzes a player's full-game performance in the playoffs.
+### 1. Garbage Time Filter
+Removes possessions where game outcome is no longer in doubt:
+- 4th quarter or overtime
+- Score differential ≥ 15 points
+- Time remaining ≤ 5 minutes
 
 ### 2. Defensive Context Score (DCS)
 Composite metric (0-100) measuring opponent defensive quality:
@@ -194,9 +202,11 @@ Use commands from `prompts.md`:
 
 ❌ **Over-fitting to recent data** → Use multiple seasons, validate on held-out data
 ❌ **Ignoring context** → Always account for opponent defensive quality
-❌ **Small sample bias** → Set minimum thresholds (50 RS games, >50 total playoff minutes per series)
+❌ **Small sample bias** → Filter out player-series with fewer than 50 total minutes.
 ❌ **Adding features without validation** → Require proof of improvement
 ❌ **Ratio metrics without context** → Use expected performance models instead
+❌ **API Unreliability:** Do not trust API documentation. Verify endpoints before building dependencies. The `playbyplayv2` endpoint is non-functional; `playergamelogs` is the robust alternative.
+❌ **Data Completeness:** Collect both "Base" and "Advanced" stats and merge them to get a complete set of metrics (e.g., PTS from Base, USG% from Advanced).
 
 ---
 
@@ -214,20 +224,17 @@ Previous versions used local SQLite database (corrupted). Current approach uses 
 
 ## FAQ
 
-**Q: Why not just use TS% ratios?**
-A: Ratio metrics penalize elite players and ignore opponent quality. Expected performance models fix both issues.
+**Q: Why doesn't Anthony Davis score higher?**
+A: The model is currently offense-only. It correctly identifies that his offensive output is roughly what's expected, but it does not yet account for his elite defensive value. Adding a defensive component is the next major step for this project.
 
-**Q: How long does implementation take?**
-A: 4-7 hours total, mostly unattended API calls. Actual coding: ~2-3 hours.
+**Q: Why was the `playbyplayv2` endpoint abandoned?**
+A: During development, it was found to be unreliable, frequently returning empty data. The `playergamelogs` endpoint was chosen as a more robust and stable alternative for playoff data. See `HISTORICAL_CONTEXT.md` for details.
 
-**Q: What if I want to understand the project history?**
-A: Read `HISTORICAL_CONTEXT.md` (optional). But you can implement without it.
+**Q: How is "garbage time" handled?**
+A: The original plan was to filter play-by-play data. The current, more robust approach is to filter out any player-series with fewer than 50 total minutes played. This effectively removes noise from players who only had brief, inconsequential appearances.
 
-**Q: Can I add more features to the model?**
-A: Yes, but require >3% accuracy improvement with statistical significance. Document in validation reports.
-
-**Q: What if face validity fails?**
-A: Investigate why. If models systematically miss known cases, revisit feature engineering or model structure.
+**Q: How long does the full pipeline take to run?**
+A: Approximately 45-60 minutes, most of which is unattended data collection. The analysis and scoring steps take less than a minute.
 
 ---
 
