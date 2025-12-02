@@ -135,8 +135,9 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 
 **Current State of Latent Star Detection**:
 *   ✅ **Implemented**: Basic detection system identifies players with top stress profiles
-*   ⚠️ **Needs Refinement**: Currently includes established stars (LeBron, Luka) - needs filtering
-*   🎯 **Next Steps**: Refine criteria to focus on true "sleeping giants" (role players with high stress profiles)
+*   ✅ **Usage Filtering**: Now filters by RS USG% < 20% FIRST (excludes established stars)
+*   ✅ **Brunson Test**: Historical validation framework implemented
+*   ⚠️ **Needs Refinement**: Missing data handling, threshold tuning (see Phase 8)
 
 **Artifacts**:
 *   `data/playoff_pie_data.csv` - Playoff PIE and advanced stats
@@ -145,7 +146,64 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 
 ---
 
-### **Step 5: Sloan Paper Preparation - READY**
+## ✅ Phase 8: Consultant Feedback Implementation (COMPLETE)
+
+**Status**: ✅ **COMPLETE** (Dec 2025)
+
+**Objective**: Implement consultant feedback to fix latent star detection and validate predictive value.
+
+### **Step 1: Usage Filtering Fix - ✅ DONE**
+
+**Problem Identified**: Detection was flagging established stars (LeBron, Luka) because it wasn't filtering by actual usage.
+
+**Solution Implemented**:
+*   **File**: `src/nba_data/scripts/detect_latent_stars.py`
+*   **Change**: Now filters by RS USG% < 20% **FIRST**, then ranks by stress profile
+*   **Result**: Excludes established stars, focuses on true "sleeping giants"
+
+**Before**: 25 candidates (included LeBron, Luka, Tatum)  
+**After**: 3 candidates (all role players with <20% USG)
+
+### **Step 2: Brunson Test Framework - ✅ DONE**
+
+**Problem Identified**: 59.4% archetype accuracy is descriptive, not predictive profit. No validation that model can identify players **before** they break out.
+
+**Solution Implemented**:
+*   **File**: `src/nba_data/scripts/brunson_test.py`
+*   **Method**: Historical backtesting - identify latent stars in past season, validate if they broke out
+*   **Validation**: 33.3% breakout rate (2 of 6 identified players broke out)
+
+**Key Results (2020-21 Test)**:
+*   **Identified**: 6 latent stars
+*   **Breakouts**: Jalen Brunson (19.6% → 31.1% USG), Tyrese Haliburton (17.5% → 23.9% USG)
+*   **Breakout Rate**: 33.3% (>30% = strong predictive value)
+
+**Artifacts**:
+*   `results/brunson_test_2020_21.csv` - Validation results
+*   `results/brunson_test_2020_21_report.md` - Validation report
+
+### **Step 3: First Principles Analysis - ✅ DONE**
+
+**Analysis Documents**:
+*   `BRUNSON_TEST_ANALYSIS.md` - Why these 6 players were identified, what distinguishes breakouts
+*   `MAXEY_ANALYSIS.md` - False negative case study (Tyrese Maxey)
+
+**Key Findings**:
+1. **Leverage TS Delta is strongest signal**: Breakouts maintain efficiency in clutch (+0.059), non-breakouts decline (-0.153)
+2. **Missing data handling critical**: Missing leverage/clutch data penalized some players
+3. **Age matters**: Breakouts are younger (21-24), non-breakouts older (25-30)
+4. **Clutch minutes = trust signal**: More clutch minutes = coaches trust them = latent value
+
+**Refinement Recommendations**:
+1. Add Leverage TS Delta filter (>0) - strongest differentiator
+2. Improve missing data handling - don't penalize for one missing feature
+3. Add age filter (<25 years old)
+4. Value positive creation tax - indicates elite self-creation ability
+5. Make clutch minutes primary signal (≥50 minutes)
+
+---
+
+### **Step 4: Sloan Paper Preparation - READY**
 
 **Status**: 🎯 **READY FOR DRAFTING**
 

@@ -69,7 +69,9 @@ The predictive engine and component analysis are production-ready. The current f
 
 ### 1. Understand the Vision & Current State
 *   **`LUKA_SIMMONS_PARADOX.md`**: **CRITICAL.** Understands the core *descriptive* problem we solved.
-*   **`IMPLEMENTATION_PLAN.md`**: The roadmap, now completed through Phase 7.
+*   **`IMPLEMENTATION_PLAN.md`**: The roadmap, now completed through Phase 8.
+*   **`BRUNSON_TEST_ANALYSIS.md`**: First principles analysis of why certain players were identified.
+*   **`MAXEY_ANALYSIS.md`**: False negative case study revealing system weaknesses.
 
 ### 2. Set Up Environment
 ```bash
@@ -119,6 +121,9 @@ python src/nba_data/scripts/component_analysis.py
 
 # Run latent star detection
 python src/nba_data/scripts/detect_latent_stars.py
+
+# Run Brunson Test for historical validation
+python src/nba_data/scripts/brunson_test.py --detection-season 2020-21 --subsequent-seasons 2021-22 2022-23 2023-24
 ```
 
 **Component Analysis Outputs:**
@@ -130,6 +135,8 @@ python src/nba_data/scripts/detect_latent_stars.py
 **Latent Star Detection Outputs:**
 *   `results/latent_stars.csv`: Current latent star candidates
 *   `results/latent_star_detection_report.md`: Analysis report
+*   `results/brunson_test_2020_21.csv`: Historical validation results
+*   `results/brunson_test_2020_21_report.md`: Validation report
 
 ---
 
@@ -170,7 +177,8 @@ See **`IMPLEMENTATION_PLAN.md`** for the detailed roadmap.
 │       ├── train_predictive_model.py         # Predictive Engine (Trains Model)
 │       ├── collect_playoff_pie.py            # Collect Playoff PIE Data
 │       ├── component_analysis.py              # Component Analysis (Stress Vectors → Outcomes)
-│       └── detect_latent_stars.py            # Latent Star Detection (Sleeping Giants)
+│       ├── detect_latent_stars.py            # Latent Star Detection (Sleeping Giants)
+│       └── brunson_test.py                   # Historical Validation Framework
 ├── models/
 │   └── resilience_xgb.pkl          # The Trained Model
 ```
