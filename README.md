@@ -16,13 +16,54 @@ The project has successfully developed a complete "Stylistic Stress Test" system
 - **`Complete Dataset`**: **10 seasons (2015-2024)** with 5,312 player-season records and full historical context data.
 - **`Clock Data Coverage`**: **100% coverage** across all seasons (2015-16 through 2024-25) with optimized parallel collection.
 
-## Next Developer Mission: Sloan Paper Drafting
+## Next Developer Mission: Refine Latent Star Detection
 
-The predictive engine is production-ready. The path forward is to create compelling visualizations and draft the Sloan conference paper.
+The predictive engine and component analysis are production-ready. The current focus is refining the latent star detection system to better identify undervalued players.
 
-1.  **Review Results**: See `results/predictive_model_report.md` for current V4.2 performance (59.4% accuracy).
-2.  **Draft Narrative**: Focus on the "Abdication Tax" and mechanistic stress vectors.
-3.  **Create Visualizations**: "Pressure Appetite vs. Playoff Performance" charts.
+### Current State
+
+**✅ Completed:**
+- **Component Analysis**: Direct correlations between stress vectors and playoff outcomes (PIE, NET_RATING, etc.)
+- **Playoff PIE Data**: Collected 2,175 player-seasons with 100% coverage
+- **Basic Latent Star Detection**: Identifies 25 candidates with high stress profiles
+
+**⚠️ Needs Refinement:**
+- **Latent Star Detection**: Currently includes established stars (LeBron, Luka) - needs filtering to focus on true "sleeping giants"
+- **Usage Filtering**: Should exclude players with high regular season usage (they're already stars)
+- **Validation**: Need to validate that identified "sleeping giants" actually broke out when given opportunity
+
+### How to Work on Latent Star Detection
+
+1.  **Review Current Implementation**:
+    *   Script: `src/nba_data/scripts/detect_latent_stars.py`
+    *   Current Results: `results/latent_stars.csv`
+    *   Report: `results/latent_star_detection_report.md`
+
+2.  **Understand the Criteria**:
+    *   Currently identifies players with:
+        *   Top stress profile (≥80th percentile)
+        *   High creation ability (top 30% in Creation Volume Ratio)
+        *   High pressure resilience (top 30% in Pressure Resilience)
+    *   **Problem**: This includes established stars who already have high usage
+
+3.  **Refinement Goals**:
+    *   Add usage filtering: Exclude players with RS USG% > 25% (they're already stars)
+    *   Focus on role players: Target players with < 20% usage but high stress profiles
+    *   Add validation: Check if identified players actually broke out in subsequent seasons
+    *   Improve scoring: Weight stress vectors by their correlation with playoff outcomes
+
+4.  **Run the Analysis**:
+    ```bash
+    # Run component analysis (if needed)
+    python src/nba_data/scripts/component_analysis.py
+    
+    # Run latent star detection
+    python src/nba_data/scripts/detect_latent_stars.py
+    ```
+
+5.  **Review Component Analysis** (for context):
+    *   See `results/component_analysis_report.md` for stress vector correlations
+    *   Use correlation data to weight stress profile scores
 
 ## Quick Start for New Developers
 
@@ -67,6 +108,29 @@ python src/nba_data/scripts/train_predictive_model.py
 *   `models/resilience_xgb.pkl`: The trained XGBoost model.
 *   `results/feature_importance.png`: Explains *why* the model works.
 
+### 4. Run Component Analysis & Latent Star Detection
+
+```bash
+# Collect playoff PIE data (if not already collected)
+python src/nba_data/scripts/collect_playoff_pie.py
+
+# Run component analysis
+python src/nba_data/scripts/component_analysis.py
+
+# Run latent star detection
+python src/nba_data/scripts/detect_latent_stars.py
+```
+
+**Component Analysis Outputs:**
+*   `data/playoff_pie_data.csv`: Playoff PIE and advanced stats
+*   `results/component_analysis_correlations.csv`: Full correlation matrix
+*   `results/component_analysis_report.md`: Detailed analysis with actionable insights
+*   `results/component_analysis_heatmap.png`: Correlation visualizations
+
+**Latent Star Detection Outputs:**
+*   `results/latent_stars.csv`: Current latent star candidates
+*   `results/latent_star_detection_report.md`: Analysis report
+
 ---
 
 ## The "Sloan Path" (Phase 6)
@@ -87,17 +151,26 @@ See **`IMPLEMENTATION_PLAN.md`** for the detailed roadmap.
 ├── LUKA_SIMMONS_PARADOX.md         # The Theoretical Foundation
 ├── IMPLEMENTATION_PLAN.md          # The Roadmap
 ├── results/
-│   ├── predictive_model_report.md  # Performance of our V3 Predictive Model
+│   ├── predictive_model_report.md  # Performance of our V4.2 Predictive Model
 │   ├── resilience_archetypes.csv   # The Labels
 │   ├── predictive_dataset.csv      # The Features
-│   └── pressure_features.csv       # The Pressure Features (New)
+│   ├── pressure_features.csv       # The Pressure Features
+│   ├── component_analysis_correlations.csv  # Stress Vector → Outcome Correlations
+│   ├── component_analysis_report.md  # Component Analysis Report
+│   ├── latent_stars.csv            # Latent Star Candidates
+│   └── latent_star_detection_report.md  # Latent Star Analysis
+├── data/
+│   └── playoff_pie_data.csv        # Playoff PIE & Advanced Stats
 ├── src/
 │   └── nba_data/scripts/
 │       ├── calculate_simple_resilience.py      # Descriptive Engine (Generates Labels)
 │       ├── evaluate_plasticity_potential.py  # Feature Engine (Generates Features)
 │       ├── collect_shot_quality_aggregates.py # Data Collection (Pressure Vector)
 │       ├── calculate_shot_difficulty_features.py # Feature Engine (Pressure Vector)
-│       └── train_predictive_model.py         # Predictive Engine (Trains Model)
+│       ├── train_predictive_model.py         # Predictive Engine (Trains Model)
+│       ├── collect_playoff_pie.py            # Collect Playoff PIE Data
+│       ├── component_analysis.py              # Component Analysis (Stress Vectors → Outcomes)
+│       └── detect_latent_stars.py            # Latent Star Detection (Sleeping Giants)
 ├── models/
 │   └── resilience_xgb.pkl          # The Trained Model
 ```

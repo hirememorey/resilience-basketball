@@ -105,7 +105,47 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 *   ✅ Achieved 100% clock feature coverage (up from 12%)
 *   ✅ Model accuracy improved to **59.4%** (up from 58.3% baseline)
 
-### **Step 4: Sloan Paper Preparation - READY**
+### **Step 4: Component Analysis & Latent Star Detection - ✅ COMPLETE**
+
+**Status**: ✅ **COMPLETE** (Dec 2025)
+
+**Consultant Feedback Integration**: Following consultant feedback to move from "Classifying Behavior" to "Quantifying Value," we implemented component analysis and latent star detection.
+
+**Implementation**:
+*   **Component Analysis Script**: `src/nba_data/scripts/component_analysis.py`
+    *   Correlates stress vectors directly with playoff outcomes (PIE, NET_RATING, OFF_RATING, etc.)
+    *   Shows actionable correlations (e.g., `CREATION_VOLUME_RATIO → PO_PTS_PER_75: r=0.633`)
+    *   Generates visualizations and reports
+*   **Playoff PIE Collection**: `src/nba_data/scripts/collect_playoff_pie.py`
+    *   Fetches playoff advanced stats (PIE, NET_RATING, OFF_RATING, DEF_RATING)
+    *   Collected 2,175 player-seasons with 100% PIE coverage
+*   **Latent Star Detection**: `src/nba_data/scripts/detect_latent_stars.py`
+    *   Identifies "Sleeping Giants" - players with high stress profiles but low usage
+    *   Currently identifies 25 candidates
+
+**Key Findings**:
+*   **Top Correlations**:
+    *   `CREATION_VOLUME_RATIO → PO_PTS_PER_75`: r=0.633 (p<0.001)
+    *   `LEVERAGE_USG_DELTA → PO_PTS_PER_75`: r=0.512 (p<0.001)
+    *   `RS_LATE_CLOCK_PRESSURE_RESILIENCE`: Strong predictor of playoff performance
+*   **Component Analysis Outputs**:
+    *   `results/component_analysis_correlations.csv` - Full correlation matrix
+    *   `results/component_analysis_report.md` - Detailed analysis with actionable insights
+    *   `results/component_analysis_heatmap.png` - Correlation visualizations
+
+**Current State of Latent Star Detection**:
+*   ✅ **Implemented**: Basic detection system identifies players with top stress profiles
+*   ⚠️ **Needs Refinement**: Currently includes established stars (LeBron, Luka) - needs filtering
+*   🎯 **Next Steps**: Refine criteria to focus on true "sleeping giants" (role players with high stress profiles)
+
+**Artifacts**:
+*   `data/playoff_pie_data.csv` - Playoff PIE and advanced stats
+*   `results/latent_stars.csv` - Current latent star candidates
+*   `results/latent_star_detection_report.md` - Analysis report
+
+---
+
+### **Step 5: Sloan Paper Preparation - READY**
 
 **Status**: 🎯 **READY FOR DRAFTING**
 
@@ -113,7 +153,8 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 1.  **The Luka/Simmons Paradox**: Volume matters as much as efficiency ("Abdication Tax")
 2.  **The Dual-Grade Archetype System**: Separating Adaptability from Dominance
 3.  **Mechanistic Stress Vectors**: Creation, Leverage, Pressure (with Clock Distinction), Rim Pressure, and Context
-4.  **Predictive Validation**: **59.4% accuracy** with mechanistic explanations and full clock data coverage
+4.  **Component Analysis**: Direct correlations between stress vectors and playoff outcomes (PIE, NET_RATING)
+5.  **Predictive Validation**: **59.4% accuracy** with mechanistic explanations and full clock data coverage
 
 ---
 
