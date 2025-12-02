@@ -1,93 +1,165 @@
+"""
+Train Predictive Model for Playoff Resilience Archetypes.
+
+This script:
+1. Loads the feature set (Stress Vectors) from results/predictive_dataset.csv
+2. Loads the target labels (Archetypes) from results/resilience_archetypes.csv
+3. Trains an XGBoost Classifier to predict Archetypes from RS data.
+4. Evaluates performance and saves the model.
+"""
+
 import pandas as pd
 import numpy as np
-import xgboost as xgb
-from sklearn.model_selection import train_test_split, KFold
-from sklearn.metrics import mean_squared_error, r2_score
-import argparse
 import logging
+import sys
+import joblib
+import matplotlib.pyplot as plt
+import seaborn as sns
 from pathlib import Path
-import pickle
-import json
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.preprocessing import LabelEncoder
+import xgboost as xgb
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Setup Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/train_model.log"),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 logger = logging.getLogger(__name__)
 
-def main():
-    parser = argparse.ArgumentParser(description='Train Predictive Resilience Model')
-    parser.add_argument('--input', default='data/predictive_model_training_data.csv', help='Input training data')
-    parser.add_argument('--model_out', default='models/predictive_resilience_model.json', help='Output model path')
-    args = parser.parse_args()
-    
-    # 1. Load Data
-    if not Path(args.input).exists():
-        logger.error(f"Missing input file: {args.input}")
-        return
+class ResiliencePredictor:
+    def __init__(self):
+        self.data_dir = Path("data")
+        self.results_dir = Path("results")
+        self.models_dir = Path("models")
+        self.models_dir.mkdir(parents=True, exist_ok=True)
         
-    df = pd.read_csv(args.input)
-    logger.info(f"Loaded {len(df)} training samples")
-    
-    # 2. Define Features and Target
-    features = [
-        'rs_ts_pct', 'rs_ppg_per75', 'rs_ast_pct', 'rs_usg_pct',  # Baseline
-        'opp_def_context_score',                                  # Scenario Context
-        'consistency_gmsc_std',                                   # Consistency
-        'ts_pct_vs_top10', 'ppg_per75_vs_top10', 
-        'ast_pct_vs_top10', 'usg_pct_vs_top10'                    # Vs Top 10
-    ]
-    
-    target = 'RESILIENCE_SCORE'
-    
-    X = df[features].fillna(0) # Basic fillna, ideally investigate missingness
-    y = df[target]
-    
-    # 3. Train/Test Split
-    # Since we only have 2023-24 data populated with features right now, 
-    # we will use a standard random split. 
-    # In production, we would split by Season (Train on < 2024, Test on 2024).
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # 4. Train Model (XGBoost Regressor)
-    model = xgb.XGBRegressor(
-        objective='reg:squarederror',
-        n_estimators=100,
-        learning_rate=0.1,
-        max_depth=3,
-        random_state=42,
-        n_jobs=-1
-    )
-    
-    logger.info("Training XGBoost model...")
-    model.fit(X_train, y_train)
-    
-    # 5. Evaluate
-    y_pred = model.predict(X_test)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-    r2 = r2_score(y_test, y_pred)
-    
-    logger.info(f"Model Evaluation:")
-    logger.info(f"  RMSE: {rmse:.4f}")
-    logger.info(f"  R2:   {r2:.4f}")
-    
-    # 6. Feature Importance
-    importance = model.get_booster().get_score(importance_type='gain')
-    importance_df = pd.DataFrame([
-        {'Feature': k, 'Importance': v} 
-        for k, v in importance.items()
-    ]).sort_values('Importance', ascending=False)
-    
-    logger.info("\nTop Predictors of Resilience:")
-    logger.info(importance_df.to_string(index=False))
-    
-    # 7. Save Model
-    model.save_model(args.model_out)
-    logger.info(f"✅ Saved model to {args.model_out}")
+    def load_and_merge_data(self):
+        """Load features and labels, merge them into a training set."""
+        logger.info("Loading datasets...")
+        
+        # Features
+        feature_path = self.results_dir / "predictive_dataset.csv"
+        if not feature_path.exists():
+            raise FileNotFoundError(f"Features file not found at {feature_path}")
+        df_features = pd.read_csv(feature_path)
+        
+        # Targets
+        target_path = self.results_dir / "resilience_archetypes.csv"
+        if not target_path.exists():
+            raise FileNotFoundError(f"Target labels not found at {target_path}")
+        df_targets = pd.read_csv(target_path)
+        
+        # Merge
+        # Note: Target CSV likely has 'PLAYER_ID' and 'SEASON'
+        # Let's inspect columns if needed, but standardizing on ID/SEASON is key.
+        
+        # Check for column case sensitivity
+        df_targets.columns = [c.upper() for c in df_targets.columns]
+        
+        # Target columns are: RESILIENCE_QUOTIENT, DOMINANCE_SCORE, ARCHETYPE
+        # We don't have PLAYER_ID in targets, so we merge on PLAYER_NAME and SEASON
+        
+        # Merge
+        df_merged = pd.merge(
+            df_features,
+            df_targets[['PLAYER_NAME', 'SEASON', 'ARCHETYPE', 'RESILIENCE_QUOTIENT', 'DOMINANCE_SCORE']],
+            on=['PLAYER_NAME', 'SEASON'],
+            how='inner'
+        )
+        
+        logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
+        
+        # Drop missing values (some players might be missing leverage data)
+        # We filled NaNs in feature generation, but let's be safe.
+        # Actually, XGBoost handles NaNs, but let's see.
+        
+        return df_merged
 
-    # Save feature names for inference
-    with open('models/predictive_features.json', 'w') as f:
-        json.dump(features, f)
+    def train(self):
+        """Train the XGBoost Model."""
+        df = self.load_and_merge_data()
+        
+        # Define Features and Target
+        features = [
+            'CREATION_TAX', 'CREATION_VOLUME_RATIO',
+            'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA',
+            'CLUTCH_MIN_TOTAL', 
+            'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED'
+        ]
+        target = 'ARCHETYPE'
+        
+        X = df[features]
+        y = df[target]
+        
+        # Encode Labels
+        le = LabelEncoder()
+        y_encoded = le.fit_transform(y)
+        
+        # Train/Test Split
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
+        )
+        
+        logger.info(f"Training on {len(X_train)} samples, Testing on {len(X_test)} samples.")
+        
+        # Initialize XGBoost
+        # Using a simplified classifier for interpretability
+        model = xgb.XGBClassifier(
+            objective='multi:softprob',
+            n_estimators=100,
+            max_depth=4,
+            learning_rate=0.1,
+            use_label_encoder=False,
+            eval_metric='mlogloss',
+            random_state=42
+        )
+        
+        # Train
+        model.fit(X_train, y_train)
+        
+        # Save Model
+        joblib.dump(model, self.models_dir / "resilience_xgb.pkl")
+        joblib.dump(le, self.models_dir / "archetype_encoder.pkl")
+        
+        # Evaluation
+        y_pred = model.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        
+        logger.info(f"Model Accuracy: {accuracy:.4f}")
+        logger.info("\nClassification Report:\n" + classification_report(y_test, y_pred, target_names=le.classes_))
+        
+        # Feature Importance
+        importance = pd.DataFrame({
+            'Feature': features,
+            'Importance': model.feature_importances_
+        }).sort_values(by='Importance', ascending=False)
+        
+        logger.info("\nFeature Importance:\n" + str(importance))
+        
+        # Visualization: Feature Importance
+        plt.figure(figsize=(10, 6))
+        sns.barplot(data=importance, x='Importance', y='Feature', hue='Feature', legend=False)
+        plt.title("Predictive Feature Importance (Stress Vectors)")
+        plt.tight_layout()
+        plt.savefig(self.results_dir / "feature_importance.png")
+        
+        # Visualization: Confusion Matrix
+        cm = confusion_matrix(y_test, y_pred)
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                    xticklabels=le.classes_, yticklabels=le.classes_)
+        plt.title("Confusion Matrix")
+        plt.ylabel('Actual')
+        plt.xlabel('Predicted')
+        plt.tight_layout()
+        plt.savefig(self.results_dir / "confusion_matrix.png")
 
 if __name__ == "__main__":
-    main()
-
+    predictor = ResiliencePredictor()
+    predictor.train()

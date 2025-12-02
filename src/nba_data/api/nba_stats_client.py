@@ -391,6 +391,126 @@ class NBAStatsClient:
         }
         return self._make_request(endpoint, params)
 
+    def get_league_player_clutch_stats(self, season: str = "2024-25", season_type: str = "Regular Season", measure_type: str = "Base") -> Dict[str, Any]:
+        """
+        Get player clutch statistics.
+        Clutch time is defined as: Last 5 minutes, score differential <= 5 points.
+        """
+        endpoint = "leaguedashplayerclutch"
+        params = {
+            "AheadBehind": "Ahead or Behind",
+            "ClutchTime": "Last 5 Minutes",
+            "College": "",
+            "Conference": "",
+            "Country": "",
+            "DateFrom": "",
+            "DateTo": "",
+            "Division": "",
+            "DraftPick": "",
+            "DraftYear": "",
+            "GameScope": "",
+            "GameSegment": "",
+            "Height": "",
+            "ISTRound": "",
+            "LastNGames": "0",
+            "LeagueID": "00",
+            "Location": "",
+            "MeasureType": measure_type,
+            "Month": "0",
+            "OpponentTeamID": "0",
+            "Outcome": "",
+            "PORound": "0",
+            "PaceAdjust": "N",
+            "PerMode": "PerGame",
+            "Period": "0",
+            "PlayerExperience": "",
+            "PlayerPosition": "",
+            "PlusMinus": "N",
+            "PointDiff": "5",
+            "Rank": "N",
+            "Season": season,
+            "SeasonSegment": "",
+            "SeasonType": season_type,
+            "ShotClockRange": "",
+            "StarterBench": "",
+            "TeamID": "0",
+            "TwoWay": "0",
+            "VsConference": "",
+            "VsDivision": "",
+            "Weight": ""
+        }
+        return self._make_request(endpoint, params)
+
+    def get_player_dashboard_stats(self, season: str = "2024-25", season_type: str = "Regular Season", measure_type: str = "Base") -> Dict[str, Any]:
+        """
+        Get player dashboard statistics (General Splits).
+        Useful for home/road, wins/losses, etc.
+        """
+        endpoint = "playerdashboardbygeneralsplits"
+        # Note: This endpoint requires a PlayerID, but we want LEAGUE wide dashboard stats?
+        # Actually, for 'Creation' metrics (Touch Time, Dribbles), we want 'leaguedashplayerptshot'.
+        # Let's stick to the plan: 'leaguedashplayerptshot' is what we need for Dribbles/Touch Time.
+        pass
+
+    def get_league_player_shooting_stats(self, season: str = "2024-25", season_type: str = "Regular Season", 
+                                         close_def_dist: str = "", 
+                                         dribble_range: str = "", 
+                                         touch_time_range: str = "",
+                                         shot_clock_range: str = "",
+                                         general_range: str = "Overall") -> Dict[str, Any]:
+        """
+        Get player shooting stats with specific filters (Dribbles, Touch Time, Defender Distance).
+        Endpoint: leaguedashplayerptshot
+        
+        Args:
+            dribble_range: "0 Dribbles", "1 Dribble", "2 Dribbles", "3-6 Dribbles", "7+ Dribbles"
+            touch_time_range: "Touch < 2 Seconds", "Touch 2-6 Seconds", "Touch 6+ Seconds"
+            close_def_dist: "0-2 Feet - Very Tight", "2-4 Feet - Tight", "4-6 Feet - Open", "6+ Feet - Wide Open"
+        """
+        endpoint = "leaguedashplayerptshot"
+        params = {
+            "CloseDefDistRange": close_def_dist,
+            "College": "",
+            "Conference": "",
+            "Country": "",
+            "DateFrom": "",
+            "DateTo": "",
+            "Division": "",
+            "DraftPick": "",
+            "DraftYear": "",
+            "DribbleRange": dribble_range,
+            "GameScope": "",
+            "GameSegment": "",
+            "GeneralRange": general_range,
+            "Height": "",
+            "LastNGames": "0",
+            "LeagueID": "00",
+            "Location": "",
+            "Month": "0",
+            "OpponentTeamID": "0",
+            "Outcome": "",
+            "PORound": "0",
+            "PaceAdjust": "N",
+            "PerMode": "PerGame",
+            "Period": "0",
+            "PlayerExperience": "",
+            "PlayerPosition": "",
+            "PlusMinus": "N",
+            "Rank": "N",
+            "Season": season,
+            "SeasonSegment": "",
+            "SeasonType": season_type,
+            "ShotClockRange": shot_clock_range,
+            "ShotDistRange": "",
+            "StarterBench": "",
+            "TeamID": "0",
+            "TouchTimeRange": touch_time_range,
+            "VsConference": "",
+            "VsDivision": "",
+            "Weight": ""
+        }
+        return self._make_request(endpoint, params)
+
     # Playoff stats methods
     def get_league_player_playoff_base_stats(self, season: str = "2024-25") -> Dict[str, Any]:
         """Get basic player playoff statistics."""

@@ -1,308 +1,259 @@
+"""
+Feature Engineering Script for "Stylistic Stress Test" (V2 Resilience Model).
 
-import sys
-import os
+This script calculates the three "Stress Vectors" for every player-season:
+1. Creation Tax (Self-Reliance)
+2. Leverage Delta (Clutch Performance)
+3. Quality of Competition (Schematic Resilience)
+
+It outputs a CSV ready for the predictive model.
+"""
+
 import pandas as pd
 import numpy as np
 import logging
+import sys
 from pathlib import Path
-import argparse
+import time
 
 # Add project root to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 
-from src.nba_data.api.nba_stats_client import NBAStatsClient
+from src.nba_data.api.nba_stats_client import create_nba_stats_client
+from src.nba_data.constants import ID_TO_ABBREV, get_team_abbrev
 
-# Configure logging
+# Setup Logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler()
+        logging.FileHandler("logs/stress_vectors.log"),
+        logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)
 
-def categorize_zone(zone_basic):
-    """Map detailed zones to simplified analysis zones."""
-    if 'Restricted Area' in zone_basic: return 'Restricted Area'
-    if 'In The Paint' in zone_basic: return 'Paint (Non-RA)'
-    if 'Mid-Range' in zone_basic: return 'Mid-Range'
-    if 'Corner 3' in zone_basic: return 'Corner 3'
-    if 'Above the Break' in zone_basic: return 'Above Break 3'
-    return 'Other'
-
-def get_defensive_rankings(season):
-    """
-    Fetch team defensive ratings and return Top 5 (Stress) and Bottom 10 (Comfort) teams.
-    Returns: (set(stress_ids), set(comfort_ids), id_to_name_map)
-    """
-    client = NBAStatsClient()
-    logger.info(f"Fetching defensive rankings for {season}...")
-    
-    data = client.get_league_team_stats(season=season, measure_type="Advanced")
-    
-    if not data or 'resultSets' not in data:
-        logger.error("Failed to fetch team stats")
-        return set(), set(), {}
+class StressVectorEngine:
+    def __init__(self):
+        self.client = create_nba_stats_client()
+        self.data_dir = Path("data")
+        self.results_dir = Path("results")
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        self.results_dir.mkdir(parents=True, exist_ok=True)
         
-    headers = data['resultSets'][0]['headers']
-    rows = data['resultSets'][0]['rowSet']
-    df = pd.DataFrame(rows, columns=headers)
-    
-    # Sort by DEF_RATING (Ascending = Better Defense)
-    df = df.sort_values('DEF_RATING', ascending=True)
-    
-    # Top 5 Defenses (Lowest Rating)
-    stress_teams = df.head(5)
-    # Bottom 10 Defenses (Highest Rating)
-    comfort_teams = df.tail(10)
-    
-    logger.info(f"Top 5 Defenses (Stress): {stress_teams['TEAM_NAME'].tolist()}")
-    logger.info(f"Bottom 10 Defenses (Comfort): {comfort_teams['TEAM_NAME'].tolist()}")
-    
-    return (
-        set(stress_teams['TEAM_ID'].values),
-        set(comfort_teams['TEAM_ID'].values),
-        dict(zip(df['TEAM_ID'], df['TEAM_NAME']))
-    )
-
-def build_abbrev_map(df_shots):
-    """
-    Build a map of Team Name/ID to Abbreviation using the shot chart data.
-    """
-    # TEAM_ID corresponds to TEAM_NAME. 
-    # HTM/VTM correspond to abbreviations.
-    # We need to link ID -> Abbrev.
-    
-    # Filter where TEAM_NAME matches HTM (Home games) - Wait, HTM is Abbrev, TEAM_NAME is Full.
-    # We can't directly match "Atlanta Hawks" to "ATL" without a common key or logic.
-    # BUT, we know for a given game (GAME_ID), there are two teams.
-    # The shot chart has TEAM_ID.
-    # If we look at a game, we can deduce the abbreviation.
-    
-    # Actually, there is a simpler way:
-    # In the shot chart, for a specific TEAM_ID, look at games where they are Home (vs someone).
-    # This is tricky because we don't know if they are Home or Away from the row alone easily
-    # without checking HTM/VTM columns.
-    # However, for every row: 
-    # IF (HTM == VTM) -> Data error (impossible).
-    # The columns are HTM and VTM. 
-    # One of them is the player's team.
-    
-    # Let's blindly try to map:
-    # For each TEAM_ID, find the abbreviation that appears in HTM or VTM most frequently? No.
-    
-    # Better approach:
-    # We have TEAM_ID and TEAM_NAME from the API.
-    # We can construct a static map for the 30 active teams to be safe.
-    # Using a static map avoids logic errors with dynamic inference.
-    
-    # NBA Team ID to Abbrev Map (Standard IDs)
-    # IDs from 1610612737 to 1610612766
-    static_map = {
-        1610612737: 'ATL', 1610612738: 'BOS', 1610612739: 'CLE', 1610612740: 'NOP',
-        1610612741: 'CHI', 1610612742: 'DAL', 1610612743: 'DEN', 1610612744: 'GSW',
-        1610612745: 'HOU', 1610612746: 'LAC', 1610612747: 'LAL', 1610612748: 'MIA',
-        1610612749: 'MIL', 1610612750: 'MIN', 1610612751: 'BKN', 1610612752: 'NYK',
-        1610612753: 'ORL', 1610612754: 'IND', 1610612755: 'PHI', 1610612756: 'PHX',
-        1610612757: 'POR', 1610612758: 'SAC', 1610612759: 'SAS', 1610612760: 'OKC',
-        1610612761: 'TOR', 1610612762: 'UTA', 1610612763: 'MEM', 1610612764: 'WAS',
-        1610612765: 'DET', 1610612766: 'CHA'
-    }
-    return static_map
-
-def determine_opponent(row, id_to_abbrev):
-    """
-    Determine the opponent team ID (or Abbrev) for a shot row.
-    """
-    player_team_id = row['TEAM_ID']
-    player_team_abbrev = id_to_abbrev.get(player_team_id)
-    
-    if not player_team_abbrev:
-        return None
+    def fetch_creation_metrics(self, season):
+        """
+        Vector 1: Self-Creation (The 'Creation Tax')
+        Fetches shooting stats by Dribble Range.
+        """
+        logger.info(f"Fetching Creation Metrics for {season}...")
         
-    htm = row['HTM']
-    vtm = row['VTM']
-    
-    if htm == player_team_abbrev:
-        return vtm # Opponent is Visiting Team
-    elif vtm == player_team_abbrev:
-        return htm # Opponent is Home Team
-    else:
-        # Fallback/Edge case: Player might have been traded or abbreviation mismatch
-        # Assume opponent is the one that isn't the mapped abbreviation
-        # But if neither match, we can't know.
-        return None
-
-def calculate_stress_plasticity(df, stress_abbrevs, comfort_abbrevs, id_to_abbrev):
-    """
-    Calculate plasticity metrics comparing Comfort (Baseline) vs Stress (Test).
-    """
-    # 1. Identify Opponent for every shot
-    # We'll create a new column 'OPP_ABBREV'
-    
-    # Optimization: Vectorize if possible, but apply is safer for logic
-    # Using a map for team_id -> abbrev
-    
-    # Create Opponent Column
-    # If HTM == TeamAbbrev, Opp = VTM, else HTM
-    df['TeamAbbrev'] = df['TEAM_ID'].map(id_to_abbrev)
-    
-    # Vectorized condition
-    df['OPP_ABBREV'] = np.where(
-        df['HTM'] == df['TeamAbbrev'], 
-        df['VTM'], 
-        df['HTM']
-    )
-    
-    # Handle cases where TeamAbbrev was NaN or neither matched (should be rare)
-    # Filter out unknown opponents
-    df = df.dropna(subset=['OPP_ABBREV'])
-    
-    # 2. Split into Contexts
-    comfort_shots = df[df['OPP_ABBREV'].isin(comfort_abbrevs)]
-    stress_shots = df[df['OPP_ABBREV'].isin(stress_abbrevs)]
-    
-    # 3. Process per player
-    results = []
-    players = df['PLAYER_ID'].unique()
-    
-    for pid in players:
-        p_comfort = comfort_shots[comfort_shots['PLAYER_ID'] == pid].copy()
-        p_stress = stress_shots[stress_shots['PLAYER_ID'] == pid].copy()
-        
-        # Minimum sample size
-        # Need significant shots to stabilize the signal
-        if len(p_comfort) < 30 or len(p_stress) < 30:
-            continue
+        try:
+            # 1. Zero Dribbles (Dependent)
+            logger.info(f"  - Fetching 0 Dribbles for {season}...")
+            zero_dribbles = self.client.get_league_player_shooting_stats(
+                season=season, 
+                dribble_range="0 Dribbles"
+            )
+            df_zero = pd.DataFrame(zero_dribbles['resultSets'][0]['rowSet'], 
+                                   columns=zero_dribbles['resultSets'][0]['headers'])
+            df_zero = df_zero[['PLAYER_ID', 'PLAYER_NAME', 'FG_PCT', 'FG3_PCT', 'EFG_PCT', 'FGA']]
+            df_zero = df_zero.rename(columns={
+                'FG_PCT': 'FG_PCT_0_DRIBBLE', 
+                'EFG_PCT': 'EFG_PCT_0_DRIBBLE',
+                'FGA': 'FGA_0_DRIBBLE'
+            })
+            logger.info(f"    -> Got {len(df_zero)} rows.")
             
-        player_name = p_comfort['PLAYER_NAME'].iloc[0]
-        
-        # Add simplified zone
-        p_comfort['SimpleZone'] = p_comfort['SHOT_ZONE_BASIC'].apply(categorize_zone)
-        p_stress['SimpleZone'] = p_stress['SHOT_ZONE_BASIC'].apply(categorize_zone)
-        
-        # Filter Other
-        p_comfort = p_comfort[p_comfort['SimpleZone'] != 'Other']
-        p_stress = p_stress[p_stress['SimpleZone'] != 'Other']
-        
-        # --- Metric Calculation (Reused Logic) ---
-        
-        # Distributions
-        c_dist = p_comfort['SimpleZone'].value_counts(normalize=True)
-        s_dist = p_stress['SimpleZone'].value_counts(normalize=True)
-        
-        all_zones = ['Restricted Area', 'Paint (Non-RA)', 'Mid-Range', 'Corner 3', 'Above Break 3']
-        c_vec = c_dist.reindex(all_zones, fill_value=0)
-        s_vec = s_dist.reindex(all_zones, fill_value=0)
-        
-        # Metric 1: Zone Displacement
-        displacement_score = (c_vec - s_vec).abs().sum() / 2
-        
-        # Metric 2: Stress Counter-Punch Efficiency
-        # Efficiency in zones where volume INCREASED under stress
-        volume_delta = s_vec - c_vec
-        increased_zones = volume_delta[volume_delta > 0].index.tolist()
-        
-        if not increased_zones:
-            cp_eff = 0.0
-        else:
-            c_makes = p_comfort[p_comfort['SimpleZone'].isin(increased_zones)]['SHOT_MADE_FLAG'].mean()
-            s_makes = p_stress[p_stress['SimpleZone'].isin(increased_zones)]['SHOT_MADE_FLAG'].mean()
+            # 2. 3-6 Dribbles (Self-Created/Iso)
+            logger.info(f"  - Fetching 3-6 Dribbles for {season}...")
+            iso_dribbles = self.client.get_league_player_shooting_stats(
+                season=season, 
+                dribble_range="3-6 Dribbles"
+            )
+            df_iso = pd.DataFrame(iso_dribbles['resultSets'][0]['rowSet'], 
+                                  columns=iso_dribbles['resultSets'][0]['headers'])
+            df_iso = df_iso[['PLAYER_ID', 'EFG_PCT', 'FGA']]
+            df_iso = df_iso.rename(columns={
+                'EFG_PCT': 'EFG_PCT_3_DRIBBLE',
+                'FGA': 'FGA_3_DRIBBLE'
+            })
+            logger.info(f"    -> Got {len(df_iso)} rows.")
             
-            if pd.isna(c_makes): c_makes = 0.0
-            if pd.isna(s_makes): s_makes = 0.0
+            # 3. 7+ Dribbles (Deep Iso)
+            logger.info(f"  - Fetching 7+ Dribbles for {season}...")
+            deep_iso = self.client.get_league_player_shooting_stats(
+                season=season, 
+                dribble_range="7+ Dribbles"
+            )
+            df_deep = pd.DataFrame(deep_iso['resultSets'][0]['rowSet'], 
+                                   columns=deep_iso['resultSets'][0]['headers'])
+            df_deep = df_deep[['PLAYER_ID', 'EFG_PCT', 'FGA']]
+            df_deep = df_deep.rename(columns={
+                'EFG_PCT': 'EFG_PCT_7_DRIBBLE',
+                'FGA': 'FGA_7_DRIBBLE'
+            })
+            logger.info(f"    -> Got {len(df_deep)} rows.")
             
-            cp_eff = s_makes - c_makes
+            # Merge
+            logger.info("  - Merging creation datasets...")
+            df_creation = pd.merge(df_zero, df_iso, on='PLAYER_ID', how='left')
+            df_creation = pd.merge(df_creation, df_deep, on='PLAYER_ID', how='left')
             
-        results.append({
-            'PLAYER_ID': pid,
-            'PLAYER_NAME': player_name,
-            'RS_STRESS_DISPLACEMENT': round(displacement_score, 4),
-            'RS_STRESS_COUNTER_PUNCH': round(cp_eff, 4),
-            'COMFORT_SHOTS': len(p_comfort),
-            'STRESS_SHOTS': len(p_stress)
-        })
-        
-    return pd.DataFrame(results)
+            # Fill NaNs with 0 (some players never take 7+ dribbles)
+            df_creation = df_creation.fillna(0)
+            
+            # Feature Engineering: Creation Tax
+            # How much efficiency do you lose when you have to dribble?
+            
+            # Weighted average of 3+ dribbles
+            df_creation['FGA_ISO_TOTAL'] = df_creation['FGA_3_DRIBBLE'] + df_creation['FGA_7_DRIBBLE']
+            
+            # Avoid division by zero
+            df_creation['EFG_ISO_WEIGHTED'] = np.where(
+                df_creation['FGA_ISO_TOTAL'] > 0,
+                ((df_creation['EFG_PCT_3_DRIBBLE'] * df_creation['FGA_3_DRIBBLE']) + 
+                 (df_creation['EFG_PCT_7_DRIBBLE'] * df_creation['FGA_7_DRIBBLE'])) / df_creation['FGA_ISO_TOTAL'],
+                0
+            )
+            
+            df_creation['CREATION_TAX'] = df_creation['EFG_ISO_WEIGHTED'] - df_creation['EFG_PCT_0_DRIBBLE']
+            
+            # Feature: Creation Volume Ratio
+            df_creation['TOTAL_FGA_TRACKED'] = df_creation['FGA_0_DRIBBLE'] + df_creation['FGA_ISO_TOTAL']
+            
+            df_creation['CREATION_VOLUME_RATIO'] = np.where(
+                df_creation['TOTAL_FGA_TRACKED'] > 0,
+                df_creation['FGA_ISO_TOTAL'] / df_creation['TOTAL_FGA_TRACKED'],
+                0
+            )
+            
+            logger.info(f"✅ Processed Creation Metrics for {len(df_creation)} players.")
+            return df_creation
+            
+        except Exception as e:
+            logger.error(f"❌ Error in Creation Metrics: {e}", exc_info=True)
+            return pd.DataFrame()
 
-def main():
-    parser = argparse.ArgumentParser(description='Evaluate Plasticity Potential (Stress Test)')
-    parser.add_argument('--season', type=str, default='2023-24', help='Season to analyze')
-    args = parser.parse_args()
-    
-    season = args.season
-    shot_file = Path(f"data/shot_charts_{season}.csv")
-    
-    if not shot_file.exists():
-        logger.error(f"Shot chart file not found: {shot_file}")
-        logger.info("Please run collect_shot_charts.py first.")
-        return
-
-    # 1. Get Defensive Rankings
-    stress_ids, comfort_ids, id_to_name = get_defensive_rankings(season)
-    if not stress_ids:
-        return
+    def fetch_leverage_metrics(self, season):
+        """
+        Vector 2: Leverage (The 'Clutch Delta')
+        Fetches Clutch stats vs Base stats.
+        """
+        logger.info(f"Fetching Leverage Metrics for {season}...")
         
-    # 2. Build Abbrev Maps
-    id_to_abbrev = build_abbrev_map(None) # Using static map
-    
-    # Convert ID sets to Abbrev sets for filtering
-    stress_abbrevs = {id_to_abbrev[tid] for tid in stress_ids if tid in id_to_abbrev}
-    comfort_abbrevs = {id_to_abbrev[tid] for tid in comfort_ids if tid in id_to_abbrev}
-    
-    logger.info(f"Stress Team Abbrevs: {stress_abbrevs}")
-    logger.info(f"Comfort Team Abbrevs: {comfort_abbrevs}")
-    
-    # 3. Load Shots
-    logger.info(f"Loading shots from {shot_file}...")
-    df = pd.read_csv(shot_file)
-    
-    # Filter for Regular Season only (we are simulating playoffs using RS data)
-    df = df[df['SEASON_TYPE'] == 'Regular Season'].copy()
-    logger.info(f"Loaded {len(df)} regular season shots.")
-    
-    # 4. Calculate Metrics
-    logger.info("Calculating stress plasticity metrics...")
-    results_df = calculate_stress_plasticity(df, stress_abbrevs, comfort_abbrevs, id_to_abbrev)
-    
-    if results_df.empty:
-        logger.warning("No players met the sample size criteria.")
-        return
-        
-    results_df['SEASON'] = season
-    
-    # 5. Validate against actual Playoff Resilience
-    res_path = Path("results/plasticity_scores.csv") 
-    # Note: We want to correlate with the MECHANISTIC score (Counter Punch), not just the raw outcome.
-    # But the Plan says correlate with "Playoff Resilience". Let's try both if available.
-    
-    if res_path.exists():
-        logger.info("Correlating with actual Playoff Plasticity...")
-        po_df = pd.read_csv(res_path)
-        
-        # Merge
-        merged = pd.merge(
-            results_df,
-            po_df[['PLAYER_ID', 'SEASON', 'COUNTER_PUNCH_EFF', 'ZONE_DISPLACEMENT']],
-            on=['PLAYER_ID', 'SEASON'],
-            suffixes=('_STRESS', '_PLAYOFF')
-        )
-        
-        if not merged.empty:
-            corr_cp = merged['RS_STRESS_COUNTER_PUNCH'].corr(merged['COUNTER_PUNCH_EFF'])
-            logger.info(f"🎯 CORRELATION (Stress CP vs Playoff CP): {corr_cp:.4f}")
+        try:
+            # Base Stats (Full Season)
+            logger.info(f"  - Fetching Base Advanced Stats for {season}...")
+            base_adv = self.client.get_league_player_advanced_stats(season=season)
+            df_base = pd.DataFrame(base_adv['resultSets'][0]['rowSet'], 
+                                   columns=base_adv['resultSets'][0]['headers'])
+            df_base = df_base[['PLAYER_ID', 'TS_PCT', 'USG_PCT']]
+            df_base = df_base.rename(columns={'TS_PCT': 'BASE_TS', 'USG_PCT': 'BASE_USG'})
             
-            # Save validation results
-            merged.to_csv(f"results/rs_stress_test_metrics.csv", index=False)
-            logger.info(f"Saved detailed metrics to results/rs_stress_test_metrics.csv")
-        else:
-            logger.warning("No overlapping players found between Stress Test and Playoff results.")
-    else:
-        logger.warning("results/plasticity_scores.csv not found. Cannot validate yet.")
-        # Save just the stress scores
-        results_df.to_csv(f"results/rs_stress_test_metrics.csv", index=False)
+            # Clutch Stats
+            logger.info(f"  - Fetching Clutch Stats for {season}...")
+            clutch_adv = self.client.get_league_player_clutch_stats(season=season, measure_type="Advanced")
+            df_clutch = pd.DataFrame(clutch_adv['resultSets'][0]['rowSet'], 
+                                     columns=clutch_adv['resultSets'][0]['headers'])
+            
+            logger.info(f"    -> Raw Clutch Data: {len(df_clutch)} rows.")
+            if not df_clutch.empty:
+                logger.info(f"    -> Sample Clutch Row: {df_clutch.iloc[0].to_dict()}")
+            
+            df_clutch = df_clutch[['PLAYER_ID', 'TS_PCT', 'USG_PCT', 'MIN', 'GP']]
+            df_clutch = df_clutch.rename(columns={'TS_PCT': 'CLUTCH_TS', 'USG_PCT': 'CLUTCH_USG', 'MIN': 'CLUTCH_MPG', 'GP': 'CLUTCH_GP'})
+            
+            # Calculate Total Clutch Minutes (API returns Per Game)
+            df_clutch['CLUTCH_MIN_TOTAL'] = df_clutch['CLUTCH_MPG'] * df_clutch['CLUTCH_GP']
+            
+            # Merge
+            df_leverage = pd.merge(df_base, df_clutch, on='PLAYER_ID', how='inner') # Inner join - must have clutch minutes
+            
+            logger.info(f"    -> Rows after Merge: {len(df_leverage)}")
+            
+            # Filter Noise: Must have at least 10 Total Clutch Minutes (~2-3 close games)
+            df_leverage = df_leverage[df_leverage['CLUTCH_MIN_TOTAL'] >= 15] 
+            
+            logger.info(f"    -> Rows after Filter (Total Min >= 15): {len(df_leverage)}")
+            
+            # Feature Engineering
+            df_leverage['LEVERAGE_TS_DELTA'] = df_leverage['CLUTCH_TS'] - df_leverage['BASE_TS']
+            df_leverage['LEVERAGE_USG_DELTA'] = df_leverage['CLUTCH_USG'] - df_leverage['BASE_USG']
+            
+            logger.info(f"✅ Processed Leverage Metrics for {len(df_leverage)} players.")
+            return df_leverage
+            
+        except Exception as e:
+            logger.error(f"❌ Error in Leverage Metrics: {e}", exc_info=True)
+            return pd.DataFrame()
+
+    def calculate_context_metrics(self, season):
+        """
+        Vector 3: Context (Quality of Competition)
+        """
+        # Placeholder for now until we confirm RS logs strategy
+        return pd.DataFrame()
+
+    def run(self, seasons=['2021-22', '2022-23', '2023-24']):
+        
+        all_seasons_data = []
+        
+        for season in seasons:
+            logger.info(f"=== Processing {season} ===")
+            
+            try:
+                # 1. Creation
+                df_creation = self.fetch_creation_metrics(season)
+                if df_creation.empty:
+                    logger.warning(f"Skipping {season} due to missing creation data.")
+                    continue
+                
+                # 2. Leverage
+                df_leverage = self.fetch_leverage_metrics(season)
+                
+                # Merge Vectors
+                if not df_leverage.empty:
+                    df_season = pd.merge(df_creation, df_leverage, on='PLAYER_ID', how='left')
+                else:
+                    logger.warning(f"No leverage data for {season}, filling with NaNs")
+                    df_season = df_creation
+                    df_season['LEVERAGE_TS_DELTA'] = np.nan
+                    df_season['LEVERAGE_USG_DELTA'] = np.nan
+                    df_season['CLUTCH_MIN_TOTAL'] = 0
+                
+                df_season['SEASON'] = season
+                all_seasons_data.append(df_season)
+                
+                # Be nice to the API
+                time.sleep(1.0)
+                
+            except Exception as e:
+                logger.error(f"Failed to process {season}: {e}", exc_info=True)
+        
+        # Combine all
+        if not all_seasons_data:
+            logger.error("No data generated.")
+            return
+            
+        final_df = pd.concat(all_seasons_data, ignore_index=True)
+        
+        # Clean up columns
+        cols_to_keep = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON', 
+                        'CREATION_TAX', 'CREATION_VOLUME_RATIO',
+                        'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CLUTCH_MIN_TOTAL',
+                        'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED']
+        
+        # Only keep columns that actually exist
+        existing_cols = [c for c in cols_to_keep if c in final_df.columns]
+        final_df = final_df[existing_cols]
+                             
+        output_path = self.results_dir / "predictive_dataset.csv"
+        final_df.to_csv(output_path, index=False)
+        logger.info(f"Successfully saved Predictive Dataset to {output_path}")
+        logger.info(f"Total Rows: {len(final_df)}")
 
 if __name__ == "__main__":
-    main()
-
+    engine = StressVectorEngine()
+    # Expanding window to capture enough historical data for training
+    engine.run(seasons=['2019-20', '2020-21', '2021-22', '2022-23', '2023-24'])

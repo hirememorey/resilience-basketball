@@ -124,6 +124,38 @@ The composite metric journey revealed fundamental issues with ratio-based approa
 
 ---
 
+### Phase 6: The Luka/Simmons Paradox (The "Aha!" Moment)
+**What:** After building a regression model, we encountered two critical failures:
+*   **Luka Dončić (2024 Finals):** Was flagged as "Fragile" despite carrying his team. The model penalized him for a drop in efficiency, ignoring that he massively increased his volume.
+*   **Ben Simmons (2021 Meltdown):** Was flagged as "Resilient" because his efficiency was stable. The model ignored that he completely stopped shooting.
+
+**Root Cause:** The regression model was still trying to measure "maintenance of baseline." We realized resilience isn't just about maintaining efficiency; it's about **absorbing responsibility**.
+
+**Solution:** The **Dual-Grade Archetype System**. We abandoned a single "resilience score" in favor of two axes:
+1.  **Resilience Quotient (RQ):** Measures *Adaptability* (`Volume Ratio * Efficiency Ratio`). This directly penalizes passivity (The Simmons Problem).
+2.  **Dominance Score:** Measures *Absolute Value* (`Playoff PTS/75`). This rewards players who carry a heavy load, even if inefficiently (The Luka Problem).
+
+**Lesson:** The final breakthrough came from returning to first principles. The "right" answer wasn't a more complex regression; it was a simpler, more robust classification system.
+
+**See:** `LUKA_SIMMONS_PARADOX.md` for the full story.
+
+---
+
+### Phase 7: The Predictive "Stress Test" Model (Current State)
+**What:** With perfect labels (Archetypes) from the Dual-Grade system, we returned to the predictive task. Instead of predicting a continuous score, we now predict the Archetype.
+
+**Method:** The **Stylistic Stress Test**. We hypothesized that RS situations that mimic playoff pressure could predict a player's Archetype. We created "Stress Vectors":
+*   **Creation Vector:** Measures performance on self-created shots (3+ dribbles).
+*   **Leverage Vector:** Measures performance in clutch time.
+
+**Result:** ✅ **Success.** An XGBoost model trained on these vectors achieved **50.5% accuracy**, proving that these stylistic indicators are predictive.
+
+**Lesson:** To predict playoff performance, don't look at RS averages. Look at how players perform in situations that *feel like the playoffs*.
+
+**See:** `results/predictive_model_report.md` for the results.
+
+---
+
 ## Key Lessons Learned
 
 ### 1. Simplicity Without Validation is Naive
