@@ -48,3 +48,4 @@ The feature importance ranking strongly validates our First Principles:
 1.  **Context Vector:** We skipped the "Quality of Competition" vector due to data complexity. Adding this (Performance vs Top 5 Defenses) is the likely path to 60%+ accuracy.
 2.  **Tracking Data:** `avg_speed` and `touch_time` could help distinguish between "Movement Shooters" (Klay) and "Stationary Shooters" (Tucker).
 
+

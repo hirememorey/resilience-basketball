@@ -55,6 +55,17 @@ class ResiliencePredictor:
             raise FileNotFoundError(f"Target labels not found at {target_path}")
         df_targets = pd.read_csv(target_path)
         
+        # Plasticity Features (New)
+        # We'll need to combine plasticity scores from all seasons
+        plasticity_files = self.results_dir.glob("plasticity_scores_*.csv")
+        df_plasticity_list = [pd.read_csv(f) for f in plasticity_files]
+        
+        if not df_plasticity_list:
+            logger.warning("No plasticity score files found. Proceeding without them.")
+            df_plasticity = pd.DataFrame()
+        else:
+            df_plasticity = pd.concat(df_plasticity_list, ignore_index=True)
+
         # Merge
         # Note: Target CSV likely has 'PLAYER_ID' and 'SEASON'
         # Let's inspect columns if needed, but standardizing on ID/SEASON is key.
@@ -63,14 +74,22 @@ class ResiliencePredictor:
         df_targets.columns = [c.upper() for c in df_targets.columns]
         
         # Target columns are: RESILIENCE_QUOTIENT, DOMINANCE_SCORE, ARCHETYPE
-        # We don't have PLAYER_ID in targets, so we merge on PLAYER_NAME and SEASON
         
-        # Merge
+        # Merge base features with targets
         df_merged = pd.merge(
             df_features,
             df_targets[['PLAYER_NAME', 'SEASON', 'ARCHETYPE', 'RESILIENCE_QUOTIENT', 'DOMINANCE_SCORE']],
             on=['PLAYER_NAME', 'SEASON'],
             how='inner'
+        )
+
+        # Merge with plasticity features if they exist
+        if not df_plasticity.empty:
+            df_merged = pd.merge(
+                df_merged,
+                df_plasticity,
+                on=['PLAYER_ID', 'SEASON'],
+                how='left'
         )
         
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
@@ -90,11 +109,21 @@ class ResiliencePredictor:
             'CREATION_TAX', 'CREATION_VOLUME_RATIO',
             'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA',
             'CLUTCH_MIN_TOTAL', 
-            'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED'
+            'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED',
+            # New Plasticity Features
+            'SHOT_DISTANCE_DELTA',
+            'SPATIAL_VARIANCE_DELTA',
+            'PO_EFG_BEYOND_RS_MEDIAN'
         ]
         target = 'ARCHETYPE'
         
-        X = df[features]
+        # Filter out features that don't exist in the dataframe
+        existing_features = [f for f in features if f in df.columns]
+        missing_features = [f for f in features if f not in df.columns]
+        if missing_features:
+            logger.warning(f"Missing expected features, they will be ignored: {missing_features}")
+        
+        X = df[existing_features]
         y = df[target]
         
         # Encode Labels
@@ -136,7 +165,7 @@ class ResiliencePredictor:
         
         # Feature Importance
         importance = pd.DataFrame({
-            'Feature': features,
+            'Feature': existing_features,
             'Importance': model.feature_importances_
         }).sort_values(by='Importance', ascending=False)
         

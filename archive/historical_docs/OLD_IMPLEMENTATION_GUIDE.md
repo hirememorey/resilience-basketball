@@ -1,5 +1,9 @@
 # Implementation Guide: Step-by-Step
 
+> **Note for New Developers (Dec 2025):** This guide documents the original data pipeline for the **Descriptive Engine** (`calculate_simple_resilience.py`). This is a critical part of the project that generates our "ground truth" labels.
+>
+> We have since built a **Predictive Engine** on top of this foundation. For instructions on how that works, please see the main `README.md` and `IMPLEMENTATION_PLAN.md`. Do not get bogged down in re-implementing the predictive pipeline; focus on understanding how this *descriptive* part of the pipeline works.
+
 ## Prerequisites
 
 ### Required Python Packages

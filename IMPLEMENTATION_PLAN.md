@@ -42,34 +42,69 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 
 ---
 
-## 🚀 Phase 6: Model Refinement & Sloan Paper Preparation
+## Phase 6: Model Refinement & Sloan Paper Preparation (Current)
 
-**The Goal:** Increase predictive accuracy to >60% and package our findings for publication. The current 50.5% accuracy is a strong proof of concept, but not yet definitive.
+**Objective**: Boost predictive accuracy from 50.5% to over 60% and finalize the analysis for the Sloan paper.
 
-**The Next Developer's Mission:** Implement the "Context Vector" to push the model's accuracy higher.
+**`[PIVOT]` From "Context" to "Plasticity"**:
+The initial plan to implement a "Context Vector" (performance vs. top RS defenses) has been **deprecated**. A pilot study revealed that this approach is likely high-risk and low-reward due to the noisy nature of regular season defensive data.
+
+The new strategic direction, "The Plasticity Resurrection," has shown a strong positive signal and is the new priority. It directly measures the "Schematic Friction" that players face in the playoffs.
 
 ---
 
-### Step 1: Implement the "Context Vector" (Accuracy Boost)
-Our V1 predictive model confirmed that "how" you score matters (Creation & Leverage vectors). The next step is to incorporate "who" you score against.
+### **Step 1: The Plasticity Resurrection (The Real Sloan Alpha)**
 
-*   **Hypothesis:** A player's performance against Top-10 Regular Season defenses is a strong predictor of how they will handle elite playoff defenses.
-*   **Action:** Create a new feature engineering script or extend the existing one (`evaluate_plasticity_potential.py`) to:
-    1.  **Collect Regular Season Game Logs:** Create a new collection script (`collect_rs_game_logs.py`) to fetch per-game data for every qualified player.
-    2.  **Identify Top Defenses:** Load the `defensive_context_{season}.csv` files.
-    3.  **Calculate Performance Splits:** For each player, calculate their aggregate performance (TS%, USG%) against Top-10 Defenses vs. Bottom-10 Defenses.
-    4.  **Create the Vector:** Engineer a `QoC_Delta` feature (e.g., TS% vs Top 10 - TS% vs Bottom 10).
+**Hypothesis**: The "Bulldozer" vs. "King" distinction is defined by **Spatial Rigidity**. A Bulldozer must get to his spot. A King can score from the counter-spot.
 
-### Step 2: Retrain and Evaluate Model V2
-*   **Action:** Add the new `QoC_Delta` feature to the XGBoost model in `train_predictive_model.py`.
-*   **Expected Outcome:** Accuracy should improve, particularly in distinguishing "Bulldozers" from "Kings," as many stars who appear inefficient in the playoffs were simply facing the league's best defenses.
+**Action Plan**:
 
-### Step 3: Write the Paper
-*   **Narrative:** The story is compelling. We started with a paradox (Luka/Simmons), solved it with a new descriptive framework (Dual-Grade), and then successfully predicted it with a mechanistic model (Stress Vectors).
-*   **Key Visuals:**
-    1.  The Dual-Grade Archetype Scatter Plot.
-    2.  The Predictive Model Feature Importance Bar Chart.
-    3.  The V2 Model Confusion Matrix.
+1.  **Collect Full Shot Chart Data (`shotchartdetail`)**
+    -   **Script**: `src/nba_data/scripts/collect_shot_charts.py`
+    -   **Status**: `[In Progress]`
+    -   **Details**: Collect RS and Playoff shot charts for all qualified players from 2019-20 to 2023-24. This is a large-scale data collection effort.
+
+2.  **Engineer "Spatial Rigidity" Features**
+    -   **Script**: `src/nba_data/scripts/calculate_shot_plasticity.py`
+    -   **Status**: `[Completed]`
+    -   **Features**:
+        -   `SHOT_DISTANCE_DELTA`: Change in median shot distance (RS vs PO).
+        -   `SPATIAL_VARIANCE_DELTA`: Change in the 2D variance of shot locations. This is the key hypothesized feature.
+        -   `PO_EFG_BEYOND_RS_MEDIAN`: Playoff eFG% on shots taken further than the player's regular season median distance.
+
+3.  **Train and Evaluate V3 Model**
+    -   **Script**: `src/nba_data/scripts/train_predictive_model.py`
+    -   **Status**: `[Completed]`
+    -   **Result**: The V3 model successfully integrated the plasticity features and achieved **52.5% accuracy**. This validates the hypothesis but falls short of the >60% goal.
+
+### **Step 2: Model Refinement for Sloan Paper**
+
+**Objective**: Take the validated V3 model and systematically refine it to break the 60% accuracy threshold.
+
+**Action Plan**:
+
+1.  **Hyperparameter Tuning**
+    -   **Action**: Use techniques like GridSearchCV or RandomizedSearchCV to find the optimal hyperparameters for the XGBoost model.
+    -   **Rationale**: The current model uses a default configuration. Tuning is the most direct path to unlocking further accuracy from the existing feature set.
+
+2.  **Feature Interaction Engineering**
+    -   **Action**: Create new features that capture the interaction between the core stress vectors.
+    -   **Example**: Create an `ADAPTABILITY_SCORE` by combining creation metrics with spatial variance (`CREATION_VOLUME_RATIO` * `SPATIAL_VARIANCE_DELTA`). This would directly test the hypothesis that players who expand their shot diet under pressure are more resilient.
+
+3.  **Expand Historical Dataset**
+    -   **Action**: Run the data collection scripts (`collect_shot_charts.py`, `evaluate_plasticity_potential.py`, etc.) for additional historical seasons (e.g., 2015-16 through 2018-19).
+    -   **Rationale**: A larger dataset will make the model more robust and help it learn more subtle patterns, reducing the impact of single-series playoff noise.
+
+### **Step 3: Sloan Paper Write-Up**
+
+**Objective**: Draft the Sloan paper, focusing on the project's compelling narrative.
+
+**Key Narrative Points**:
+1.  **The Core Problem**: Deconstructing the vague concept of "playoff resilience."
+2.  **The Breakthrough**: Solving the "Luka & Simmons Paradox" with the Dual-Grade Archetype system. This is the intellectual foundation.
+3.  **The Predictive Leap**: Moving beyond simple stats to predict these archetypes using "Stylistic Stress Vectors," with a special focus on how "Spatial Rigidity" proved to be the missing ingredient.
+
+This narrative combines a strong theoretical framework (the Dual-Grade system) with a validated, data-driven predictive model that has a clear, intuitive explanation (the Stress Vectors).
 
 ---
 

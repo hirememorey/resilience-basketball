@@ -20,7 +20,7 @@ import time
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 from src.nba_data.api.nba_stats_client import create_nba_stats_client
-from src.nba_data.constants import ID_TO_ABBREV, get_team_abbrev
+from src.nba_data.constants import ID_TO_ABBREV, get_team_abbrev, ABBREV_TO_ID
 
 # Setup Logging
 logging.basicConfig(
@@ -188,6 +188,98 @@ class StressVectorEngine:
             logger.error(f"❌ Error in Leverage Metrics: {e}", exc_info=True)
             return pd.DataFrame()
 
+    def fetch_context_metrics(self, season):
+        """
+        Vector 3: Context (Quality of Competition)
+        Calculates player performance against Top 10 vs Bottom 10 defenses.
+        """
+        logger.info(f"Fetching Context Metrics for {season}...")
+        try:
+            # 1. Load Defensive Context
+            def_context_path = self.data_dir / f"defensive_context_{season}.csv"
+            if not def_context_path.exists():
+                logger.warning(f"  - Defensive context file not found at {def_context_path}, skipping.")
+                return pd.DataFrame()
+            
+            df_def = pd.read_csv(def_context_path)
+            # Rank by DEF_RATING (lower is better)
+            df_def['DEF_RANK'] = df_def['DEF_RATING'].rank(method='first', ascending=True)
+            
+            top_10_defenses = df_def[df_def['DEF_RANK'] <= 10]['TEAM_ID'].tolist()
+            bottom_10_defenses = df_def[df_def['DEF_RANK'] > 20]['TEAM_ID'].tolist()
+
+            # 2. Load Regular Season Game Logs
+            game_logs_path = self.data_dir / f"rs_game_logs_{season}.csv"
+            if not game_logs_path.exists():
+                logger.warning(f"  - RS Game Logs not found at {game_logs_path}, skipping.")
+                return pd.DataFrame()
+                
+            df_logs = pd.read_csv(game_logs_path, dtype={'GAME_ID': str, 'PLAYER_ID': int, 'TEAM_ID': int})
+
+            # Get opponent team ID
+            def get_opponent_team_abbrev(row):
+                matchup = row['MATCHUP']
+                teams = matchup.replace('@', 'vs.').split(' vs. ')
+                # Find the abbreviation that is NOT the player's team's abbreviation
+                player_team_abbrev = row['TEAM_ABBREVIATION']
+                opponent_abbrev = teams[0] if teams[0] != player_team_abbrev else teams[1]
+                return opponent_abbrev
+
+            df_logs['OPPONENT_TEAM_ABBREV'] = df_logs.apply(get_opponent_team_abbrev, axis=1)
+            df_logs['OPPONENT_TEAM_ID'] = df_logs['OPPONENT_TEAM_ABBREV'].map(ABBREV_TO_ID)
+
+            # Drop rows where opponent ID could not be mapped (just in case)
+            df_logs.dropna(subset=['OPPONENT_TEAM_ID'], inplace=True)
+            df_logs['OPPONENT_TEAM_ID'] = df_logs['OPPONENT_TEAM_ID'].astype(int)
+
+            # 3. Split by Opponent Quality
+            df_vs_top10 = df_logs[df_logs['OPPONENT_TEAM_ID'].isin(top_10_defenses)]
+            df_vs_bottom10 = df_logs[df_logs['OPPONENT_TEAM_ID'].isin(bottom_10_defenses)]
+
+            # 4. Aggregate Player Stats
+            def aggregate_player_stats(df, suffix):
+                if df.empty:
+                    return pd.DataFrame()
+                
+                player_agg = df.groupby('PLAYER_ID').agg(
+                    FGA=('FGA', 'sum'),
+                    FGM=('FGM', 'sum'),
+                    FG3A=('FG3A', 'sum'),
+                    FG3M=('FG3M', 'sum'),
+                    FTA=('FTA', 'sum'),
+                    FTM=('FTM', 'sum'),
+                    USG_PCT=('USU_PCT', 'mean'), # Note: API has a typo USU_PCT
+                    MIN=('MIN', 'sum')
+                ).reset_index()
+
+                # Calculate TS%
+                player_agg[f'TS_PCT_{suffix}'] = np.where(
+                    player_agg['FGA'] + 0.44 * player_agg['FTA'] > 0,
+                    (player_agg['FGM'] + 0.5 * player_agg['FG3M']) / (2 * (player_agg['FGA'] + 0.44 * player_agg['FTA'])),
+                    0
+                )
+                player_agg = player_agg.rename(columns={'USG_PCT': f'USG_PCT_{suffix}', 'MIN': f'MIN_{suffix}'})
+                return player_agg[['PLAYER_ID', f'TS_PCT_{suffix}', f'USG_PCT_{suffix}', f'MIN_{suffix}']]
+
+            agg_top10 = aggregate_player_stats(df_vs_top10, 'vs_top10')
+            agg_bottom10 = aggregate_player_stats(df_vs_bottom10, 'vs_bottom10')
+
+            # 5. Merge and Create Features
+            df_context = pd.merge(agg_top10, agg_bottom10, on='PLAYER_ID', how='inner')
+            
+            # Filter for meaningful sample size
+            df_context = df_context[(df_context['MIN_vs_top10'] >= 50) & (df_context['MIN_vs_bottom10'] >= 50)]
+
+            df_context['QOC_TS_DELTA'] = df_context['TS_PCT_vs_top10'] - df_context['TS_PCT_vs_bottom10']
+            df_context['QOC_USG_DELTA'] = df_context['USG_PCT_vs_top10'] - df_context['USG_PCT_vs_bottom10']
+            
+            logger.info(f"✅ Processed Context Metrics for {len(df_context)} players.")
+            return df_context
+
+        except Exception as e:
+            logger.error(f"❌ Error in Context Metrics: {e}", exc_info=True)
+            return pd.DataFrame()
+
     def calculate_context_metrics(self, season):
         """
         Vector 3: Context (Quality of Competition)
@@ -211,16 +303,26 @@ class StressVectorEngine:
                 
                 # 2. Leverage
                 df_leverage = self.fetch_leverage_metrics(season)
+
+                # 3. Context
+                df_context = self.fetch_context_metrics(season)
                 
                 # Merge Vectors
+                df_season = df_creation
                 if not df_leverage.empty:
-                    df_season = pd.merge(df_creation, df_leverage, on='PLAYER_ID', how='left')
+                    df_season = pd.merge(df_season, df_leverage, on='PLAYER_ID', how='left')
                 else:
                     logger.warning(f"No leverage data for {season}, filling with NaNs")
-                    df_season = df_creation
                     df_season['LEVERAGE_TS_DELTA'] = np.nan
                     df_season['LEVERAGE_USG_DELTA'] = np.nan
                     df_season['CLUTCH_MIN_TOTAL'] = 0
+
+                if not df_context.empty:
+                    df_season = pd.merge(df_season, df_context, on='PLAYER_ID', how='left')
+                else:
+                    logger.warning(f"No context data for {season}, filling with NaNs")
+                    df_season['QOC_TS_DELTA'] = np.nan
+                    df_season['QOC_USG_DELTA'] = np.nan
                 
                 df_season['SEASON'] = season
                 all_seasons_data.append(df_season)
@@ -242,6 +344,7 @@ class StressVectorEngine:
         cols_to_keep = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON', 
                         'CREATION_TAX', 'CREATION_VOLUME_RATIO',
                         'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CLUTCH_MIN_TOTAL',
+                        'QOC_TS_DELTA', 'QOC_USG_DELTA',
                         'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED']
         
         # Only keep columns that actually exist

@@ -34,6 +34,9 @@ Before you begin, another developer started at this exact spot and spent a lot o
 ## @UpdateDocs
 Please update and/or remove any relevant markdown files based on the changes we've implemented or insights we've developed. Generally it's better to update existing docs than creating new ones. Do not touch prompts.md Ensure that another developer could pick up from where we left off with all the context they need. Once done, please commit and push the changes to github.
 
+## @UpdateDocsII
+I want another developer to implement this approach. Ensure that another developer could pick up from where we left off with all the context they need.Utilizing first principles, I want you to update the markdown content so that another developer won't get confused or try and solve a problem already solved earlier. Generally it's better to update existing docs than creating new ones. Do not touch prompts.md. Once done, please commit and push the changes to github. 
+
 ## @CleanupDocs
 I want you to utilize first principles to ensure that only necessary markdown files and markdown content within those files are in this project. I worry about documentation creep and want to make sure that only the minimum amount of content is available for a brand new developer with no context to pick up from where the project was last left off. Do not touch prompts.md
 

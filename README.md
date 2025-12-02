@@ -2,13 +2,26 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:**
-*   ✅ **Data Foundation:** Complete historical dataset (2015-2024).
-*   ✅ **The Paradox Solved:** The **Dual-Grade Archetype System** correctly classifies historical player performance (e.g., Jokić, Simmons).
-*   ✅ **Predictive Engine V1 Complete:** We have successfully built a model that **predicts Playoff Archetypes from Regular Season data with 50.5% accuracy** (2x random chance).
-*   ✅ **Mechanism Validated:** The model confirmed that **Self-Creation Volume** and **Clutch Usage Scaling** are the strongest predictors of playoff resilience.
+**Current Status & Key Insight (V2)**
 
----
+The project has successfully developed a "Stylistic Stress Test" to predict Playoff Archetypes using only Regular Season data.
+
+- **`V2 Predictive Model`**: An XGBoost Classifier that achieves **50.5% accuracy** in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on two Regular Season "Stress Vectors":
+    1.  **Creation Vector**: Measures a player's efficiency drop-off when forced to create their own shot (e.g., stats on 3+ dribbles vs. 0 dribbles).
+    2.  **Leverage Vector**: Measures how a player's efficiency and usage scale in clutch situations.
+
+- **`The "Plasticity" Pivot (The Sloan Alpha)`**: Initial plans to add a "Context Vector" (performance vs. top defenses) were superseded by a more powerful insight. A pilot study and subsequent model run have validated that **Spatial Rigidity** is the key missing variable. Our V3 model, incorporating these features, achieved **52.5% accuracy**, a notable improvement from the baseline.
+
+## Next Developer Mission: Break 60% Accuracy
+
+The theoretical breakthrough is complete. The path to >60% accuracy is now one of systematic machine learning refinement. Your mission is to take the V3 model and elevate it.
+
+This involves three primary tasks:
+1.  **Hyperparameter Tuning**: The current XGBoost model uses a default configuration. Systematically tune the model's hyperparameters (`n_estimators`, `max_depth`, `learning_rate`, etc.) to maximize performance.
+2.  **Feature Interaction Engineering**: Create new, more powerful features by combining the existing vectors. For example, an `ADAPTABILITY_SCORE` (`CREATION_VOLUME_RATIO` * `SPATIAL_VARIANCE_DELTA`) could explicitly reward players who diversify their shot profile under a heavy creation burden.
+3.  **Expand the Dataset**: The current model is trained on five seasons. Expand the data collection pipeline to include more historical seasons (e.g., back to 2015-16) to provide the model with more data to learn from.
+
+This is the core work required to prepare the analysis for the Sloan paper.
 
 ## Quick Start for New Developers
 

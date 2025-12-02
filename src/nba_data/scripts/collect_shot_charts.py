@@ -25,127 +25,93 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def get_target_players(season):
-    """
-    Load the list of target players for a given season.
-    We use results/resilience_scores_all.csv as the source of truth
-    for players who actually played significant playoff minutes.
-    """
-    source_path = Path("results/resilience_scores_all.csv")
-    if not source_path.exists():
-        logger.error(f"Source file {source_path} not found!")
+def load_qualified_players(season):
+    """Load qualified players from existing regular_season CSV."""
+    path = Path(f"data/regular_season_{season}.csv")
+    if not path.exists():
+        logger.error(f"Regular season data not found for {season} at {path}")
         return []
     
-    df = pd.read_csv(source_path)
-    
-    # Filter for the specific season
-    # The CSV has 'SEASON' column like '2023-24'
-    season_players = df[df['SEASON'] == season][['PLAYER_ID', 'PLAYER_NAME']].drop_duplicates()
-    
-    targets = []
-    for _, row in season_players.iterrows():
-        targets.append({
-            'id': row['PLAYER_ID'],
-            'name': row['PLAYER_NAME'],
-            'season': season
-        })
+    df = pd.read_csv(path)
+    if 'PLAYER_ID' not in df.columns:
+        logger.error(f"PLAYER_ID column missing in {path}")
+        return []
         
-    return targets
+    return df['PLAYER_ID'].unique().tolist()
 
-def fetch_shot_charts(client, player_id, season):
-    """
-    Fetch both Regular Season and Playoff shot charts.
-    Returns a combined DataFrame with a 'SEASON_TYPE' column.
-    """
-    dfs = []
-    
+def fetch_shot_chart(client, player_id, season):
+    """Fetches both RS and Playoff shot charts for a player."""
+    all_charts = []
     for season_type in ["Regular Season", "Playoffs"]:
         try:
-            data = client.get_player_shot_chart(
-                player_id=player_id, 
-                season=season, 
-                season_type=season_type
-            )
-            
-            # Check for valid response structure
-            if data and 'resultSets' in data and len(data['resultSets']) > 0:
-                headers = data['resultSets'][0]['headers']
-                rows = data['resultSets'][0]['rowSet']
-                
-                if rows:
-                    df = pd.DataFrame(rows, columns=headers)
+            resp = client.get_player_shot_chart(player_id=player_id, season=season, season_type=season_type)
+            if resp and 'resultSets' in resp and resp['resultSets']:
+                df = pd.DataFrame(
+                    resp['resultSets'][0]['rowSet'],
+                    columns=resp['resultSets'][0]['headers']
+                )
+                if not df.empty:
                     df['SEASON_TYPE'] = season_type
-                    df['PLAYER_ID'] = player_id
-                    df['SEASON'] = season
-                    dfs.append(df)
-                    
+                    all_charts.append(df)
         except Exception as e:
-            # Log but don't crash - we want to continue with other players
-            logger.warning(f"Failed to fetch {season_type} for {player_id}: {e}")
+            logger.error(f"Error fetching shot chart for Player {player_id}, Season {season}, Type {season_type}: {e}")
             
-    if not dfs:
+    if all_charts:
+        return pd.concat(all_charts, ignore_index=True)
         return pd.DataFrame()
         
-    return pd.concat(dfs, ignore_index=True)
-
-def process_player_task(args):
-    """
-    Worker function to fetch data for a single player.
-    Instantiates its own client to ensure thread safety.
-    """
-    player_target = args
-    player_id = player_target['id']
-    season = player_target['season']
-    
-    # Create a fresh client for this thread
-    client = NBAStatsClient()
-    # Set a conservative interval since we are running in parallel
-    client.min_request_interval = 0.6 
-    
-    return fetch_shot_charts(client, player_id, season)
+def fetch_task(args):
+    player_id, season = args
+    # Create a fresh client for each task to avoid shared state issues
+    local_client = NBAStatsClient()
+    local_client.min_request_interval = 0.6 # Be conservative with this endpoint
+    return fetch_shot_chart(local_client, player_id, season)
 
 def main():
     parser = argparse.ArgumentParser(description='Collect Shot Chart Data')
     parser.add_argument('--seasons', nargs='+', help='Seasons to collect (e.g. 2023-24)', required=True)
-    parser.add_argument('--workers', type=int, default=4, help='Number of parallel workers')
+    parser.add_argument('--workers', type=int, default=5, help='Number of parallel workers')
+    parser.add_argument('--pilot', action='store_true', help='Run in pilot mode for a small subset of players.')
     args = parser.parse_args()
     
     Path("data").mkdir(exist_ok=True)
     Path("logs").mkdir(exist_ok=True)
     
+    # Pilot player IDs
+    pilot_player_ids = [203999, 201939, 203507, 1629029] # Jokic, Curry, Giannis, Luka
+    
     for season in args.seasons:
-        logger.info(f"Starting collection for {season}...")
+        logger.info(f"Processing Shot Charts for {season}...")
         
-        targets = get_target_players(season)
-        if not targets:
-            logger.warning(f"No target players found for {season}. Skipping.")
+        if args.pilot:
+            player_ids = pilot_player_ids
+            logger.info(f"PILOT MODE: Using {len(player_ids)} specific players.")
+        else:
+            player_ids = load_qualified_players(season)
+
+        if not player_ids:
+            logger.warning(f"Skipping {season} due to missing player list")
             continue
             
-        logger.info(f"Found {len(targets)} players to process for {season}")
+        logger.info(f"Found {len(player_ids)} qualified players for {season}")
         
-        all_shots = []
+        tasks = [(pid, season) for pid in player_ids]
+        all_shot_charts = []
         
-        # Parallel Execution
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
-            # Map returns results in order of input
-            results = list(tqdm(
-                executor.map(process_player_task, targets), 
-                total=len(targets), 
-                desc=f"Fetching {season} Shot Charts"
-            ))
+            results = list(tqdm(executor.map(fetch_task, tasks), total=len(tasks), desc=f"Fetching {season} Shot Charts"))
             
             for res in results:
                 if not res.empty:
-                    all_shots.append(res)
+                    all_shot_charts.append(res)
         
-        # Save Results
-        if all_shots:
-            final_df = pd.concat(all_shots, ignore_index=True)
+        if all_shot_charts:
+            final_df = pd.concat(all_shot_charts, ignore_index=True)
             output_path = f"data/shot_charts_{season}.csv"
             final_df.to_csv(output_path, index=False)
-            logger.info(f"✅ Success! Saved {len(final_df)} shots to {output_path}")
+            logger.info(f"✅ Saved {len(final_df)} shots to {output_path}")
         else:
-            logger.warning(f"⚠️  No shot data collected for {season}")
+            logger.warning(f"No shot charts collected for {season}")
 
 if __name__ == "__main__":
     main()
