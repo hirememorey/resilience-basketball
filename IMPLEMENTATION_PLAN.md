@@ -43,34 +43,37 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 
 ---
 
-## Phase 7: The "Physicality" & "Expansion" Phase (Current)
+## Phase 7: The "Physicality" & "Expansion" Phase (In Progress)
 
 **Objective**: Boost predictive accuracy to >60% by capturing the missing "Force" dimension and learning from more historical failures.
 
-### **Step 1: The Physicality Vector (Free Throw Rate Resilience)**
+### **Step 1: The Physicality Vector (Free Throw Rate Resilience) - ✅ DONE**
 
-**Hypothesis**: Playoff resilience is often physical. Can the player get to their spot when the whistle is swallowed? We need to measure the ability to force the issue.
+**Status**: ✅ Implemented and Integrated (Dec 2025)
 
-**Action Plan**:
-1.  **Metric**: `FTr Resilience` = Playoff FTr / Regular Season FTr.
-2.  **Context**: Filter for games against Top-10 defenses in RS to see if FTr drops.
-3.  **Implementation**:
-    *   Create `src/nba_data/scripts/calculate_physicality_features.py`.
-    *   Integrate into `train_predictive_model.py`.
+**Implementation**:
+*   **Script**: `src/nba_data/scripts/calculate_physicality_features.py`
+*   **Metric**: `FTr Resilience` = Playoff FTr / Regular Season FTr.
+*   **Integration**: Integrated into `train_predictive_model.py`.
+*   **Impact**: `RS_FTr` is a top-5 feature. Model accuracy improved to **55.0%**.
 
-### **Step 2: Historical Data Expansion (2015-2019)**
+### **Step 2: Historical Data Expansion (2015-2019) - ⚠️ PARTIALLY DONE**
 
-**Hypothesis**: Machine Learning needs more failures to learn from. We are currently training on only 5 seasons. Expanding back to 2015 will provide critical data on "good regular season, bad playoff" players (e.g., DeMar DeRozan's Toronto years).
+**Status**: ⚠️ Partial (Aggregates collected, Shot Charts pending)
 
-**Action Plan**:
-1.  **Run Collection Pipeline**:
-    *   Run `collect_shot_charts.py` for 2015-16 to 2018-19.
-    *   Run `collect_shot_quality_aggregates.py` for 2015-16 to 2018-19.
-2.  **Re-run Feature Engineering**:
-    *   Re-run `evaluate_plasticity_potential.py` (Creation/Leverage vectors).
-    *   Re-run `calculate_shot_difficulty_features.py` (Pressure vector).
-3.  **Retrain V4 Model**:
-    *   Train on the full 9-year dataset.
+**Progress**:
+1.  **Collection**:
+    *   ✅ `collect_shot_quality_aggregates.py` run for 2015-16 to 2018-19.
+    *   ✅ `evaluate_plasticity_potential.py` run for 2015-16 to 2018-19 (Creation/Leverage).
+    *   ❌ `collect_shot_charts.py` **NOT RUN** (Time intensive). Plasticity features missing for these years.
+2.  **Model**:
+    *   ✅ Retrained on 9-year dataset (899 samples).
+    *   **Accuracy**: 55.0% (up from 53.5%).
+
+**Next Actions**:
+1.  **Run Shot Chart Collection**: Execute `python src/nba_data/scripts/collect_shot_charts.py --seasons 2015-16 2016-17 2017-18 2018-19` (Warning: Takes ~80 mins).
+2.  **Run Plasticity Calculation**: Execute `python src/nba_data/scripts/calculate_shot_plasticity.py` to fill missing features.
+3.  **Final Retrain**: Retrain model to potentially reach >60%.
 
 ### **Step 3: Sloan Paper Write-Up**
 

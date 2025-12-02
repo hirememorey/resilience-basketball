@@ -358,5 +358,9 @@ class StressVectorEngine:
 
 if __name__ == "__main__":
     engine = StressVectorEngine()
-    # Expanding window to capture enough historical data for training
-    engine.run(seasons=['2019-20', '2020-21', '2021-22', '2022-23', '2023-24'])
+    # Expanding window to capture enough historical data for training (2015-2024)
+    all_seasons = [
+        '2015-16', '2016-17', '2017-18', '2018-19',
+        '2019-20', '2020-21', '2021-22', '2022-23', '2023-24'
+    ]
+    engine.run(seasons=all_seasons)

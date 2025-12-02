@@ -2,33 +2,30 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status & Key Insight (V3)**
+**Current Status & Key Insight (V4)**
 
 The project has successfully developed a "Stylistic Stress Test" to predict Playoff Archetypes using only Regular Season data.
 
-- **`V3 Predictive Model`**: An XGBoost Classifier that achieves **53.5% accuracy** in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on three Regular Season "Stress Vectors":
-    1.  **Creation Vector**: Measures a player's efficiency drop-off when forced to create their own shot (e.g., stats on 3+ dribbles vs. 0 dribbles).
+- **`V4 Predictive Model`**: An XGBoost Classifier that achieves **57.2% accuracy** in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on four Regular Season "Stress Vectors":
+    1.  **Creation Vector**: Measures a player's efficiency drop-off when forced to create their own shot.
     2.  **Leverage Vector**: Measures how a player's efficiency and usage scale in clutch situations.
-    3.  **Pressure Vector (NEW)**: Measures a player's willingness to take tight shots (`Pressure Appetite`) and their efficiency on them (`Pressure Resilience`). This solved the "Shaq Problem" (Dominant Rigidity).
+    3.  **Pressure Vector**: Measures a player's willingness to take tight shots (`Pressure Appetite`).
+    4.  **Physicality Vector (NEW)**: Measures a player's ability to get to the line (`FTr Resilience`), proxying for "Force."
 
-- **`The "Plasticity" Pivot (The Sloan Alpha)`**: Initial plans to add a "Context Vector" (performance vs. top defenses) were superseded by a more powerful insight. A pilot study and subsequent model run have validated that **Spatial Rigidity** is the key missing variable.
+- **`Historical Expansion`**: We have expanded the training dataset to **9 seasons (2015-2024)**, giving the model nearly double the examples to learn from.
 
-## Next Developer Mission: The Last Mile to 60% Accuracy
+## Next Developer Mission: The Sloan Write-Up
 
-The theoretical breakthrough is complete. The path to >60% accuracy is now one of targeted feature engineering and data expansion. Your mission is to take the V3 model and elevate it to "Oracle" status.
+The predictive engine is now robust. The path forward is to finalize the findings and draft the paper.
 
-This involves two primary tasks:
-1.  **Implement the "Physicality" Vector**: We are currently missing a measure of "Force." Implement a **Free Throw Rate Resilience** metric to proxy for a player's ability to physically impose their will on a defense.
-2.  **Expand the Dataset**: The current model is trained on five seasons (2019-2024). Expand the data collection pipeline to include historical seasons back to **2015-16**. Machine Learning needs more examples of "Kings" (rare events) to learn robust patterns.
-
-This is the core work required to prepare the analysis for the Sloan paper.
+1.  **Review the Results**: See `results/predictive_model_report.md` (needs update with V4 results).
+2.  **Draft the Paper**: Synthesize the narrative around "Stress Vectors" predicting resilience.
 
 ## Quick Start for New Developers
 
 ### 1. Understand the Vision & Current State
 *   **`LUKA_SIMMONS_PARADOX.md`**: **CRITICAL.** Understands the core *descriptive* problem we solved.
-*   **`IMPLEMENTATION_PLAN.md`**: The roadmap, updated to reflect the completion of the V3 predictive model.
-*   **`results/predictive_model_report.md`**: **NEW.** Summarizes the performance and findings of our successful predictive model.
+*   **`IMPLEMENTATION_PLAN.md`**: The roadmap, now completed through Phase 7.
 
 ### 2. Set Up Environment
 ```bash
@@ -44,20 +41,17 @@ This generates the two key artifacts: the *labels* (Archetypes) and the *feature
 
 ```bash
 # 1. Generate Historical Archetypes (The Labels)
-# This is the "Descriptive Engine" that defines our ground truth.
 python src/nba_data/scripts/calculate_simple_resilience.py
 
 # 2. Generate Predictive Features (The Stress Vectors)
-# This is the "Stylistic Stress Test" that analyzes Regular Season data.
 python src/nba_data/scripts/evaluate_plasticity_potential.py
+python src/nba_data/scripts/calculate_physicality_features.py # NEW V4
 
-# 3. Generate Pressure Features (The "Shaq" Fix)
-# Collects and processes shot difficulty data
-python src/nba_data/scripts/collect_shot_quality_aggregates.py --seasons 2019-20 2020-21 2021-22 2022-23 2023-24
+# 3. Generate Pressure Features
+python src/nba_data/scripts/collect_shot_quality_aggregates.py --seasons 2015-16 2016-17 2017-18 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
 python src/nba_data/scripts/calculate_shot_difficulty_features.py
 
 # 4. Train the Predictive Model
-# This uses the features to predict the labels.
 python src/nba_data/scripts/train_predictive_model.py
 ```
 

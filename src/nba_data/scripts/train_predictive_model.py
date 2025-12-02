@@ -113,6 +113,29 @@ class ResiliencePredictor:
             # Drop duplicate columns if any (like PLAYER_NAME_pressure)
             cols_to_drop = [c for c in df_merged.columns if '_pressure' in c]
             df_merged = df_merged.drop(columns=cols_to_drop)
+            
+        # Physicality Features (New V3/V4)
+        physicality_path = self.results_dir / "physicality_features.csv"
+        if physicality_path.exists():
+            df_physicality = pd.read_csv(physicality_path)
+            logger.info(f"Loaded Physicality Features: {len(df_physicality)} rows.")
+            
+            df_merged = pd.merge(
+                df_merged,
+                df_physicality,
+                on=['PLAYER_NAME', 'SEASON'], # Physicality uses PLAYER_NAME/SEASON as keys or PLAYER_ID?
+                how='left',
+                suffixes=('', '_phys')
+            )
+            # Note: Physicality script uses PLAYER_ID, PLAYER_NAME, SEASON. 
+            # If 'PLAYER_ID' is in df_merged (it is), better to use that + SEASON
+            # But let's check if df_merged has PLAYER_ID consistently. Yes.
+            
+            # Drop duplicate columns
+            cols_to_drop = [c for c in df_merged.columns if '_phys' in c]
+            df_merged = df_merged.drop(columns=cols_to_drop)
+        else:
+            logger.warning("No physicality features file found.")
         
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
         
@@ -140,7 +163,10 @@ class ResiliencePredictor:
             'RS_PRESSURE_APPETITE',
             'RS_PRESSURE_RESILIENCE',
             'PRESSURE_APPETITE_DELTA',
-            'PRESSURE_RESILIENCE_DELTA'
+            'PRESSURE_RESILIENCE_DELTA',
+            # New Physicality Features
+            'FTr_RESILIENCE',
+            'RS_FTr'
         ]
         target = 'ARCHETYPE'
         
