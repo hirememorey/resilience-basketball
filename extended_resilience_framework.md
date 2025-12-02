@@ -56,6 +56,15 @@ Regular-season performance is an imperfect predictor of postseason success. The 
     *   **Archetype:** **Giannis Antetokounmpo**.
 
 ---
+### Note on "Plasticity" as a Vector (The "Metric Drift" Lesson)
+A critical insight from our V1 predictive models is that "plasticity" or "displacement" (a change in a player's shot chart) is a **vector**, not a scalar. The direction of the change is more important than the magnitude.
+
+*   **Example A (Adaptive Plasticity):** Luka Dončić is forced off the three-point line and increases his volume from the floater range. His shot chart *displaces*. This is a sign of **resilience**.
+*   **Example B (Forced Plasticity):** Rudy Gobert is drawn out of the paint by a 5-out offense and is forced to take mid-range shots. His shot chart *displaces*. This is a sign of **fragility**.
+
+Therefore, any analysis of adaptability must not just measure *if* a player changed, but *where* they were forced to migrate to and whether that new location was effective.
+
+---
 
 ## 5. Technical Implementation & Current Status
 

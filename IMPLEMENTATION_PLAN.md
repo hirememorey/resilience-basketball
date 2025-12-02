@@ -21,40 +21,49 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 
 ---
 
-## 🚀 Phase 5: The "Plasticity Potential" Model (Sloan Readiness)
+## 🚀 Phase 5: The "Stylistic Stress Test" Predictive Model (Sloan Readiness)
 
-**The Problem:** We now have perfect *labels* (King, Bulldozer, Victim, Sniper). We need to *predict* them.
+**The Problem:** We now have perfect *labels* (King, Bulldozer, Victim, Sniper). We need to *predict* them using only Regular Season data.
 
 **The Sloan Standard:** To be a paper, we need **Prescriptive Utility**. We must answer: *"How do we identify a 'King' BEFORE the playoffs?"*
 
-**The Hypothesis:** A player's "Plasticity Potential" is visible in the Regular Season during **High-Stress Outliers** (e.g., vs. Top-5 Defenses, Clutch Minutes).
+---
 
-### Step 1: The "Stress Test" Pipeline (NEXT PRIORITY)
-**Objective:** Calculate `RS_STRESS_METRICS` using *only* specific subsets of Regular Season data.
+### Critical Lessons from V1 (The Post-Mortem)
+Our initial attempt to solve this by simply filtering RS data for games against "Top-5 Defenses" failed (correlation of 0.08). The post-mortem revealed critical insights that now guide our V2 approach:
 
-*   **Task:** Create `src/nba_data/scripts/evaluate_plasticity_potential.py`.
-*   **Methodology:**
-    1.  **Baseline:** Player's performance vs. Bottom-10 Defenses (The "Comfort Zone").
-    2.  **Stress Test:** Player's performance vs. Top-5 Defenses (The "Simulated Playoff").
-    3.  **Metric:** Calculate the drop-off in Volume and Efficiency under stress.
-    4.  **Validation:** Correlate `RS_STRESS_DROP_OFF` with actual `RESILIENCE_QUOTIENT` and `ARCHETYPE`.
+1.  **The "Different Sport" Fallacy:** RS "Stress" is not the same as Playoff "Stress." Playoff pressure is about *schematic removal*, not just better opponents. We cannot simply filter game logs; we must find proxies for the *stylistic shift* that occurs in the postseason.
+2.  **The "Identifier Hell" Fix:** The NBA API uses inconsistent team IDs. A canonical `teams.py` or `constants.py` file with hardcoded ID-to-Abbreviation maps is the first step to prevent hours of debugging.
+3.  **The "Metric Drift" Reality:** "Plasticity" is a vector, not a scalar. A player changing their shot chart (displacement) is only meaningful in context. For a star, it can be adaptation (good); for a role player, it can mean being forced from their spots (bad).
 
-### Step 2: Addressing Critical Failure Modes (Luka & Simmons)
-**Status: COMPLETED (Dec 2025).**
-We successfully resolved the paradoxes using the Dual-Grade system.
-*   **See:** `LUKA_SIMMONS_PARADOX.md`
-*   **Code:** `src/nba_data/scripts/calculate_simple_resilience.py`
+---
 
-### Step 3: The "Fragility Taxonomy" Clustering
-**Status: COMPLETED (Dec 2025).**
+### The V2 Plan: The "Stylistic Stress Test" Pipeline
+**The Hypothesis:** A player's resilience is visible in RS situations that mimic the three core stylistic shifts of the playoffs: **1) Increased Self-Creation**, **2) Higher Leverage**, and **3) Schematic Pressure**.
 
-We formally clustered players into 4 archetypes:
-*   **King (Resilient Star):** High RQ, High Dominance.
-*   **Bulldozer (Fragile Star):** Low RQ, High Dominance.
-*   **Sniper (Resilient Role):** High RQ, Low Dominance.
-*   **Victim (Fragile Role):** Low RQ, Low Dominance.
+#### Step 1: Feature Engineering (The "Stress Vectors")
+**Objective:** Create features that measure a player's performance under these specific stylistic pressures. This will be done in a new script: `src/nba_data/scripts/evaluate_plasticity_potential.py`.
 
-**See:** `results/resilience_archetypes.csv`
+*   **Vector 1: The "Isolation" Vector (Self-Creation)**
+    *   **Theory:** Assisted looks disappear in the playoffs. We need to measure a player's ability to create their own shot.
+    *   **Source:** `ShotDashboardClient` (Dribble Ranges).
+    *   **Metric:** `Creation_Tax` = (Efficiency on 3+ Dribbles) / (Efficiency on 0 Dribbles).
+
+*   **Vector 2: The "Clutch" Vector (Leverage)**
+    *   **Theory:** Clutch minutes (last 5 mins, score +/- 5) are the best proxy for playoff intensity.
+    *   **Source:** `leaguedashplayerclutch` endpoint (needs to be added to `NBAStatsClient`).
+    *   **Metric:** `Leverage_Delta` = (Clutch Usage - Season Usage) and (Clutch TS% - Season TS%).
+
+*   **Vector 3: The "Quality of Competition" Vector**
+    *   **Theory:** A simplified, more robust version of the original "Stress Test."
+    *   **Source:** Regular Season Game Logs.
+    *   **Metric:** `QoC_Ratio` = (Performance vs. Top 10 Defenses) / (Performance vs. Bottom 10 Defenses).
+
+#### Step 2: Modeling (Non-Linearity is Key)
+**Objective:** Train a model that can understand the complex, non-linear interactions between these features.
+
+*   **Methodology:** An **XGBoost Classifier**. A linear model will fail because the "Stress Vectors" have different meanings for different archetypes.
+*   **Target:** The `archetype` column from `results/resilience_archetypes.csv`.
 
 ---
 
@@ -66,14 +75,15 @@ The current "Truth" of the project is in the Archetypes.
 2.  Visualize with `results/resilience_archetypes_plot.png`.
 3.  Understand the logic in `src/nba_data/scripts/calculate_simple_resilience.py`.
 
-### 2. Start the "Stress Test" (Your Mission)
-Your goal is to predict these archetypes.
-1.  **Feature Engineering:** Use `NBAStatsClient` to fetch RS Game Logs.
-2.  **Filtering:** Filter for games against Top-5 Defensive Rating teams.
-3.  **Calculation:** Calculate `RS_Stress_Vol_Ratio` and `RS_Stress_Eff_Ratio`.
-4.  **Prediction:** Train a classifier (XGBoost/RandomForest) to predict `ARCHETYPE` using these RS Stress features.
+### 2. Your Mission: Build the Predictive Engine (V2)
+Your goal is to predict the archetypes using the "Stylistic Stress Test" approach.
+1.  **Infrastructure:** Create `src/nba_data/constants.py` and hardcode the Team ID/Abbreviation maps.
+2.  **API Expansion:** Add the `get_league_player_clutch_stats` endpoint to `src/nba_data/api/nba_stats_client.py`.
+3.  **Feature Engineering:** Create `src/nba_data/scripts/evaluate_plasticity_potential.py`. This script will fetch all the necessary data (Game Logs, Shot Dashboards, Clutch Stats) and engineer the "Stress Vector" features.
+4.  **Prediction:** Train an XGBoost classifier to predict `ARCHETYPE` using the features created in the previous step.
+5.  **Validation:** Correlate your predictions with the actual Playoff Archetypes to validate the model.
 
-### 3. Key Files
-*   `src/nba_data/scripts/calculate_simple_resilience.py`: The engine that generates the target labels.
-*   `LUKA_SIMMONS_PARADOX.md`: The bible for why we use this metric.
-*   `src/nba_data/scripts/collect_regular_season_stats.py`: The data harvester.
+### 3. Key Files for This Phase
+*   `src/nba_data/scripts/calculate_simple_resilience.py`: The engine that generates your **target labels**.
+*   `LUKA_SIMMONS_PARADOX.md`: The bible for *why* we use the current labels.
+*   `src/nba_data/api/nba_stats_client.py`: The client you will need to extend.

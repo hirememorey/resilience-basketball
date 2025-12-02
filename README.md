@@ -58,7 +58,7 @@ We are aiming for a paper worthy of the **MIT Sloan Sports Analytics Conference*
 *   **The Bulldozer:** Sacrifices Efficiency to maintain Volume (Luka).
 *   **The Victim:** Sacrifices Volume to maintain Efficiency (Simmons).
 
-**Next Step:** Proving we can predict these Archetypes using *Regular Season* data by simulating playoff stress (isolating performance vs. Top-5 Defenses).
+**Next Step:** Proving we can predict these Archetypes using *Regular Season* data by simulating playoff *stylistic shifts* (isolating performance in clutch, self-created, and high-pressure situations).
 
 See **`IMPLEMENTATION_PLAN.md`** for the detailed roadmap.
 
