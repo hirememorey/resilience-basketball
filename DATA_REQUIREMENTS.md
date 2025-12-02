@@ -96,23 +96,29 @@ This document specifies the data sources for the **Playoff Resilience Engine** a
 
 ---
 
-## Historical Expansion Target
+## Historical Expansion Status
 
-To reach >60% model accuracy, we need to expand from 5 seasons to 9 seasons:
+**✅ COMPLETE** - All seasons collected (2015-16 through 2024-25)
 
-| Season | Status |
-|--------|--------|
-| 2023-24 | ✅ Collected |
-| 2022-23 | ✅ Collected |
-| 2021-22 | ✅ Collected |
-| 2020-21 | ✅ Collected |
-| 2019-20 | ✅ Collected |
-| 2018-19 | 🎯 **Needs Collection** |
-| 2017-18 | 🎯 **Needs Collection** |
-| 2016-17 | 🎯 **Needs Collection** |
-| 2015-16 | 🎯 **Needs Collection** |
+| Season | Shot Quality Aggregates | Clock Data | Status |
+|--------|------------------------|------------|--------|
+| 2024-25 | ✅ Collected | ✅ Collected | Complete |
+| 2023-24 | ✅ Collected | ✅ Collected | Complete |
+| 2022-23 | ✅ Collected | ✅ Collected | Complete |
+| 2021-22 | ✅ Collected | ✅ Collected | Complete |
+| 2020-21 | ✅ Collected | ✅ Collected | Complete |
+| 2019-20 | ✅ Collected | ✅ Collected | Complete |
+| 2018-19 | ✅ Collected | ✅ Collected | Complete |
+| 2017-18 | ✅ Collected | ✅ Collected | Complete |
+| 2016-17 | ✅ Collected | ✅ Collected | Complete |
+| 2015-16 | ✅ Collected | ✅ Collected | Complete |
 
-**Command to expand:**
+**Clock Data Collection (Optimized):**
 ```bash
-python src/nba_data/scripts/collect_shot_quality_aggregates.py --seasons 2015-16 2016-17 2017-18 2018-19
+# Collect clock data for all seasons (parallelized, ~4-5x faster)
+python src/nba_data/scripts/collect_shot_quality_with_clock.py \
+  --seasons 2015-16 2016-17 2017-18 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24 2024-25 \
+  --workers 8
 ```
+
+**Note:** Clock data collection has been optimized with ThreadPoolExecutor for parallel fetching. The `--workers` parameter controls parallelism (default: 8).

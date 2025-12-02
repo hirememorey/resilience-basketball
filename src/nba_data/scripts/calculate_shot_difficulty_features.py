@@ -46,9 +46,17 @@ def load_all_shot_quality_clock_data():
     return pd.concat(dfs, ignore_index=True)
 
 def calculate_clock_features(df_clock):
-    """Calculate Late vs Early Clock Pressure features."""
+    """Calculate Late vs Early Clock Pressure features.
+    
+    Applies data quality fixes:
+    - Caps eFG% at 1.0 (should never exceed 1.0)
+    - Sets features to NaN if sample size is too small (< 5 shots per game equivalent)
+    """
     if df_clock.empty:
         return pd.DataFrame()
+    
+    # Minimum shots per game for reliable clock features (5 shots per game * games played)
+    MIN_SHOTS_FOR_RELIABILITY = 5
     
     # Ensure numeric columns
     clock_cols = [
@@ -61,40 +69,57 @@ def calculate_clock_features(df_clock):
         if col in df_clock.columns:
             df_clock[col] = pd.to_numeric(df_clock[col], errors='coerce').fillna(0)
     
+    # Cap eFG% values at 1.0 (they should never exceed 1.0)
+    efg_cols = ['EFG_0_2_LATE', 'EFG_0_2_EARLY', 'EFG_2_4_LATE', 'EFG_2_4_EARLY']
+    for col in efg_cols:
+        if col in df_clock.columns:
+            df_clock[col] = df_clock[col].clip(upper=1.0)
+    
     # Calculate total tight FGA (0-2 + 2-4) for late and early clock
     df_clock['TIGHT_FGA_LATE'] = df_clock['FGA_0_2_LATE'] + df_clock['FGA_2_4_LATE']
     df_clock['TIGHT_FGA_EARLY'] = df_clock['FGA_0_2_EARLY'] + df_clock['FGA_2_4_EARLY']
     df_clock['TIGHT_FGA_TOTAL'] = df_clock['TIGHT_FGA_LATE'] + df_clock['TIGHT_FGA_EARLY']
     
+    # Calculate total shots for sample size check (per game * games)
+    df_clock['TOTAL_TIGHT_SHOTS'] = df_clock['TIGHT_FGA_TOTAL'] * df_clock['GP']
+    df_clock['TOTAL_TIGHT_SHOTS_LATE'] = df_clock['TIGHT_FGA_LATE'] * df_clock['GP']
+    df_clock['TOTAL_TIGHT_SHOTS_EARLY'] = df_clock['TIGHT_FGA_EARLY'] * df_clock['GP']
+    
     # Late Clock Pressure Appetite: % of tight shots taken in late clock
     df_clock['LATE_CLOCK_PRESSURE_APPETITE'] = np.where(
         df_clock['TIGHT_FGA_TOTAL'] > 0,
         df_clock['TIGHT_FGA_LATE'] / df_clock['TIGHT_FGA_TOTAL'],
-        0
+        np.nan
     )
     
     # Early Clock Pressure Appetite: % of tight shots taken in early clock
     df_clock['EARLY_CLOCK_PRESSURE_APPETITE'] = np.where(
         df_clock['TIGHT_FGA_TOTAL'] > 0,
         df_clock['TIGHT_FGA_EARLY'] / df_clock['TIGHT_FGA_TOTAL'],
-        0
+        np.nan
     )
     
     # Late Clock Pressure Resilience: Weighted eFG% on tight shots in late clock
+    # Only calculate if we have sufficient sample size
     df_clock['LATE_CLOCK_PRESSURE_RESILIENCE'] = np.where(
-        df_clock['TIGHT_FGA_LATE'] > 0,
+        df_clock['TOTAL_TIGHT_SHOTS_LATE'] >= MIN_SHOTS_FOR_RELIABILITY,
         ((df_clock['EFG_0_2_LATE'] * df_clock['FGA_0_2_LATE']) + 
-         (df_clock['EFG_2_4_LATE'] * df_clock['FGA_2_4_LATE'])) / df_clock['TIGHT_FGA_LATE'],
-        0
+         (df_clock['EFG_2_4_LATE'] * df_clock['FGA_2_4_LATE'])) / df_clock['TIGHT_FGA_LATE'].replace(0, np.nan),
+        np.nan
     )
+    # Cap at 1.0
+    df_clock['LATE_CLOCK_PRESSURE_RESILIENCE'] = df_clock['LATE_CLOCK_PRESSURE_RESILIENCE'].clip(upper=1.0)
     
     # Early Clock Pressure Resilience: Weighted eFG% on tight shots in early clock
+    # Only calculate if we have sufficient sample size
     df_clock['EARLY_CLOCK_PRESSURE_RESILIENCE'] = np.where(
-        df_clock['TIGHT_FGA_EARLY'] > 0,
+        df_clock['TOTAL_TIGHT_SHOTS_EARLY'] >= MIN_SHOTS_FOR_RELIABILITY,
         ((df_clock['EFG_0_2_EARLY'] * df_clock['FGA_0_2_EARLY']) + 
-         (df_clock['EFG_2_4_EARLY'] * df_clock['FGA_2_4_EARLY'])) / df_clock['TIGHT_FGA_EARLY'],
-        0
+         (df_clock['EFG_2_4_EARLY'] * df_clock['FGA_2_4_EARLY'])) / df_clock['TIGHT_FGA_EARLY'].replace(0, np.nan),
+        np.nan
     )
+    # Cap at 1.0
+    df_clock['EARLY_CLOCK_PRESSURE_RESILIENCE'] = df_clock['EARLY_CLOCK_PRESSURE_RESILIENCE'].clip(upper=1.0)
     
     return df_clock
 
@@ -125,13 +150,14 @@ def calculate_features(df):
     
     # 2. PRESSURE RESILIENCE: eFG% on shots with defender < 2 feet (Very Tight)
     # We focus on the most extreme pressure.
-    df['PRESSURE_RESILIENCE'] = df['EFG_0_2']
+    # Cap eFG% at 1.0
+    df['PRESSURE_RESILIENCE'] = df['EFG_0_2'].clip(upper=1.0)
     
     # Also calculate "Tight" resilience (0-4 feet) for robustness
     total_tight_fga = df['FGA_0_2'] + df['FGA_2_4']
     # Weighted average eFG
-    weighted_tight_efg = ((df['EFG_0_2'] * df['FGA_0_2']) + (df['EFG_2_4'] * df['FGA_2_4'])) / total_tight_fga
-    df['PRESSURE_RESILIENCE_BROAD'] = weighted_tight_efg.fillna(0)
+    weighted_tight_efg = ((df['EFG_0_2'] * df['FGA_0_2']) + (df['EFG_2_4'] * df['FGA_2_4'])) / total_tight_fga.replace(0, np.nan)
+    df['PRESSURE_RESILIENCE_BROAD'] = weighted_tight_efg.clip(upper=1.0).fillna(0)
     
     return df
 
@@ -182,11 +208,16 @@ def pivot_and_calculate_deltas(df, df_clock=None):
             merged = pd.merge(merged, po_clock_subset, on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'], how='left')
         
         # Calculate clock deltas
+        # Only calculate deltas if both RS and PO values are valid (not NaN)
         for feat in clock_feature_cols:
             rs_col = f'RS_{feat}'
             po_col = f'PO_{feat}'
             if rs_col in merged.columns and po_col in merged.columns:
-                merged[f'{feat}_DELTA'] = merged[po_col] - merged[rs_col]
+                merged[f'{feat}_DELTA'] = np.where(
+                    merged[rs_col].notna() & merged[po_col].notna(),
+                    merged[po_col] - merged[rs_col],
+                    np.nan
+                )
         
         logger.info(f"Added clock features: {len([c for c in merged.columns if 'CLOCK' in c])} columns")
     

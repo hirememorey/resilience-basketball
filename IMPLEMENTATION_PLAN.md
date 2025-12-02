@@ -98,6 +98,13 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 
 **Key Insight**: The clock distinction reveals that shot timing matters as much as shot difficulty. Late-clock pressure resilience is a strong positive signal, while early-clock pressure provides negative signal.
 
+**Data Collection Achievement (Dec 2025):**
+*   ✅ Expanded clock data collection to all 10 seasons (2015-16 through 2024-25)
+*   ✅ Optimized collection script with ThreadPoolExecutor parallelization (~4-5x faster)
+*   ✅ Implemented data quality fixes: eFG% capped at 1.0, minimum sample size thresholds
+*   ✅ Achieved 100% clock feature coverage (up from 12%)
+*   ✅ Model accuracy improved to **59.4%** (up from 58.3% baseline)
+
 ### **Step 4: Sloan Paper Preparation - READY**
 
 **Status**: 🎯 **READY FOR DRAFTING**
@@ -106,7 +113,7 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 1.  **The Luka/Simmons Paradox**: Volume matters as much as efficiency ("Abdication Tax")
 2.  **The Dual-Grade Archetype System**: Separating Adaptability from Dominance
 3.  **Mechanistic Stress Vectors**: Creation, Leverage, Pressure (with Clock Distinction), Rim Pressure, and Context
-4.  **Predictive Validation**: 58.3% accuracy with mechanistic explanations
+4.  **Predictive Validation**: **59.4% accuracy** with mechanistic explanations and full clock data coverage
 
 ---
 

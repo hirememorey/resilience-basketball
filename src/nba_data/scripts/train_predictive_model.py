@@ -213,8 +213,23 @@ class ResiliencePredictor:
         if missing_features:
             logger.warning(f"Missing expected features, they will be ignored: {missing_features}")
         
-        X = df[existing_features]
+        X = df[existing_features].copy()
         y = df[target]
+        
+        # Handle NaN values in features
+        # For clock features with low coverage, fill NaN with 0 (no clock pressure data = neutral signal)
+        # For other features, fill with median
+        for col in X.columns:
+            if X[col].isna().sum() > 0:
+                if 'CLOCK' in col:
+                    # Clock features: fill NaN with 0 (neutral signal when no data)
+                    X[col] = X[col].fillna(0)
+                    logger.info(f"Filled {X[col].isna().sum()} NaN values in {col} with 0")
+                else:
+                    # Other features: fill with median
+                    median_val = X[col].median()
+                    X[col] = X[col].fillna(median_val)
+                    logger.info(f"Filled {X[col].isna().sum()} NaN values in {col} with median ({median_val:.4f})")
         
         # Encode Labels
         le = LabelEncoder()
