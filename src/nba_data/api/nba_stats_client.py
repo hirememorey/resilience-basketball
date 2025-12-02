@@ -76,7 +76,7 @@ class NBAStatsClient:
         self.requests_per_minute = 100
         self.request_interval = 60.0 / self.requests_per_minute
         self.last_request_time = 0.0
-        self.min_request_interval = 5.0  # Minimum time between requests in seconds
+        self.min_request_interval = 0.6  # Reduced from 5.0 to 0.6 to match 100 req/min
 
         # Adaptive rate limiting state
         self.consecutive_failures = 0
@@ -596,7 +596,7 @@ class NBAStatsClient:
         }
         return self._make_request(endpoint, params)
 
-    def get_player_game_logs(self, player_id: int, season: str = "2024-25", season_type: str = "Regular Season") -> Dict[str, Any]:
+    def get_player_game_logs(self, player_id: int, season: str = "2024-25", season_type: str = "Regular Season", measure_type: str = "Base") -> Dict[str, Any]:
         """Get game logs for a specific player."""
         endpoint = "playergamelogs"
         params = {
@@ -606,7 +606,7 @@ class NBAStatsClient:
             "LastNGames": "0",
             "LeagueID": "00",
             "Location": "",
-            "MeasureType": "Base",
+            "MeasureType": measure_type,
             "Month": "0",
             "OpponentTeamID": "0",
             "Outcome": "",

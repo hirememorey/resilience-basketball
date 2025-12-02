@@ -123,26 +123,62 @@ def main():
             player_ids = get_playoff_players(client, season)
             logger.info(f"Found {len(player_ids)} playoff players")
         
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# ... existing imports ...
+
+def process_player(client, player_id, season):
+    """Helper to fetch logs for a single player."""
+    try:
+        return fetch_player_playoff_logs(client, player_id, season)
+    except Exception as e:
+        logger.error(f"Error processing player {player_id}: {e}")
+        return pd.DataFrame()
+
+def main():
+    parser = argparse.ArgumentParser(description='Collect Playoff Game Logs')
+    parser.add_argument('--seasons', nargs='+', help='Seasons to collect (e.g. 2023-24)', required=True)
+    parser.add_argument('--player_id', type=int, help='Optional: Collect for single player only', required=False)
+    parser.add_argument('--workers', type=int, default=3, help='Number of parallel workers')
+    args = parser.parse_args()
+    
+    client = NBAStatsClient()
+    Path("data").mkdir(exist_ok=True)
+    
+    for season in args.seasons:
+        logger.info(f"Processing {season}...")
+        
+        if args.player_id:
+            player_ids = [args.player_id]
+            logger.info(f"Collecting for single player: {args.player_id}")
+        else:
+            player_ids = get_playoff_players(client, season)
+            logger.info(f"Found {len(player_ids)} playoff players")
+        
         all_logs = []
         
-        for i, player_id in enumerate(player_ids):
-            logs = fetch_player_playoff_logs(client, player_id, season)
+        # Use ThreadPoolExecutor for parallel fetching
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            future_to_pid = {executor.submit(process_player, client, pid, season): pid for pid in player_ids}
             
-            if not logs.empty:
-                all_logs.append(logs)
-            
-            # Log progress every 10 players
-            if (i + 1) % 10 == 0:
-                logger.info(f"Processed {i + 1}/{len(player_ids)} players")
+            for i, future in enumerate(as_completed(future_to_pid)):
+                pid = future_to_pid[future]
+                try:
+                    logs = future.result()
+                    if not logs.empty:
+                        all_logs.append(logs)
+                except Exception as exc:
+                    logger.error(f"Player {pid} generated an exception: {exc}")
                 
-                # Incremental Save
-                if all_logs:
-                    temp_df = pd.concat(all_logs, ignore_index=True)
-                    output_path = f"data/playoff_logs_{season}.csv"
-                    temp_df.to_csv(output_path, index=False)
-                    logger.info(f"Incremental save: {len(temp_df)} rows")
-                
-            time.sleep(0.6) # Respect rate limits
+                if (i + 1) % 10 == 0:
+                    logger.info(f"Processed {i + 1}/{len(player_ids)} players")
+                    
+                    # Incremental Save
+                    if all_logs:
+                        temp_df = pd.concat(all_logs, ignore_index=True)
+                        output_path = f"data/playoff_logs_{season}.csv"
+                        temp_df.to_csv(output_path, index=False)
+                        logger.info(f"Incremental save: {len(temp_df)} rows")
             
         if all_logs:
             final_df = pd.concat(all_logs, ignore_index=True)

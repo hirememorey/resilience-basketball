@@ -6,9 +6,7 @@
 
 **Target:** Submission to MIT Sloan Sports Analytics Conference.
 
-**Core Breakthrough (Dec 2025):** We have mathematically proven that **Resilience is "Counter-Punch Efficiency."**
-*   **Findings:** Resilient players are *not* those who maintain their shot diet (Correlation: -0.06). They are the ones who maintain efficiency in the *new* zones that defenses force them into (Correlation: +0.38, P < 0.0001).
-*   **The Metric:** `COUNTER_PUNCH_EFF` = Efficiency in zones where Playoff Volume > Regular Season Volume.
+**Core Breakthrough (Dec 2025):** We have solved the **Luka/Simmons Paradox** by establishing the **Dual-Grade Archetype System**. Resilience is defined as the interaction between **Adaptability** (Resilience Quotient) and **Dominance** (Absolute Value).
 
 ---
 
@@ -16,82 +14,66 @@
 
 We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 
-*   **Phase 1: Data Integrity:** ✅ Solved via `collect_rs_game_logs.py` (Granular data).
-*   **Phase 2: Descriptive Resilience:** ✅ Solved via `calculate_resilience_scores.py` (Performance vs. Expectation).
-*   **Phase 3: Predictive Engine:** ✅ Solved via `train_predictive_model.py` (Top-10 Defense Performance).
-*   **Phase 4: Mechanistic Engine:** ✅ Solved via `calculate_shot_plasticity.py`. We have identified the mechanism of resilience.
+*   **Phase 1: Data Integrity:** ✅ Solved. Full historical dataset (2015-2024) collected and verified.
+*   **Phase 2: Descriptive Resilience:** ✅ Solved. The "Dual-Grade" system correctly classifies historical outliers.
+*   **Phase 3: Predictive Engine:** ✅ Initial "Plasticity" model showed promise; now needs retraining on the new Archetype labels.
+*   **Phase 4: The Paradox Fix:** ✅ Solved. `LUKA_SIMMONS_PARADOX.md` details the resolution.
 
 ---
 
 ## 🚀 Phase 5: The "Plasticity Potential" Model (Sloan Readiness)
 
-**The Problem:** Our current "Counter-Punch" metric is descriptive (post-hoc). We know *who* adapted, but only after the playoffs happen.
-**The Sloan Standard:** To be a paper, we need **Prescriptive Utility**. We must answer: *"How do we identify this Counter-Punch trait in a player BEFORE the playoffs?"*
+**The Problem:** We now have perfect *labels* (King, Bulldozer, Victim, Sniper). We need to *predict* them.
+
+**The Sloan Standard:** To be a paper, we need **Prescriptive Utility**. We must answer: *"How do we identify a 'King' BEFORE the playoffs?"*
 
 **The Hypothesis:** A player's "Plasticity Potential" is visible in the Regular Season during **High-Stress Outliers** (e.g., vs. Top-5 Defenses, Clutch Minutes).
 
-### Step 1: The "Stress Test" Pipeline
-**Objective:** Calculate `COUNTER_PUNCH_EFF` using *only* specific subsets of Regular Season data to see if it predicts Playoff `COUNTER_PUNCH_EFF`.
+### Step 1: The "Stress Test" Pipeline (NEXT PRIORITY)
+**Objective:** Calculate `RS_STRESS_METRICS` using *only* specific subsets of Regular Season data.
 
 *   **Task:** Create `src/nba_data/scripts/evaluate_plasticity_potential.py`.
 *   **Methodology:**
-    1.  **Baseline:** Player's shot chart vs. Bottom-10 Defenses (The "Comfort Zone").
-    2.  **Stress Test:** Player's shot chart vs. Top-5 Defenses (The "Simulated Playoff").
-    3.  **Metric:** Calculate the `RS_STRESS_COUNTER_PUNCH` (Efficiency in zones where volume increases against Top-5 defenses).
-    4.  **Validation:** Correlate `RS_STRESS_COUNTER_PUNCH` with actual `PLAYOFF_RESILIENCE`.
+    1.  **Baseline:** Player's performance vs. Bottom-10 Defenses (The "Comfort Zone").
+    2.  **Stress Test:** Player's performance vs. Top-5 Defenses (The "Simulated Playoff").
+    3.  **Metric:** Calculate the drop-off in Volume and Efficiency under stress.
+    4.  **Validation:** Correlate `RS_STRESS_DROP_OFF` with actual `RESILIENCE_QUOTIENT` and `ARCHETYPE`.
 
 ### Step 2: Addressing Critical Failure Modes (Luka & Simmons)
-**Status: Implemented (Dec 2025) but requires Review.**
-We discovered two critical paradoxes that threatened the model's validity:
-1.  **The Luka Paradox:** High volume/usage players were penalized for efficiency drops even if they carried the offense.
-    *   *Fix Attempted:* **Production Resilience** (Per-Minute Volume Scaling).
-2.  **The Simmons Paradox:** Passive players maintained efficiency by refusing to shoot.
-    *   *Fix Attempted:* **Abdication Tax** (Penalizing low volume per minute).
-
-**See `LUKA_SIMMONS_PARADOX.md` for the full First Principles analysis before proceeding.**
+**Status: COMPLETED (Dec 2025).**
+We successfully resolved the paradoxes using the Dual-Grade system.
+*   **See:** `LUKA_SIMMONS_PARADOX.md`
+*   **Code:** `src/nba_data/scripts/calculate_simple_resilience.py`
 
 ### Step 3: The "Fragility Taxonomy" Clustering
-**Objective:** Formally cluster players into the 4 archetypes we discovered.
-**Status: REDEFINED (Dec 2025).**
+**Status: COMPLETED (Dec 2025).**
 
-We have moved away from K-Means clustering (Black Box) to a transparent "Dual-Grade" Classification System (Glass Box).
+We formally clustered players into 4 archetypes:
+*   **King (Resilient Star):** High RQ, High Dominance.
+*   **Bulldozer (Fragile Star):** Low RQ, High Dominance.
+*   **Sniper (Resilient Role):** High RQ, Low Dominance.
+*   **Victim (Fragile Role):** Low RQ, Low Dominance.
 
-*   **The Logic:** Resilience is the tension between **Adaptability** (Skill/Efficiency) and **Dominance** (Will/Volume).
-*   **The Fix for Luka/Simmons:**
-    *   We normalized Adaptability and Dominance scores by **Usage Tier** (High, Mid, Low) to ensure fair comparisons.
-    *   **Critical Pivot:** We determined that "Delta" metrics (Playoff vs RS) are flawed for Dominance because they reward stability over magnitude. We are moving towards **Absolute Playoff Value** (Points Created Per 75) as the true measure of Dominance.
-*   **The New Archetypes:**
-    *   **The Master:** High Adaptability, High Dominance (Giannis '21).
-    *   **The Bulldozer:** Low Adaptability, High Dominance (Luka '24).
-    *   **The Reluctant Sniper:** High Adaptability, Low Dominance (Simmons '21).
-    *   **The Crumble:** Low Adaptability, Low Dominance.
-
-See `src/nba_data/scripts/proof_of_concept_archetypes.py` for the working prototype.
+**See:** `results/resilience_archetypes.csv`
 
 ---
 
 ## Implementation Guide for New Developer
 
-### 1. Run the Existing Pipeline
-The full pipeline is robust and parallelized.
-```bash
-# 1. Collect Shot Charts (Takes ~20 mins for 6 seasons)
-python src/nba_data/scripts/collect_shot_charts.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24 --workers 4
+### 1. Review the Current State
+The current "Truth" of the project is in the Archetypes.
+1.  Check `results/resilience_archetypes.csv`.
+2.  Visualize with `results/resilience_archetypes_plot.png`.
+3.  Understand the logic in `src/nba_data/scripts/calculate_simple_resilience.py`.
 
-# 2. Calculate Plasticity Metrics
-python src/nba_data/scripts/calculate_shot_plasticity.py
-
-# 3. Analyze Correlations (The "Money Plot")
-python src/nba_data/scripts/analyze_plasticity_correlation.py
-```
-
-### 2. Start the "Stress Test" (Next Priority)
-Your goal is to prove we can scout this trait.
-1.  Modify `NBAStatsClient` to allow fetching game logs/shots filtered by *Opponent Team ID*.
-2.  Collect shot charts for games against Top-5 Defensive Rating teams for each season.
-3.  Calculate the "Stress Plasticity" and correlate it with the known "Playoff Plasticity".
+### 2. Start the "Stress Test" (Your Mission)
+Your goal is to predict these archetypes.
+1.  **Feature Engineering:** Use `NBAStatsClient` to fetch RS Game Logs.
+2.  **Filtering:** Filter for games against Top-5 Defensive Rating teams.
+3.  **Calculation:** Calculate `RS_Stress_Vol_Ratio` and `RS_Stress_Eff_Ratio`.
+4.  **Prediction:** Train a classifier (XGBoost/RandomForest) to predict `ARCHETYPE` using these RS Stress features.
 
 ### 3. Key Files
-*   `src/nba_data/scripts/collect_shot_charts.py`: The data harvester.
-*   `src/nba_data/scripts/calculate_shot_plasticity.py`: The logic engine (Hellinger distance, efficiency deltas).
-*   `results/plasticity_scores.csv`: The output file containing the breakthrough metrics.
+*   `src/nba_data/scripts/calculate_simple_resilience.py`: The engine that generates the target labels.
+*   `LUKA_SIMMONS_PARADOX.md`: The bible for why we use this metric.
+*   `src/nba_data/scripts/collect_regular_season_stats.py`: The data harvester.

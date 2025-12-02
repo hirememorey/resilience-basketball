@@ -134,6 +134,10 @@ def aggregate_playoff_series(po_logs, team_map):
             'OPPONENT_ABBREV': opp_abbrev,
             'po_games_played': games_played,
             'po_minutes_total': total_min,
+            'po_poss_total': total_poss,
+            'po_fga': total_fga,
+            'po_fta': total_fta,
+            'po_pts': total_pts,
             'po_ts_pct': ts_pct,
             'po_ppg_per75': ppg75,
             'po_ast_pct': avg_ast_pct,
@@ -183,6 +187,10 @@ def main():
         'TS_PCT': 'rs_ts_pct',
         'AST_PCT': 'rs_ast_pct',
         'USG_PCT': 'rs_usg_pct',
+        'PACE': 'rs_pace',
+        'MIN': 'rs_min',
+        'FGA': 'rs_fga',
+        'FTA': 'rs_fta',
         'PTS': 'rs_pts', # Need to calculate per 75?
         # RS data is per 100 poss!
         # So PTS in RS data is actually Points per 100 Possessions?
@@ -190,7 +198,7 @@ def main():
         # Yes. So to get Per 75, we multiply by 0.75
     }
     
-    rs_prep = rs_df[['PLAYER_ID', 'SEASON', 'TS_PCT', 'AST_PCT', 'USG_PCT', 'PTS']].copy()
+    rs_prep = rs_df[['PLAYER_ID', 'SEASON', 'TS_PCT', 'AST_PCT', 'USG_PCT', 'PTS', 'PACE', 'MIN', 'FGA', 'FTA']].copy()
     rs_prep = rs_prep.rename(columns=rs_cols)
     rs_prep['rs_ppg_per75'] = rs_prep['rs_pts'] * 0.75
     
@@ -249,9 +257,10 @@ def main():
     cols_to_keep = [
         'PLAYER_ID', 'PLAYER_NAME', 'SEASON', 'OPPONENT_ABBREV',
         'rs_ts_pct', 'rs_ppg_per75', 'rs_ast_pct', 'rs_usg_pct',
+        'rs_pace', 'rs_min', 'rs_fga', 'rs_fta', 'rs_pts',
         'opp_def_context_score',
         'po_ts_pct', 'po_ppg_per75', 'po_ast_pct',
-        'po_games_played', 'po_minutes_total'
+        'po_games_played', 'po_minutes_total', 'po_poss_total', 'po_fga', 'po_fta', 'po_pts'
     ]
     
     final_df = final_df[cols_to_keep]

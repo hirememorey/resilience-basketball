@@ -1,7 +1,7 @@
-# The Luka & Simmons Paradox: A First-Principles Analysis
+# The Luka & Simmons Paradox: Problem & Resolution
 
 ## 1. The Problem State
-As of Dec 2025, the "Plasticity" model (which measures resilience as the ability to maintain efficiency in new shot zones) encountered two critical failure modes that threatened its validity.
+As of Dec 2025, the initial "Plasticity" model (which measured resilience as the ability to maintain efficiency in new shot zones) encountered two critical failure modes that threatened its validity.
 
 ### Failure Mode A: The "Luka Paradox" (False Negative)
 *   **Observation:** Luka Dončić (2023-24) led his team to the NBA Finals but was flagged as "Fragile" by the model.
@@ -38,49 +38,53 @@ Comparing a small-sample Playoff run against an outlier Regular Season performan
 
 ---
 
-## 3. Proposed Solutions (Implemented & Available for Review)
+## 3. The Solution: The "Dual-Grade" Archetype System
 
-We implemented three specific fixes to address these paradoxes. The new developer should review these and decide whether to keep, refine, or replace them.
+We resolved these paradoxes by abandoning the search for a single scalar "Resilience Score" in favor of a **Dual-Grade System** that evaluates players on two independent axes.
 
-### Fix 1: Bayesian Baseline Correction (The "Shrinkage" Fix)
-*   **Goal:** Stop penalizing elite players for regressing to the mean.
-*   **Method:** Instead of comparing `Playoff %` vs `Raw Regular Season %`, we compare against a **Bayesian Posterior**:
-    $$Expected = \frac{PlayerMakes + (K \times LeagueAvg)}{PlayerAttempts + K}$$
-*   **Result:** It helped marginally (+0.6% for Luka) but was overwhelmed by Luka's massive sample size.
-*   **Status:** **Active** in `calculate_shot_plasticity.py`.
+### The Two Axes
+1.  **Resilience Quotient (RQ):** The Y-Axis. Measures **Adaptability**.
+    *   Formula: `(Playoff Volume / Regular Season Volume) * (Playoff Efficiency / Regular Season Efficiency)`
+    *   This effectively captures "Counter-Punch Efficiency" while penalizing passivity (Volume drop) and rewarding scaling (Volume increase).
+2.  **Dominance Score:** The X-Axis. Measures **Absolute Value**.
+    *   Formula: `Playoff Points Per 75 Possessions`
+    *   We determined that "Delta" metrics (Playoff vs RS) are flawed for Dominance because they reward low-usage players for stability. The true measure of Dominance in the playoffs is **Absolute Magnitude**.
 
-### Fix 2: Shot Quality Context (The "Defense" Fix)
-*   **Goal:** Forgive efficiency drops if the defender was closer.
-*   **Method:** Calculate the change in `% Tight Shots` (Defender < 4ft). Add a credit factor to the efficiency score.
-*   **Result:** **Failed for Luka.** His "Tight Shot %" didn't change significantly. The difficulty came from the *zone* (floater vs layup), not the defender distance.
-*   **Status:** **Active** but secondary.
+### The Four Archetypes
 
-### Fix 3: Production Resilience (The "Volume" Fix)
-*   **Goal:** Reward scaling up (Luka) and penalize hiding (Simmons).
-*   **Method:** Measure the delta in **Makes Per 36 Minutes** in the Counter-Punch zones.
-    $$Score = (PO\_Makes_{per36} - RS\_Makes_{per36}) \times ScalingFactor$$
-*   **Result:**
-    *   **Luka:** `+0.14` (Positive). He produced *more* points per minute despite the efficiency drop. **Success.**
-    *   **Giannis:** `+0.57` (Elite). He scaled massively. **Success.**
-    *   **Simmons:** `+0.07` (Neutral/Low). He barely maintained production despite playing big minutes. **Partial Success** (Ideally should be negative, but definitely not Elite).
-*   **Status:** **Active** in `calculate_shot_plasticity.py`.
+| Archetype | Description | RQ (Resilience) | Dominance | Example |
+| :--- | :--- | :--- | :--- | :--- |
+| **King (Resilient Star)** | Elite production maintained under pressure. | High (>0.95) | High (>20) | **Nikola Jokić**, **Giannis '21** |
+| **Bulldozer (Fragile Star)** | High production, but inefficient ("Wins Ugly"). | Low (<0.95) | High (>20) | **Luka Dončić**, **LeBron '15** |
+| **Sniper (Resilient Role)** | Efficient, but low volume/impact. | High (>0.95) | Low (<20) | **Aaron Gordon**, **Brook Lopez** |
+| **Victim (Fragile Role)** | Low production, low efficiency. The "Collapse". | Low (<0.95) | Low (<20) | **Ben Simmons**, **D'Angelo Russell** |
 
 ---
 
-## 4. Decision Points for Next Developer
+## 4. Validation Results (Historical Analysis 2015-2024)
 
-You are not bound by these implementations. Consider these alternatives:
+We ran this model against the full 9-year dataset. The results confirmed the solution to the paradoxes.
 
-1.  **Usage-Efficiency Curve:** Instead of linear production, should we model the *expected drop* in efficiency for every unit increase in usage? (e.g., "For every +10% volume, expect -2% efficiency"). If Luka beat that curve, he is resilient.
-2.  **The "Simmons Penalty":** Should `PRODUCTION_RESILIENCE` punish drops in *Attempts* rather than just *Makes*? Simmons maintained *makes* (barely) but his *attempts* plummeted.
-3.  **Weighting:** Currently, `COUNTER_PUNCH_EFF` (Efficiency) and `PRODUCTION_RESILIENCE` (Volume) are separate columns. How should they be combined into a single "Resilience Score"? Or should they remain a 2D clustering map?
+### Validating the Luka Paradox
+*   **Luka Dončić (2020-21 vs LAC):** **King** (RQ: 1.159, Dom: 33.9). *Elite.*
+*   **Luka Dončić (2023-24 Run):**
+    *   vs MIN: **King** (RQ 0.958, Dom 30.8).
+    *   vs LAC/OKC/BOS: **Bulldozer** (RQ ~0.85, Dom >27.0).
+    *   **Verdict:** Correctly identified as an offensive engine who carries massive load ("Bulldozer") even when efficiency drops, but hits "King" status when healthy/hot. **Not Fragile.**
 
-**Recommendation:**
-Start by plotting `COUNTER_PUNCH_EFF` (X-axis) vs `PRODUCTION_RESILIENCE` (Y-axis).
-*   **Top Right:** True Resilience (Giannis).
-*   **Top Left:** The Engine (Luka - High Vol, Low Eff).
-*   **Bottom Right:** The Sniper (KD - Low Vol, High Eff).
-*   **Bottom Left:** The Crumble (Simmons/Gobert - Low Vol, Low Eff).
+### Validating the Simmons Paradox
+*   **Ben Simmons (2020-21 vs ATL):** **Victim** (RQ: 0.647, Dom: 10.1).
+    *   RQ dropped massively due to Volume abdication. Dominance was non-existent.
+    *   **Verdict:** Correctly identified as a collapse. **Not Resilient.**
 
-If the clusters look right, the metrics are valid. If not, re-engineer from principles.
+### Other Key Findings
+*   **Nikola Jokić:** The gold standard. **King** in 9 out of 11 career series.
+*   **DeMar DeRozan (2015-2018):** Correctly captures his struggles. **Victim** vs IND '16, **Bulldozer** (inefficient volume) vs CLE '16.
+*   **James Harden:** Historical validation of his "Bulldozer" status (high volume, significant efficiency drops) in HOU years.
 
+---
+
+## 5. Implementation Status
+*   **Script:** `src/nba_data/scripts/calculate_simple_resilience.py`
+*   **Dataset:** `results/resilience_archetypes.csv` (Full 2015-2024 History)
+*   **Visualization:** `results/resilience_archetypes_plot.png`

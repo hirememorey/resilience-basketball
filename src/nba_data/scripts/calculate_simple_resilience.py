@@ -1,237 +1,192 @@
-#!/usr/bin/env python3
-"""
-Simple Playoff Resilience Calculator
-
-From first principles: Playoff resilience is about maintaining shooting efficiency
-when the games matter most. This calculator uses the simplest, most direct approach:
-
-Resilience Score = Playoff TS% / Regular Season TS%
-
-- > 1.0: Improved in playoffs (resilient)
-- = 1.0: Maintained efficiency (neutral)
-- < 1.0: Declined in playoffs (fragile)
-
-Weighted by regular season usage to focus on players who actually matter.
-"""
-
-import sqlite3
 import pandas as pd
-import sys
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from pathlib import Path
-from typing import Dict, List, Optional
 
-# Add project root to path
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-
-DB_PATH = "data/nba_stats.db"
-
-def get_db_connection():
-    """Get database connection."""
-    return sqlite3.connect(DB_PATH)
-
-def calculate_player_resilience(player_id: int, season: str) -> Optional[Dict]:
-    """
-    Calculate simple resilience score for a player in a given season.
-
-    Returns:
-        dict with resilience metrics, or None if insufficient data
-    """
-    conn = get_db_connection()
-
-    # Get regular season advanced stats
-    rs_query = """
-        SELECT
-            p.player_name,
-            rs.true_shooting_percentage as rs_ts_pct,
-            rs.usage_percentage as rs_usage_pct,
-            rs.games_played as rs_games,
-            rs.offensive_rating as rs_ortg,
-            rs.effective_field_goal_percentage as rs_efg_pct
-        FROM player_advanced_stats rs
-        JOIN players p ON rs.player_id = p.player_id
-        WHERE rs.player_id = ? AND rs.season = ? AND rs.season_type = 'Regular Season'
-        AND rs.games_played >= 20  -- Minimum games for reliability
-    """
-
-    # Get playoff advanced stats
-    po_query = """
-        SELECT
-            true_shooting_percentage as po_ts_pct,
-            usage_percentage as po_usage_pct,
-            games_played as po_games,
-            offensive_rating as po_ortg,
-            effective_field_goal_percentage as po_efg_pct
-        FROM player_playoff_advanced_stats
-        WHERE player_id = ? AND season = ?
-        AND games_played >= 4  -- At least one short playoff series
-    """
-
-    try:
-        # Get regular season data
-        rs_df = pd.read_sql_query(rs_query, conn, params=(player_id, season))
-
-        if rs_df.empty:
-            return None  # No regular season data
-
-        rs_data = rs_df.iloc[0]
-
-        # Get playoff data
-        po_df = pd.read_sql_query(po_query, conn, params=(player_id, season))
-
-        if po_df.empty:
-            return None  # No playoff data
-
-        po_data = po_df.iloc[0]
-
-        # Calculate resilience metrics
-        ts_resilience = po_data['po_ts_pct'] / rs_data['rs_ts_pct']
-        ortg_resilience = po_data['po_ortg'] / rs_data['rs_ortg']
-        efg_resilience = po_data['po_efg_pct'] / rs_data['rs_efg_pct']
-
-        # Weighted resilience (higher usage = more important)
-        usage_weight = rs_data['rs_usage_pct']
-        weighted_ts_resilience = ts_resilience * usage_weight
-
-        return {
-            'player_id': player_id,
-            'player_name': rs_data['player_name'],
-            'season': season,
-
-            # Raw metrics
-            'rs_ts_pct': rs_data['rs_ts_pct'],
-            'po_ts_pct': po_data['po_ts_pct'],
-            'rs_usage_pct': rs_data['rs_usage_pct'],
-            'po_usage_pct': po_data['po_usage_pct'],
-
-            # Resilience ratios
-            'ts_resilience_ratio': ts_resilience,
-            'ortg_resilience_ratio': ortg_resilience,
-            'efg_resilience_ratio': efg_resilience,
-
-            # Weighted scores
-            'weighted_ts_resilience': weighted_ts_resilience,
-
-            # Sample sizes
-            'rs_games': rs_data['rs_games'],
-            'po_games': po_data['po_games']
-        }
-
-    except Exception as e:
-        print(f"Error calculating resilience for player {player_id}: {e}")
-        return None
-    finally:
-        conn.close()
-
-def calculate_season_resilience(season: str = "2023-24", min_usage: float = 0.20) -> pd.DataFrame:
-    """
-    Calculate resilience scores for all qualified players in a season.
-
-    Args:
-        season: Season to analyze (e.g., "2023-24")
-        min_usage: Minimum regular season usage % to include
-    """
-    conn = get_db_connection()
-
-    # Get all players with sufficient regular season and playoff data
-    query = """
-        SELECT DISTINCT
-            rs.player_id,
-            p.player_name
-        FROM player_advanced_stats rs
-        JOIN player_playoff_advanced_stats po ON rs.player_id = po.player_id AND rs.season = po.season
-        JOIN players p ON rs.player_id = p.player_id
-        WHERE rs.season = ?
-          AND rs.season_type = 'Regular Season'
-          AND rs.games_played >= 20
-          AND rs.usage_percentage >= ?
-          AND po.games_played >= 4
-        ORDER BY rs.usage_percentage DESC
-    """
-
-    players_df = pd.read_sql_query(query, conn, params=(season, min_usage))
-    conn.close()
-
-    print(f"Calculating resilience for {len(players_df)} players in {season} (min usage: {min_usage:.1%})")
-
-    results = []
-    for _, row in players_df.iterrows():
-        resilience = calculate_player_resilience(row['player_id'], season)
-        if resilience:
-            results.append(resilience)
-
-    df = pd.DataFrame(results)
-
-    # Add resilience categories
-    df['resilience_category'] = pd.cut(
-        df['ts_resilience_ratio'],
-        bins=[0, 0.85, 0.95, 1.05, 1.15, float('inf')],
-        labels=['Severely Fragile', 'Fragile', 'Neutral', 'Resilient', 'Highly Resilient']
+def calculate_simple_resilience():
+    # 1. Load Data
+    data_path = Path("data/training_dataset.csv")
+    if not data_path.exists():
+        print("❌ Training data not found!")
+        return
+        
+    df = pd.read_csv(data_path)
+    print(f"Loaded {len(df)} rows.")
+    
+    # 2. Recalculate Metrics (Fixing potential upstream errors)
+    
+    # --- Regular Season ---
+    # Estimate RS Possessions per Game: (MIN * PACE) / 48
+    df['rs_poss_est'] = (df['rs_min'] * df['rs_pace']) / 48
+    
+    # RS True Shot Attempts
+    df['rs_tsa'] = df['rs_fga'] + 0.44 * df['rs_fta']
+    
+    # RS Volume (TSA per 75)
+    # If rs_poss_est is 0, avoid div/0
+    df['rs_vol_75'] = np.where(
+        df['rs_poss_est'] > 0,
+        (df['rs_tsa'] / df['rs_poss_est']) * 75,
+        0
     )
-
-    # Sort by weighted resilience (most important players first)
-    df = df.sort_values('weighted_ts_resilience', ascending=False)
-
-    return df
-
-def identify_underperformers(season: str = "2023-24", min_usage: float = 0.25) -> pd.DataFrame:
-    """
-    Identify players who significantly underperformed in playoffs.
-
-    Focus on high-usage players with meaningful TS% drops.
-    """
-    df = calculate_season_resilience(season, min_usage)
-
-    # Filter for significant underperformance
-    underperformers = df[
-        (df['ts_resilience_ratio'] < 0.90) &  # >10% TS% drop
-        (df['rs_usage_pct'] >= min_usage)
+    
+    # RS Efficiency (TS%) - Recalculate to be safe
+    # TS% = PTS / (2 * TSA)
+    df['rs_ts_pct_calc'] = np.where(
+        df['rs_tsa'] > 0,
+        df['rs_pts'] / (2 * df['rs_tsa']),
+        0
+    )
+    
+    # --- Playoffs ---
+    # PO True Shot Attempts
+    df['po_tsa'] = df['po_fga'] + 0.44 * df['po_fta']
+    
+    # PO Volume (TSA per 75)
+    df['po_vol_75'] = np.where(
+        df['po_poss_total'] > 0,
+        (df['po_tsa'] / df['po_poss_total']) * 75,
+        0
+    )
+    
+    # PO Efficiency (TS%)
+    df['po_ts_pct_calc'] = np.where(
+        df['po_tsa'] > 0,
+        df['po_pts'] / (2 * df['po_tsa']),
+        0
+    )
+    
+    # 3. Calculate Ratios
+    df['vol_ratio'] = np.where(
+        df['rs_vol_75'] > 0,
+        df['po_vol_75'] / df['rs_vol_75'],
+        0
+    )
+    
+    df['eff_ratio'] = np.where(
+        df['rs_ts_pct_calc'] > 0,
+        df['po_ts_pct_calc'] / df['rs_ts_pct_calc'],
+        0
+    )
+    
+    # 4. Resilience Quotient
+    df['resilience_quotient'] = df['vol_ratio'] * df['eff_ratio']
+    
+    # 5. Dominance Score (PO PPG per 75)
+    df['dominance_score'] = np.where(
+        df['po_poss_total'] > 0,
+        (df['po_pts'] / df['po_poss_total']) * 75,
+        0
+    )
+    
+    # 6. Filtering
+    # We want significant series.
+    # DeRozan 2016 series were ~220-260 mins.
+    # Let's set min minutes to 150 (approx 4-5 games of starter minutes)
+    MIN_PO_MINUTES = 150 
+    MIN_DOMINANCE = 10 # Keep it low to include "Victims" but exclude bench warmers
+    
+    df_filtered = df[
+        (df['po_minutes_total'] >= MIN_PO_MINUTES) & 
+        (df['dominance_score'] >= MIN_DOMINANCE)
     ].copy()
+    
+    print(f"Filtered to {len(df_filtered)} significant player-series (Min {MIN_PO_MINUTES} mins, {MIN_DOMINANCE} Dom).")
+    
+    # 7. Archetypes
+    def classify_archetype(row):
+        rq = row['resilience_quotient']
+        dom = row['dominance_score']
+        
+        # Thresholds
+        RQ_THRESHOLD = 0.95
+        DOM_THRESHOLD = 20.0
+        
+        if dom >= DOM_THRESHOLD:
+            if rq >= RQ_THRESHOLD:
+                return "King (Resilient Star)"
+            else:
+                return "Bulldozer (Fragile Star)"
+        else:
+            if rq >= RQ_THRESHOLD:
+                return "Sniper (Resilient Role)"
+            else:
+                return "Victim (Fragile Role)"
 
-    # Calculate severity score
-    underperformers['severity_score'] = (
-        (1 - underperformers['ts_resilience_ratio']) *
-        underperformers['rs_usage_pct'] * 100
+    df_filtered['archetype'] = df_filtered.apply(classify_archetype, axis=1)
+    
+    # 8. Save Results
+    output_dir = Path("results")
+    output_dir.mkdir(exist_ok=True)
+    
+    # Save CSV
+    cols_to_save = [
+        'PLAYER_NAME', 'SEASON', 'OPPONENT_ABBREV', 
+        'resilience_quotient', 'dominance_score', 'archetype',
+        'vol_ratio', 'eff_ratio', 'rs_vol_75', 'po_vol_75',
+        'rs_ts_pct_calc', 'po_ts_pct_calc', 'po_minutes_total'
+    ]
+    df_filtered[cols_to_save].sort_values(['PLAYER_NAME', 'SEASON']).to_csv(output_dir / "resilience_archetypes.csv", index=False)
+    print(f"Saved results to {output_dir / 'resilience_archetypes.csv'}")
+    
+    # 9. Plot
+    plot_archetypes(df_filtered, output_dir)
+
+def plot_archetypes(df, output_dir):
+    plt.figure(figsize=(12, 10))
+    
+    # Color map
+    colors = {
+        "King (Resilient Star)": "#2ecc71",      # Green
+        "Bulldozer (Fragile Star)": "#f1c40f",   # Yellow
+        "Sniper (Resilient Role)": "#3498db",    # Blue
+        "Victim (Fragile Role)": "#e74c3c"       # Red
+    }
+    
+    sns.scatterplot(
+        data=df,
+        x='dominance_score',
+        y='resilience_quotient',
+        hue='archetype',
+        palette=colors,
+        s=100,
+        alpha=0.7
     )
-
-    # Sort by severity
-    underperformers = underperformers.sort_values('severity_score', ascending=False)
-
-    return underperformers
-
-def main():
-    """Main function to demonstrate simple resilience calculation."""
-
-    print("🏀 Simple Playoff Resilience Calculator")
-    print("=" * 50)
-
-    # Calculate resilience for recent season
-    season = "2023-24"
-    df = calculate_season_resilience(season, min_usage=0.20)
-
-    print(f"\n📊 {season} Resilience Analysis")
-    print(f"Found {len(df)} qualified players\n")
-
-    # Show top resilient players
-    print("✅ MOST RESILIENT PLAYERS:")
-    top_resilient = df.head(10)
-    for _, row in top_resilient.iterrows():
-        print(".3f")
-
-    print("\n❌ MOST FRAGILE PLAYERS:")
-    bottom_fragile = df[df['ts_resilience_ratio'] < 0.9].tail(10)
-    for _, row in bottom_fragile.iterrows():
-        print(".3f")
-
-    # Identify major underperformers
-    print(f"\n🚨 MAJOR UNDERPERFORMERS ({season}):")
-    underperformers = identify_underperformers(season, min_usage=0.25)
-
-    for _, row in underperformers.head(10).iterrows():
-        print(".1f")
-
-    # Save results
-    df.to_csv(f"data/simple_resilience_{season.replace('-', '_')}.csv", index=False)
-    print(f"\n💾 Results saved to data/simple_resilience_{season.replace('-', '_')}.csv")
+    
+    # Reference lines
+    plt.axvline(x=20, color='gray', linestyle='--', alpha=0.5)
+    plt.axhline(y=0.95, color='gray', linestyle='--', alpha=0.5)
+    
+    # Annotate notable cases
+    notable_players = [
+        ("Luka Dončić", "2020-21"),
+        ("Jimmy Butler", "2022-23"),
+        ("Jamal Murray", "2019-20"),
+        ("Ben Simmons", "2020-21"),
+        ("DeMar DeRozan", "2015-16"),
+        ("Donovan Mitchell", "2019-20"),
+        ("Nikola Jokić", "2020-21")
+    ]
+    
+    for player, season in notable_players:
+        player_rows = df[(df['PLAYER_NAME'].str.contains(player)) & (df['SEASON'] == season)]
+        for _, row in player_rows.iterrows():
+            plt.text(
+                row['dominance_score'] + 0.2, 
+                row['resilience_quotient'], 
+                f"{row['PLAYER_NAME']} ({row['OPPONENT_ABBREV']})", 
+                fontsize=8,
+                alpha=0.8
+            )
+            
+    plt.title('NBA Playoff Resilience Archetypes (2015-2024)', fontsize=16)
+    plt.xlabel('Dominance Score (Playoff PTS/75)', fontsize=12)
+    plt.ylabel('Resilience Quotient (Vol Ratio × Eff Ratio)', fontsize=12)
+    plt.grid(True, alpha=0.3)
+    
+    plt.savefig(output_dir / "resilience_archetypes_plot.png", dpi=300, bbox_inches='tight')
+    print(f"Saved plot to {output_dir / 'resilience_archetypes_plot.png'}")
 
 if __name__ == "__main__":
-    main()
+    calculate_simple_resilience()

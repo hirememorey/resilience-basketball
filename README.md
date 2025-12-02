@@ -3,46 +3,49 @@
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
 **Current Status:**
-*   ✅ **Descriptive Engine:** Fully functional. Calculates "Resilience Scores" for historical playoffs based on performance vs. expectation (accounting for defensive context).
-*   ✅ **Predictive Engine:** Fully functional. Predicts future resilience with positive R² using "Performance vs. Top-10 Defenses" and "Consistency" metrics.
-*   ✅ **Mechanistic Engine (The Sloan Breakthrough):** **CONFIRMED.** We have identified the mechanism of resilience: **Counter-Punch Efficiency**.
-    *   Resilience Correlation: **+0.381 (P < 0.0001)**.
-    *   Key Insight: Resilient players are those who maintain efficiency in the *new* zones that playoff defenses force them into.
-*   🔄 **Dual-Grade Archetypes (Phase 5b):** We have pivoted to a "Dual-Grade" system that separates **Adaptability** (Efficiency) from **Dominance** (Volume) to correctly classify outliers like Luka Dončić and Ben Simmons. See `LUKA_SIMMONS_PARADOX_UPDATE.md`.
+*   ✅ **Data Foundation:** Complete historical dataset (2015-2024) with Regular Season, Playoff Logs, and Defensive Context.
+*   ✅ **The Paradox Solved:** We have successfully addressed the "Luka Dončić Paradox" (False Negative) and "Ben Simmons Paradox" (False Positive) using the **Dual-Grade Archetype System**.
+*   ✅ **Dual-Grade System:** Players are now evaluated on two axes:
+    1.  **Resilience Quotient (RQ):** Adaptability (Volume × Efficiency retention).
+    2.  **Dominance Score:** Absolute Value (Playoff PTS/75).
+*   ✅ **Historical Validation:** The model correctly classifies historical outliers (Jokić as "King", Simmons as "Victim", Harden as "Bulldozer").
 
 ---
 
 ## Quick Start for New Developers
 
 ### 1. Understand the Vision
-*   **`README.md`**: You're here! High-level overview.
-*   **`IMPLEMENTATION_PLAN.md`**: **CRITICAL.** Read this to understand the "Plasticity Potential" model and your specific next steps (The "Stress Test").
+*   **`LUKA_SIMMONS_PARADOX.md`**: **CRITICAL.** Read this to understand the core problem we solved and the logic behind the current "Dual-Grade" model.
+*   **`IMPLEMENTATION_PLAN.md`**: The roadmap for the "Plasticity Potential" predictive model (The Sloan Paper goal).
 
 ### 2. Set Up Environment
 ```bash
 # Install dependencies
-pip install pandas numpy scikit-learn scipy tenacity requests xgboost tqdm tabulate
+pip install pandas numpy scikit-learn scipy tenacity requests xgboost tqdm tabulate seaborn matplotlib
 
 # Create required directories
 mkdir -p data/cache models results logs
 ```
 
-### 3. Run the Full Pipeline
-This pipeline collects data, generates features, calculates plasticity, and outputs the leaderboard.
+### 3. Run the Resilience Engine
+This pipeline collects data, builds the dataset, and calculates the Archetypes.
 
 ```bash
-# 1. Collect Shot Charts (Historical & Current)
-# Note: This uses parallel workers to respect rate limits while collecting fast.
-python src/nba_data/scripts/collect_shot_charts.py --seasons 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24 --workers 4
+# 1. Collect Data (if needed)
+# Note: The repository should contain the CSVs in data/. If not:
+python src/nba_data/scripts/collect_regular_season_stats.py --seasons 2015-16 ... 2023-24
+python src/nba_data/scripts/collect_playoff_logs.py --seasons 2015-16 ... 2023-24 --workers 4
 
-# 2. Calculate Plasticity Metrics (Zone Displacement, Counter-Punch Efficiency)
-python src/nba_data/scripts/calculate_shot_plasticity.py
+# 2. Assemble Training Data
+python src/nba_data/scripts/assemble_training_data.py
 
-# 3. Generate Correlation Report & Leaderboard
-python src/nba_data/scripts/analyze_plasticity_correlation.py
+# 3. Calculate Archetypes & Generate Plot
+python src/nba_data/scripts/calculate_simple_resilience.py
 ```
 
-**Output:** Check `results/plasticity_scores.csv` and the terminal output for the "Plasticity Leaderboard".
+**Output:**
+*   **`results/resilience_archetypes.csv`**: The master file with RQ, Dominance, and Archetypes for every player-series (2015-2024).
+*   **`results/resilience_archetypes_plot.png`**: The scatter plot visualization.
 
 ---
 
@@ -50,11 +53,12 @@ python src/nba_data/scripts/analyze_plasticity_correlation.py
 
 We are aiming for a paper worthy of the **MIT Sloan Sports Analytics Conference**.
 
-**Core Finding:** Resilience is "Plasticity"—the ability to adapt efficiency to a forced change in shot diet.
-*   **The "Tank" (Jokic):** Displaced from Rim $\to$ Dominates Short Mid-Range.
-*   **The "Crumble" (Gobert):** Displaced from Rim $\to$ Efficiency Collapses.
+**Core Finding:** Resilience is not just about "making shots"—it's about the trade-off between **Adaptability** and **Dominance**.
+*   **The King:** Maintains Efficiency AND Volume (Jokić).
+*   **The Bulldozer:** Sacrifices Efficiency to maintain Volume (Luka).
+*   **The Victim:** Sacrifices Volume to maintain Efficiency (Simmons).
 
-**Next Step:** Proving we can predict this using *Regular Season* data by simulating playoff stress (isolating performance vs. Top-5 Defenses).
+**Next Step:** Proving we can predict these Archetypes using *Regular Season* data by simulating playoff stress (isolating performance vs. Top-5 Defenses).
 
 See **`IMPLEMENTATION_PLAN.md`** for the detailed roadmap.
 
@@ -63,20 +67,22 @@ See **`IMPLEMENTATION_PLAN.md`** for the detailed roadmap.
 ## Project Structure
 
 ```
-├── IMPLEMENTATION_PLAN.md          # **START HERE** - The Roadmap
+├── LUKA_SIMMONS_PARADOX.md         # The Theoretical Foundation (Problem & Solution)
+├── IMPLEMENTATION_PLAN.md          # The Roadmap
 ├── src/
 │   └── nba_data/
 │       ├── api/                    # NBA Stats API client
 │       └── scripts/
-│           ├── collect_shot_charts.py          # Parallel data collection
-│           ├── calculate_shot_plasticity.py    # The Plasticity Engine
-│           └── analyze_plasticity_correlation.py # The Validation Engine
+│           ├── collect_*.py                    # Data collection scripts
+│           ├── assemble_training_data.py       # Data merger
+│           └── calculate_simple_resilience.py  # The Dual-Grade Engine (Current Production)
 ├── data/                           # Data storage
-│   ├── shot_charts_*.csv           # Raw X,Y shot data
-│   └── rs_game_logs_*.csv          # Granular RS data
+│   ├── regular_season_*.csv        # RS Stats
+│   ├── playoff_logs_*.csv          # Playoff Game Logs
+│   └── training_dataset.csv        # The assembled master dataset
 ├── results/                        # Final Scores
-│   ├── resilience_scores_all.csv   # Historical Resilience Scores
-│   └── plasticity_scores.csv       # The Mechanic Metrics
+│   ├── resilience_archetypes.csv   # The Archetype Classifications
+│   └── resilience_archetypes_plot.png
 ```
 
 ---
@@ -84,11 +90,11 @@ See **`IMPLEMENTATION_PLAN.md`** for the detailed roadmap.
 ## Key Principles
 
 1.  **First Principles Thinking:** Don't just measure *what* happened. Ask *why* it happened given the context.
-2.  **Mechanism over Correlation:** We proved that resilience isn't random; it's a specific skill (hitting shots in secondary zones).
-3.  **Simplicity in Execution:** We use simple, robust metrics (Efficiency Delta) rather than black-box neural networks.
+2.  **Resilience = Efficiency × Volume:** You cannot measure resilience without accounting for the "Abdication Tax" (Passivity).
+3.  **Absolute Dominance:** In the playoffs, absolute production matters more than relative improvement.
 
 ---
 
 ## Support
 *   **Technical questions:** Review `src/nba_data/api/nba_stats_client.py` to see how we handle rate limits.
-*   **Conceptual questions:** Review `IMPLEMENTATION_PLAN.md`.
+*   **Conceptual questions:** Review `LUKA_SIMMONS_PARADOX.md`.
