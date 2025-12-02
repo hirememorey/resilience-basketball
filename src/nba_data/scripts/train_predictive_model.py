@@ -175,6 +175,11 @@ class ResiliencePredictor:
             'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA',
             'CLUTCH_MIN_TOTAL', 
             'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED',
+            # Context Features (Quality of Competition)
+            'QOC_TS_DELTA', 'QOC_USG_DELTA',
+            # NEW: Opponent Defensive Context Features
+            'AVG_OPPONENT_DCS', 'MEAN_OPPONENT_DCS',
+            'ELITE_WEAK_TS_DELTA', 'ELITE_WEAK_USG_DELTA',
             # New Plasticity Features
             'SHOT_DISTANCE_DELTA',
             'SPATIAL_VARIANCE_DELTA',
@@ -184,6 +189,15 @@ class ResiliencePredictor:
             'RS_PRESSURE_RESILIENCE',
             'PRESSURE_APPETITE_DELTA',
             'PRESSURE_RESILIENCE_DELTA',
+            # NEW: Late vs Early Clock Pressure Features (V4.2)
+            'RS_LATE_CLOCK_PRESSURE_APPETITE',
+            'RS_EARLY_CLOCK_PRESSURE_APPETITE',
+            'RS_LATE_CLOCK_PRESSURE_RESILIENCE',
+            'RS_EARLY_CLOCK_PRESSURE_RESILIENCE',
+            'LATE_CLOCK_PRESSURE_APPETITE_DELTA',
+            'EARLY_CLOCK_PRESSURE_APPETITE_DELTA',
+            'LATE_CLOCK_PRESSURE_RESILIENCE_DELTA',
+            'EARLY_CLOCK_PRESSURE_RESILIENCE_DELTA',
             # New Physicality Features
             'FTr_RESILIENCE',
             'RS_FTr',

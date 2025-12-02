@@ -192,6 +192,7 @@ class StressVectorEngine:
         """
         Vector 3: Context (Quality of Competition)
         Calculates player performance against Top 10 vs Bottom 10 defenses.
+        ENHANCED: Adds opponent defensive context score (DCS) features.
         """
         logger.info(f"Fetching Context Metrics for {season}...")
         try:
@@ -205,8 +206,15 @@ class StressVectorEngine:
             # Rank by DEF_RATING (lower is better)
             df_def['DEF_RANK'] = df_def['DEF_RATING'].rank(method='first', ascending=True)
             
+            # Create DCS map for quick lookup
+            dcs_map = dict(zip(df_def['TEAM_ID'], df_def['def_context_score']))
+            
             top_10_defenses = df_def[df_def['DEF_RANK'] <= 10]['TEAM_ID'].tolist()
             bottom_10_defenses = df_def[df_def['DEF_RANK'] > 20]['TEAM_ID'].tolist()
+            
+            # Elite defenses (DCS > 70) and weak defenses (DCS < 40)
+            elite_defenses = df_def[df_def['def_context_score'] > 70]['TEAM_ID'].tolist()
+            weak_defenses = df_def[df_def['def_context_score'] < 40]['TEAM_ID'].tolist()
 
             # 2. Load Regular Season Game Logs
             game_logs_path = self.data_dir / f"rs_game_logs_{season}.csv"
@@ -231,10 +239,15 @@ class StressVectorEngine:
             # Drop rows where opponent ID could not be mapped (just in case)
             df_logs.dropna(subset=['OPPONENT_TEAM_ID'], inplace=True)
             df_logs['OPPONENT_TEAM_ID'] = df_logs['OPPONENT_TEAM_ID'].astype(int)
+            
+            # Add opponent DCS to each game log
+            df_logs['OPPONENT_DCS'] = df_logs['OPPONENT_TEAM_ID'].map(dcs_map)
 
             # 3. Split by Opponent Quality
             df_vs_top10 = df_logs[df_logs['OPPONENT_TEAM_ID'].isin(top_10_defenses)]
             df_vs_bottom10 = df_logs[df_logs['OPPONENT_TEAM_ID'].isin(bottom_10_defenses)]
+            df_vs_elite = df_logs[df_logs['OPPONENT_TEAM_ID'].isin(elite_defenses)]
+            df_vs_weak = df_logs[df_logs['OPPONENT_TEAM_ID'].isin(weak_defenses)]
 
             # 4. Aggregate Player Stats
             def aggregate_player_stats(df, suffix):
@@ -263,17 +276,90 @@ class StressVectorEngine:
 
             agg_top10 = aggregate_player_stats(df_vs_top10, 'vs_top10')
             agg_bottom10 = aggregate_player_stats(df_vs_bottom10, 'vs_bottom10')
+            agg_elite = aggregate_player_stats(df_vs_elite, 'vs_elite')
+            agg_weak = aggregate_player_stats(df_vs_weak, 'vs_weak')
 
-            # 5. Merge and Create Features
-            df_context = pd.merge(agg_top10, agg_bottom10, on='PLAYER_ID', how='inner')
+            # 5. Calculate average opponent DCS faced (weighted by minutes)
+            # Handle case where df_logs might be empty or have no valid DCS values
+            if len(df_logs) > 0 and df_logs['OPPONENT_DCS'].notna().any():
+                opp_dcs_weighted = df_logs.groupby('PLAYER_ID').apply(
+                    lambda x: np.average(x['OPPONENT_DCS'], weights=x['MIN']) if x['OPPONENT_DCS'].notna().any() else np.nan,
+                    include_groups=False
+                ).reset_index()
+                opp_dcs_weighted.columns = ['PLAYER_ID', 'AVG_OPPONENT_DCS']
+                
+                # Also calculate simple average
+                opp_dcs_simple = df_logs.groupby('PLAYER_ID')['OPPONENT_DCS'].mean().reset_index()
+                opp_dcs_simple.columns = ['PLAYER_ID', 'MEAN_OPPONENT_DCS']
+            else:
+                opp_dcs_weighted = pd.DataFrame(columns=['PLAYER_ID', 'AVG_OPPONENT_DCS'])
+                opp_dcs_simple = pd.DataFrame(columns=['PLAYER_ID', 'MEAN_OPPONENT_DCS'])
+
+            # 6. Merge all context features - start with top10/bottom10 which should always exist
+            if not agg_top10.empty and not agg_bottom10.empty:
+                df_context = pd.merge(agg_top10, agg_bottom10, on='PLAYER_ID', how='outer')
+            elif not agg_top10.empty:
+                df_context = agg_top10.copy()
+            elif not agg_bottom10.empty:
+                df_context = agg_bottom10.copy()
+            else:
+                # If both are empty, we can't create context features
+                logger.warning(f"  - No top10/bottom10 data for {season}, skipping context metrics.")
+                return pd.DataFrame()
             
-            # Filter for meaningful sample size
-            df_context = df_context[(df_context['MIN_vs_top10'] >= 50) & (df_context['MIN_vs_bottom10'] >= 50)]
+            # Merge elite/weak stats if they exist
+            if not agg_elite.empty:
+                df_context = pd.merge(df_context, agg_elite, on='PLAYER_ID', how='outer')
+            if not agg_weak.empty:
+                df_context = pd.merge(df_context, agg_weak, on='PLAYER_ID', how='outer')
+            if not opp_dcs_weighted.empty:
+                df_context = pd.merge(df_context, opp_dcs_weighted, on='PLAYER_ID', how='outer')
+            if not opp_dcs_simple.empty:
+                df_context = pd.merge(df_context, opp_dcs_simple, on='PLAYER_ID', how='outer')
+            
+            # Filter for meaningful sample size (at least 50 minutes vs top 10 and bottom 10)
+            df_context = df_context[
+                (df_context['MIN_vs_top10'].fillna(0) >= 50) & 
+                (df_context['MIN_vs_bottom10'].fillna(0) >= 50)
+            ]
 
-            df_context['QOC_TS_DELTA'] = df_context['TS_PCT_vs_top10'] - df_context['TS_PCT_vs_bottom10']
-            df_context['QOC_USG_DELTA'] = df_context['USG_PCT_vs_top10'] - df_context['USG_PCT_vs_bottom10']
+            # 7. Create Features
+            # Existing QOC features
+            df_context['QOC_TS_DELTA'] = df_context['TS_PCT_vs_top10'].fillna(0) - df_context['TS_PCT_vs_bottom10'].fillna(0)
+            df_context['QOC_USG_DELTA'] = df_context['USG_PCT_vs_top10'].fillna(0) - df_context['USG_PCT_vs_bottom10'].fillna(0)
+            
+            # NEW: Elite vs Weak defense features (only if columns exist)
+            if 'TS_PCT_vs_elite' in df_context.columns and 'TS_PCT_vs_weak' in df_context.columns:
+                df_context['ELITE_WEAK_TS_DELTA'] = (
+                    df_context['TS_PCT_vs_elite'].fillna(0) - df_context['TS_PCT_vs_weak'].fillna(0)
+                )
+            else:
+                df_context['ELITE_WEAK_TS_DELTA'] = 0
+                
+            if 'USG_PCT_vs_elite' in df_context.columns and 'USG_PCT_vs_weak' in df_context.columns:
+                df_context['ELITE_WEAK_USG_DELTA'] = (
+                    df_context['USG_PCT_vs_elite'].fillna(0) - df_context['USG_PCT_vs_weak'].fillna(0)
+                )
+            else:
+                df_context['ELITE_WEAK_USG_DELTA'] = 0
+            
+            # Fill NaN values for players who didn't face elite/weak defenses
+            if 'TS_PCT_vs_elite' in df_context.columns:
+                df_context['TS_PCT_vs_elite'] = df_context['TS_PCT_vs_elite'].fillna(0)
+            if 'TS_PCT_vs_weak' in df_context.columns:
+                df_context['TS_PCT_vs_weak'] = df_context['TS_PCT_vs_weak'].fillna(0)
+            if 'USG_PCT_vs_elite' in df_context.columns:
+                df_context['USG_PCT_vs_elite'] = df_context['USG_PCT_vs_elite'].fillna(0)
+            if 'USG_PCT_vs_weak' in df_context.columns:
+                df_context['USG_PCT_vs_weak'] = df_context['USG_PCT_vs_weak'].fillna(0)
+            if 'MIN_vs_elite' in df_context.columns:
+                df_context['MIN_vs_elite'] = df_context['MIN_vs_elite'].fillna(0)
+            if 'MIN_vs_weak' in df_context.columns:
+                df_context['MIN_vs_weak'] = df_context['MIN_vs_weak'].fillna(0)
             
             logger.info(f"✅ Processed Context Metrics for {len(df_context)} players.")
+            logger.info(f"  - Added AVG_OPPONENT_DCS (weighted by minutes)")
+            logger.info(f"  - Added ELITE_WEAK_TS_DELTA and ELITE_WEAK_USG_DELTA")
             return df_context
 
         except Exception as e:
@@ -323,6 +409,10 @@ class StressVectorEngine:
                     logger.warning(f"No context data for {season}, filling with NaNs")
                     df_season['QOC_TS_DELTA'] = np.nan
                     df_season['QOC_USG_DELTA'] = np.nan
+                    df_season['AVG_OPPONENT_DCS'] = np.nan
+                    df_season['MEAN_OPPONENT_DCS'] = np.nan
+                    df_season['ELITE_WEAK_TS_DELTA'] = np.nan
+                    df_season['ELITE_WEAK_USG_DELTA'] = np.nan
                 
                 df_season['SEASON'] = season
                 all_seasons_data.append(df_season)
@@ -345,6 +435,8 @@ class StressVectorEngine:
                         'CREATION_TAX', 'CREATION_VOLUME_RATIO',
                         'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CLUTCH_MIN_TOTAL',
                         'QOC_TS_DELTA', 'QOC_USG_DELTA',
+                        'AVG_OPPONENT_DCS', 'MEAN_OPPONENT_DCS',
+                        'ELITE_WEAK_TS_DELTA', 'ELITE_WEAK_USG_DELTA',
                         'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED']
         
         # Only keep columns that actually exist

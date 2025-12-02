@@ -79,14 +79,33 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 
 **Key Insight**: Context features (Quality of Competition) are sparse (~35% availability) and don't provide significant additional predictive signal. Model performance stabilized at 58.3% indicating robust core features.
 
-### **Step 3: Sloan Paper Preparation - READY**
+### **Step 3: Pressure Vector Clock Refinement - ✅ DONE**
+
+**Status**: ✅ **COMPLETE** (Dec 2025)
+
+**Consultant Feedback Integration**: Following consultant feedback that "players who take bad shots early (low IQ) fail, but players who take bad shots late (bailouts) are valuable," we refined the Pressure Vector to distinguish late-clock vs early-clock pressure.
+
+**Implementation**:
+*   **Script**: `src/nba_data/scripts/collect_shot_quality_with_clock.py` (collects clock data)
+*   **Script**: `src/nba_data/scripts/calculate_shot_difficulty_features.py` (calculates clock features)
+*   **Features Added**:
+    *   `RS_LATE_CLOCK_PRESSURE_APPETITE`: % of tight shots taken in late clock
+    *   `RS_LATE_CLOCK_PRESSURE_RESILIENCE`: eFG% on tight shots in late clock
+    *   `RS_EARLY_CLOCK_PRESSURE_APPETITE`: % of tight shots taken in early clock
+    *   `RS_EARLY_CLOCK_PRESSURE_RESILIENCE`: eFG% on tight shots in early clock
+    *   Plus corresponding PO features and deltas
+*   **Impact**: `RS_LATE_CLOCK_PRESSURE_RESILIENCE` (4.8% importance, ranked 3rd) validates that late-clock bailout ability is a strong predictor.
+
+**Key Insight**: The clock distinction reveals that shot timing matters as much as shot difficulty. Late-clock pressure resilience is a strong positive signal, while early-clock pressure provides negative signal.
+
+### **Step 4: Sloan Paper Preparation - READY**
 
 **Status**: 🎯 **READY FOR DRAFTING**
 
 **Core Narrative**:
 1.  **The Luka/Simmons Paradox**: Volume matters as much as efficiency ("Abdication Tax")
 2.  **The Dual-Grade Archetype System**: Separating Adaptability from Dominance
-3.  **Mechanistic Stress Vectors**: Creation, Leverage, Pressure, and Rim Pressure
+3.  **Mechanistic Stress Vectors**: Creation, Leverage, Pressure (with Clock Distinction), Rim Pressure, and Context
 4.  **Predictive Validation**: 58.3% accuracy with mechanistic explanations
 
 ---

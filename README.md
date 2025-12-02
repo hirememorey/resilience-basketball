@@ -51,6 +51,8 @@ python src/nba_data/scripts/calculate_physicality_features.py # NEW V4
 
 # 3. Generate Pressure Features
 python src/nba_data/scripts/collect_shot_quality_aggregates.py --seasons 2015-16 2016-17 2017-18 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
+# 3a. Generate Pressure Features with Shot Clock (V4.2 - Optional but recommended)
+python src/nba_data/scripts/collect_shot_quality_with_clock.py --seasons 2015-16 2016-17 2017-18 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24
 python src/nba_data/scripts/calculate_shot_difficulty_features.py
 
 # 4. Train the Predictive Model

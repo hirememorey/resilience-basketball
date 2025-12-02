@@ -1,6 +1,6 @@
 # Extended Playoff Resilience Framework
 
-## 🎯 Project Status: The Five-Vector Model (COMPLETE - Dec 2025)
+## 🎯 Project Status: The Five-Vector Model with Clock Refinement (COMPLETE - Dec 2025)
 
 **Note:** This document outlines the complete theoretical and implementation framework. The project has successfully deployed the **Five-Vector Stress Test Model** with 58.3% predictive accuracy.
 
@@ -9,11 +9,14 @@ The framework has been synthesized into five primary "Stress Vectors" that predi
 
 1.  **Creation Vector:** Measures self-creation ability (efficiency on 3+ dribble shots).
 2.  **Leverage Vector:** Measures clutch performance (usage and efficiency in high-pressure moments).
-3.  **Pressure Vector:** Measures "Dominant Rigidity" (willingness and efficiency on tightly contested shots).
+3.  **Pressure Vector (V4.2 Refined):** Measures "Dominant Rigidity" with **Clock Distinction**:
+    *   **Late Clock Pressure:** Bailout shots (7-4s, 4-0s) - valuable ability
+    *   **Early Clock Pressure:** Bad shot selection (22-18s, 18-15s) - negative signal
 4.  **Physicality Vector (COMPLETE):** Measures "Force" via **Rim Pressure Resilience** (maintaining rim attack volume in playoffs).
 5.  **Plasticity Vector:** Measures spatial and temporal shot distribution adaptability.
+6.  **Context Vector (V4.1):** Measures opponent defensive quality and quality of competition.
 
-**See `results/predictive_model_report.md` for the current model performance (58.3% accuracy).**
+**See `results/predictive_model_report.md` for the current model performance (58.3% accuracy with V4.2 clock features).**
 
 ---
 
@@ -48,12 +51,13 @@ A critical insight from V2 was the **"Shaq Problem"**: the Plasticity hypothesis
 
 ### Core Scripts
 - **`calculate_simple_resilience.py`**: The Descriptive Engine. Calculates the Dual-Grade Archetypes (RQ + Dominance).
-- **`evaluate_plasticity_potential.py`**: Generates Creation, Leverage, and Plasticity vectors.
-- **`collect_shot_quality_aggregates.py`**: Collects Pressure vector raw data.
-- **`calculate_shot_difficulty_features.py`**: Calculates Pressure Appetite and Resilience.
-- **`calculate_rim_pressure.py`**: **NEW** - Calculates Rim Pressure Resilience (Physicality Vector).
+- **`evaluate_plasticity_potential.py`**: Generates Creation, Leverage, Plasticity, and Context vectors.
+- **`collect_shot_quality_aggregates.py`**: Collects Pressure vector raw data (defender distance).
+- **`collect_shot_quality_with_clock.py`**: **V4.2** - Collects Pressure vector data with shot clock ranges.
+- **`calculate_shot_difficulty_features.py`**: Calculates Pressure Appetite, Resilience, and Clock features.
+- **`calculate_rim_pressure.py`**: Calculates Rim Pressure Resilience (Physicality Vector).
 - **`calculate_physicality_features.py`**: Calculates Free Throw Rate features.
-- **`train_predictive_model.py`**: Trains the XGBoost classifier with 18 stress vector features.
+- **`train_predictive_model.py`**: Trains the XGBoost classifier with stress vector features (now includes clock features).
 
 ### Current Status & Achievements
 1.  **✅ Complete Dataset:** 10 seasons (2015-2024) with full stress vectors.
