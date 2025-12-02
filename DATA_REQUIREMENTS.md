@@ -2,64 +2,117 @@
 
 ## Overview
 
-This document specifies the data sources for the **Playoff Resilience Engine** and the **Sloan Path (Shot Plasticity)** analysis.
+This document specifies the data sources for the **Playoff Resilience Engine** and the **Sloan Path (Stress Vectors)** analysis.
 
 ---
 
-## Part 1: Resilience & Predictive Engine (Existing)
+## Part 1: Resilience & Predictive Engine (Core Data)
 
-### 1. Regular Season Game Logs
-*   **Source:** `playergamelogs` (Base & Advanced merged)
-*   **Purpose:** Feature engineering (Consistency, Performance vs Top 10)
-*   **File:** `data/rs_game_logs_{season}.csv`
+### 1. Regular Season Stats
+*   **Source:** `leaguedashplayerstats` (Base & Advanced merged)
+*   **Purpose:** Baseline player performance for comparison.
+*   **File:** `data/regular_season_{season}.csv`
 
-### 2. Defensive Context
-*   **Source:** `leaguedashteamstats` (Advanced & Opponent merged)
-*   **Purpose:** Identifying Top-10 Defenses and calculating Expected Performance.
-*   **File:** `data/defensive_context_{season}.csv`
-
-### 3. Playoff Logs
+### 2. Playoff Logs
 *   **Source:** `playergamelogs` (Playoffs)
-*   **Purpose:** Calculating ground-truth Resilience Scores.
+*   **Purpose:** Calculating ground-truth Resilience Scores (Archetypes).
 *   **File:** `data/playoff_logs_{season}.csv`
 
 ---
 
-## Part 2: The Sloan Path (New Requirements)
+## Part 2: Stress Vector Data
 
-### 4. Shot Charts (Spatial Data)
-**Critical for determining "Shot Diet Plasticity"**
+### 3. Shot Charts (Plasticity Vector)
+**Critical for determining "Spatial Rigidity"**
 
 #### Endpoint
 `stats.nba.com/stats/shotchartdetail`
-
-#### Parameters
-*   `PlayerID`: (Loop through all qualified players)
-*   `Season`: e.g., "2023-24"
-*   `SeasonType`: Fetch **both** "Regular Season" and "Playoffs" separately.
-*   `ContextMeasure`: "FGA"
 
 #### Required Fields
 | Field | Description | Usage |
 |-------|-------------|-------|
 | `LOC_X` | X Coordinate (-250 to 250) | Spatial analysis |
 | `LOC_Y` | Y Coordinate (-50 to 900) | Spatial analysis |
-| `SHOT_ZONE_BASIC` | e.g., "Mid-Range", "Restricted Area" | Zone migration analysis |
 | `SHOT_DISTANCE` | Distance in feet | "Pushed Out" metric |
-| `SHOT_TYPE` | "2PT Field Goal" vs "3PT Field Goal" | Shot profile |
-| `ACTION_TYPE` | e.g., "Jump Shot", "Driving Layup" | Shot type analysis |
 
 #### Storage Format
 `data/shot_charts_{season}.csv`
-*   *Note:* You may want to store RS and PO in the same file with a `SEASON_TYPE` column, or separate files. Single file with a flag is usually easier for analysis.
+
+---
+
+### 4. Shot Quality Aggregates (Pressure Vector) ✅ NEW
+**Critical for determining "Pressure Appetite" and "Pressure Resilience"**
+
+#### Endpoint
+`stats.nba.com/stats/leaguedashplayerptshot`
+
+#### Parameters
+*   `Season`: e.g., "2023-24"
+*   `SeasonType`: "Regular Season" or "Playoffs"
+*   `CloseDefDistRange`: One of:
+    *   `"0-2 Feet - Very Tight"`
+    *   `"2-4 Feet - Tight"`
+    *   `"4-6 Feet - Open"`
+    *   `"6+ Feet - Wide Open"`
+
+#### Required Fields
+| Field | Description | Usage |
+|-------|-------------|-------|
+| `PLAYER_ID` | Player ID | Join key |
+| `GP` | Games Played | Total volume calculation |
+| `FGA` | Field Goal Attempts (per game) | Volume |
+| `EFG_PCT` | Effective Field Goal % | Efficiency |
+
+#### Storage Format
+`data/shot_quality_aggregates_{season}.csv`
+
+**Script:** `src/nba_data/scripts/collect_shot_quality_aggregates.py`
+
+---
+
+### 5. Physicality Data (Physicality Vector) 🎯 NEXT
+**For measuring "Force" - the ability to get to the line**
+
+#### Endpoint
+`stats.nba.com/stats/leaguedashplayerstats`
+
+#### Required Fields
+| Field | Description | Usage |
+|-------|-------------|-------|
+| `FTA` | Free Throw Attempts | Volume |
+| `FGA` | Field Goal Attempts | Denominator for FTr |
+
+#### Derived Metric
+*   **`FTr` (Free Throw Rate):** `FTA / FGA`
+*   **`FTr_RESILIENCE`:** `Playoff FTr / RS FTr`
 
 ---
 
 ## Data Caching Strategy
 
 *   **API Rate Limiting:** The `NBAStatsClient` handles this. Do not bypass it.
-*   **Volume:** Shot chart data is large. 
-    *   Regular Season: ~200k shots per season.
-    *   Playoffs: ~15k shots per season.
-    *   **Total:** ~1.5M rows for 6 seasons.
-    *   **Strategy:** Use `ThreadPoolExecutor` (as in `collect_rs_game_logs.py`) but be mindful of the sheer number of rows when loading into memory. Use `dask` or process player-by-player if pandas memory usage becomes an issue.
+*   **Caching:** All API responses are cached to `data/cache/` for 24 hours. Delete cache files to force re-fetch.
+*   **Volume:** Shot quality aggregates are lightweight (~500 players per call). Shot charts are large (~200k shots per season).
+
+---
+
+## Historical Expansion Target
+
+To reach >60% model accuracy, we need to expand from 5 seasons to 9 seasons:
+
+| Season | Status |
+|--------|--------|
+| 2023-24 | ✅ Collected |
+| 2022-23 | ✅ Collected |
+| 2021-22 | ✅ Collected |
+| 2020-21 | ✅ Collected |
+| 2019-20 | ✅ Collected |
+| 2018-19 | 🎯 **Needs Collection** |
+| 2017-18 | 🎯 **Needs Collection** |
+| 2016-17 | 🎯 **Needs Collection** |
+| 2015-16 | 🎯 **Needs Collection** |
+
+**Command to expand:**
+```bash
+python src/nba_data/scripts/collect_shot_quality_aggregates.py --seasons 2015-16 2016-17 2017-18 2018-19
+```

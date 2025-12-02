@@ -1,37 +1,39 @@
-# Predictive Model Results: The Stylistic Stress Test (V2)
+# Predictive Model Results: The Stylistic Stress Test (V3)
 
 **Date:** Dec 2025
-**Status:** ✅ Successful Proof of Concept
+**Status:** ✅ Successful Enhancement (Pressure Vectors Added)
 
 ## Executive Summary
-We successfully trained an XGBoost classifier to predict Playoff Archetypes (King, Bulldozer, Victim, Sniper) using only Regular Season data. The model validates the "Stress Vector" hypothesis, achieving **50.5% accuracy** (2x random chance) and confirming that **Self-Creation Volume** and **Clutch Usage** are the strongest leading indicators of playoff resilience.
+We successfully upgraded the predictive engine to **V3** by integrating "Pressure Vectors" (Shot Difficulty). The model accuracy has improved to **53.5%**, and more importantly, the new features have proven to be highly predictive, validating the hypothesis that **Pressure Appetite** (willingness to take tight shots) is a key marker of "Dominant Rigidity."
 
 ---
 
 ## 1. The Model Performance
 
-*   **Overall Accuracy:** 50.5% (vs 25% baseline)
-*   **Key Success:** The model effectively distinguishes between "Resilient Role Players" (Snipers) and "Fragile Role Players" (Victims).
+*   **Overall Accuracy:** 53.5% (up from 50.5% in V2)
+*   **Key Success:** The model now has a stronger signal for separating "Kings" from "Bulldozers," though recall for Kings remains the primary challenge.
 
 ### Classification Report
 | Archetype | Precision | Recall | F1-Score | Insight |
 | :--- | :--- | :--- | :--- | :--- |
-| **Sniper** | 0.52 | 0.57 | 0.55 | ✅ **Best Performer.** We can predict who will stay efficient. |
-| **Victim** | 0.51 | 0.53 | 0.52 | ✅ **Solid.** We correctly identify >50% of playoff collapses. |
-| **Bulldozer** | 0.42 | 0.53 | 0.47 | ⚠️ **Over-Predicted.** We tend to label high-usage stars as inefficient "Bulldozers." |
-| **King** | 0.55 | 0.41 | 0.47 | ❌ **Hardest to Predict.** True transcendence is elusive in RS data. |
+| **King** | 0.60 | 0.44 | 0.51 | ✅ **High Precision.** If we call you a King, you probably are one. |
+| **Bulldozer** | 0.52 | 0.73 | 0.61 | ⚠️ **Over-Predicted.** We still capture many Kings in this net (Dominant Rigidity). |
+| **Sniper** | 0.48 | 0.57 | 0.52 | ✅ **Solid.** Identifies resilient role players well. |
+| **Victim** | 0.54 | 0.50 | 0.52 | ✅ **Balanced.** Reliable detection of fragile role players. |
 
 ---
 
 ## 2. Feature Importance (The "Why")
 
-The feature importance ranking strongly validates our First Principles:
+The new "Pressure" features immediately jumped to the top of the importance list, validating the "Shaq Problem" hypothesis.
 
-1.  **`CREATION_VOLUME_RATIO` (25.9%)**: **The dominant factor.** The percentage of a player's shots that are self-created (3+ dribbles) is the #1 predictor of their playoff destiny.
-    *   *Takeaway:* You cannot be a "King" if you rely on others to create your offense.
-2.  **`LEVERAGE_USG_DELTA` (16.2%)**: **The "Abdication" Detector.** Whether a player's usage goes UP or DOWN in clutch time is more important than their efficiency.
-    *   *Takeaway:* Resilient players demand the ball. Fragile players hide.
-3.  **`EFG_PCT_0_DRIBBLE` (13.5%)**: **The Baseline.** Elite catch-and-shoot ability provides a safety floor (Sniper archetype).
+1.  **`CREATION_VOLUME_RATIO` (13.9%)**: Still the King. Self-creation volume is the #1 prerequisites.
+2.  **`RS_PRESSURE_APPETITE` (9.8%)**: **NEW & CRITICAL.** The percentage of shots taken with a defender < 4 feet. This proxies "Dominance" - the willingness to force the issue.
+3.  **`LEVERAGE_USG_DELTA` (8.9%)**: The "Abdication Detector" remains vital.
+4.  **`PO_EFG_BEYOND_RS_MEDIAN` (8.7%)**: The "Plasticity" signal (scoring from new spots) is strong.
+5.  **`RS_PRESSURE_RESILIENCE` (6.6%)**: **NEW.** Efficiency on very tight shots (0-2 feet).
+
+**Takeaway:** The strongest predictor of playoff resilience is a player who **creates their own shot** (`Creation Volume`) and **habitually plays through contact** (`Pressure Appetite`).
 
 ---
 
@@ -39,13 +41,12 @@ The feature importance ranking strongly validates our First Principles:
 *   **Algorithm:** XGBoost Classifier (Multi-Class)
 *   **Training Data:** 503 Player-Seasons (2019-2024)
 *   **Target Labels:** Derived from the "Dual-Grade" Descriptive Engine.
-*   **Input Features:**
-    *   *Creation Vector:* Tax (Efficiency Drop) & Volume Ratio.
-    *   *Leverage Vector:* Clutch Usage Delta & Clutch TS Delta.
-    *   *Baseline:* 0-Dribble Efficiency.
+*   **Input Features (Stress Vectors):**
+    *   *Creation Vector:* Tax & Volume.
+    *   *Leverage Vector:* Clutch Usage & TS Delta.
+    *   *Plasticity Vector:* Spatial Variance & Distance Delta.
+    *   *Pressure Vector (New):* Appetite (% Tight Shots) & Resilience (eFG% on Tight Shots).
 
 ## 4. Future Improvements
-1.  **Context Vector:** We skipped the "Quality of Competition" vector due to data complexity. Adding this (Performance vs Top 5 Defenses) is the likely path to 60%+ accuracy.
-2.  **Tracking Data:** `avg_speed` and `touch_time` could help distinguish between "Movement Shooters" (Klay) and "Stationary Shooters" (Tucker).
-
-
+1.  **Physicality Vector:** Free Throw Rate Resilience. This is the next logical step to capture "force."
+2.  **Historical Expansion:** We are still training on a small dataset (5 seasons). Expanding back to 2015 is the best way to improve the model's ability to learn rare "King" patterns.

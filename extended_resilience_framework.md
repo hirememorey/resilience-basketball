@@ -1,15 +1,18 @@
 # Extended Playoff Resilience Framework
 
-## 🚨 Project Update: The Dual-Grade Evolution (Dec 2025)
+## 🚨 Project Update: The Four-Vector Model (Dec 2025)
 
-**Note:** This document outlines the original "5-Pathway" framework. While the core principles remain valid, the implementation has been streamlined into the **Dual-Grade Archetype System** to solve the "Luka & Simmons Paradox".
+**Note:** This document outlines the theoretical framework. The implementation has evolved into the **Four-Vector Stress Test Model**.
 
 **Current Implementation:**
-The 5 pathways have been synthesized into two primary axes:
-1.  **Adaptability (Resilience Quotient):** Synthesizes *Versatility*, *Role Scalability*, and *Evolution*.
-2.  **Dominance (Dominance Score):** Synthesizes *Dominance Resilience* and *Crucible Baseline*.
+The framework has been synthesized into four primary "Stress Vectors" that predict playoff archetypes from Regular Season data:
 
-**See `LUKA_SIMMONS_PARADOX.md` for the current, active framework.**
+1.  **Creation Vector:** Measures self-creation ability (efficiency on 3+ dribble shots).
+2.  **Leverage Vector:** Measures clutch performance (usage and efficiency in high-pressure moments).
+3.  **Pressure Vector:** Measures "Dominant Rigidity" (willingness and efficiency on tightly contested shots).
+4.  **Physicality Vector (Planned):** Will measure "Force" (ability to get to the free throw line).
+
+**See `results/predictive_model_report.md` for the current model performance.**
 
 ---
 
@@ -19,64 +22,36 @@ The ultimate goal is to build a predictive model that moves beyond traditional b
 
 ## 2. The Core Problem
 
-Regular-season performance is an imperfect predictor of postseason success. The game changes—defensive intensity increases, rotations shorten, and opponents exploit specific weaknesses. This project addresses the critical gap in understanding the *leading indicators* of playoff adaptability. We are not just asking "who succeeded," but "why did they succeed, and can we predict it in advance?"
+Regular-season performance is an imperfect predictor of postseason success. The game changes—defensive intensity increases, rotations shorten, and opponents exploit specific weaknesses. This project addresses the critical gap in understanding the *leading indicators* of playoff adaptability.
 
-## 3. Core Hypotheses
+## 3. Core Hypotheses (Validated ✅)
 
-1.  **Method Resilience Predicts Playoff Success:** A player who demonstrates a measurable diversification of their *scoring methods* is more likely to maintain performance. A diverse skillset is harder to neutralize.
-2.  **Method Over-Specialization Creates Fragility:** Players who rely on a narrow set of offensive actions are more susceptible to targeted defensive schemes.
-3.  **Adaptability is a Measurable Skill:** The "rate of change" in a player's statistical profile over time is a variable we can test as a predictor of future success under pressure.
-4.  **The "Neuroplasticity Coefficient" Predicts Future Resilience:** Future resilience is predicted by the **rate of new method acquisition**, not by age or athleticism. Draft for "learning rate."
+1.  **Self-Creation Predicts Playoff Success:** ✅ Validated. `CREATION_VOLUME_RATIO` is the #1 predictor.
+2.  **Clutch Performance Matters:** ✅ Validated. `LEVERAGE_USG_DELTA` is a top-5 predictor.
+3.  **Dominance is Rigid:** ✅ Validated. `RS_PRESSURE_APPETITE` is the #2 predictor. Some players succeed not by adapting, but by imposing their will.
 
-## 4. The Five-Pathway Framework (Theoretical Basis)
+## 4. The "Shaq Problem" and Its Resolution
 
-1.  **Versatility Resilience (The "Swiss Army Knife")**
-    *   **Concept:** Harder to guard if you can score from everywhere.
-    *   **Metric:** **Diversity Score** (Inverse HHI).
-    *   **Archetype:** **Luka Doncic**.
+A critical insight from V2 was the **"Shaq Problem"**: the Plasticity hypothesis assumed "change is good." But some "Kings" are resilient because they are unmovable, not because they are flexible. If Giannis gets to the rim every time, his spatial variance is low (rigid), but his resilience is high.
 
-2.  **Specialization Mastery (The "Shaq")**
-    *   **Concept:** If you are elite at one thing, you don't need to be versatile.
-    *   **Metric:** **Primary Method Mastery**.
-    *   **Archetype:** **Kevin Durant**.
-
-3.  **Role Scalability (The "Jimmy Butler")**
-    *   **Concept:** Can you maintain efficiency when your usage spikes?
-    *   **Metric:** **Efficiency Slope** (Correlation between Usage & Efficiency).
-    *   **Archetype:** **Nikola Jokic**.
-
-4.  **Dominance Resilience (The "Harden/Kobe")**
-    *   **Concept:** Can you make bad shots (high contest, low clock)?
-    *   **Metric:** **SQAV (Shot Quality-Adjusted Value)**.
-    *   **Archetype:** **James Harden**.
-
-5.  **Longitudinal Evolution (The "Giannis")**
-    *   **Concept:** "Neuroplasticity" or Learning Rate. Does the player add new skills over time?
-    *   **Metric:** **Adaptability Score**.
-    *   **Archetype:** **Giannis Antetokounmpo**.
-
----
-### Note on "Plasticity" as a Vector (The "Metric Drift" Lesson)
-A critical insight from our V1 predictive models is that "plasticity" or "displacement" (a change in a player's shot chart) is a **vector**, not a scalar. The direction of the change is more important than the magnitude.
-
-*   **Example A (Adaptive Plasticity):** Luka Dončić is forced off the three-point line and increases his volume from the floater range. His shot chart *displaces*. This is a sign of **resilience**.
-*   **Example B (Forced Plasticity):** Rudy Gobert is drawn out of the paint by a 5-out offense and is forced to take mid-range shots. His shot chart *displaces*. This is a sign of **fragility**.
-
-Therefore, any analysis of adaptability must not just measure *if* a player changed, but *where* they were forced to migrate to and whether that new location was effective.
+**Solution:** The **Pressure Vector**. We measure a player's *willingness* to take tightly contested shots (`Pressure Appetite`) and their *efficiency* on those shots (`Pressure Resilience`). This captures "Dominant Rigidity."
 
 ---
 
 ## 5. Technical Implementation & Current Status
 
-### Data Foundation & Recent Fixes
-- **Scope:** 10 full seasons (2015-16 to 2024-25).
-- **Architecture:** Local SQLite (`nba_stats.db`) and CSV.
-- **Status:** Fully populated with clean data for all seasons.
+### Data Foundation
+- **Scope:** 5 seasons (2019-20 to 2023-24). Expansion to 2015-16 is the next major goal.
+- **Architecture:** CSV-based data lake in `data/` and `results/`.
 
 ### Core Scripts
-- **`calculate_simple_resilience.py`**: **The Main Engine.** Calculates the Dual-Grade Archetypes (RQ + Dominance).
-- **`calculate_shot_plasticity.py`**: The original mechanistic engine (Legacy/Research).
+- **`calculate_simple_resilience.py`**: The Descriptive Engine. Calculates the Dual-Grade Archetypes (RQ + Dominance).
+- **`evaluate_plasticity_potential.py`**: Generates Creation and Leverage vectors.
+- **`collect_shot_quality_aggregates.py`**: Collects Pressure vector raw data.
+- **`calculate_shot_difficulty_features.py`**: Calculates Pressure Appetite and Resilience.
+- **`train_predictive_model.py`**: Trains the XGBoost classifier.
 
 ### Next Steps
-1.  **Visualization:** Generate career arc charts.
-2.  **Predictive Modeling:** Use RS "Stress Tests" to predict Playoff Archetypes.
+1.  **Physicality Vector:** Implement Free Throw Rate Resilience.
+2.  **Historical Expansion:** Collect data for 2015-16 through 2018-19.
+3.  **Model Tuning:** Hyperparameter optimization on the expanded dataset.

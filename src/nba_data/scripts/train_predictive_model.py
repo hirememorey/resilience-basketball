@@ -66,6 +66,15 @@ class ResiliencePredictor:
         else:
             df_plasticity = pd.concat(df_plasticity_list, ignore_index=True)
 
+        # Pressure Features (New V2)
+        pressure_path = self.results_dir / "pressure_features.csv"
+        if pressure_path.exists():
+            df_pressure = pd.read_csv(pressure_path)
+            logger.info(f"Loaded Pressure Features: {len(df_pressure)} rows.")
+        else:
+            df_pressure = pd.DataFrame()
+            logger.warning("No pressure features file found.")
+
         # Merge
         # Note: Target CSV likely has 'PLAYER_ID' and 'SEASON'
         # Let's inspect columns if needed, but standardizing on ID/SEASON is key.
@@ -90,7 +99,20 @@ class ResiliencePredictor:
                 df_plasticity,
                 on=['PLAYER_ID', 'SEASON'],
                 how='left'
-        )
+            )
+
+        # Merge with pressure features if they exist
+        if not df_pressure.empty:
+            df_merged = pd.merge(
+                df_merged,
+                df_pressure,
+                on=['PLAYER_ID', 'SEASON'],
+                how='left',
+                suffixes=('', '_pressure') # Avoid collisions if names match
+            )
+            # Drop duplicate columns if any (like PLAYER_NAME_pressure)
+            cols_to_drop = [c for c in df_merged.columns if '_pressure' in c]
+            df_merged = df_merged.drop(columns=cols_to_drop)
         
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
         
@@ -113,7 +135,12 @@ class ResiliencePredictor:
             # New Plasticity Features
             'SHOT_DISTANCE_DELTA',
             'SPATIAL_VARIANCE_DELTA',
-            'PO_EFG_BEYOND_RS_MEDIAN'
+            'PO_EFG_BEYOND_RS_MEDIAN',
+            # New Shot Difficulty Features (V2)
+            'RS_PRESSURE_APPETITE',
+            'RS_PRESSURE_RESILIENCE',
+            'PRESSURE_APPETITE_DELTA',
+            'PRESSURE_RESILIENCE_DELTA'
         ]
         target = 'ARCHETYPE'
         
