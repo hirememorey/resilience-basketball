@@ -10,8 +10,8 @@ We successfully upgraded the predictive engine to **V4.2** by refining the **Pre
 
 ## 1. The Model Performance
 
-*   **Overall Accuracy:** 58.3% (up from 57.2% in V4)
-*   **Key Success:** The new "Rim Pressure" features successfully captured the "Force" signal better than the previous "FTr Resilience" metric.
+*   **Overall Accuracy:** 58.3% (maintained from V4.1)
+*   **Note on Accuracy:** Despite adding valuable clock features, accuracy did not improve because clock data is only available for 1 season (2023-24), resulting in 12% feature coverage. The clock features show strong importance when available (RS_LATE_CLOCK_PRESSURE_RESILIENCE ranks 3rd), but cannot improve overall accuracy with such sparse coverage.
 
 ### Classification Report
 | Archetype | Precision | Recall | F1-Score | Insight |
@@ -52,6 +52,11 @@ The feature importance ranking validates both the "Physicality" and "Clock Disti
 **New V4.2 Features:**
 *   **Late Clock Pressure:** Measures performance on tight shots taken in late clock (7-4 seconds, 4-0 seconds) - bailout situations.
 *   **Early Clock Pressure:** Measures performance on tight shots taken in early clock (22-18 seconds, 18-15 seconds) - bad shot selection.
+
+**Data Coverage Limitation:**
+*   Clock features currently only available for 2023-24 season (12% of training set)
+*   To see accuracy improvements, collect clock data for all seasons (2015-2024)
+*   This requires ~160 API calls (16 per season × 10 seasons) with rate limiting
 
 ## 4. Next Steps
 1.  **Visualization:** Create the "Late Clock Pressure vs. Playoff Performance" chart.
