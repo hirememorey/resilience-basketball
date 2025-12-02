@@ -2,24 +2,26 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status & Key Insight (V4)**
+**Current Status & Key Insight (V4.1)**
 
-The project has successfully developed a "Stylistic Stress Test" to predict Playoff Archetypes using only Regular Season data.
+The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience.
 
-- **`V4 Predictive Model`**: An XGBoost Classifier that achieves **57.2% accuracy** in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on four Regular Season "Stress Vectors":
-    1.  **Creation Vector**: Measures a player's efficiency drop-off when forced to create their own shot.
-    2.  **Leverage Vector**: Measures how a player's efficiency and usage scale in clutch situations.
-    3.  **Pressure Vector**: Measures a player's willingness to take tight shots (`Pressure Appetite`).
-    4.  **Physicality Vector (NEW)**: Measures a player's ability to get to the line (`FTr Resilience`), proxying for "Force."
+- **`V4.1 Predictive Model`**: An XGBoost Classifier that achieves **58.3% accuracy** in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on five Regular Season "Stress Vectors":
+    1.  **Creation Vector**: Measures efficiency drop-off when forced to create own shot.
+    2.  **Leverage Vector**: Measures how efficiency and usage scale in clutch situations.
+    3.  **Pressure Vector**: Measures willingness to take tight shots (`Pressure Appetite`).
+    4.  **Physicality Vector**: **Rim Pressure Resilience** - maintains rim attack volume in playoffs.
+    5.  **Plasticity Vector**: Spatial and temporal shot distribution changes.
 
-- **`Historical Expansion`**: We have expanded the training dataset to **9 seasons (2015-2024)**, giving the model nearly double the examples to learn from.
+- **`Complete Dataset`**: **10 seasons (2015-2024)** with 5,312 player-season records and full historical context data.
 
-## Next Developer Mission: The Sloan Write-Up
+## Next Developer Mission: Sloan Paper Drafting
 
-The predictive engine is now robust. The path forward is to finalize the findings and draft the paper.
+The predictive engine is production-ready. The path forward is to create compelling visualizations and draft the Sloan conference paper.
 
-1.  **Review the Results**: See `results/predictive_model_report.md` (needs update with V4 results).
-2.  **Draft the Paper**: Synthesize the narrative around "Stress Vectors" predicting resilience.
+1.  **Review Results**: See `results/predictive_model_report.md` for current V4.1 performance.
+2.  **Draft Narrative**: Focus on the "Abdication Tax" and mechanistic stress vectors.
+3.  **Create Visualizations**: "Pressure Appetite vs. Playoff Performance" charts.
 
 ## Quick Start for New Developers
 

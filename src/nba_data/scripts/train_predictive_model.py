@@ -136,6 +136,26 @@ class ResiliencePredictor:
             df_merged = df_merged.drop(columns=cols_to_drop)
         else:
             logger.warning("No physicality features file found.")
+
+        # Rim Pressure Features (New V4.1)
+        rim_path = self.results_dir / "rim_pressure_features.csv"
+        if rim_path.exists():
+            df_rim = pd.read_csv(rim_path)
+            logger.info(f"Loaded Rim Pressure Features: {len(df_rim)} rows.")
+            
+            df_merged = pd.merge(
+                df_merged,
+                df_rim,
+                on=['PLAYER_NAME', 'SEASON'],
+                how='left',
+                suffixes=('', '_rim')
+            )
+            
+            # Drop duplicate columns
+            cols_to_drop = [c for c in df_merged.columns if '_rim' in c]
+            df_merged = df_merged.drop(columns=cols_to_drop)
+        else:
+            logger.warning("No rim pressure features file found.")
         
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
         
@@ -166,7 +186,10 @@ class ResiliencePredictor:
             'PRESSURE_RESILIENCE_DELTA',
             # New Physicality Features
             'FTr_RESILIENCE',
-            'RS_FTr'
+            'RS_FTr',
+            # New Rim Pressure Features
+            'RS_RIM_APPETITE',
+            'RIM_PRESSURE_RESILIENCE'
         ]
         target = 'ARCHETYPE'
         

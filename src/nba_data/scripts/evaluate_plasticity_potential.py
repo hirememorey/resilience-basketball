@@ -248,7 +248,7 @@ class StressVectorEngine:
                     FG3M=('FG3M', 'sum'),
                     FTA=('FTA', 'sum'),
                     FTM=('FTM', 'sum'),
-                    USG_PCT=('USU_PCT', 'mean'), # Note: API has a typo USU_PCT
+                    USG_PCT=('USG_PCT', 'mean'), # Note: API has a typo USU_PCT corrected to USG_PCT
                     MIN=('MIN', 'sum')
                 ).reset_index()
 
@@ -358,9 +358,9 @@ class StressVectorEngine:
 
 if __name__ == "__main__":
     engine = StressVectorEngine()
-    # Expanding window to capture enough historical data for training (2015-2024)
+    # Expanding window to capture enough historical data for training (2015-2025)
     all_seasons = [
         '2015-16', '2016-17', '2017-18', '2018-19',
-        '2019-20', '2020-21', '2021-22', '2022-23', '2023-24'
+        '2019-20', '2020-21', '2021-22', '2022-23', '2023-24', '2024-25'
     ]
     engine.run(seasons=all_seasons)
