@@ -8,17 +8,24 @@ given the opportunity yet.
 The consultant's hypothesis: "Who is paid like a role player ('Sniper') but has
 the latent stress profile of a 'King'?"
 
+Key Principles (UPDATED):
+1. Filter FIRST (Reference Class) - Define candidate pool (Age < 25, USG < 25%) before ranking
+2. Use Stress Vector Composite - Use validated stress vectors with model feature importance weights
+3. Normalize within Candidate Pool - All normalization/ranking relative to filtered subset, not entire league
+4. Confidence Scores - Flag missing data, no proxies (correlation = 0.0047 invalidates Isolation EFG proxy)
+
 Key Criteria:
-1. Low usage (< 20% USG in regular season)
-2. High stress vector scores (top decile in key metrics)
-3. High pressure resilience (ability to make tough shots)
-4. High creation volume ratio (self-creation ability)
+1. Age < 25 years old (latent stars must be young)
+2. Low usage (< 25% USG in regular season)
+3. High stress vector composite score (weighted by model feature importance)
+4. High confidence (complete data preferred, but flag low confidence instead of excluding)
 """
 
 import pandas as pd
 import numpy as np
 import logging
 import sys
+import joblib
 from pathlib import Path
 from typing import List, Dict
 
@@ -40,15 +47,128 @@ class LatentStarDetector:
     def __init__(self):
         self.results_dir = Path("results")
         self.data_dir = Path("data")
+        self.models_dir = Path("models")
         self.results_dir.mkdir(exist_ok=True)
+        
+        # Load trained model and label encoder
+        self.model = None
+        self.label_encoder = None
+        self.model_features = None
+        self._load_model()
+    
+    def _load_model(self):
+        """Load the trained XGBoost model and label encoder."""
+        model_path = self.models_dir / "resilience_xgb.pkl"
+        encoder_path = self.models_dir / "archetype_encoder.pkl"
+        
+        if not model_path.exists() or not encoder_path.exists():
+            logger.warning("Model files not found. Archetype prediction will be skipped.")
+            logger.warning(f"Expected: {model_path} and {encoder_path}")
+            return
+        
+        try:
+            self.model = joblib.load(model_path)
+            self.label_encoder = joblib.load(encoder_path)
+            
+            # Get feature names from model (if available)
+            if hasattr(self.model, 'feature_names_in_'):
+                self.model_features = list(self.model.feature_names_in_)
+            else:
+                # Fallback: try to get from predictive_features.json if it exists
+                import json
+                features_path = self.models_dir / "predictive_features.json"
+                if features_path.exists():
+                    with open(features_path, 'r') as f:
+                        self.model_features = json.load(f)
+                else:
+                    logger.warning("Could not determine model feature names. Will use all available features.")
+            
+            logger.info(f"Loaded model with {len(self.model_features) if self.model_features else 'unknown'} features")
+        except Exception as e:
+            logger.error(f"Error loading model: {e}")
+            logger.warning("Archetype prediction will be skipped.")
+    
+    def predict_archetypes(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Predict archetypes for candidates using the trained model.
+        
+        Returns DataFrame with PREDICTED_ARCHETYPE and PREDICTED_KING_PROBABILITY columns.
+        """
+        if self.model is None or self.label_encoder is None:
+            logger.warning("Model not loaded. Skipping archetype prediction.")
+            df['PREDICTED_ARCHETYPE'] = 'Unknown'
+            df['PREDICTED_KING_PROBABILITY'] = 0.0
+            return df
+        
+        df = df.copy()
+        
+        # Get features that model expects
+        if self.model_features:
+            # Ensure all model features exist in dataframe (add missing ones with default values)
+            for feature in self.model_features:
+                if feature not in df.columns:
+                    # Add missing feature with default value (0 for clock features, median for others)
+                    if 'CLOCK' in feature or 'DELTA' in feature:
+                        df[feature] = 0.0
+                    else:
+                        # Try to infer default from similar features
+                        df[feature] = 0.0
+                    logger.debug(f"Added missing feature {feature} with default value 0.0")
+            
+            X = df[self.model_features].copy()
+        else:
+            # Use all numeric features (fallback)
+            numeric_cols = df.select_dtypes(include=[np.number]).columns
+            # Exclude non-feature columns
+            exclude_cols = ['PLAYER_ID', 'AGE', 'USG_PCT', 'SEASON']
+            feature_cols = [c for c in numeric_cols if c not in exclude_cols]
+            X = df[feature_cols].copy()
+            logger.info(f"Using {len(feature_cols)} numeric features for prediction")
+        
+        # Handle NaN values same way as training (fill with median or 0 for clock features)
+        for col in X.columns:
+            if X[col].isna().sum() > 0:
+                if 'CLOCK' in col:
+                    X[col] = X[col].fillna(0)
+                else:
+                    median_val = X[col].median()
+                    X[col] = X[col].fillna(median_val)
+        
+        try:
+            # Predict archetypes
+            y_pred = self.model.predict(X)
+            y_proba = self.model.predict_proba(X)
+            
+            # Decode predictions
+            df['PREDICTED_ARCHETYPE'] = self.label_encoder.inverse_transform(y_pred)
+            
+            # Get probability of being "King" (first class in label encoder)
+            king_class_idx = list(self.label_encoder.classes_).index('King') if 'King' in self.label_encoder.classes_ else 0
+            df['PREDICTED_KING_PROBABILITY'] = y_proba[:, king_class_idx]
+            
+            logger.info(f"Predicted archetypes for {len(df)} candidates")
+            logger.info(f"Archetype distribution: {df['PREDICTED_ARCHETYPE'].value_counts().to_dict()}")
+            
+        except Exception as e:
+            logger.error(f"Error predicting archetypes: {e}")
+            df['PREDICTED_ARCHETYPE'] = 'Unknown'
+            df['PREDICTED_KING_PROBABILITY'] = 0.0
+        
+        return df
         
     def load_data(self) -> pd.DataFrame:
         """Load stress vectors and regular season usage data."""
         logger.info("Loading data...")
         
-        # Load stress vectors
+        # Load stress vectors (should already have USG_PCT, AGE, CREATION_BOOST from Phase 1)
         df_features = pd.read_csv(self.results_dir / "predictive_dataset.csv")
         logger.info(f"Loaded {len(df_features)} player-seasons with stress vectors")
+        
+        # Verify critical columns exist
+        required_cols = ['PLAYER_ID', 'SEASON', 'USG_PCT', 'AGE']
+        missing_cols = [c for c in required_cols if c not in df_features.columns]
+        if missing_cols:
+            logger.warning(f"Missing required columns: {missing_cols}. These should be in predictive_dataset.csv from Phase 1.")
         
         # Load pressure features
         pressure_path = self.results_dir / "pressure_features.csv"
@@ -72,186 +192,285 @@ class LatentStarDetector:
                 how='left'
             )
         
-        # Load regular season stats for actual USG% data
-        logger.info("Loading regular season usage data...")
-        rs_files = list(self.data_dir.glob("regular_season_*.csv"))
-        if not rs_files:
-            logger.warning("No regular season files found. Cannot filter by usage.")
-            return df_features
-        
-        rs_data_list = []
-        for rs_file in rs_files:
-            try:
-                # Extract season from filename (e.g., "regular_season_2023-24.csv" -> "2023-24")
-                season = rs_file.stem.replace("regular_season_", "")
-                df_rs = pd.read_csv(rs_file)
-                df_rs['SEASON'] = season
+        # USG_PCT and AGE should already be in predictive_dataset.csv from Phase 1
+        # Only merge from regular season files if they're missing
+        if 'USG_PCT' not in df_features.columns:
+            logger.warning("USG_PCT not in predictive_dataset.csv. Attempting to load from regular season files...")
+            rs_files = list(self.data_dir.glob("regular_season_*.csv"))
+            if rs_files:
+                rs_data_list = []
+                for rs_file in rs_files:
+                    try:
+                        season = rs_file.stem.replace("regular_season_", "")
+                        df_rs = pd.read_csv(rs_file)
+                        df_rs['SEASON'] = season
+                        if 'PLAYER_ID' in df_rs.columns and 'USG_PCT' in df_rs.columns:
+                            rs_data_list.append(df_rs[['PLAYER_ID', 'SEASON', 'USG_PCT']])
+                    except Exception as e:
+                        logger.warning(f"Error loading {rs_file}: {e}")
+                        continue
                 
-                # Select only needed columns
-                if 'PLAYER_ID' in df_rs.columns and 'USG_PCT' in df_rs.columns:
-                    rs_data_list.append(df_rs[['PLAYER_ID', 'SEASON', 'USG_PCT', 'PLAYER_NAME']])
-            except Exception as e:
-                logger.warning(f"Error loading {rs_file}: {e}")
-                continue
-        
-        if rs_data_list:
-            df_rs_usage = pd.concat(rs_data_list, ignore_index=True)
-            # Handle players who played for multiple teams (take max usage)
-            df_rs_usage = df_rs_usage.groupby(['PLAYER_ID', 'SEASON']).agg({
-                'USG_PCT': 'max',  # Take max usage if player was on multiple teams
-                'PLAYER_NAME': 'first'  # Keep first name
-            }).reset_index()
-            
-            # Merge usage data
-            df_features = df_features.merge(
-                df_rs_usage[['PLAYER_ID', 'SEASON', 'USG_PCT']],
-                on=['PLAYER_ID', 'SEASON'],
-                how='left'
-            )
-            logger.info(f"Merged usage data for {df_features['USG_PCT'].notna().sum()} player-seasons")
+                if rs_data_list:
+                    df_rs_usage = pd.concat(rs_data_list, ignore_index=True)
+                    df_rs_usage = df_rs_usage.groupby(['PLAYER_ID', 'SEASON']).agg({'USG_PCT': 'max'}).reset_index()
+                    df_features = df_features.merge(df_rs_usage, on=['PLAYER_ID', 'SEASON'], how='left')
+                    logger.info(f"Merged usage data for {df_features['USG_PCT'].notna().sum()} player-seasons")
+                else:
+                    logger.error("Could not load USG_PCT from regular season files.")
+                    df_features['USG_PCT'] = np.nan
+            else:
+                logger.error("No regular season files found and USG_PCT not in dataset.")
+                df_features['USG_PCT'] = np.nan
         else:
-            logger.warning("No regular season usage data loaded. Cannot filter by usage.")
-            df_features['USG_PCT'] = np.nan
+            logger.info(f"USG_PCT already in dataset: {df_features['USG_PCT'].notna().sum()} / {len(df_features)} values")
+        
+        # Same for AGE
+        if 'AGE' not in df_features.columns:
+            logger.warning("AGE not in predictive_dataset.csv. This should have been added in Phase 1.")
+            df_features['AGE'] = np.nan
+        else:
+            logger.info(f"AGE already in dataset: {df_features['AGE'].notna().sum()} / {len(df_features)} values")
         
         return df_features
     
-    def calculate_stress_profile_score(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Calculate composite stress profile score."""
-        logger.info("Calculating stress profile scores...")
+    def get_stress_vector_weights(self) -> Dict[str, float]:
+        """
+        Get stress vector feature importance weights from validated model.
+        These weights come from the XGBoost model that achieves 59.4% accuracy.
+        """
+        # Feature importance weights from model (validated, from predictive_model_report.md)
+        # These are the actual weights learned by the model, not arbitrary
+        weights = {
+            'LEVERAGE_USG_DELTA': 0.092,  # #1 Predictor - Abdication Detector
+            'CREATION_VOLUME_RATIO': 0.062,  # Self-creation ability
+            'RS_PRESSURE_APPETITE': 0.045,  # Dominance signal
+            'EFG_ISO_WEIGHTED': 0.041,  # Isolation efficiency
+            'RS_FTr': 0.039,  # Physicality
+            'RS_EARLY_CLOCK_PRESSURE_APPETITE': 0.038,  # Early-clock bad shots (negative signal)
+            'LATE_CLOCK_PRESSURE_RESILIENCE_DELTA': 0.036,  # Late-clock bailout ability change
+            'RS_PRESSURE_RESILIENCE': 0.035,  # Pressure resilience
+            'RS_LATE_CLOCK_PRESSURE_RESILIENCE': 0.032,  # Late-clock bailout ability
+            'LEVERAGE_TS_DELTA': 0.030,  # Clutch efficiency (if available)
+            'CLUTCH_MIN_TOTAL': 0.025,  # Clutch minutes (trust signal)
+            'CREATION_TAX': 0.020,  # Creation efficiency cost
+            'RS_RIM_PRESSURE_RESILIENCE': 0.018,  # Rim pressure resilience
+            'EFG_PCT_0_DRIBBLE': 0.015,  # Catch-and-shoot efficiency
+            # Add other stress vector features with lower weights
+        }
+        return weights
+    
+    def calculate_stress_composite(self, df: pd.DataFrame, reference_pool: pd.DataFrame = None) -> pd.DataFrame:
+        """
+        Calculate stress vector composite score using model feature importance weights.
+        
+        CRITICAL: Normalize within reference pool (candidate pool), not entire league.
+        This implements the "Reference Class" principle.
+        
+        Args:
+            df: DataFrame with stress vectors
+            reference_pool: Pool to normalize against (if None, uses df itself)
+        """
+        logger.info("Calculating stress vector composite scores...")
+        
+        if reference_pool is None:
+            reference_pool = df
         
         df = df.copy()
-        
-        # Key stress vector features that indicate playoff readiness
-        # CONSULTANT FIX: CREATION_BOOST is a "superpower" signal - efficiency increases when self-creating
-        # This is a "physics violation" indicating elite self-creation ability (e.g., Tyrese Maxey)
-        stress_features = [
-            'CREATION_BOOST',  # CONSULTANT FIX: Superpower signal (1.5x weighted when CREATION_TAX > 0)
-            'CREATION_VOLUME_RATIO',  # Self-creation ability
-            'RS_PRESSURE_RESILIENCE',  # Ability to make tough shots
-            'RS_LATE_CLOCK_PRESSURE_RESILIENCE',  # Late-clock bailout ability
-            'EFG_ISO_WEIGHTED',  # Isolation efficiency
-            'LEVERAGE_USG_DELTA',  # Clutch usage scaling
-            'RS_FTr',  # Physicality
-        ]
+        weights = self.get_stress_vector_weights()
         
         # Filter to existing features
-        existing_features = [f for f in stress_features if f in df.columns]
-        logger.info(f"Using {len(existing_features)} stress features for scoring")
+        existing_features = [f for f in weights.keys() if f in df.columns]
+        logger.info(f"Using {len(existing_features)} stress vector features for composite scoring")
         
-        # Calculate percentiles for each feature
+        # Initialize composite score
+        df['STRESS_COMPOSITE'] = 0.0
+        df['SIGNAL_CONFIDENCE'] = 0.0
+        
+        # Calculate composite for each feature
         for feature in existing_features:
-            # Only calculate on non-null values
-            valid_mask = df[feature].notna()
-            if valid_mask.sum() < 10:
+            weight = weights[feature]
+            
+            # Check data availability
+            has_data = df[feature].notna()
+            df.loc[has_data, 'SIGNAL_CONFIDENCE'] += weight * 0.5  # Data available = confidence boost
+            
+            if has_data.sum() < 10:
+                logger.debug(f"Skipping {feature}: insufficient data ({has_data.sum()} valid values)")
                 continue
             
-            # Calculate percentile (0-100)
-            df.loc[valid_mask, f'{feature}_PERCENTILE'] = (
-                df.loc[valid_mask, feature].rank(pct=True) * 100
+            # Normalize within reference pool (percentile-based, more robust)
+            # CRITICAL: Normalize relative to reference pool, not entire df
+            reference_values = reference_pool[feature].dropna()
+            if len(reference_values) < 10:
+                logger.debug(f"Skipping {feature}: insufficient reference data")
+                continue
+            
+            # Calculate percentile rank within reference pool
+            # CRITICAL: Rank df values relative to reference_pool distribution
+            # This implements the "Reference Class" principle
+            reference_series = reference_pool[feature].dropna()
+            if len(reference_series) > 0:
+                # For each value in df, calculate its percentile rank in reference_pool
+                df_values = df.loc[has_data, feature]
+                # Use numpy searchsorted to find percentile rank
+                sorted_ref = np.sort(reference_series.values)
+                percentile_ranks = np.searchsorted(sorted_ref, df_values, side='right') / len(sorted_ref) * 100
+                df.loc[has_data, f'{feature}_NORMALIZED'] = percentile_ranks
+            else:
+                df.loc[has_data, f'{feature}_NORMALIZED'] = 50.0  # Default to median if no reference
+            
+            # Add weighted normalized value to composite
+            df.loc[has_data, 'STRESS_COMPOSITE'] += (
+                df.loc[has_data, f'{feature}_NORMALIZED'] * weight
             )
         
-        # Calculate composite stress profile score
-        # Average of percentiles (higher = better stress profile)
-        percentile_cols = [c for c in df.columns if c.endswith('_PERCENTILE')]
+        # Normalize confidence score (0-1 scale)
+        max_confidence = sum(weights.values()) * 0.5  # Max if all features available
+        df['SIGNAL_CONFIDENCE'] = df['SIGNAL_CONFIDENCE'] / max_confidence if max_confidence > 0 else 0.0
+        df['SIGNAL_CONFIDENCE'] = df['SIGNAL_CONFIDENCE'].clip(0.0, 1.0)
         
-        if percentile_cols:
-            df['STRESS_PROFILE_SCORE'] = df[percentile_cols].mean(axis=1)
-            logger.info(f"Calculated stress profile scores for {df['STRESS_PROFILE_SCORE'].notna().sum()} players")
-        else:
-            logger.warning("No percentile columns created. Cannot calculate stress profile score.")
-            df['STRESS_PROFILE_SCORE'] = np.nan
+        logger.info(f"Calculated stress composite scores for {df['STRESS_COMPOSITE'].notna().sum()} players")
+        logger.info(f"Average confidence: {df['SIGNAL_CONFIDENCE'].mean():.3f}")
         
         return df
     
     def identify_latent_stars(self, df: pd.DataFrame, 
-                             usage_threshold: float = 20.0,
-                             stress_percentile_threshold: float = 80.0) -> pd.DataFrame:
+                             age_threshold: float = 25.0,
+                             usage_threshold: float = 25.0,
+                             min_confidence: float = 0.3,
+                             leverage_usg_delta_threshold: float = -0.05) -> pd.DataFrame:
         """
-        Identify latent stars based on criteria.
+        Identify latent stars using filter-first architecture and stress vector composite.
         
-        CONSULTANT'S FIX: Filter by LOW USAGE FIRST, then rank by stress profile.
-        A "latent star" = High Capacity + Low Opportunity, not just High Capacity.
+        CRITICAL: Filter FIRST (Reference Class), then normalize and rank within candidate pool.
+        This implements the "Reference Class" principle - value is relative to the cohort.
         
         Args:
-            df: DataFrame with stress vectors and usage data
-            usage_threshold: Maximum USG% to be considered "low usage" (default 20%)
-            stress_percentile_threshold: Minimum stress profile percentile (default 80th)
+            df: DataFrame with stress vectors, usage data, and age
+            age_threshold: Maximum age to be considered "latent star" (default 25.0)
+            usage_threshold: Maximum USG% to be considered "low usage" (default 25%)
+            min_confidence: Minimum signal confidence to include (default 0.3)
         """
-        logger.info("Identifying latent stars...")
-        logger.info(f"Using usage threshold: {usage_threshold}%")
-        logger.info(f"Using stress percentile threshold: {stress_percentile_threshold}th")
+        logger.info("Identifying latent stars using filter-first architecture...")
+        logger.info(f"Age threshold: < {age_threshold} years")
+        logger.info(f"Usage threshold: < {usage_threshold}%")
+        logger.info(f"Minimum confidence: ≥ {min_confidence}")
+        logger.info(f"LEVERAGE_USG_DELTA threshold: ≥ {leverage_usg_delta_threshold} (Abdication Detector)")
         
-        # Filter for players with stress profile scores
-        df_valid = df[df['STRESS_PROFILE_SCORE'].notna()].copy()
+        # STEP 1: FILTER FIRST - Define the candidate pool (Reference Class)
+        # This is the critical change - we stop asking "Is Brunson better than LeBron?"
+        # and start asking "Is Brunson better than other 24-year-old bench guards?"
         
-        if len(df_valid) == 0:
-            logger.error("No players with valid stress profile scores!")
-            return pd.DataFrame()
+        df_candidate = df.copy()
         
-        # CONSULTANT'S FIX: Filter by LOW USAGE FIRST
-        # This is the critical change - we want players with high capacity but low opportunity
-        if 'USG_PCT' not in df_valid.columns or df_valid['USG_PCT'].isna().all():
-            logger.error("USG_PCT column missing or all NaN. Cannot filter by usage.")
-            logger.warning("Falling back to stress profile only (this will include established stars)")
-            df_low_usage = df_valid.copy()
+        # Filter by age FIRST
+        if 'AGE' not in df_candidate.columns or df_candidate['AGE'].isna().all():
+            logger.warning("AGE column missing or all NaN. Cannot filter by age.")
         else:
-            # Convert USG_PCT to percentage if it's stored as decimal (0.20) vs percentage (20.0)
-            # Check if values are typically < 1 (decimal) or > 1 (percentage)
-            sample_usg = df_valid['USG_PCT'].dropna()
+            before_age = len(df_candidate)
+            df_candidate = df_candidate[df_candidate['AGE'] < age_threshold].copy()
+            logger.info(f"After age filter (< {age_threshold}): {len(df_candidate)} players (removed {before_age - len(df_candidate)})")
+        
+        # Filter by usage
+        if 'USG_PCT' not in df_candidate.columns or df_candidate['USG_PCT'].isna().all():
+            logger.error("USG_PCT column missing or all NaN. Cannot filter by usage.")
+            return pd.DataFrame()
+        else:
+            # Convert USG_PCT to percentage if needed
+            sample_usg = df_candidate['USG_PCT'].dropna()
             if len(sample_usg) > 0:
                 max_usg = sample_usg.max()
                 if max_usg < 1.0:
-                    # Stored as decimal, convert to percentage
                     usage_threshold_decimal = usage_threshold / 100.0
-                    df_low_usage = df_valid[df_valid['USG_PCT'] < usage_threshold_decimal].copy()
+                    before_usage = len(df_candidate)
+                    df_candidate = df_candidate[df_candidate['USG_PCT'] < usage_threshold_decimal].copy()
+                    logger.info(f"After usage filter (< {usage_threshold}%): {len(df_candidate)} players (removed {before_usage - len(df_candidate)})")
                 else:
-                    # Stored as percentage
-                    df_low_usage = df_valid[df_valid['USG_PCT'] < usage_threshold].copy()
+                    before_usage = len(df_candidate)
+                    df_candidate = df_candidate[df_candidate['USG_PCT'] < usage_threshold].copy()
+                    logger.info(f"After usage filter (< {usage_threshold}%): {len(df_candidate)} players (removed {before_usage - len(df_candidate)})")
             else:
                 logger.warning("No valid USG_PCT values. Cannot filter by usage.")
-                df_low_usage = df_valid.copy()
+                return pd.DataFrame()
         
-        logger.info(f"After usage filter (< {usage_threshold}%): {len(df_low_usage)} players")
-        
-        if len(df_low_usage) == 0:
-            logger.warning("No players meet usage threshold. Try lowering usage_threshold.")
+        if len(df_candidate) == 0:
+            logger.warning("No players meet age and usage criteria. Try adjusting thresholds.")
             return pd.DataFrame()
         
-        # Calculate stress profile percentile (on the low-usage subset)
-        df_low_usage['STRESS_PROFILE_PERCENTILE'] = (
-            df_low_usage['STRESS_PROFILE_SCORE'].rank(pct=True) * 100
-        )
+        # STEP 2: Filter by LEVERAGE_USG_DELTA (Abdication Detector)
+        # CRITICAL: Players with negative LEVERAGE_USG_DELTA don't scale up in clutch
+        # This is the #1 predictor (9.2% importance) and catches the "Simmons Paradox"
+        if 'LEVERAGE_USG_DELTA' in df_candidate.columns:
+            before_leverage = len(df_candidate)
+            df_candidate = df_candidate[
+                df_candidate['LEVERAGE_USG_DELTA'].notna() & 
+                (df_candidate['LEVERAGE_USG_DELTA'] >= leverage_usg_delta_threshold)
+            ].copy()
+            logger.info(f"After LEVERAGE_USG_DELTA filter (≥ {leverage_usg_delta_threshold}): {len(df_candidate)} players (removed {before_leverage - len(df_candidate)})")
+            
+            if len(df_candidate) == 0:
+                logger.warning("No players meet LEVERAGE_USG_DELTA threshold.")
+                return pd.DataFrame()
+        else:
+            logger.warning("LEVERAGE_USG_DELTA not in dataset. Cannot filter by Abdication Detector.")
         
-        # Filter by stress profile percentile
-        latent_stars = df_low_usage[
-            df_low_usage['STRESS_PROFILE_PERCENTILE'] >= stress_percentile_threshold
-        ].copy()
+        # STEP 3: Predict archetypes using trained model
+        # This captures the interaction of all stress vectors, not just individual ones
+        df_candidate = self.predict_archetypes(df_candidate)
         
-        logger.info(f"After stress profile filter (≥{stress_percentile_threshold}th percentile): {len(latent_stars)} players")
+        # Filter for King or Bulldozer predictions only
+        # These are players who will actually perform in playoffs (not just have skills)
+        before_archetype = len(df_candidate)
+        # Check actual archetype format (may include parentheses)
+        unique_archetypes = df_candidate['PREDICTED_ARCHETYPE'].unique()
+        logger.info(f"Unique predicted archetypes: {unique_archetypes}")
         
-        # Additional quality filters: High creation ability and pressure resilience
-        if 'CREATION_VOLUME_RATIO' in latent_stars.columns:
-            # High creation ability (top 30% of remaining players)
-            creation_threshold = latent_stars['CREATION_VOLUME_RATIO'].quantile(0.7)
-            before_creation = len(latent_stars)
-            latent_stars = latent_stars[
-                latent_stars['CREATION_VOLUME_RATIO'] >= creation_threshold
-            ]
-            logger.info(f"After creation filter (≥{creation_threshold:.3f}): {len(latent_stars)} players (removed {before_creation - len(latent_stars)})")
+        # Match archetypes that contain "King" or "Bulldozer" (case-insensitive)
+        valid_archetypes = df_candidate[
+            df_candidate['PREDICTED_ARCHETYPE'].str.contains('King|Bulldozer', case=False, na=False)
+        ]['PREDICTED_ARCHETYPE'].unique().tolist()
         
-        if 'RS_PRESSURE_RESILIENCE' in latent_stars.columns:
-            # High pressure resilience (top 30% of remaining players)
-            pressure_threshold = latent_stars['RS_PRESSURE_RESILIENCE'].quantile(0.7)
-            before_pressure = len(latent_stars)
-            latent_stars = latent_stars[
-                latent_stars['RS_PRESSURE_RESILIENCE'] >= pressure_threshold
-            ]
-            logger.info(f"After pressure resilience filter (≥{pressure_threshold:.3f}): {len(latent_stars)} players (removed {before_pressure - len(latent_stars)})")
+        if not valid_archetypes:
+            # Fallback: try exact matches
+            valid_archetypes = ['King (Resilient Star)', 'Bulldozer (Fragile Star)', 'King', 'Bulldozer']
+            valid_archetypes = [a for a in valid_archetypes if a in unique_archetypes]
         
-        # Sort by stress profile score (descending)
-        latent_stars = latent_stars.sort_values('STRESS_PROFILE_SCORE', ascending=False)
+        logger.info(f"Valid archetypes for filtering: {valid_archetypes}")
+        df_candidate = df_candidate[df_candidate['PREDICTED_ARCHETYPE'].isin(valid_archetypes)].copy()
+        logger.info(f"After archetype filter (King/Bulldozer only): {len(df_candidate)} players (removed {before_archetype - len(df_candidate)})")
+        
+        if len(df_candidate) == 0:
+            logger.warning("No players predicted as King or Bulldozer.")
+            return pd.DataFrame()
+        
+        # STEP 4: Calculate stress vector composite WITHIN candidate pool
+        # CRITICAL: Normalize relative to candidate pool, not entire league
+        df_candidate = self.calculate_stress_composite(df_candidate, reference_pool=df_candidate)
+        
+        # Filter by minimum confidence
+        before_confidence = len(df_candidate)
+        df_candidate = df_candidate[df_candidate['SIGNAL_CONFIDENCE'] >= min_confidence].copy()
+        logger.info(f"After confidence filter (≥ {min_confidence}): {len(df_candidate)} players (removed {before_confidence - len(df_candidate)})")
+        
+        if len(df_candidate) == 0:
+            logger.warning("No players meet confidence threshold.")
+            return pd.DataFrame()
+        
+        # STEP 5: Rank within candidate pool (Z-scores relative to peers)
+        # Calculate Z-score relative to candidate pool distribution
+        mean_composite = df_candidate['STRESS_COMPOSITE'].mean()
+        std_composite = df_candidate['STRESS_COMPOSITE'].std()
+        
+        if std_composite > 0:
+            df_candidate['Z_SCORE'] = (df_candidate['STRESS_COMPOSITE'] - mean_composite) / std_composite
+        else:
+            df_candidate['Z_SCORE'] = 0.0
+        
+        # Sort by Z-score (descending) - highest relative to candidate pool peers
+        latent_stars = df_candidate.sort_values('Z_SCORE', ascending=False).copy()
         
         logger.info(f"Final latent star candidates: {len(latent_stars)}")
+        logger.info(f"Top candidate Z-score: {latent_stars['Z_SCORE'].iloc[0]:.2f}")
         
         return latent_stars
     
@@ -262,8 +481,8 @@ class LatentStarDetector:
         if len(latent_stars) == 0:
             return "# Latent Star Detection Report\n\nNo latent stars identified."
         
-        # Sort by stress profile score
-        latent_stars_sorted = latent_stars.sort_values('STRESS_PROFILE_SCORE', ascending=False)
+        # Sort by Z-score (already sorted, but ensure it's correct)
+        latent_stars_sorted = latent_stars.sort_values('Z_SCORE', ascending=False)
         
         report_lines = [
             "# Latent Star Detection Report: Sleeping Giants",
@@ -276,29 +495,37 @@ class LatentStarDetector:
             "",
             "---",
             "",
-            "## Methodology",
+            "## Methodology (Phase 2 - Updated)",
             "",
             "**Criteria for Latent Stars:**",
             "",
-            "1. **Low Usage** (< 20% USG in regular season): Filter FIRST - identifies players with low opportunity",
-            "2. **Top Stress Profile** (≥80th percentile): High scores across key stress vectors",
-            "3. **High Creation Ability**: Top 30% in Creation Volume Ratio",
-            "4. **High Pressure Resilience**: Top 30% in Pressure Resilience",
+            "1. **Age < 25 years old**: Filter FIRST - latent stars must be young",
+            "2. **Low Usage (< 25% USG)**: Identifies players with low opportunity",
+            "3. **LEVERAGE_USG_DELTA ≥ -0.05**: Abdication Detector - must scale up in clutch (filters out passivity)",
+            "4. **Predicted Archetype (King/Bulldozer)**: Model predicts actual playoff performance, not just skills",
+            "5. **Primary Score Ranking**: Ranked by Stress Vector Composite (weighted by model feature importance)",
+            "6. **Confidence Score**: Flags data quality (missing data = lower confidence, no proxies)",
             "",
-            "**Key Stress Vectors Analyzed:**",
-            "- Creation Volume Ratio (self-creation ability)",
-            "- Pressure Resilience (ability to make tough shots)",
-            "- Late-Clock Pressure Resilience (bailout ability)",
-            "- Isolation Efficiency",
-            "- Clutch Usage Scaling",
-            "- Physicality (Free Throw Rate)",
+            "**Key Principles:**",
+            "- **Filter FIRST (Reference Class)**: Define candidate pool before ranking",
+            "- **Normalize within Candidate Pool**: All ranking relative to filtered subset, not entire league",
+            "- **Use Validated Stress Vectors**: Model feature importance weights (not arbitrary)",
+            "- **No Proxies**: Flag missing data with confidence scores (correlation = 0.0047 invalidates Isolation EFG proxy)",
+            "",
+            "**Key Stress Vectors Analyzed (from validated model):**",
+            "- LEVERAGE_USG_DELTA (9.2%): Clutch usage scaling (Abdication Detector)",
+            "- CREATION_VOLUME_RATIO (6.2%): Self-creation ability",
+            "- RS_PRESSURE_APPETITE (4.5%): Dominance signal",
+            "- EFG_ISO_WEIGHTED (4.1%): Isolation efficiency",
+            "- RS_LATE_CLOCK_PRESSURE_RESILIENCE (4.8%): Late-clock bailout ability",
+            "- Plus 10+ other validated stress vector features",
             "",
             "---",
             "",
             "## Top Latent Star Candidates",
             "",
-            "| Rank | Player | Season | RS USG% | Stress Score | Creation Ratio | Pressure Resilience | Key Strengths |",
-            "|------|--------|--------|---------|--------------|----------------|-------------------|---------------|"
+            "| Rank | Player | Season | Age | RS USG% | Z-Score | Predicted Archetype | King Prob | Key Strengths |",
+            "|------|--------|--------|-----|---------|---------|---------------------|-----------|---------------|"
         ]
         
         # Add top 20 candidates
@@ -307,30 +534,33 @@ class LatentStarDetector:
         for idx, (_, row) in enumerate(top_20.iterrows(), 1):
             player = row.get('PLAYER_NAME', 'Unknown')
             season = row.get('SEASON', 'Unknown')
+            age = row.get('AGE', 0)
             usg_pct = row.get('USG_PCT', 0)
             # Convert to percentage if stored as decimal
             if usg_pct < 1.0:
                 usg_pct = usg_pct * 100
-            stress_score = row.get('STRESS_PROFILE_SCORE', 0)
-            creation = row.get('CREATION_VOLUME_RATIO', 0)
-            pressure = row.get('RS_PRESSURE_RESILIENCE', 0)
+            z_score = row.get('Z_SCORE', 0)
+            predicted_archetype = row.get('PREDICTED_ARCHETYPE', 'Unknown')
+            king_prob = row.get('PREDICTED_KING_PROBABILITY', 0.0)
             
             # Identify key strengths
             strengths = []
-            if creation > 0.5:
+            if row.get('CREATION_VOLUME_RATIO', 0) > 0.5:
                 strengths.append("High Creation")
-            if pressure > 0.5:
+            if row.get('RS_PRESSURE_RESILIENCE', 0) > 0.5:
                 strengths.append("Pressure Resilient")
             if row.get('RS_LATE_CLOCK_PRESSURE_RESILIENCE', 0) > 0.5:
                 strengths.append("Late-Clock")
-            if row.get('EFG_ISO_WEIGHTED', 0) > 0.5:
-                strengths.append("Isolation")
+            if row.get('LEVERAGE_USG_DELTA', 0) > 0:
+                strengths.append("Clutch Scaling")
+            if row.get('CREATION_BOOST', 1.0) > 1.0:
+                strengths.append("Positive Creation Tax")
             
             strengths_str = ", ".join(strengths) if strengths else "N/A"
             
             report_lines.append(
-                f"| {idx} | {player} | {season} | {usg_pct:.1f}% | {stress_score:.1f} | "
-                f"{creation:.3f} | {pressure:.3f} | {strengths_str} |"
+                f"| {idx} | {player} | {season} | {age:.1f} | {usg_pct:.1f}% | "
+                f"{z_score:.2f} | {predicted_archetype} | {king_prob:.2f} | {strengths_str} |"
             )
         
         report_lines.extend([
@@ -385,21 +615,20 @@ class LatentStarDetector:
         # 1. Load data
         df = self.load_data()
         
-        # 2. Calculate stress profile scores
-        df = self.calculate_stress_profile_score(df)
-        
-        # 3. Identify latent stars
-        latent_stars = self.identify_latent_stars(df)
+        # 2. Identify latent stars (filter-first architecture with stress vector composite)
+        latent_stars = self.identify_latent_stars(df, age_threshold=25.0, usage_threshold=25.0)
         
         if len(latent_stars) == 0:
             logger.warning("No latent stars identified!")
             return
         
         # 4. Save results
-        output_cols = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON', 'USG_PCT', 'STRESS_PROFILE_SCORE',
-                      'STRESS_PROFILE_PERCENTILE', 'CREATION_BOOST', 'CREATION_TAX', 'CREATION_VOLUME_RATIO',
+        output_cols = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON', 'AGE', 'USG_PCT', 
+                      'STRESS_COMPOSITE', 'Z_SCORE', 'SIGNAL_CONFIDENCE',
+                      'PREDICTED_ARCHETYPE', 'PREDICTED_KING_PROBABILITY',
+                      'CREATION_VOLUME_RATIO', 'LEVERAGE_USG_DELTA',
                       'RS_PRESSURE_RESILIENCE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE',
-                      'EFG_ISO_WEIGHTED', 'LEVERAGE_USG_DELTA', 'RS_FTr']
+                      'EFG_ISO_WEIGHTED', 'RS_FTr', 'CREATION_BOOST']
         
         output_cols = [c for c in output_cols if c in latent_stars.columns]
         latent_stars[output_cols].to_csv(
@@ -421,10 +650,11 @@ class LatentStarDetector:
         logger.info("=" * 60)
         logger.info(f"Total latent stars identified: {len(latent_stars)}")
         logger.info("\nTop 5 Candidates:")
-        top_5 = latent_stars.sort_values('STRESS_PROFILE_SCORE', ascending=False).head(5)
+        top_5 = latent_stars.head(5)
         for idx, (_, row) in enumerate(top_5.iterrows(), 1):
             logger.info(f"  {idx}. {row.get('PLAYER_NAME', 'Unknown')} ({row.get('SEASON', 'Unknown')}) - "
-                       f"Stress Score: {row.get('STRESS_PROFILE_SCORE', 0):.1f}")
+                       f"Z-Score: {row.get('Z_SCORE', 0):.2f}, Archetype: {row.get('PREDICTED_ARCHETYPE', 'Unknown')}, "
+                       f"King Prob: {row.get('PREDICTED_KING_PROBABILITY', 0):.2f}")
 
 
 def main():

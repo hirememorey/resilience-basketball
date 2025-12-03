@@ -1,0 +1,7 @@
+player_id,player_name,detection_season,detection_usg_pct,max_subsequent_usg_pct,breakout_detected,breakout_seasons,max_usg_increase,stress_profile_score,creation_volume_ratio,pressure_resilience
+1628973,Jalen Brunson,2020-21,19.6,31.1,True,"[{'season': '2022-23', 'usg_pct': np.float64(26.6), 'increase': np.float64(7.0)}, {'season': '2023-24', 'usg_pct': np.float64(31.1), 'increase': np.float64(11.5)}]",11.5,88.61919073574109,0.692,0
+204456,T.J. McConnell,2020-21,14.899999999999999,18.2,False,[],0.0,80.13452362759581,0.8159851301115241,0
+1628407,Dwayne Bacon,2020-21,19.3,19.3,False,[],0.0,74.81534307982272,0.6384364820846905,0
+202709,Cory Joseph,2020-21,15.9,15.9,False,[],0.0,65.41588134413257,0.6178010471204188,0
+1630169,Tyrese Haliburton,2020-21,17.5,23.9,True,"[{'season': '2022-23', 'usg_pct': np.float64(23.799999999999997), 'increase': np.float64(6.299999999999997)}, {'season': '2023-24', 'usg_pct': np.float64(23.9), 'increase': np.float64(6.399999999999999)}]",6.399999999999999,63.36491603416366,0.5815950920245399,0
+1626153,Delon Wright,2020-21,16.3,16.3,False,[],0.0,60.653218548893754,0.6329305135951662,0

@@ -223,11 +223,15 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 
 ---
 
-## ✅ Phase 9: Latent Star Detection Refinement
+## ⏸️ Phase 9: Latent Star Detection Refinement (PAUSED)
 
-**Status**: ✅ **Phase 0 & 1 Complete** → 🎯 **Phase 2 Ready for Implementation** (December 2025)
+**Status**: ⏸️ **PAUSED** - Focus shifted to usage-aware conditional prediction model (December 2025)
 
-**Objective**: Implement additional consultant feedback to fix critical flaws in latent star detection system.
+**Reason for Pause**: The latent star detection system revealed a fundamental limitation: the model predicts performance at the current usage level, not at different usage levels. This prevents it from answering "Who has the skills but hasn't been given opportunity?"
+
+**Next Step**: Implement usage-aware conditional prediction model (see `USAGE_AWARE_MODEL_PLAN.md`). Once complete, latent star detection can be resumed using conditional predictions.
+
+**Archived Documentation**: See `archive/latent_star_detection/` for complete implementation details and analysis.
 
 ### **✅ Phase 0: Problem Domain Understanding (COMPLETE)**
 

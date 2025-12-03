@@ -16,89 +16,46 @@ The project has successfully developed a complete "Stylistic Stress Test" system
 - **`Complete Dataset`**: **10 seasons (2015-2024)** with 5,312 player-season records and full historical context data.
 - **`Clock Data Coverage`**: **100% coverage** across all seasons (2015-16 through 2024-25) with optimized parallel collection.
 
-## Next Developer Mission: Implement Phase 2 - Ranking Formula & Features
+## Next Developer Mission: Implement Usage-Aware Conditional Prediction Model
 
-The predictive engine and component analysis are production-ready. Phase 0 (Problem Domain Understanding) and Phase 1 (Data Pipeline Fix) are complete. The current focus is Phase 2: implementing the ranking formula and features to better identify undervalued players.
+The current model predicts playoff archetypes based on regular season stress vectors, but it has a critical limitation: **it predicts performance at the current usage level, not at different usage levels**. This prevents it from answering both questions we need:
 
-### Current State
+1. **Question 1 (Archetype Prediction)**: "How will this player perform in playoffs given their current role?"
+2. **Question 2 (Latent Star Detection)**: "Who has the skills but hasn't been given opportunity?"
 
-**✅ Phase 0 Complete (Problem Domain Understanding):**
-- All 14 test cases validated (100% coverage)
-- Key findings documented: USG% filter too strict, Leverage TS Delta is strongest signal
-- See `results/phase0_key_findings.md` for complete analysis
-
-**✅ Phase 1 Complete (Data Pipeline Fix):**
-- USG_PCT: 100% coverage (5,312 / 5,312) - fetched directly from API
-- AGE: 100% coverage (5,312 / 5,312) - fetched directly from API
-- CREATION_BOOST: 100% coverage, correctly calculated
-- No dependency on filtered files
-- See `results/phase1_completion_summary.md` for details
-
-**🎯 Phase 2 Ready (Ranking Formula & Features):**
-- **⚠️ CRITICAL**: Read previous developer's learnings and consultant's Proxy Fallacy warning in `LATENT_STAR_REFINEMENT_PLAN.md`
-- Validate ranking formula on test cases BEFORE building pipeline
-- Understand data distribution (actual ranges, not theoretical)
-- Implement Confidence Score system (addresses Proxy Fallacy)
-- Implement Scalability Coefficient
-- Implement ranking formula with piecewise normalization
-- Update filter thresholds (raise USG% to 25%, test age < 26)
-- Systematic threshold testing
+**The Solution**: Make the model **usage-aware** by treating usage as an explicit feature with interactions, allowing it to predict performance at different usage levels.
 
 ### ⚠️ CRITICAL: Read This First
 
-**Before implementing Phase 2, read `LATENT_STAR_REFINEMENT_PLAN.md`.**
+**Before implementing, read `USAGE_AWARE_MODEL_PLAN.md`.**
 
-The plan includes:
-- Phase 0 findings summary (what we learned from test cases)
-- Phase 1 completion summary (data pipeline fixes)
-- Complete Phase 2 implementation plan with specific formulas and validation criteria
-- Previous developer's critical insights (don't average away strongest signal)
+This document includes:
+- The problem statement (why current model can't answer both questions)
+- Theoretical foundation (what we know about skills vs. performance)
+- Current model state (what exists and what's missing)
+- Implementation plan (step-by-step approach)
+- Validation approach (how to know it works)
 
-**Key Principle**: Understand the problem before implementing the solution. Missing data often has a systematic cause (selection bias), not a technical one (NaN handling).
+**Key Principle**: Skills (stress vectors) are relatively stable across seasons. Performance (archetype) depends on opportunity (usage). The model needs to learn: `archetype = f(stress_vectors, usage)`
 
-### How to Work on Latent Star Detection (Phase 2)
+### Quick Reference
 
-**✅ Phase 0 & 1 Complete**: Problem domain understanding and data pipeline fixes are done.
-
-1.  **Read the Refinement Plan**:
-    *   **`LATENT_STAR_REFINEMENT_PLAN.md`**: Complete implementation plan with Phase 0 findings and Phase 2 tasks
-    *   **`results/phase0_key_findings.md`**: Key insights from test case validation
-    *   **`results/phase1_completion_summary.md`**: Data pipeline fix summary
-    *   **`BRUNSON_TEST_ANALYSIS.md`**: First principles analysis of why certain players were identified
-    *   **`MAXEY_ANALYSIS.md`**: False negative case study revealing system weaknesses
-
-2.  **Implement Phase 2 (Ranking Formula & Features)**:
-    *   Implement Scalability Coefficient calculation
-    *   Implement ranking formula (Leverage TS Delta weighted 3x + Scalability + CREATION_BOOST)
-    *   Update filter thresholds (raise USG% to 25%, test age < 26)
-    *   Implement Signal Confidence metric
-    *   Systematic threshold testing
-
-3.  **Key Files to Modify**:
-    *   `src/nba_data/scripts/detect_latent_stars.py` - Implement ranking formula, Scalability Coefficient, Signal Confidence
-    *   `src/nba_data/scripts/brunson_test.py` - Update validation criteria
-
-4.  **Run the Analysis**:
-    ```bash
-    # Run latent star detection (after Phase 2 implementation)
-    python src/nba_data/scripts/detect_latent_stars.py
-    
-    # Run Brunson Test for validation
-    python src/nba_data/scripts/brunson_test.py --detection-season 2020-21 --subsequent-seasons 2021-22 2022-23 2023-24
-    
-    # Validate Phase 2 implementation
-    python validate_test_cases.py  # Re-run to verify improvements
-    ```
+- **`USAGE_AWARE_MODEL_PLAN.md`**: **START HERE** - Complete implementation plan
+- **`KEY_INSIGHTS.md`**: Hard-won lessons (condensed reference)
+- **`LUKA_SIMMONS_PARADOX.md`**: Theoretical foundation
+- **`extended_resilience_framework.md`**: Stress vectors explained
+- **`results/predictive_model_report.md`**: Current model performance
 
 ## Quick Start for New Developers
 
 ### 1. Understand the Vision & Current State
-*   **`LUKA_SIMMONS_PARADOX.md`**: **CRITICAL.** Understands the core *descriptive* problem we solved.
-*   **`IMPLEMENTATION_PLAN.md`**: The roadmap, now completed through Phase 8, with Phase 9 in progress.
-*   **`LATENT_STAR_REFINEMENT_PLAN.md`**: **START HERE** - Complete implementation plan for latent star detection refinement with consultant feedback.
-*   **`BRUNSON_TEST_ANALYSIS.md`**: First principles analysis of why certain players were identified.
-*   **`MAXEY_ANALYSIS.md`**: False negative case study revealing system weaknesses.
-*   **`CONSULTANT_FIXES_IMPLEMENTED.md`**: Summary of initial consultant feedback implementation (partial).
+*   **`USAGE_AWARE_MODEL_PLAN.md`**: **START HERE** - Complete implementation plan for usage-aware conditional prediction model
+*   **`CURRENT_STATE.md`**: What exists, what's missing, and what needs to be built
+*   **`KEY_INSIGHTS.md`**: Hard-won lessons (condensed reference for quick lookup)
+*   **`LUKA_SIMMONS_PARADOX.md`**: **CRITICAL.** The theoretical foundation - understands the core problem we solved.
+*   **`extended_resilience_framework.md`**: Stress vectors explained (what they measure and why)
+*   **`results/predictive_model_report.md`**: Current model performance and architecture
+*   **`IMPLEMENTATION_PLAN.md`**: Historical roadmap (for context, but focus on USAGE_AWARE_MODEL_PLAN.md)
 
 ### 2. Set Up Environment
 ```bash
@@ -137,7 +94,7 @@ python src/nba_data/scripts/train_predictive_model.py
 *   `models/resilience_xgb.pkl`: The trained XGBoost model.
 *   `results/feature_importance.png`: Explains *why* the model works.
 
-### 4. Run Component Analysis & Latent Star Detection
+### 4. Run Component Analysis
 
 ```bash
 # Collect playoff PIE data (if not already collected)
@@ -145,12 +102,6 @@ python src/nba_data/scripts/collect_playoff_pie.py
 
 # Run component analysis
 python src/nba_data/scripts/component_analysis.py
-
-# Run latent star detection
-python src/nba_data/scripts/detect_latent_stars.py
-
-# Run Brunson Test for historical validation
-python src/nba_data/scripts/brunson_test.py --detection-season 2020-21 --subsequent-seasons 2021-22 2022-23 2023-24
 ```
 
 **Component Analysis Outputs:**
@@ -159,11 +110,7 @@ python src/nba_data/scripts/brunson_test.py --detection-season 2020-21 --subsequ
 *   `results/component_analysis_report.md`: Detailed analysis with actionable insights
 *   `results/component_analysis_heatmap.png`: Correlation visualizations
 
-**Latent Star Detection Outputs:**
-*   `results/latent_stars.csv`: Current latent star candidates
-*   `results/latent_star_detection_report.md`: Analysis report
-*   `results/brunson_test_2020_21.csv`: Historical validation results
-*   `results/brunson_test_2020_21_report.md`: Validation report
+**Note**: Latent star detection work has been paused. See `archive/latent_star_detection/README.md` for details. Focus is now on implementing usage-aware conditional prediction model.
 
 ---
 
@@ -175,24 +122,26 @@ We have achieved the core goal of building a predictive model. The next phase is
 
 **Current Status:** Model accuracy is **59.4%** with full clock data coverage. The model successfully predicts playoff archetypes using mechanistic stress vectors.
 
-See **`IMPLEMENTATION_PLAN.md`** for the detailed roadmap.
+**Next Step:** Implement usage-aware conditional prediction model to answer both questions (current performance + potential performance). See **`USAGE_AWARE_MODEL_PLAN.md`** for the implementation plan.
 
 ---
 
 ## Project Structure
 
 ```
+├── USAGE_AWARE_MODEL_PLAN.md       # START HERE - Implementation plan for usage-aware model
+├── CURRENT_STATE.md                # What exists, what's missing, what needs to be built
+├── KEY_INSIGHTS.md                 # Hard-won lessons (quick reference)
 ├── LUKA_SIMMONS_PARADOX.md         # The Theoretical Foundation
-├── IMPLEMENTATION_PLAN.md          # The Roadmap
+├── extended_resilience_framework.md # Stress Vectors Explained
+├── IMPLEMENTATION_PLAN.md          # Historical Roadmap (for context)
 ├── results/
 │   ├── predictive_model_report.md  # Performance of our V4.2 Predictive Model
 │   ├── resilience_archetypes.csv   # The Labels
 │   ├── predictive_dataset.csv      # The Features
 │   ├── pressure_features.csv       # The Pressure Features
 │   ├── component_analysis_correlations.csv  # Stress Vector → Outcome Correlations
-│   ├── component_analysis_report.md  # Component Analysis Report
-│   ├── latent_stars.csv            # Latent Star Candidates
-│   └── latent_star_detection_report.md  # Latent Star Analysis
+│   └── component_analysis_report.md  # Component Analysis Report
 ├── data/
 │   └── playoff_pie_data.csv        # Playoff PIE & Advanced Stats
 ├── src/
@@ -203,11 +152,11 @@ See **`IMPLEMENTATION_PLAN.md`** for the detailed roadmap.
 │       ├── calculate_shot_difficulty_features.py # Feature Engine (Pressure Vector)
 │       ├── train_predictive_model.py         # Predictive Engine (Trains Model)
 │       ├── collect_playoff_pie.py            # Collect Playoff PIE Data
-│       ├── component_analysis.py              # Component Analysis (Stress Vectors → Outcomes)
-│       ├── detect_latent_stars.py            # Latent Star Detection (Sleeping Giants)
-│       └── brunson_test.py                   # Historical Validation Framework
+│       └── component_analysis.py              # Component Analysis (Stress Vectors → Outcomes)
 ├── models/
 │   └── resilience_xgb.pkl          # The Trained Model
+├── archive/
+│   └── latent_star_detection/      # Archived latent star detection work (paused)
 ```
 
 ---
