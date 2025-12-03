@@ -36,38 +36,38 @@ The predictive engine and component analysis are production-ready. **CREATION_BO
   - **Solution Needed**: Fetch USG_PCT directly from API or remove MIN filter
   - **See**: `MISSING_DATA_ROOT_CAUSE_ANALYSIS.md` for complete analysis and implementation plan
 
-### How to Work on Latent Star Detection
+### How to Fix USG_PCT Selection Bias
 
-1.  **Review Current Implementation**:
-    *   Script: `src/nba_data/scripts/detect_latent_stars.py`
-    *   Current Results: `results/latent_stars.csv`
-    *   Report: `results/latent_star_detection_report.md`
+1.  **Read the Analysis**:
+    *   **CRITICAL**: Read `MISSING_DATA_ROOT_CAUSE_ANALYSIS.md` first
+    *   Understand why 66.6% of players are missing USG_PCT
+    *   Review the Tyrese Maxey case study
 
-2.  **Understand the Criteria**:
-    *   Currently identifies players with:
-        *   Top stress profile (≥80th percentile)
-        *   High creation ability (top 30% in Creation Volume Ratio)
-        *   High pressure resilience (top 30% in Pressure Resilience)
-    *   **Problem**: This includes established stars who already have high usage
+2.  **Understand the Problem**:
+    *   `regular_season_{season}.csv` files filter for `MIN >= 20.0`
+    *   This excludes low-opportunity players (exactly our target population!)
+    *   Players like Maxey (15.3 MIN) are excluded → missing USG_PCT → filtered out before evaluation
 
-3.  **Refinement Goals**:
-    *   Add usage filtering: Exclude players with RS USG% > 25% (they're already stars)
-    *   Focus on role players: Target players with < 20% usage but high stress profiles
-    *   Add validation: Check if identified players actually broke out in subsequent seasons
-    *   Improve scoring: Weight stress vectors by their correlation with playoff outcomes
+3.  **Implementation Options** (see analysis doc for details):
+    *   **Option A**: Remove MIN filter from `collect_regular_season_stats.py` (keep GP >= 50)
+    *   **Option B (Recommended)**: Fetch USG_PCT directly from API for all players in `predictive_dataset.csv`
+    *   **Rationale**: Don't filter out players before evaluating them
 
-4.  **Run the Analysis**:
+4.  **Files to Modify**:
+    *   `src/nba_data/scripts/detect_latent_stars.py` - Modify `load_data()` method
+    *   Consider: `src/nba_data/scripts/collect_regular_season_stats.py` - If removing MIN filter
+
+5.  **Test the Fix**:
     ```bash
-    # Run component analysis (if needed)
-    python src/nba_data/scripts/component_analysis.py
-    
-    # Run latent star detection
+    # After fix, verify Tyrese Maxey (2020-21) is now identified
     python src/nba_data/scripts/detect_latent_stars.py
+    # Check results/latent_stars.csv for Maxey
     ```
 
-5.  **Review Component Analysis** (for context):
-    *   See `results/component_analysis_report.md` for stress vector correlations
-    *   Use correlation data to weight stress profile scores
+6.  **Next Steps After Fix**:
+    *   Implement Signal Confidence metric for legitimate missing data
+    *   Use alternative signals when primary signals are missing
+    *   See `MISSING_DATA_ROOT_CAUSE_ANALYSIS.md` Section "Recommended Solutions"
 
 ## Quick Start for New Developers
 
