@@ -16,72 +16,75 @@ The project has successfully developed a complete "Stylistic Stress Test" system
 - **`Complete Dataset`**: **10 seasons (2015-2024)** with 5,312 player-season records and full historical context data.
 - **`Clock Data Coverage`**: **100% coverage** across all seasons (2015-16 through 2024-25) with optimized parallel collection.
 
-## Next Developer Mission: Refine Latent Star Detection
+## Next Developer Mission: Implement Phase 2 - Ranking Formula & Features
 
-The predictive engine and component analysis are production-ready. The current focus is refining the latent star detection system to better identify undervalued players.
+The predictive engine and component analysis are production-ready. Phase 0 (Problem Domain Understanding) and Phase 1 (Data Pipeline Fix) are complete. The current focus is Phase 2: implementing the ranking formula and features to better identify undervalued players.
 
 ### Current State
 
-**✅ Completed:**
-- **Component Analysis**: Direct correlations between stress vectors and playoff outcomes (PIE, NET_RATING, etc.)
-- **Playoff PIE Data**: Collected 2,175 player-seasons with 100% coverage
-- **Basic Latent Star Detection**: Identifies candidates with high stress profiles
-- **Usage Filtering**: Now filters by RS USG% < 20% first (excludes established stars)
-- **Brunson Test**: Historical validation framework (33% breakout rate)
+**✅ Phase 0 Complete (Problem Domain Understanding):**
+- All 14 test cases validated (100% coverage)
+- Key findings documented: USG% filter too strict, Leverage TS Delta is strongest signal
+- See `results/phase0_key_findings.md` for complete analysis
 
-**⚠️ Needs Refinement (Critical):**
-- **Data Pipeline Issues**: USG_PCT and AGE missing for low-minute players (selection bias)
-- **Positive Creation Tax**: Not valued as superpower indicator (logic inversion)
-- **Missing Data Handling**: Players filtered out instead of flagged as "High Potential / Low Confidence"
-- **Age Constraint**: Missing - a 32-year-old "latent star" doesn't exist
-- **Scalability Coefficient**: Not implemented - needed to filter false positives
+**✅ Phase 1 Complete (Data Pipeline Fix):**
+- USG_PCT: 100% coverage (5,312 / 5,312) - fetched directly from API
+- AGE: 100% coverage (5,312 / 5,312) - fetched directly from API
+- CREATION_BOOST: 100% coverage, correctly calculated
+- No dependency on filtered files
+- See `results/phase1_completion_summary.md` for details
+
+**🎯 Phase 2 Ready (Ranking Formula & Features):**
+- Implement Scalability Coefficient
+- Implement ranking formula (Leverage TS Delta weighted 3x + Scalability + CREATION_BOOST)
+- Update filter thresholds (raise USG% to 25%, test age < 26)
+- Implement Signal Confidence metric
+- Systematic threshold testing
 
 ### ⚠️ CRITICAL: Read This First
 
-**Before implementing any features, read `LATENT_STAR_REFINEMENT_PLAN.md`.**
+**Before implementing Phase 2, read `LATENT_STAR_REFINEMENT_PLAN.md`.**
 
-A previous developer spent significant time implementing features before discovering the root cause. The plan includes:
-- Consultant feedback summary
-- Previous developer's critical insights
-- Data pipeline architecture mapping
-- Step-by-step implementation plan (Phase 0-4)
+The plan includes:
+- Phase 0 findings summary (what we learned from test cases)
+- Phase 1 completion summary (data pipeline fixes)
+- Complete Phase 2 implementation plan with specific formulas and validation criteria
+- Previous developer's critical insights (don't average away strongest signal)
 
 **Key Principle**: Understand the problem before implementing the solution. Missing data often has a systematic cause (selection bias), not a technical one (NaN handling).
 
-### How to Work on Latent Star Detection
+### How to Work on Latent Star Detection (Phase 2)
+
+**✅ Phase 0 & 1 Complete**: Problem domain understanding and data pipeline fixes are done.
 
 1.  **Read the Refinement Plan**:
-    *   **`LATENT_STAR_REFINEMENT_PLAN.md`**: Complete implementation plan with consultant feedback
+    *   **`LATENT_STAR_REFINEMENT_PLAN.md`**: Complete implementation plan with Phase 0 findings and Phase 2 tasks
+    *   **`results/phase0_key_findings.md`**: Key insights from test case validation
+    *   **`results/phase1_completion_summary.md`**: Data pipeline fix summary
     *   **`BRUNSON_TEST_ANALYSIS.md`**: First principles analysis of why certain players were identified
     *   **`MAXEY_ANALYSIS.md`**: False negative case study revealing system weaknesses
 
-2.  **Start with Phase 0 (Problem Domain Understanding)**:
-    *   Validate known cases (Maxey, Brunson, Haliburton) are in data
-    *   Map the data pipeline architecture
-    *   Understand why data is missing (selection bias vs. random)
-    *   Validate age constraint impact
+2.  **Implement Phase 2 (Ranking Formula & Features)**:
+    *   Implement Scalability Coefficient calculation
+    *   Implement ranking formula (Leverage TS Delta weighted 3x + Scalability + CREATION_BOOST)
+    *   Update filter thresholds (raise USG% to 25%, test age < 26)
+    *   Implement Signal Confidence metric
+    *   Systematic threshold testing
 
-3.  **Fix Data Pipeline (Phase 1)**:
-    *   Add USG_PCT to `predictive_dataset.csv` during feature generation
-    *   Add AGE to `predictive_dataset.csv` during feature generation
-    *   Remove dependency on filtered `regular_season_*.csv` files
+3.  **Key Files to Modify**:
+    *   `src/nba_data/scripts/detect_latent_stars.py` - Implement ranking formula, Scalability Coefficient, Signal Confidence
+    *   `src/nba_data/scripts/brunson_test.py` - Update validation criteria
 
-4.  **Implement Features (Phase 2)**:
-    *   CREATION_BOOST (weight positive creation tax 1.5x)
-    *   Signal Confidence metric
-    *   Scalability Coefficient
-    *   Age constraint (< 25 years old)
-
-5.  **Run the Analysis**:
+4.  **Run the Analysis**:
     ```bash
-    # Run component analysis (if needed)
-    python src/nba_data/scripts/component_analysis.py
-    
-    # Run latent star detection
+    # Run latent star detection (after Phase 2 implementation)
     python src/nba_data/scripts/detect_latent_stars.py
     
     # Run Brunson Test for validation
     python src/nba_data/scripts/brunson_test.py --detection-season 2020-21 --subsequent-seasons 2021-22 2022-23 2023-24
+    
+    # Validate Phase 2 implementation
+    python validate_test_cases.py  # Re-run to verify improvements
     ```
 
 ## Quick Start for New Developers

@@ -1,8 +1,14 @@
 # Latent Star Detection Refinement Plan
 
-**Status**: 🎯 **READY FOR IMPLEMENTATION**  
+**Status**: ✅ **Phase 0 & 1 Complete** → 🎯 **Phase 2 Ready for Implementation**  
 **Date**: December 2025  
 **Priority**: High - Required for Sloan Paper
+
+## Current Status
+
+- ✅ **Phase 0**: Problem Domain Understanding - COMPLETE
+- ✅ **Phase 1**: Data Pipeline Fix - COMPLETE
+- 🎯 **Phase 2**: Implement Ranking Formula & Features - READY FOR IMPLEMENTATION
 
 ## Executive Summary
 
@@ -110,9 +116,51 @@ detect_latent_stars.py:
 
 ---
 
-## Implementation Plan: Phase 0 (Problem Domain Understanding)
+## ✅ Phase 0: Problem Domain Understanding (COMPLETE)
 
-**⚠️ DO NOT SKIP THIS PHASE**: Understanding the problem before implementing the solution is critical.
+**Status**: ✅ **COMPLETE** (December 2025)
+
+**Key Findings**: See `results/phase0_key_findings.md` for complete analysis.
+
+### Summary of Phase 0 Results
+
+1. **All 14 test cases found** (100% coverage in dataset)
+2. **USG% filter too strict**: 20% threshold filters out Maxey (22.2%), Edwards (26.4%), Siakam 2018-19 (20.5%)
+3. **Age filter validated**: Correctly filters out Turner (27, 28) and McConnell (29)
+4. **Leverage TS Delta is strongest signal**: Breakouts average +0.178, non-breakouts average -0.016
+5. **Scalability alone insufficient**: High for both breakouts and false positives
+6. **CREATION_BOOST already implemented**: Maxey has 1.5 (positive creation tax)
+7. **Missing data handling critical**: Maxey missing Leverage TS Delta but should still be identified
+
+**Validation Results**: See `results/phase0_validation_results.csv` and `results/phase0_validation_report.md`
+
+---
+
+## ✅ Phase 1: Fix Data Pipeline (COMPLETE)
+
+**Status**: ✅ **COMPLETE** (December 2025)
+
+### Summary of Phase 1 Results
+
+1. **USG_PCT**: 100% coverage (5,312 / 5,312 player-seasons) - fetched directly from API
+2. **AGE**: 100% coverage (5,312 / 5,312 player-seasons) - fetched directly from API
+3. **CREATION_BOOST**: 100% coverage, 100% correct calculation (867 players with positive creation tax)
+4. **No dependency on filtered files**: All metadata fetched directly from API during feature generation
+
+**Implementation**: Modified `evaluate_plasticity_potential.py`:
+- Added `fetch_player_metadata()` method
+- Integrated metadata fetch into pipeline
+- Added CREATION_BOOST calculation
+
+**Validation Results**: See `results/phase1_completion_summary.md` and `validate_phase1.py`
+
+---
+
+## 🎯 Phase 2: Implement Ranking Formula & Features (READY FOR IMPLEMENTATION)
+
+**Status**: 🎯 **READY FOR IMPLEMENTATION**
+
+Based on Phase 0 findings, Phase 2 should implement:
 
 ### Step 0.1: Define "Latent Star" with Age Constraint
 
@@ -269,21 +317,48 @@ detect_latent_stars.py:
 
 ---
 
-## Implementation Plan: Phase 2 (Implement Consultant's Features)
+## 🎯 Phase 2: Implement Ranking Formula & Features (READY FOR IMPLEMENTATION)
 
-**⚠️ ONLY AFTER PHASE 1 IS COMPLETE**
+**Status**: 🎯 **READY FOR IMPLEMENTATION**
 
-### Step 2.1: Implement CREATION_BOOST Feature
+**Prerequisites**: Phase 0 and Phase 1 are complete. All required data (USG_PCT, AGE, CREATION_BOOST) is available in `predictive_dataset.csv`.
 
-**Logic**: If `CREATION_TAX > 0` (efficiency increases when creating), this is a superpower.
+### Phase 2 Objectives
+
+Based on Phase 0 findings, Phase 2 must:
+1. **Implement ranking formula** prioritizing Leverage TS Delta (strongest signal)
+2. **Implement Scalability Coefficient** (secondary signal)
+3. **Fix filter thresholds** (raise USG% to 25%, test age < 26 for edge cases)
+4. **Handle missing data** (use proxies, flag confidence)
+5. **Use CREATION_BOOST in ranking** (already calculated, just needs integration)
+
+### Step 2.1: Implement Scalability Coefficient
+
+**Status**: ✅ CREATION_BOOST already implemented in Phase 1
+
+**Formula** (from Phase 0 analysis):
+```
+Scalability = (Normalized Isolation EFG × 0.4) + 
+              (Normalized Leverage TS Delta × 0.4) + 
+              (Normalized Clutch Minutes × 0.2)
+
+Where:
+- Normalized Isolation EFG = EFG_ISO_WEIGHTED / 0.7 (assume max ~0.7)
+- Normalized Leverage TS Delta = (LEVERAGE_TS_DELTA + 0.4) / 0.6 (range -0.4 to +0.2)
+- Normalized Clutch Minutes = CLUTCH_MIN_TOTAL / 100.0
+- If Leverage TS Delta is NaN, use Isolation EFG as proxy
+```
 
 **Implementation**:
-1. In `evaluate_plasticity_potential.py`: Add `CREATION_BOOST` column
-   - `CREATION_BOOST = 1.5 if CREATION_TAX > 0 else 1.0`
-2. In `detect_latent_stars.py`: Include `CREATION_BOOST` in stress profile calculation
-   - Multiply `CREATION_TAX` percentile by `CREATION_BOOST` before averaging
+1. In `detect_latent_stars.py`: Add `calculate_scalability()` method
+2. Handle missing data: Use Isolation EFG as proxy if Leverage TS Delta is NaN
+3. **DO NOT use as hard filter** (Phase 0 showed it's necessary but not sufficient)
+4. Use as secondary signal in ranking formula
 
-**Validation**: Maxey should have `CREATION_BOOST = 1.5` (his creation tax is +0.034)
+**Validation**: 
+- Haliburton: 0.912 (very high) ✅
+- Brunson: 0.647 (high) ✅
+- Maxey: 0.727 (high) ✅
 
 ### Step 2.2: Implement Signal Confidence Metric
 
@@ -291,56 +366,104 @@ detect_latent_stars.py:
 
 **Implementation**:
 1. In `detect_latent_stars.py`: Calculate `SIGNAL_CONFIDENCE`
-   - Count how many stress features are non-null
+   - Count how many key features are non-null: Leverage TS Delta, Scalability, Creation Ratio, Pressure Resilience
    - `SIGNAL_CONFIDENCE = (non_null_features / total_features) * 100`
-2. Modify stress profile calculation:
-   - Calculate score on available features only
-   - Don't penalize for missing features (don't average in zeros)
-   - Store confidence separately
-3. Add confidence threshold:
-   - Flag players with `SIGNAL_CONFIDENCE < 50%` as "Low Confidence"
-   - Still include them, but mark them separately
+2. Flag players with `SIGNAL_CONFIDENCE < 50%` as "Low Confidence"
+3. **Still include them** - don't exclude for missing data
 
-**Validation**: Haliburton (missing pressure data) should have lower confidence but still be included
+**Validation**: 
+- Maxey (missing Leverage TS Delta): Should have lower confidence but still be included
+- Haliburton (missing pressure data): Should have lower confidence but still be included
 
-### Step 2.3: Implement Scalability Coefficient
+### Step 2.3: Implement Ranking Formula (CRITICAL)
 
-**Logic**: Combines efficiency signals (Isolation EFG, Leverage TS Delta) with volume signals (Clutch Minutes).
+**Key Insight from Phase 0**: Leverage TS Delta is the strongest signal. Don't average it away.
 
-**Formula**:
+**Ranking Formula**:
 ```
-Scalability = (Isolation EFG × 0.4) + 
-              (Leverage TS Delta × 0.4) + 
-              (Clutch Minutes / 100 × 0.2)
+Primary Score = (Normalized Leverage TS Delta × 3.0) + 
+                (Normalized Scalability × 1.0) + 
+                (CREATION_BOOST bonus)
+
+Where:
+- Normalized Leverage TS Delta = (LEVERAGE_TS_DELTA + 0.4) / 0.6 (range -0.4 to +0.2)
+- Normalized Scalability = Scalability Coefficient (already 0-1 scale)
+- CREATION_BOOST bonus = (CREATION_BOOST - 1.0) × 0.2 (adds 0.1 for positive creation tax)
+- If Leverage TS Delta is NaN, use Isolation EFG normalized as proxy
 ```
 
 **Implementation**:
-1. In `detect_latent_stars.py`: Calculate `SCALABILITY_COEFFICIENT`
-   - Handle missing data: if Leverage TS Delta is NaN, use Isolation EFG as proxy
-   - Normalize Clutch Minutes (divide by 100)
-2. Add as primary filter:
-   - Require `SCALABILITY_COEFFICIENT >= 0.5` for latent star candidates
-3. Add to stress profile calculation:
-   - Include as a feature in stress profile score
+1. In `detect_latent_stars.py`: Add `calculate_primary_score()` method
+2. Normalize features to comparable scales (0-1)
+3. Weight Leverage TS Delta 3x (strongest signal from Phase 0)
+4. Use CREATION_BOOST as bonus (already calculated in Phase 1)
 
-**Validation**: 
-- Brunson should have high scalability (positive Leverage TS Delta, high Isolation EFG)
-- T.J. McConnell should have low scalability (negative Leverage TS Delta)
+**Validation**:
+- Haliburton (+0.178 Leverage TS Delta): Should rank very high
+- Brunson (-0.060 Leverage TS Delta): Should rank lower but still pass filters
+- Maxey (NaN Leverage TS Delta): Should use Isolation EFG proxy, still rank high
 
-### Step 2.4: Add Age Constraint
+### Step 2.4: Update Filter Thresholds
 
-**Logic**: Latent stars must be young players (< 25 years old).
+**Based on Phase 0 Findings**:
+
+1. **Age Filter**: Keep < 25, but test < 26 for edge cases (Siakam 2018-19 is 25.0)
+   - **Implementation**: Add age filter as FIRST filter
+   - **Validation**: Turner (27, 28) and McConnell (29) should be filtered out ✅
+
+2. **USG% Filter**: Raise threshold from 20% to 25% or 30%
+   - **Problem**: 20% filters out Maxey (22.2%), Edwards (26.4%), Siakam 2018-19 (20.5%)
+   - **Recommendation**: Test 25% and 30% thresholds
+   - **Implementation**: Update `usage_threshold` parameter
+
+3. **Leverage TS Delta**: Require data preferred, but use proxy if missing
+   - **Implementation**: Use Isolation EFG as proxy if Leverage TS Delta is NaN
+   - **Flag as "Low Confidence"** but don't exclude
+
+4. **Scalability**: Don't use as hard filter (too many false positives)
+   - **Implementation**: Use in ranking, not as filter
+   - **Threshold**: None (use in ranking only)
+
+5. **Creation Ratio**: Use as tiebreaker, not hard filter
+   - **Implementation**: Use in ranking or as secondary filter
+   - **Threshold**: 0.20 (validated by Siakam 2017-18)
+
+### Step 2.5: Update Detection Logic
+
+**New Detection Flow**:
+```
+1. Filter: Age < 25 (or < 26 - test both)
+2. Filter: USG < 25% (or 30% - test both)
+3. Calculate: Scalability Coefficient
+4. Calculate: Primary Score (Leverage TS Delta weighted 3x + Scalability + CREATION_BOOST)
+5. Calculate: Signal Confidence
+6. Rank: By Primary Score (descending)
+7. Filter: Creation Ratio > 0.20 (optional, as tiebreaker)
+8. Output: Top N candidates with confidence flags
+```
 
 **Implementation**:
-1. In `detect_latent_stars.py`: Add age filter
-   - Filter by `AGE < 25` **FIRST** (along with usage)
-   - Then rank by stress profile
-2. Update detection criteria documentation
-3. Add age to output reports
+1. Modify `identify_latent_stars()` in `detect_latent_stars.py`
+2. Replace stress profile percentile ranking with Primary Score ranking
+3. Add Signal Confidence calculation
+4. Update filters based on Phase 0 findings
 
-**Validation**: 
-- T.J. McConnell (29) should be filtered out
-- Brunson (24), Haliburton (21), Maxey (20) should all pass
+### Step 2.6: Systematic Threshold Testing
+
+**Test Combinations**:
+- Age: [< 25, < 26]
+- USG%: [< 20%, < 25%, < 30%]
+- Creation Ratio: [None, > 0.20]
+
+**Validation Matrix**:
+- True Positives: Haliburton, Brunson, Siakam (2017-18), Maxey, Edwards
+- False Positives: Turner, McConnell (should be filtered by age)
+- Measure: Precision, Recall, F1-Score
+
+**Implementation**:
+1. Create `test_threshold_combinations.py` script
+2. Test all combinations systematically
+3. Choose combination that maximizes true positives while minimizing false positives
 
 ---
 

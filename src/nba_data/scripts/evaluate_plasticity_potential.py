@@ -119,15 +119,6 @@ class StressVectorEngine:
             
             df_creation['CREATION_TAX'] = df_creation['EFG_ISO_WEIGHTED'] - df_creation['EFG_PCT_0_DRIBBLE']
             
-            # CONSULTANT FIX: CREATION_BOOST - Superpower signal
-            # If efficiency increases when self-creating (positive tax), this is a "physics violation"
-            # indicating elite self-creation ability. Weight it 1.5x as a superpower indicator.
-            df_creation['CREATION_BOOST'] = np.where(
-                df_creation['CREATION_TAX'] > 0,
-                df_creation['CREATION_TAX'] * 1.5,  # 1.5x weight for positive creation tax
-                0  # No boost for negative or zero tax
-            )
-            
             # Feature: Creation Volume Ratio
             df_creation['TOTAL_FGA_TRACKED'] = df_creation['FGA_0_DRIBBLE'] + df_creation['FGA_ISO_TOTAL']
             
@@ -135,6 +126,14 @@ class StressVectorEngine:
                 df_creation['TOTAL_FGA_TRACKED'] > 0,
                 df_creation['FGA_ISO_TOTAL'] / df_creation['TOTAL_FGA_TRACKED'],
                 0
+            )
+            
+            # PHASE 1: CREATION_BOOST - Positive creation tax is a superpower
+            # If efficiency increases when creating (positive tax), weight by 1.5x
+            df_creation['CREATION_BOOST'] = np.where(
+                df_creation['CREATION_TAX'] > 0,
+                1.5,
+                1.0
             )
             
             logger.info(f"✅ Processed Creation Metrics for {len(df_creation)} players.")
@@ -381,6 +380,63 @@ class StressVectorEngine:
         """
         # Placeholder for now until we confirm RS logs strategy
         return pd.DataFrame()
+    
+    def fetch_player_metadata(self, season):
+        """
+        Fetch USG_PCT and AGE for all players in a season.
+        This ensures we have complete metadata without dependency on filtered files.
+        
+        Returns:
+            DataFrame with columns: PLAYER_ID, PLAYER_NAME, USG_PCT, AGE
+        """
+        logger.info(f"Fetching player metadata (USG_PCT, AGE) for {season}...")
+        
+        try:
+            # Fetch Base stats for USG_PCT
+            base_stats = self.client.get_league_player_base_stats(season=season, season_type="Regular Season")
+            df_base = pd.DataFrame(
+                base_stats['resultSets'][0]['rowSet'],
+                columns=base_stats['resultSets'][0]['headers']
+            )
+            
+            # Fetch Advanced stats for AGE
+            advanced_stats = self.client.get_league_player_advanced_stats(season=season, season_type="Regular Season")
+            df_advanced = pd.DataFrame(
+                advanced_stats['resultSets'][0]['rowSet'],
+                columns=advanced_stats['resultSets'][0]['headers']
+            )
+            
+            # Select only needed columns
+            df_base_subset = df_base[['PLAYER_ID', 'PLAYER_NAME', 'USG_PCT']].copy()
+            df_advanced_subset = df_advanced[['PLAYER_ID', 'AGE']].copy()
+            
+            # Merge on PLAYER_ID
+            df_metadata = pd.merge(
+                df_base_subset,
+                df_advanced_subset,
+                on='PLAYER_ID',
+                how='outer'  # Use outer to include all players from both sources
+            )
+            
+            # Handle USG_PCT: API might return as decimal (0.20) or percentage (20.0)
+            # Check if values are typically < 1 (decimal) or > 1 (percentage)
+            if len(df_metadata) > 0:
+                sample_usg = df_metadata['USG_PCT'].dropna()
+                if len(sample_usg) > 0:
+                    max_usg = sample_usg.max()
+                    if max_usg < 1.0:
+                        # Stored as decimal, convert to percentage for consistency
+                        df_metadata['USG_PCT'] = df_metadata['USG_PCT'] * 100.0
+            
+            logger.info(f"  ✅ Fetched metadata for {len(df_metadata)} players")
+            logger.info(f"  - USG_PCT coverage: {df_metadata['USG_PCT'].notna().sum()} / {len(df_metadata)}")
+            logger.info(f"  - AGE coverage: {df_metadata['AGE'].notna().sum()} / {len(df_metadata)}")
+            
+            return df_metadata
+            
+        except Exception as e:
+            logger.error(f"❌ Error fetching player metadata for {season}: {e}", exc_info=True)
+            return pd.DataFrame()
 
     def run(self, seasons=['2021-22', '2022-23', '2023-24']):
         
@@ -401,6 +457,9 @@ class StressVectorEngine:
 
                 # 3. Context
                 df_context = self.fetch_context_metrics(season)
+                
+                # 4. Player Metadata (USG_PCT, AGE) - PHASE 1 FIX
+                df_metadata = self.fetch_player_metadata(season)
                 
                 # Merge Vectors
                 df_season = df_creation
@@ -423,6 +482,27 @@ class StressVectorEngine:
                     df_season['ELITE_WEAK_TS_DELTA'] = np.nan
                     df_season['ELITE_WEAK_USG_DELTA'] = np.nan
                 
+                # Merge metadata (USG_PCT, AGE) - PHASE 1 FIX
+                if not df_metadata.empty:
+                    # Merge on PLAYER_ID, update PLAYER_NAME if missing
+                    df_season = pd.merge(
+                        df_season,
+                        df_metadata[['PLAYER_ID', 'USG_PCT', 'AGE']],
+                        on='PLAYER_ID',
+                        how='left'
+                    )
+                    # Update PLAYER_NAME from metadata if it's missing in df_season
+                    if 'PLAYER_NAME' in df_metadata.columns:
+                        df_season['PLAYER_NAME'] = df_season['PLAYER_NAME'].fillna(
+                            df_season['PLAYER_ID'].map(
+                                df_metadata.set_index('PLAYER_ID')['PLAYER_NAME']
+                            )
+                        )
+                else:
+                    logger.warning(f"No metadata data for {season}, filling with NaNs")
+                    df_season['USG_PCT'] = np.nan
+                    df_season['AGE'] = np.nan
+                
                 df_season['SEASON'] = season
                 all_seasons_data.append(df_season)
                 
@@ -441,12 +521,13 @@ class StressVectorEngine:
         
         # Clean up columns
         cols_to_keep = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON', 
-                        'CREATION_TAX', 'CREATION_BOOST', 'CREATION_VOLUME_RATIO',
+                        'CREATION_TAX', 'CREATION_VOLUME_RATIO', 'CREATION_BOOST',
                         'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CLUTCH_MIN_TOTAL',
                         'QOC_TS_DELTA', 'QOC_USG_DELTA',
                         'AVG_OPPONENT_DCS', 'MEAN_OPPONENT_DCS',
                         'ELITE_WEAK_TS_DELTA', 'ELITE_WEAK_USG_DELTA',
-                        'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED']
+                        'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED',
+                        'USG_PCT', 'AGE']  # PHASE 1: Added USG_PCT, AGE, and CREATION_BOOST
         
         # Only keep columns that actually exist
         existing_cols = [c for c in cols_to_keep if c in final_df.columns]
