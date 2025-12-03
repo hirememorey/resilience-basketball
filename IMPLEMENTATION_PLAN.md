@@ -195,18 +195,17 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 4. **Clutch minutes = trust signal**: More clutch minutes = coaches trust them = latent value
 
 **Refinement Recommendations**:
-1. ✅ **CREATION_BOOST implemented** - Positive creation tax now weighted 1.5x (superpower signal)
-2. ⚠️ **Fix USG_PCT selection bias** - 66.6% missing due to MIN >= 20.0 filter (CRITICAL - see `MISSING_DATA_ROOT_CAUSE_ANALYSIS.md`)
-3. Add Leverage TS Delta filter (>0) - strongest differentiator
-4. Implement Signal Confidence metric - don't penalize for one missing feature
-5. Add age filter (<25 years old)
-6. Make clutch minutes primary signal (≥50 minutes)
+1. Add Leverage TS Delta filter (>0) - strongest differentiator
+2. Improve missing data handling - don't penalize for one missing feature
+3. Add age filter (<25 years old)
+4. Value positive creation tax - indicates elite self-creation ability
+5. Make clutch minutes primary signal (≥50 minutes)
 
 ---
 
-### **Step 4: Sloan Paper Preparation - READY**
+### **Step 4: Sloan Paper Preparation - IN PROGRESS**
 
-**Status**: 🎯 **READY FOR DRAFTING**
+**Status**: 🎯 **IN PROGRESS** - Additional consultant feedback received
 
 **Core Narrative**:
 1.  **The Luka/Simmons Paradox**: Volume matters as much as efficiency ("Abdication Tax")
@@ -214,6 +213,60 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 3.  **Mechanistic Stress Vectors**: Creation, Leverage, Pressure (with Clock Distinction), Rim Pressure, and Context
 4.  **Component Analysis**: Direct correlations between stress vectors and playoff outcomes (PIE, NET_RATING)
 5.  **Predictive Validation**: **59.4% accuracy** with mechanistic explanations and full clock data coverage
+
+**Additional Requirements** (from consultant):
+- Quantify "Arbitrage Value" (Cost per Win) to show market inefficiency
+- Create arbitrage chart (Latent Star Score vs. Next Season Salary)
+- Show dollar value: "Brunson identified 2 years early = $X million saved"
+
+**See `LATENT_STAR_REFINEMENT_PLAN.md` for complete implementation plan.**
+
+---
+
+## ✅ Phase 9: Latent Star Detection Refinement (IN PROGRESS)
+
+**Status**: 🎯 **READY FOR IMPLEMENTATION** (December 2025)
+
+**Objective**: Implement additional consultant feedback to fix critical flaws in latent star detection system.
+
+### **Problem Identified**
+
+After initial consultant feedback implementation, additional critical flaws were identified:
+
+1. **Positive Creation Tax Logic Inversion**: System doesn't value players with positive creation tax (efficiency increases when self-creating) - this is a "physics violation" indicating elite ability
+2. **Missing Data Blindspot**: Missing data is treated as absence of evidence, not evidence of absence - players are filtered out instead of flagged as "High Potential / Low Confidence"
+3. **Age Constraint Missing**: A 32-year-old "latent star" doesn't exist - latent stars must be young players (< 25 years old)
+
+### **Current State**
+
+- **Brunson Test**: 33% breakout rate (good, but false positives remain)
+- **False Positives**: T.J. McConnell (29), Dwayne Bacon (25), Cory Joseph (30), Delon Wright (28) - all older role players
+- **False Negatives**: Tyrese Maxey (20) - excluded due to missing data pipeline issues
+
+### **Implementation Plan**
+
+**See `LATENT_STAR_REFINEMENT_PLAN.md` for complete implementation plan with phases:**
+
+- **Phase 0**: Problem Domain Understanding (DO THIS FIRST)
+- **Phase 1**: Fix Data Pipeline (USG_PCT and AGE source issues)
+- **Phase 2**: Implement Consultant's Features (CREATION_BOOST, Signal Confidence, Scalability Coefficient, Age Constraint)
+- **Phase 3**: Add Arbitrage Value (For Sloan Paper)
+- **Phase 4**: End-to-End Validation
+
+### **Key Files to Modify**
+
+1. `src/nba_data/scripts/evaluate_plasticity_potential.py` - Add USG_PCT, AGE, CREATION_BOOST
+2. `src/nba_data/scripts/detect_latent_stars.py` - Implement new features and age constraint
+3. `src/nba_data/scripts/brunson_test.py` - Update validation criteria
+
+### **Success Criteria**
+
+- ✅ Maxey (2020-21) is identified as a latent star
+- ✅ All players in `predictive_dataset.csv` have USG_PCT and AGE (no systematic exclusion)
+- ✅ Brunson Test breakout rate improves (> 33%)
+- ✅ False positives (McConnell, Bacon) are filtered out by Scalability Coefficient and Age
+- ✅ System flags "High Potential / Low Confidence" players instead of excluding them
+- ✅ Arbitrage value is calculated and visualized for Sloan paper
 
 ---
 

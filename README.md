@@ -16,66 +16,83 @@ The project has successfully developed a complete "Stylistic Stress Test" system
 - **`Complete Dataset`**: **10 seasons (2015-2024)** with 5,312 player-season records and full historical context data.
 - **`Clock Data Coverage`**: **100% coverage** across all seasons (2015-16 through 2024-25) with optimized parallel collection.
 
-## Next Developer Mission: Fix USG_PCT Selection Bias
+## Next Developer Mission: Refine Latent Star Detection
 
-The predictive engine and component analysis are production-ready. **CREATION_BOOST feature is implemented.** The current priority is fixing the USG_PCT selection bias that filters out the exact players we're trying to identify.
+The predictive engine and component analysis are production-ready. The current focus is refining the latent star detection system to better identify undervalued players.
 
 ### Current State
 
 **✅ Completed:**
 - **Component Analysis**: Direct correlations between stress vectors and playoff outcomes (PIE, NET_RATING, etc.)
 - **Playoff PIE Data**: Collected 2,175 player-seasons with 100% coverage
-- **Latent Star Detection**: Identifies candidates with high stress profiles and low usage
-- **CREATION_BOOST Feature**: Implemented (1.5x weight for positive creation tax - "superpower" signal)
-- **Usage Filtering**: Filters by `USG_PCT < 20%` to exclude established stars
+- **Basic Latent Star Detection**: Identifies candidates with high stress profiles
+- **Usage Filtering**: Now filters by RS USG% < 20% first (excludes established stars)
+- **Brunson Test**: Historical validation framework (33% breakout rate)
 
-**⚠️ Critical Issue - Needs Immediate Fix:**
-- **USG_PCT Selection Bias**: 66.6% of players missing USG_PCT due to `MIN >= 20.0` filter in regular season file
-  - **Impact**: Players like Tyrese Maxey (2020-21) are excluded before evaluation
-  - **Root Cause**: Regular season file filters for MIN >= 20.0, excluding low-opportunity players (our target population!)
-  - **Solution Needed**: Fetch USG_PCT directly from API or remove MIN filter
-  - **See**: `MISSING_DATA_ROOT_CAUSE_ANALYSIS.md` for complete analysis and implementation plan
+**⚠️ Needs Refinement (Critical):**
+- **Data Pipeline Issues**: USG_PCT and AGE missing for low-minute players (selection bias)
+- **Positive Creation Tax**: Not valued as superpower indicator (logic inversion)
+- **Missing Data Handling**: Players filtered out instead of flagged as "High Potential / Low Confidence"
+- **Age Constraint**: Missing - a 32-year-old "latent star" doesn't exist
+- **Scalability Coefficient**: Not implemented - needed to filter false positives
 
-### How to Fix USG_PCT Selection Bias
+### ⚠️ CRITICAL: Read This First
 
-1.  **Read the Analysis**:
-    *   **CRITICAL**: Read `MISSING_DATA_ROOT_CAUSE_ANALYSIS.md` first
-    *   Understand why 66.6% of players are missing USG_PCT
-    *   Review the Tyrese Maxey case study
+**Before implementing any features, read `LATENT_STAR_REFINEMENT_PLAN.md`.**
 
-2.  **Understand the Problem**:
-    *   `regular_season_{season}.csv` files filter for `MIN >= 20.0`
-    *   This excludes low-opportunity players (exactly our target population!)
-    *   Players like Maxey (15.3 MIN) are excluded → missing USG_PCT → filtered out before evaluation
+A previous developer spent significant time implementing features before discovering the root cause. The plan includes:
+- Consultant feedback summary
+- Previous developer's critical insights
+- Data pipeline architecture mapping
+- Step-by-step implementation plan (Phase 0-4)
 
-3.  **Implementation Options** (see analysis doc for details):
-    *   **Option A**: Remove MIN filter from `collect_regular_season_stats.py` (keep GP >= 50)
-    *   **Option B (Recommended)**: Fetch USG_PCT directly from API for all players in `predictive_dataset.csv`
-    *   **Rationale**: Don't filter out players before evaluating them
+**Key Principle**: Understand the problem before implementing the solution. Missing data often has a systematic cause (selection bias), not a technical one (NaN handling).
 
-4.  **Files to Modify**:
-    *   `src/nba_data/scripts/detect_latent_stars.py` - Modify `load_data()` method
-    *   Consider: `src/nba_data/scripts/collect_regular_season_stats.py` - If removing MIN filter
+### How to Work on Latent Star Detection
 
-5.  **Test the Fix**:
+1.  **Read the Refinement Plan**:
+    *   **`LATENT_STAR_REFINEMENT_PLAN.md`**: Complete implementation plan with consultant feedback
+    *   **`BRUNSON_TEST_ANALYSIS.md`**: First principles analysis of why certain players were identified
+    *   **`MAXEY_ANALYSIS.md`**: False negative case study revealing system weaknesses
+
+2.  **Start with Phase 0 (Problem Domain Understanding)**:
+    *   Validate known cases (Maxey, Brunson, Haliburton) are in data
+    *   Map the data pipeline architecture
+    *   Understand why data is missing (selection bias vs. random)
+    *   Validate age constraint impact
+
+3.  **Fix Data Pipeline (Phase 1)**:
+    *   Add USG_PCT to `predictive_dataset.csv` during feature generation
+    *   Add AGE to `predictive_dataset.csv` during feature generation
+    *   Remove dependency on filtered `regular_season_*.csv` files
+
+4.  **Implement Features (Phase 2)**:
+    *   CREATION_BOOST (weight positive creation tax 1.5x)
+    *   Signal Confidence metric
+    *   Scalability Coefficient
+    *   Age constraint (< 25 years old)
+
+5.  **Run the Analysis**:
     ```bash
-    # After fix, verify Tyrese Maxey (2020-21) is now identified
+    # Run component analysis (if needed)
+    python src/nba_data/scripts/component_analysis.py
+    
+    # Run latent star detection
     python src/nba_data/scripts/detect_latent_stars.py
-    # Check results/latent_stars.csv for Maxey
+    
+    # Run Brunson Test for validation
+    python src/nba_data/scripts/brunson_test.py --detection-season 2020-21 --subsequent-seasons 2021-22 2022-23 2023-24
     ```
-
-6.  **Next Steps After Fix**:
-    *   Implement Signal Confidence metric for legitimate missing data
-    *   Use alternative signals when primary signals are missing
-    *   See `MISSING_DATA_ROOT_CAUSE_ANALYSIS.md` Section "Recommended Solutions"
 
 ## Quick Start for New Developers
 
 ### 1. Understand the Vision & Current State
 *   **`LUKA_SIMMONS_PARADOX.md`**: **CRITICAL.** Understands the core *descriptive* problem we solved.
-*   **`IMPLEMENTATION_PLAN.md`**: The roadmap, now completed through Phase 8.
+*   **`IMPLEMENTATION_PLAN.md`**: The roadmap, now completed through Phase 8, with Phase 9 in progress.
+*   **`LATENT_STAR_REFINEMENT_PLAN.md`**: **START HERE** - Complete implementation plan for latent star detection refinement with consultant feedback.
 *   **`BRUNSON_TEST_ANALYSIS.md`**: First principles analysis of why certain players were identified.
 *   **`MAXEY_ANALYSIS.md`**: False negative case study revealing system weaknesses.
+*   **`CONSULTANT_FIXES_IMPLEMENTED.md`**: Summary of initial consultant feedback implementation (partial).
 
 ### 2. Set Up Environment
 ```bash
