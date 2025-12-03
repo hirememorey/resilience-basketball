@@ -195,11 +195,12 @@ We have successfully built the Descriptive, Predictive, and Mechanistic engines.
 4. **Clutch minutes = trust signal**: More clutch minutes = coaches trust them = latent value
 
 **Refinement Recommendations**:
-1. Add Leverage TS Delta filter (>0) - strongest differentiator
-2. Improve missing data handling - don't penalize for one missing feature
-3. Add age filter (<25 years old)
-4. Value positive creation tax - indicates elite self-creation ability
-5. Make clutch minutes primary signal (≥50 minutes)
+1. ✅ **CREATION_BOOST implemented** - Positive creation tax now weighted 1.5x (superpower signal)
+2. ⚠️ **Fix USG_PCT selection bias** - 66.6% missing due to MIN >= 20.0 filter (CRITICAL - see `MISSING_DATA_ROOT_CAUSE_ANALYSIS.md`)
+3. Add Leverage TS Delta filter (>0) - strongest differentiator
+4. Implement Signal Confidence metric - don't penalize for one missing feature
+5. Add age filter (<25 years old)
+6. Make clutch minutes primary signal (≥50 minutes)
 
 ---
 

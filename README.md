@@ -16,21 +16,25 @@ The project has successfully developed a complete "Stylistic Stress Test" system
 - **`Complete Dataset`**: **10 seasons (2015-2024)** with 5,312 player-season records and full historical context data.
 - **`Clock Data Coverage`**: **100% coverage** across all seasons (2015-16 through 2024-25) with optimized parallel collection.
 
-## Next Developer Mission: Refine Latent Star Detection
+## Next Developer Mission: Fix USG_PCT Selection Bias
 
-The predictive engine and component analysis are production-ready. The current focus is refining the latent star detection system to better identify undervalued players.
+The predictive engine and component analysis are production-ready. **CREATION_BOOST feature is implemented.** The current priority is fixing the USG_PCT selection bias that filters out the exact players we're trying to identify.
 
 ### Current State
 
 **✅ Completed:**
 - **Component Analysis**: Direct correlations between stress vectors and playoff outcomes (PIE, NET_RATING, etc.)
 - **Playoff PIE Data**: Collected 2,175 player-seasons with 100% coverage
-- **Basic Latent Star Detection**: Identifies 25 candidates with high stress profiles
+- **Latent Star Detection**: Identifies candidates with high stress profiles and low usage
+- **CREATION_BOOST Feature**: Implemented (1.5x weight for positive creation tax - "superpower" signal)
+- **Usage Filtering**: Filters by `USG_PCT < 20%` to exclude established stars
 
-**⚠️ Needs Refinement:**
-- **Latent Star Detection**: Currently includes established stars (LeBron, Luka) - needs filtering to focus on true "sleeping giants"
-- **Usage Filtering**: Should exclude players with high regular season usage (they're already stars)
-- **Validation**: Need to validate that identified "sleeping giants" actually broke out when given opportunity
+**⚠️ Critical Issue - Needs Immediate Fix:**
+- **USG_PCT Selection Bias**: 66.6% of players missing USG_PCT due to `MIN >= 20.0` filter in regular season file
+  - **Impact**: Players like Tyrese Maxey (2020-21) are excluded before evaluation
+  - **Root Cause**: Regular season file filters for MIN >= 20.0, excluding low-opportunity players (our target population!)
+  - **Solution Needed**: Fetch USG_PCT directly from API or remove MIN filter
+  - **See**: `MISSING_DATA_ROOT_CAUSE_ANALYSIS.md` for complete analysis and implementation plan
 
 ### How to Work on Latent Star Detection
 

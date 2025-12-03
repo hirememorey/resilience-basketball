@@ -122,7 +122,10 @@ class LatentStarDetector:
         df = df.copy()
         
         # Key stress vector features that indicate playoff readiness
+        # CONSULTANT FIX: CREATION_BOOST is a "superpower" signal - efficiency increases when self-creating
+        # This is a "physics violation" indicating elite self-creation ability (e.g., Tyrese Maxey)
         stress_features = [
+            'CREATION_BOOST',  # CONSULTANT FIX: Superpower signal (1.5x weighted when CREATION_TAX > 0)
             'CREATION_VOLUME_RATIO',  # Self-creation ability
             'RS_PRESSURE_RESILIENCE',  # Ability to make tough shots
             'RS_LATE_CLOCK_PRESSURE_RESILIENCE',  # Late-clock bailout ability
@@ -394,7 +397,7 @@ class LatentStarDetector:
         
         # 4. Save results
         output_cols = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON', 'USG_PCT', 'STRESS_PROFILE_SCORE',
-                      'STRESS_PROFILE_PERCENTILE', 'CREATION_VOLUME_RATIO',
+                      'STRESS_PROFILE_PERCENTILE', 'CREATION_BOOST', 'CREATION_TAX', 'CREATION_VOLUME_RATIO',
                       'RS_PRESSURE_RESILIENCE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE',
                       'EFG_ISO_WEIGHTED', 'LEVERAGE_USG_DELTA', 'RS_FTr']
         

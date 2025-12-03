@@ -119,6 +119,15 @@ class StressVectorEngine:
             
             df_creation['CREATION_TAX'] = df_creation['EFG_ISO_WEIGHTED'] - df_creation['EFG_PCT_0_DRIBBLE']
             
+            # CONSULTANT FIX: CREATION_BOOST - Superpower signal
+            # If efficiency increases when self-creating (positive tax), this is a "physics violation"
+            # indicating elite self-creation ability. Weight it 1.5x as a superpower indicator.
+            df_creation['CREATION_BOOST'] = np.where(
+                df_creation['CREATION_TAX'] > 0,
+                df_creation['CREATION_TAX'] * 1.5,  # 1.5x weight for positive creation tax
+                0  # No boost for negative or zero tax
+            )
+            
             # Feature: Creation Volume Ratio
             df_creation['TOTAL_FGA_TRACKED'] = df_creation['FGA_0_DRIBBLE'] + df_creation['FGA_ISO_TOTAL']
             
@@ -432,7 +441,7 @@ class StressVectorEngine:
         
         # Clean up columns
         cols_to_keep = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON', 
-                        'CREATION_TAX', 'CREATION_VOLUME_RATIO',
+                        'CREATION_TAX', 'CREATION_BOOST', 'CREATION_VOLUME_RATIO',
                         'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CLUTCH_MIN_TOTAL',
                         'QOC_TS_DELTA', 'QOC_USG_DELTA',
                         'AVG_OPPONENT_DCS', 'MEAN_OPPONENT_DCS',
