@@ -323,14 +323,160 @@ detect_latent_stars.py:
 
 **Prerequisites**: Phase 0 and Phase 1 are complete. All required data (USG_PCT, AGE, CREATION_BOOST) is available in `predictive_dataset.csv`.
 
+### ⚠️ CRITICAL: Read Previous Developer's Learnings First
+
+**A previous developer attempted Phase 2 and learned critical lessons. Their insights are documented below. Read these BEFORE implementing anything.**
+
+**Core Lesson**: "Don't build the system and then validate. Validate the formula first, then build the system around it."
+
+### Previous Developer's Critical Learnings
+
+#### 1. Validation-First Approach (Not Build-First)
+
+**What Happened**: The developer built the full pipeline, then found Brunson and Edwards ranked 725 and 682.
+
+**What to Do Instead**:
+1. **Before writing any code**: Manually calculate ranking scores for known test cases (Brunson, Haliburton, Maxey, Edwards, Siakam)
+2. **Check their positions**: Where do they rank in the full distribution?
+3. **Validate the formula**: If Brunson ranks 725th, the formula is wrong—fix it before building the pipeline
+
+**Instruction**: Create `test_ranking_formula.py` that loads only test cases, calculates ranking scores, and validates the formula produces expected rankings. Only then integrate into the full pipeline.
+
+#### 2. Understand Data Distribution (Not Theoretical Ranges)
+
+**What Happened**: Assumed Leverage TS Delta range of -0.4 to +0.2, then found many values cluster around 0 (median -0.014).
+
+**What to Do Instead**:
+```python
+# BEFORE implementing normalization, run this:
+df = pd.read_csv("results/predictive_dataset.csv")
+for col in ['LEVERAGE_TS_DELTA', 'EFG_ISO_WEIGHTED', 'CLUTCH_MIN_TOTAL', 'CREATION_VOLUME_RATIO']:
+    print(f"\n{col}:")
+    print(df[col].describe())
+    print(f"Percentiles: {df[col].quantile([0.1, 0.25, 0.5, 0.75, 0.9])}")
+    print(f"Missing: {df[col].isna().sum()} / {len(df)}")
+```
+
+**Key Insight**: Most values are between -0.15 and +0.10, not -0.4 to +0.2. Design normalization around the actual distribution, not theoretical extremes.
+
+#### 3. Ranking Position > Filter Pass Rate
+
+**What Happened**: Brunson and Edwards pass all filters but rank 725 and 682, so they're excluded.
+
+**What to Do Instead**: After implementing filters, check:
+1. Do test cases pass filters? ✅
+2. **Where do they rank?** ❌ (This is the critical question)
+
+If they pass filters but rank 500+, the ranking formula is the problem, not the filters.
+
+#### 4. Normalization Method Selection (Data-Driven)
+
+**What Happened**: Used min-max normalization with theoretical ranges, which penalizes values near 0.
+
+**What to Do Instead**: Test three normalization methods on test cases:
+- **Min-Max**: If data is uniformly distributed, no outliers
+- **Percentile-based (Recommended)**: If data is skewed or has outliers (more robust)
+- **Piecewise**: If values near threshold should be treated differently (e.g., values ≥ -0.10 normalized separately from values < -0.10)
+
+**Key Insight**: Values near 0 (like Brunson's -0.060) are different from strongly negative values (like -0.35). If threshold is Leverage TS Delta ≥ -0.10, then values between -0.10 and 0 should be normalized to a higher range (e.g., 0.5-1.0), not 0-1.0.
+
+#### 5. Incremental Validation (Not Big-Bang Testing)
+
+**What to Do**: Build and validate each component separately:
+1. **Step 4a**: Implement Scalability Coefficient → Validate: Do test cases have reasonable values?
+2. **Step 4b**: Implement normalization → Validate: Are normalized values in expected range (0-1)?
+3. **Step 4c**: Implement ranking formula → Validate: Do test cases rank in expected order?
+4. **Step 4d**: Integrate into pipeline → Validate: Are test cases identified?
+
+Catch issues early. If Scalability is wrong, fix it before building ranking.
+
+#### 6. Systematic Threshold Testing (Not Guessing)
+
+**What to Do**: Test threshold combinations systematically:
+```python
+for top_n in [25, 50, 100, 150, 200]:
+    for leverage_weight in [2, 3, 4]:
+        for scalability_weight in [1, 1.5, 2]:
+            # Calculate ranking with these parameters
+            # Measure: How many test cases caught? How many false positives?
+            # Pick the combination that maximizes true positives while minimizing false positives
+```
+
+### Consultant's Critical Warning: The Proxy Fallacy
+
+**⚠️ CRITICAL FLAW IDENTIFIED**: Using Isolation EFG as a proxy for Leverage TS Delta violates the core thesis of the project.
+
+**The Problem**:
+- 43.5% of players are missing "Leverage TS Delta" (Clutch data)
+- Using Isolation EFG as a proxy assumes "Maxey is good at ISO, so he's probably good in the clutch"
+- **This is mathematically forcing the Delta to be consistent with their baseline**
+- **You are assuming "Innocent until proven Guilty"** - a player who has never played in the clutch gets a resilience score based on their regular talent
+
+**The Risk**:
+- You fixed the "False Negative" (Maxey) but likely introduced massive "False Positives"
+- You will promote high-skill players who would crumble under pressure, simply because they haven't had the chance to crumble yet
+
+**The Core Question**: "By using Isolation EFG as a proxy for Clutch, are we identifying Resilient players, or just Talented ones? Does this proxy defeat the purpose of measuring the drop-off?"
+
+**Better Approach**: Instead of a proxy, implement a **Confidence Score**:
+- Maxey gets a high Resilience Score but a **low Confidence Score** (because the data is imputed)
+- Flag players as "High Potential / Low Confidence" instead of treating proxy as real data
+- Separate output by confidence tiers: High Confidence vs. Low Confidence candidates
+
+**Validation Required**: Before using proxy, validate:
+1. What's the correlation between Isolation EFG and Leverage TS Delta? (Validate proxy assumption)
+2. Are there high Isolation EFG players who are fragile in clutch? (Check for false positives)
+3. Are we identifying resilient players or just talented ones? (Core question)
+
 ### Phase 2 Objectives
 
-Based on Phase 0 findings, Phase 2 must:
-1. **Implement ranking formula** prioritizing Leverage TS Delta (strongest signal)
-2. **Implement Scalability Coefficient** (secondary signal)
-3. **Fix filter thresholds** (raise USG% to 25%, test age < 26 for edge cases)
-4. **Handle missing data** (use proxies, flag confidence)
-5. **Use CREATION_BOOST in ranking** (already calculated, just needs integration)
+Based on Phase 0 findings and previous developer's learnings, Phase 2 must:
+1. **Understand data distribution first** (30 minutes) - Check actual ranges, percentiles, missing data patterns
+2. **Validate ranking formula on test cases** (1-2 hours) - Test formula before building pipeline
+3. **Implement Confidence Score system** (not just proxy) - Flag imputed data, separate by confidence tiers
+4. **Implement ranking formula** prioritizing Leverage TS Delta (strongest signal)
+5. **Implement Scalability Coefficient** (secondary signal)
+6. **Fix filter thresholds** (raise USG% to 25%, test age < 26 for edge cases)
+7. **Choose normalization method** based on actual data distribution (piecewise recommended)
+8. **Systematic threshold testing** (don't guess)
+
+### Step 2.0: Data Exploration (DO THIS FIRST - 30 minutes)
+
+**⚠️ CRITICAL**: Do not implement any formulas until you understand the actual data distribution.
+
+**What to Do**:
+```python
+# Load the dataset
+df = pd.read_csv("results/predictive_dataset.csv")
+
+# Check distributions of key features
+for col in ['LEVERAGE_TS_DELTA', 'EFG_ISO_WEIGHTED', 'CLUTCH_MIN_TOTAL', 'CREATION_VOLUME_RATIO']:
+    print(f"\n{col}:")
+    print(df[col].describe())
+    print(f"Percentiles: {df[col].quantile([0.1, 0.25, 0.5, 0.75, 0.9])}")
+    print(f"Missing: {df[col].isna().sum()} / {len(df)} ({df[col].isna().sum() / len(df) * 100:.1f}%)")
+
+# Check test case values
+test_cases = ["Jalen Brunson", "Tyrese Haliburton", "Tyrese Maxey", "Anthony Edwards", "Pascal Siakam"]
+for name in test_cases:
+    mask = df['PLAYER_NAME'].str.contains(name, case=False, na=False) & (df['SEASON'] == "2020-21")
+    if mask.any():
+        row = df[mask].iloc[0]
+        print(f"\n{name} (2020-21):")
+        print(f"  Leverage TS Delta: {row.get('LEVERAGE_TS_DELTA', 'N/A')}")
+        print(f"  Isolation EFG: {row.get('EFG_ISO_WEIGHTED', 'N/A')}")
+        print(f"  Clutch Minutes: {row.get('CLUTCH_MIN_TOTAL', 'N/A')}")
+        print(f"  Creation Ratio: {row.get('CREATION_VOLUME_RATIO', 'N/A')}")
+```
+
+**Key Questions to Answer**:
+1. What's the actual range of Leverage TS Delta? (Not theoretical -0.4 to +0.2)
+2. What's the median? (Likely around -0.014, not 0)
+3. How many players are missing Leverage TS Delta? (43.5% according to consultant)
+4. What's the correlation between Isolation EFG and Leverage TS Delta? (Validate proxy assumption)
+5. Where do test cases fall in the distribution?
+
+**Why This Matters**: The previous developer assumed theoretical ranges and built normalization for a world that doesn't exist. The empirical world is clustered and narrow. If you normalize a tight cluster into a wide linear range, you crush the variance.
 
 ### Step 2.1: Implement Scalability Coefficient
 
@@ -344,14 +490,14 @@ Scalability = (Normalized Isolation EFG × 0.4) +
 
 Where:
 - Normalized Isolation EFG = EFG_ISO_WEIGHTED / 0.7 (assume max ~0.7)
-- Normalized Leverage TS Delta = (LEVERAGE_TS_DELTA + 0.4) / 0.6 (range -0.4 to +0.2)
+- Normalized Leverage TS Delta = Use piecewise normalization (see Step 2.3)
 - Normalized Clutch Minutes = CLUTCH_MIN_TOTAL / 100.0
-- If Leverage TS Delta is NaN, use Isolation EFG as proxy
+- If Leverage TS Delta is NaN, use Isolation EFG as proxy BUT flag as low confidence
 ```
 
 **Implementation**:
 1. In `detect_latent_stars.py`: Add `calculate_scalability()` method
-2. Handle missing data: Use Isolation EFG as proxy if Leverage TS Delta is NaN
+2. Handle missing data: Use Isolation EFG as proxy if Leverage TS Delta is NaN, but flag confidence
 3. **DO NOT use as hard filter** (Phase 0 showed it's necessary but not sufficient)
 4. Use as secondary signal in ranking formula
 
@@ -360,24 +506,87 @@ Where:
 - Brunson: 0.647 (high) ✅
 - Maxey: 0.727 (high) ✅
 
-### Step 2.2: Implement Signal Confidence Metric
+### Step 2.2: Implement Confidence Score System (CRITICAL - Addresses Proxy Fallacy)
 
-**Logic**: Missing data = lower confidence, not lower score.
+**⚠️ CRITICAL**: This is not just about missing data handling. This addresses the "Proxy Fallacy" identified by the consultant.
+
+**The Problem**: Using Isolation EFG as a proxy for Leverage TS Delta assumes "talented = resilient," which defeats the purpose of measuring drop-off under pressure.
+
+**The Solution**: Calculate Resilience Score using available data (proxy if needed), but flag Confidence Score based on data availability. Separate "High Confidence" from "Low Confidence" candidates.
 
 **Implementation**:
-1. In `detect_latent_stars.py`: Calculate `SIGNAL_CONFIDENCE`
-   - Count how many key features are non-null: Leverage TS Delta, Scalability, Creation Ratio, Pressure Resilience
-   - `SIGNAL_CONFIDENCE = (non_null_features / total_features) * 100`
-2. Flag players with `SIGNAL_CONFIDENCE < 50%` as "Low Confidence"
-3. **Still include them** - don't exclude for missing data
+1. In `detect_latent_stars.py`: Calculate `SIGNAL_CONFIDENCE` based on data availability:
+   - Leverage TS Delta available (real data): +0.3 confidence
+   - Clutch Minutes available: +0.2 confidence
+   - Pressure Resilience available: +0.2 confidence
+   - Isolation EFG available: +0.1 confidence
+   - Creation Ratio available: +0.1 confidence
+   - Other features: +0.1 confidence
+   - Maximum confidence: 1.0 (all data available)
+   - Minimum confidence: 0.3 (only basic data available)
 
-**Validation**: 
-- Maxey (missing Leverage TS Delta): Should have lower confidence but still be included
-- Haliburton (missing pressure data): Should have lower confidence but still be included
+2. **Tiered System**:
+   - **Tier 1 (High Confidence)**: All critical data available (Confidence ≥ 0.7)
+   - **Tier 2 (Medium Confidence)**: Missing Leverage TS Delta but has Clutch Minutes (Confidence 0.5-0.7)
+   - **Tier 3 (Low Confidence)**: Missing Leverage TS Delta, using Isolation EFG proxy (Confidence 0.3-0.5)
+   - **Tier 4 (Very Low Confidence)**: Missing multiple critical features (Confidence < 0.3)
+
+3. **Output Structure**:
+   ```python
+   # Separate candidates by confidence
+   high_confidence_candidates = candidates[candidates['SIGNAL_CONFIDENCE'] >= 0.7]
+   low_confidence_candidates = candidates[candidates['SIGNAL_CONFIDENCE'] < 0.7]
+   
+   # Flag low confidence candidates
+   low_confidence_candidates['FLAG'] = 'High Potential / Low Confidence'
+   ```
+
+4. **Still include them** - don't exclude for missing data, but make confidence transparent
+
+**Validation Required**:
+- Check known resilient players: Do they have real Leverage TS Delta data, or are they using proxies?
+- Check known fragile players: Do they have real Leverage TS Delta data showing negative values?
+- Check false positives: Are they high-skill players with missing clutch data (using proxies)?
+- **Core Question**: Are we identifying resilient players or just talented ones?
+
+**Validation Cases**:
+- Maxey (missing Leverage TS Delta): Should have low confidence (Tier 3) but still be included
+- Haliburton (missing pressure data but has Clutch Minutes): Should have medium confidence (Tier 2)
+- Brunson (has real Leverage TS Delta): Should have high confidence (Tier 1)
+
+### Step 2.2a: Validate Proxy Assumption (BEFORE Using Proxy)
+
+**⚠️ CRITICAL**: Before using Isolation EFG as a proxy for Leverage TS Delta, validate the assumption.
+
+**What to Do**:
+```python
+# Calculate correlation between Isolation EFG and Leverage TS Delta
+df_with_both = df.dropna(subset=['EFG_ISO_WEIGHTED', 'LEVERAGE_TS_DELTA'])
+correlation = df_with_both['EFG_ISO_WEIGHTED'].corr(df_with_both['LEVERAGE_TS_DELTA'])
+print(f"Correlation between Isolation EFG and Leverage TS Delta: {correlation:.3f}")
+
+# Check for high Isolation EFG players who are fragile in clutch
+high_iso = df_with_both[df_with_both['EFG_ISO_WEIGHTED'] > 0.55]
+fragile_in_clutch = high_iso[high_iso['LEVERAGE_TS_DELTA'] < -0.10]
+print(f"\nHigh Isolation EFG players (>0.55) who are fragile in clutch (<-0.10): {len(fragile_in_clutch)}")
+print(f"Examples: {fragile_in_clutch[['PLAYER_NAME', 'SEASON', 'EFG_ISO_WEIGHTED', 'LEVERAGE_TS_DELTA']].head()}")
+```
+
+**Key Questions**:
+1. What's the correlation? (If low, proxy is invalid)
+2. Are there high Isolation EFG players who are fragile in clutch? (If yes, proxy introduces false positives)
+3. Are we identifying resilient players or just talented ones? (Core question)
+
+**Decision Point**: If correlation is low (< 0.3) or there are many high Isolation EFG players who are fragile in clutch, consider:
+- Using Confidence Score instead of proxy
+- Excluding players with missing Leverage TS Delta (more honest)
+- Using multiple proxies with weights based on correlation
 
 ### Step 2.3: Implement Ranking Formula (CRITICAL)
 
 **Key Insight from Phase 0**: Leverage TS Delta is the strongest signal. Don't average it away.
+
+**⚠️ CRITICAL**: Use piecewise normalization based on actual data distribution, not theoretical ranges.
 
 **Ranking Formula**:
 ```
@@ -386,22 +595,63 @@ Primary Score = (Normalized Leverage TS Delta × 3.0) +
                 (CREATION_BOOST bonus)
 
 Where:
-- Normalized Leverage TS Delta = (LEVERAGE_TS_DELTA + 0.4) / 0.6 (range -0.4 to +0.2)
+- Normalized Leverage TS Delta = Use piecewise normalization (see below)
 - Normalized Scalability = Scalability Coefficient (already 0-1 scale)
 - CREATION_BOOST bonus = (CREATION_BOOST - 1.0) × 0.2 (adds 0.1 for positive creation tax)
-- If Leverage TS Delta is NaN, use Isolation EFG normalized as proxy
+- If Leverage TS Delta is NaN, use Isolation EFG normalized as proxy BUT flag as low confidence
+```
+
+**Piecewise Normalization for Leverage TS Delta**:
+
+Based on consultant's insight: "The gap between -0.10 (Liability) and 0.0 (Average) is existentially different from the gap between 0.0 (Average) and +0.10 (Elite)."
+
+**Option 1: Piecewise (Recommended)**:
+```python
+# Values ≥ -0.10 (threshold of viability): Normalize to 0.5-1.0 range
+# Values < -0.10 (liability): Normalize to 0-0.5 range
+if leverage_ts_delta >= -0.10:
+    # "Can play" range: -0.10 to +0.20 → 0.5 to 1.0
+    normalized = 0.5 + ((leverage_ts_delta + 0.10) / 0.30) * 0.5
+else:
+    # "Can't play" range: -0.40 to -0.10 → 0.0 to 0.5
+    normalized = ((leverage_ts_delta + 0.40) / 0.30) * 0.5
+```
+
+**Option 2: Percentile-Based (Alternative)**:
+```python
+# Use percentile rank instead of min-max
+# Treats -0.06 (Brunson) as its percentile rank (e.g., 60th percentile)
+# More robust to outliers, less sensitive to theoretical extremes
+normalized = df['LEVERAGE_TS_DELTA'].rank(pct=True)
+```
+
+**Option 3: Data-Driven Min-Max (If distribution is uniform)**:
+```python
+# Use actual min/max from data, not theoretical
+actual_min = df['LEVERAGE_TS_DELTA'].quantile(0.01)  # 1st percentile
+actual_max = df['LEVERAGE_TS_DELTA'].quantile(0.99)  # 99th percentile
+normalized = (leverage_ts_delta - actual_min) / (actual_max - actual_min)
 ```
 
 **Implementation**:
-1. In `detect_latent_stars.py`: Add `calculate_primary_score()` method
-2. Normalize features to comparable scales (0-1)
-3. Weight Leverage TS Delta 3x (strongest signal from Phase 0)
-4. Use CREATION_BOOST as bonus (already calculated in Phase 1)
+1. **First**: Test all three normalization methods on test cases
+2. **Then**: Pick the one that produces expected rankings (Brunson should rank higher than random role players)
+3. In `detect_latent_stars.py`: Add `calculate_primary_score()` method
+4. Normalize features to comparable scales (0-1)
+5. Weight Leverage TS Delta 3x (strongest signal from Phase 0)
+6. Use CREATION_BOOST as bonus (already calculated in Phase 1)
 
-**Validation**:
-- Haliburton (+0.178 Leverage TS Delta): Should rank very high
-- Brunson (-0.060 Leverage TS Delta): Should rank lower but still pass filters
-- Maxey (NaN Leverage TS Delta): Should use Isolation EFG proxy, still rank high
+**Validation** (CRITICAL - Do this BEFORE building pipeline):
+1. Create `test_ranking_formula.py` that loads only test cases
+2. Manually calculate ranking scores with different formulas
+3. Check: Does Brunson rank higher than random role players?
+4. If not, iterate on formula until it works
+5. Only then integrate into full pipeline
+
+**Expected Rankings**:
+- Haliburton (+0.178 Leverage TS Delta): Should rank very high (top 50)
+- Brunson (-0.060 Leverage TS Delta): Should rank lower but still pass filters (top 200)
+- Maxey (NaN Leverage TS Delta): Should use Isolation EFG proxy, still rank high (top 200) but with low confidence
 
 ### Step 2.4: Update Filter Thresholds
 
@@ -537,30 +787,83 @@ Where:
 
 ---
 
-## Implementation Order (Critical)
+## Implementation Order (Critical - Validation-First Approach)
 
-1. **Phase 0**: Problem Domain Understanding (DO THIS FIRST)
-   - Don't implement features until you understand why data is missing
-   - Map the pipeline, validate known cases, identify root cause
+**Core Principle**: "Don't build the system and then validate. Validate the formula first, then build the system around it."
 
-2. **Phase 1**: Fix Data Pipeline (Root Cause)
-   - Fix USG_PCT source problem
-   - Add AGE to feature generation
-   - Validate the fix
+### Phase 2 Implementation Order (Detailed)
 
-3. **Phase 2**: Implement Features (After Pipeline is Fixed)
-   - CREATION_BOOST
-   - Signal Confidence
-   - Scalability Coefficient
-   - Age Constraint
+1. **Step 2.0: Data Exploration (30 minutes)** - DO THIS FIRST
+   - Load `predictive_dataset.csv`
+   - Check distributions of key features (Leverage TS Delta, Isolation EFG, Clutch Minutes, etc.)
+   - Check actual ranges, percentiles, missing data patterns
+   - Check test case values (Brunson, Haliburton, Maxey, Edwards, Siakam)
+   - **Why**: Understand actual data distribution before designing formulas
 
-4. **Phase 3**: Add Arbitrage Value (For Sloan Paper)
+2. **Step 2.2a: Validate Proxy Assumption (30 minutes)** - BEFORE USING PROXY
+   - Calculate correlation between Isolation EFG and Leverage TS Delta
+   - Check for high Isolation EFG players who are fragile in clutch
+   - **Why**: Validate that proxy doesn't introduce false positives (talented but not resilient)
+
+3. **Step 2.1: Test Ranking Formula on Test Cases (1-2 hours)** - VALIDATE BEFORE BUILDING
+   - Create `test_ranking_formula.py` that loads only test cases
+   - Manually calculate ranking scores with different formulas
+   - Test different normalization methods (piecewise, percentile-based, min-max)
+   - Check: Does Brunson rank higher than random role players?
+   - **Why**: Catch formula issues early, not after building the pipeline
+
+4. **Step 2.1: Implement Scalability Coefficient (30 minutes)**
+   - Add `calculate_scalability()` method
+   - Validate: Do test cases have reasonable Scalability values?
+   - **Why**: Incremental validation - fix issues before building ranking
+
+5. **Step 2.3: Implement Ranking Formula (1 hour)**
+   - Add `calculate_primary_score()` method
+   - Use piecewise normalization (or percentile-based if data supports it)
+   - Validate: Do test cases rank in expected order?
+   - **Why**: Formula already validated, now implement it
+
+6. **Step 2.2: Implement Confidence Score System (1 hour)**
+   - Calculate `SIGNAL_CONFIDENCE` based on data availability
+   - Implement tiered system (High, Medium, Low, Very Low Confidence)
+   - Separate output by confidence tiers
+   - **Why**: Address Proxy Fallacy - make imputed data transparent
+
+7. **Step 2.4: Update Filter Thresholds (30 minutes)**
+   - Update age filter (< 25 or < 26)
+   - Update USG% filter (25% or 30%)
+   - Validate: Do test cases pass filters?
+
+8. **Step 2.5: Update Detection Logic (1 hour)**
+   - Integrate all components into pipeline
+   - Validate: Are test cases identified?
+
+9. **Step 2.6: Systematic Threshold Testing (1 hour)**
+   - Test combinations of top_n, leverage_weight, scalability_weight
+   - Measure: How many test cases caught? How many false positives?
+   - Pick optimal combination
+
+10. **Phase 4: End-to-End Validation (1 hour)**
+    - Test with known cases
+    - Re-run Brunson Test
+    - Validate: Are we identifying resilient players or just talented ones?
+
+### Previous Phases (Already Complete)
+
+1. **Phase 0**: Problem Domain Understanding ✅ COMPLETE
+   - All 14 test cases validated (100% coverage)
+   - Key findings documented
+
+2. **Phase 1**: Fix Data Pipeline ✅ COMPLETE
+   - USG_PCT: 100% coverage
+   - AGE: 100% coverage
+   - CREATION_BOOST: 100% coverage
+
+### Future Phases
+
+3. **Phase 3**: Add Arbitrage Value (For Sloan Paper)
    - Salary data integration
    - Arbitrage chart
-
-5. **Phase 4**: End-to-End Validation
-   - Test with known cases
-   - Re-run Brunson Test
 
 ---
 
@@ -596,4 +899,39 @@ Where:
 ---
 
 **Status**: Ready for implementation. Follow the phases in order. Do not skip Phase 0.
+
+---
+
+## Quick Reference: Critical Insights for Phase 2
+
+### The Three Most Important Lessons
+
+1. **Validation-First Approach**: Test ranking formula on test cases BEFORE building the pipeline. If Brunson ranks 725th, the formula is wrong—fix it before building.
+
+2. **Data Distribution Understanding**: Check actual distributions (percentiles, median) before designing normalization. Most values cluster around 0, not theoretical extremes.
+
+3. **Proxy Fallacy Warning**: Using Isolation EFG as proxy for Leverage TS Delta may identify talented players, not resilient ones. Implement Confidence Score to make imputed data transparent.
+
+### The Core Question
+
+> "By using Isolation EFG as a proxy for Clutch, are we identifying Resilient players, or just Talented ones? Does this proxy defeat the purpose of measuring the drop-off?"
+
+**Answer this question before using the proxy.**
+
+### Implementation Checklist
+
+- [ ] **Step 2.0**: Data exploration (30 min) - Understand actual distributions
+- [ ] **Step 2.2a**: Validate proxy assumption (30 min) - Check correlation, check for false positives
+- [ ] **Step 2.1**: Test ranking formula on test cases (1-2 hours) - Validate before building
+- [ ] **Step 2.1**: Implement Scalability Coefficient (30 min) - Incremental validation
+- [ ] **Step 2.3**: Implement Ranking Formula (1 hour) - Use piecewise normalization
+- [ ] **Step 2.2**: Implement Confidence Score System (1 hour) - Address Proxy Fallacy
+- [ ] **Step 2.4**: Update Filter Thresholds (30 min) - Age < 25, USG < 25%
+- [ ] **Step 2.5**: Update Detection Logic (1 hour) - Integrate all components
+- [ ] **Step 2.6**: Systematic Threshold Testing (1 hour) - Test combinations
+- [ ] **Phase 4**: End-to-End Validation (1 hour) - Validate resilient vs. talented
+
+### Expected Time: ~8-10 hours (vs. ~6 hours of debugging if done wrong)
+
+**The Right Approach**: Validate first, build second. This saves ~40% of time and catches issues immediately.
 

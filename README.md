@@ -35,10 +35,13 @@ The predictive engine and component analysis are production-ready. Phase 0 (Prob
 - See `results/phase1_completion_summary.md` for details
 
 **🎯 Phase 2 Ready (Ranking Formula & Features):**
+- **⚠️ CRITICAL**: Read previous developer's learnings and consultant's Proxy Fallacy warning in `LATENT_STAR_REFINEMENT_PLAN.md`
+- Validate ranking formula on test cases BEFORE building pipeline
+- Understand data distribution (actual ranges, not theoretical)
+- Implement Confidence Score system (addresses Proxy Fallacy)
 - Implement Scalability Coefficient
-- Implement ranking formula (Leverage TS Delta weighted 3x + Scalability + CREATION_BOOST)
+- Implement ranking formula with piecewise normalization
 - Update filter thresholds (raise USG% to 25%, test age < 26)
-- Implement Signal Confidence metric
 - Systematic threshold testing
 
 ### ⚠️ CRITICAL: Read This First
