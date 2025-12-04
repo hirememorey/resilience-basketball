@@ -1,15 +1,15 @@
 """
-Phase 2: Conditional Prediction Function (Enhanced with Phase 3 Fixes)
+Phase 2: Conditional Prediction Function (Enhanced with Phase 3.5 Fixes)
 
 This script provides a function to predict archetype at different usage levels.
 This enables answering both questions:
 1. "What would this player's archetype be at their current usage?" (Use Case A)
 2. "What would this player's archetype be at 25% usage?" (Use Case B - Latent Star Detection)
 
-Phase 3 Enhancements:
-- Fix #1: Usage-Dependent Feature Weighting (gradual scaling based on target usage)
-- Fix #2: Context-Adjusted Efficiency (usage-scaled system merchant penalty)
-- Fix #3: Fragility Gate (cap star-level if rim pressure is too low)
+Phase 3.5 Enhancements (First Principles Fixes):
+- Fix #1: Fragility Gate - Use RS_RIM_APPETITE (absolute volume) instead of RIM_PRESSURE_RESILIENCE (ratio)
+- Fix #2: Projected Volume Features - Simulate usage scaling instead of linear scaling
+- Fix #3: Context-Adjusted Efficiency - Usage-scaled system merchant penalty (requires RS_CONTEXT_ADJUSTMENT data)
 """
 
 import pandas as pd
@@ -96,17 +96,18 @@ class ConditionalArchetypePredictor:
         return df_features
     
     def _calculate_feature_distributions(self):
-        """Calculate feature distributions for Phase 3 fixes (fragility gate threshold)."""
-        # Calculate bottom 20th percentile for RIM_PRESSURE_RESILIENCE (Fragility Gate)
-        if 'RIM_PRESSURE_RESILIENCE' in self.df_features.columns:
-            rim_pressure = self.df_features['RIM_PRESSURE_RESILIENCE'].dropna()
-            if len(rim_pressure) > 0:
-                self.rim_pressure_bottom_20th = rim_pressure.quantile(0.20)
-                logger.info(f"RIM_PRESSURE_RESILIENCE bottom 20th percentile: {self.rim_pressure_bottom_20th:.4f}")
+        """Calculate feature distributions for Phase 3.5 fixes (fragility gate threshold)."""
+        # Phase 3.5 Fix #1: Use RS_RIM_APPETITE (absolute volume) instead of RIM_PRESSURE_RESILIENCE (ratio)
+        # Calculate bottom 20th percentile for RS_RIM_APPETITE (Fragility Gate)
+        if 'RS_RIM_APPETITE' in self.df_features.columns:
+            rim_appetite = self.df_features['RS_RIM_APPETITE'].dropna()
+            if len(rim_appetite) > 0:
+                self.rim_appetite_bottom_20th = rim_appetite.quantile(0.20)
+                logger.info(f"RS_RIM_APPETITE bottom 20th percentile: {self.rim_appetite_bottom_20th:.4f}")
             else:
-                self.rim_pressure_bottom_20th = None
+                self.rim_appetite_bottom_20th = None
         else:
-            self.rim_pressure_bottom_20th = None
+            self.rim_appetite_bottom_20th = None
     
     def _get_expected_features(self) -> list:
         """Get expected feature names (fallback if model doesn't have feature_names_in_)."""
@@ -167,14 +168,14 @@ class ConditionalArchetypePredictor:
         """
         Prepare feature vector for prediction at specified usage level.
         
-        Phase 3 Fixes Applied:
-        - Fix #1: Usage-Dependent Feature Weighting (gradual scaling)
-        - Fix #2: Context-Adjusted Efficiency (usage-scaled penalty)
+        Phase 3.5 Fixes Applied:
+        - Fix #2: Projected Volume Features (simulate usage scaling instead of linear scaling)
+        - Fix #2 (Context): Context-Adjusted Efficiency (usage-scaled penalty)
         
         Args:
             player_data: Player's stress vector data (Series)
             usage_level: Usage percentage as decimal (e.g., 0.25 for 25%)
-            apply_phase3_fixes: Whether to apply Phase 3 fixes (default: True)
+            apply_phase3_fixes: Whether to apply Phase 3.5 fixes (default: True)
         
         Returns:
             Feature array ready for model prediction
@@ -182,20 +183,20 @@ class ConditionalArchetypePredictor:
         features = []
         missing_features = []
         
-        # Phase 3 Fix #1: Calculate usage-dependent scaling factors
-        # Gradual scaling: stronger effect at higher usage levels
-        if apply_phase3_fixes and usage_level > 0.20:
-            # Scale from 0 (at 20% usage) to 1.0 (at 32% usage)
-            usage_scale = min(1.0, (usage_level - 0.20) / (0.32 - 0.20))
-            # Suppress volume ratio, amplify efficiency metrics
-            volume_suppress = 1.0 - (usage_scale * 0.9)  # Suppress by up to 90%
-            efficiency_amplify = 1.0 + (usage_scale * 1.0)  # Amplify by up to 100%
-        else:
-            usage_scale = 0.0
-            volume_suppress = 1.0
-            efficiency_amplify = 1.0
+        # Get current usage for projection calculation
+        current_usage = player_data.get('USG_PCT', usage_level)
+        if pd.isna(current_usage):
+            current_usage = usage_level
         
-        # Phase 3 Fix #2: Calculate context adjustment (if available)
+        # Phase 3.5 Fix #2: Calculate projection factor for volume features
+        # Principle: Tree models make decisions based on splits. Simulate the result, don't just weight the input.
+        projection_factor = 1.0
+        use_projection = False
+        if apply_phase3_fixes and usage_level > current_usage:
+            projection_factor = usage_level / current_usage
+            use_projection = True
+        
+        # Phase 3 Fix #2 (Context): Calculate context adjustment (if available)
         context_adjustment = 0.0
         context_penalty = 0.0
         if apply_phase3_fixes and 'RS_CONTEXT_ADJUSTMENT' in player_data.index:
@@ -248,18 +249,28 @@ class ConditionalArchetypePredictor:
                         else:
                             val = 0.0
                     
-                    # Phase 3 Fix #1: Apply usage-dependent weighting
-                    if apply_phase3_fixes:
-                        if feature_name == 'CREATION_VOLUME_RATIO':
-                            # Suppress volume ratio at high usage
-                            val = val * volume_suppress
-                        elif feature_name in ['CREATION_TAX', 'EFG_ISO_WEIGHTED']:
-                            # Amplify efficiency metrics at high usage
-                            val = val * efficiency_amplify
-                        elif feature_name in ['RS_PRESSURE_RESILIENCE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE']:
-                            # Apply context penalty to efficiency features
+                    # Phase 3.5 Fix #2: Apply projected volume features instead of linear scaling
+                    # Volume-based features: project to simulate usage scaling
+                    # Efficiency features: keep as-is (they don't scale with usage)
+                    if apply_phase3_fixes and use_projection:
+                        # Volume-based features that should be projected
+                        volume_features = [
+                            'CREATION_VOLUME_RATIO',
+                            'LEVERAGE_USG_DELTA',  # Usage delta scales with usage
+                            'RS_PRESSURE_APPETITE',  # Pressure appetite scales with usage
+                            'RS_LATE_CLOCK_PRESSURE_APPETITE',
+                            'RS_EARLY_CLOCK_PRESSURE_APPETITE'
+                        ]
+                        
+                        if feature_name in volume_features:
+                            # Project volume feature: simulate what it would be at higher usage
+                            val = val * projection_factor
+                        elif feature_name in ['RS_PRESSURE_RESILIENCE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE', 
+                                             'RS_EARLY_CLOCK_PRESSURE_RESILIENCE', 'CREATION_TAX', 'EFG_ISO_WEIGHTED']:
+                            # Efficiency features: keep as-is, but apply context penalty if applicable
                             if context_penalty > 0:
                                 val = max(0.0, val - context_penalty)
+                        # All other features: use as-is
                     
                     features.append(val)
                 else:
@@ -277,7 +288,8 @@ class ConditionalArchetypePredictor:
         
         # Return features and phase3 metadata
         phase3_metadata = {
-            'usage_scale': usage_scale,
+            'projection_factor': projection_factor if use_projection else 1.0,
+            'use_projection': use_projection,
             'context_penalty': context_penalty,
             'context_adjustment': context_adjustment if 'RS_CONTEXT_ADJUSTMENT' in player_data.index else None
         }
@@ -330,14 +342,15 @@ class ConditionalArchetypePredictor:
         # Calculate star-level potential (King + Bulldozer)
         star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
         
-        # Phase 3 Fix #3: Fragility Gate
-        # Cap star-level if RIM_PRESSURE_RESILIENCE is bottom 20th percentile
+        # Phase 3.5 Fix #1: Fragility Gate - Use RS_RIM_APPETITE (absolute volume) instead of ratio
+        # Cap star-level if RS_RIM_APPETITE is bottom 20th percentile
+        # Principle: Ratios measure change, not state. Use absolute metrics for floors.
         fragility_gate_applied = False
-        rim_pressure = None
-        if apply_phase3_fixes and 'RIM_PRESSURE_RESILIENCE' in player_data.index:
-            rim_pressure = player_data['RIM_PRESSURE_RESILIENCE']
-            if pd.notna(rim_pressure) and self.rim_pressure_bottom_20th is not None:
-                if rim_pressure <= self.rim_pressure_bottom_20th:
+        rim_appetite = None
+        if apply_phase3_fixes and 'RS_RIM_APPETITE' in player_data.index:
+            rim_appetite = player_data['RS_RIM_APPETITE']
+            if pd.notna(rim_appetite) and self.rim_appetite_bottom_20th is not None:
+                if rim_appetite <= self.rim_appetite_bottom_20th:
                     # Hard gate: Cap at 30% (Sniper ceiling)
                     star_level_potential = min(star_level_potential, 0.30)
                     fragility_gate_applied = True
@@ -360,14 +373,14 @@ class ConditionalArchetypePredictor:
             if feat in player_data.index and pd.isna(player_data[feat]):
                 confidence_flags.append(f"Missing {feat}")
         
-        # Add Phase 3 fix flags
+        # Add Phase 3.5 fix flags
         phase3_flags = []
-        if phase3_metadata['usage_scale'] > 0:
-            phase3_flags.append(f"Usage-dependent weighting applied (scale: {phase3_metadata['usage_scale']:.2f})")
+        if phase3_metadata['use_projection']:
+            phase3_flags.append(f"Volume projection applied (factor: {phase3_metadata['projection_factor']:.2f}x)")
         if phase3_metadata['context_penalty'] > 0:
             phase3_flags.append(f"Context penalty applied: {phase3_metadata['context_penalty']:.4f}")
-        if fragility_gate_applied and rim_pressure is not None:
-            phase3_flags.append(f"Fragility gate applied (rim pressure: {rim_pressure:.4f})")
+        if fragility_gate_applied and rim_appetite is not None:
+            phase3_flags.append(f"Fragility gate applied (RS_RIM_APPETITE: {rim_appetite:.4f})")
         
         return {
             'predicted_archetype': pred_archetype,

@@ -1,0 +1,390 @@
+2025-12-04 13:52:45,281 - INFO - ====================================================================================================
+2025-12-04 13:52:45,281 - INFO - CRITICAL CASE STUDIES FOR LATENT STAR DETECTION
+2025-12-04 13:52:45,281 - INFO - ====================================================================================================
+2025-12-04 13:52:45,981 - INFO - RS_RIM_APPETITE bottom 20th percentile: 0.1744
+2025-12-04 13:52:45,981 - INFO - Model expects 38 features
+2025-12-04 13:52:45,981 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,981 - INFO - Test 1/16: Shai Gilgeous-Alexander (2018-19)
+2025-12-04 13:52:45,981 - INFO - Category: True Positive - Latent Star
+2025-12-04 13:52:45,981 - INFO - ====================================================================================================
+2025-12-04 13:52:45,981 - INFO - Context: Rookie year. 18.3% Usage. Role player behind Lou Williams and Danilo Gallinari.
+2025-12-04 13:52:45,981 - INFO - Mechanism: Should see elite Driving/Physicality Vector (Rim Pressure) even at low volume. Tests if model overvalues shooting range and undervalues rim pressure.
+2025-12-04 13:52:45,981 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-04 13:52:45,981 - INFO - Test Usage: 30.0%
+2025-12-04 13:52:45,982 - INFO -   Actual Usage: 18.2%
+2025-12-04 13:52:45,984 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,984 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-04 13:52:45,984 - INFO -     Star-Level Potential: 89.17%
+2025-12-04 13:52:45,984 - INFO -     Probabilities:
+2025-12-04 13:52:45,984 - INFO -       King: 16.68%
+2025-12-04 13:52:45,984 - INFO -       Bulldozer: 72.50%
+2025-12-04 13:52:45,984 - INFO -       Sniper: 1.51%
+2025-12-04 13:52:45,984 - INFO -       Victim: 9.32%
+2025-12-04 13:52:45,984 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,985 - INFO -     ✅ PASS
+2025-12-04 13:52:45,985 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,985 - INFO - Test 2/16: Victor Oladipo (2016-17)
+2025-12-04 13:52:45,985 - INFO - Category: True Positive - Latent Star
+2025-12-04 13:52:45,985 - INFO - ====================================================================================================
+2025-12-04 13:52:45,985 - INFO - Context: Russell Westbrook's MVP usage-hole year. Oladipo was relegated to a spot-up shooter (21% Usage).
+2025-12-04 13:52:45,985 - INFO - Mechanism: Did he maintain Creation Vector efficiency on the few self-created shots? Tests if model can see Creation Vector through role constraints.
+2025-12-04 13:52:45,985 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-04 13:52:45,985 - INFO - Test Usage: 30.0%
+2025-12-04 13:52:45,985 - INFO -   Actual Usage: 21.0%
+2025-12-04 13:52:45,986 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,986 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-04 13:52:45,986 - INFO -     Star-Level Potential: 68.08%
+2025-12-04 13:52:45,986 - INFO -     Probabilities:
+2025-12-04 13:52:45,986 - INFO -       King: 6.90%
+2025-12-04 13:52:45,986 - INFO -       Bulldozer: 61.18%
+2025-12-04 13:52:45,986 - INFO -       Sniper: 0.46%
+2025-12-04 13:52:45,986 - INFO -       Victim: 31.46%
+2025-12-04 13:52:45,986 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,986 - INFO -     ❌ FAIL
+2025-12-04 13:52:45,986 - INFO -       - Expected high star-level (≥70%), got 68.08%
+2025-12-04 13:52:45,986 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,986 - INFO - Test 3/16: Jalen Brunson (2020-21)
+2025-12-04 13:52:45,986 - INFO - Category: True Positive - Latent Star
+2025-12-04 13:52:45,986 - INFO - ====================================================================================================
+2025-12-04 13:52:45,986 - INFO - Context: 19.6% Usage. Backup to Luka Dončić.
+2025-12-04 13:52:45,986 - INFO - Mechanism: Gold Standard validation. High Creation Efficiency + High Leverage Resilience should trigger high star-level even at low usage.
+2025-12-04 13:52:45,986 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-04 13:52:45,986 - INFO - Test Usage: 32.0%
+2025-12-04 13:52:45,986 - INFO -   Actual Usage: 19.6%
+2025-12-04 13:52:45,987 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,987 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-04 13:52:45,987 - INFO -     Star-Level Potential: 94.17%
+2025-12-04 13:52:45,987 - INFO -     Probabilities:
+2025-12-04 13:52:45,987 - INFO -       King: 23.31%
+2025-12-04 13:52:45,987 - INFO -       Bulldozer: 70.86%
+2025-12-04 13:52:45,987 - INFO -       Sniper: 0.39%
+2025-12-04 13:52:45,987 - INFO -       Victim: 5.44%
+2025-12-04 13:52:45,987 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,987 - INFO -     ✅ PASS
+2025-12-04 13:52:45,987 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,987 - INFO - Test 4/16: Jordan Poole (2021-22)
+2025-12-04 13:52:45,987 - INFO - Category: False Positive - Mirage Breakout
+2025-12-04 13:52:45,987 - INFO - ====================================================================================================
+2025-12-04 13:52:45,987 - INFO - Context: 26% Usage, 60% TS. Looked like the next Curry.
+2025-12-04 13:52:45,987 - INFO - Mechanism: Should detect low Pressure Resilience. Poole likely took many 'Open' shots (Stephen Curry gravity) and few 'Late Clock/High Pressure' shots.
+2025-12-04 13:52:45,987 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-04 13:52:45,987 - INFO - Test Usage: 30.0%
+2025-12-04 13:52:45,987 - INFO -   Actual Usage: 25.2%
+2025-12-04 13:52:45,988 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,988 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-04 13:52:45,988 - INFO -     Star-Level Potential: 84.23%
+2025-12-04 13:52:45,988 - INFO -     Probabilities:
+2025-12-04 13:52:45,988 - INFO -       King: 5.30%
+2025-12-04 13:52:45,988 - INFO -       Bulldozer: 78.93%
+2025-12-04 13:52:45,988 - INFO -       Sniper: 0.48%
+2025-12-04 13:52:45,988 - INFO -       Victim: 15.29%
+2025-12-04 13:52:45,988 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,988 - INFO -     ❌ FAIL
+2025-12-04 13:52:45,988 - INFO -       - Expected low star-level (<30%), got 84.23%
+2025-12-04 13:52:45,988 - INFO -       - Archetype mismatch: expected Victim, got Bulldozer (Fragile Star)
+2025-12-04 13:52:45,988 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,988 - INFO - Test 5/16: Talen Horton-Tucker (2020-21)
+2025-12-04 13:52:45,988 - INFO - Category: False Positive - Mirage Breakout
+2025-12-04 13:52:45,988 - INFO - ====================================================================================================
+2025-12-04 13:52:45,988 - INFO - Context: 18% Usage. The 'Baby LeBron' hype. Elite rim pressure numbers on low volume.
+2025-12-04 13:52:45,988 - INFO - Mechanism: Should see that while Physicality Vector was high, Creation Efficiency was actually poor. Should predict 'Bulldozer' (Empty Calories) at best.
+2025-12-04 13:52:45,988 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-04 13:52:45,988 - INFO - Test Usage: 25.0%
+2025-12-04 13:52:45,988 - INFO -   Actual Usage: 21.0%
+2025-12-04 13:52:45,989 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,989 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-04 13:52:45,989 - INFO -     Star-Level Potential: 19.71%
+2025-12-04 13:52:45,989 - INFO -     Probabilities:
+2025-12-04 13:52:45,989 - INFO -       King: 8.89%
+2025-12-04 13:52:45,989 - INFO -       Bulldozer: 10.82%
+2025-12-04 13:52:45,989 - INFO -       Sniper: 0.78%
+2025-12-04 13:52:45,989 - INFO -       Victim: 79.52%
+2025-12-04 13:52:45,989 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,989 - INFO -     ✅ PASS
+2025-12-04 13:52:45,989 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,989 - INFO - Test 6/16: Tyus Jones (2021-22)
+2025-12-04 13:52:45,989 - INFO - Category: System Player - Ceiling Test
+2025-12-04 13:52:45,989 - INFO - ====================================================================================================
+2025-12-04 13:52:45,989 - INFO - Context: The 'God of Assist-to-Turnover Ratio.' Elite efficiency metrics.
+2025-12-04 13:52:45,989 - INFO - Mechanism: Should predict 'Sniper' or 'Victim' at high usage. If it predicts 'King' just because he doesn't turn the ball over, model is overweighting Plasticity and underweighting Creation/Physicality.
+2025-12-04 13:52:45,989 - INFO - Expected: Sniper (Star-Level: Low)
+2025-12-04 13:52:45,990 - INFO - Test Usage: 25.0%
+2025-12-04 13:52:45,990 - INFO -   Actual Usage: 16.4%
+2025-12-04 13:52:45,990 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,990 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-04 13:52:45,990 - INFO -     Star-Level Potential: 8.75%
+2025-12-04 13:52:45,991 - INFO -     Probabilities:
+2025-12-04 13:52:45,991 - INFO -       King: 0.00%
+2025-12-04 13:52:45,991 - INFO -       Bulldozer: 0.00%
+2025-12-04 13:52:45,991 - INFO -       Sniper: 2.06%
+2025-12-04 13:52:45,991 - INFO -       Victim: 97.94%
+2025-12-04 13:52:45,991 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,991 - INFO -     ✅ PASS
+2025-12-04 13:52:45,991 - INFO -       - Archetype mismatch: expected Sniper, got Victim (Fragile Role)
+2025-12-04 13:52:45,991 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,991 - INFO - Test 7/16: Mikal Bridges (2021-22)
+2025-12-04 13:52:45,991 - INFO - Category: Usage Shock - Hardest Test
+2025-12-04 13:52:45,991 - INFO - ====================================================================================================
+2025-12-04 13:52:45,991 - INFO - Context: Elite 3-and-D (15% Usage). Later became Primary Option (27% Usage).
+2025-12-04 13:52:45,991 - INFO - Mechanism: Hardest test. Can the model see a '3-and-D' player and correctly identify that he has the Creation Vector chops to scale up, even if he didn't use them in Phoenix?
+2025-12-04 13:52:45,991 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-04 13:52:45,991 - INFO - Test Usage: 28.0%
+2025-12-04 13:52:45,991 - INFO -   Actual Usage: 14.9%
+2025-12-04 13:52:45,991 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,991 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-04 13:52:45,991 - INFO -     Star-Level Potential: 61.71%
+2025-12-04 13:52:45,991 - INFO -     Probabilities:
+2025-12-04 13:52:45,992 - INFO -       King: 7.67%
+2025-12-04 13:52:45,992 - INFO -       Bulldozer: 54.04%
+2025-12-04 13:52:45,992 - INFO -       Sniper: 0.37%
+2025-12-04 13:52:45,992 - INFO -       Victim: 37.91%
+2025-12-04 13:52:45,992 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,992 - INFO -     ❌ FAIL
+2025-12-04 13:52:45,992 - INFO -       - Expected high star-level (≥70%), got 61.71%
+2025-12-04 13:52:45,992 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,992 - INFO - Test 8/16: Lauri Markkanen (2021-22)
+2025-12-04 13:52:45,992 - INFO - Category: True Positive - Wrong Role
+2025-12-04 13:52:45,992 - INFO - ====================================================================================================
+2025-12-04 13:52:45,992 - INFO - Context: Played as a 'Tower' Small Forward alongside Mobley/Allen. 19.4% Usage, primarily a spot-up threat.
+2025-12-04 13:52:45,992 - INFO - Mechanism: Did the model see the Creation Vector (ability to shoot off the dribble/drive) hidden inside a 'Catch-and-Shoot' role?
+2025-12-04 13:52:45,992 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-04 13:52:45,992 - INFO - Test Usage: 26.0%
+2025-12-04 13:52:45,992 - INFO -   Actual Usage: 19.2%
+2025-12-04 13:52:45,993 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,993 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-04 13:52:45,993 - INFO -     Star-Level Potential: 15.31%
+2025-12-04 13:52:45,993 - INFO -     Probabilities:
+2025-12-04 13:52:45,993 - INFO -       King: 3.47%
+2025-12-04 13:52:45,993 - INFO -       Bulldozer: 11.84%
+2025-12-04 13:52:45,993 - INFO -       Sniper: 0.43%
+2025-12-04 13:52:45,993 - INFO -       Victim: 84.26%
+2025-12-04 13:52:45,993 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,993 - INFO -     ❌ FAIL
+2025-12-04 13:52:45,993 - INFO -       - Expected high star-level (≥70%), got 15.31%
+2025-12-04 13:52:45,993 - INFO -       - Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
+2025-12-04 13:52:45,993 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,993 - INFO - Test 9/16: Christian Wood (2020-21)
+2025-12-04 13:52:45,993 - INFO - Category: False Positive - Empty Calories
+2025-12-04 13:52:45,993 - INFO - ====================================================================================================
+2025-12-04 13:52:45,993 - INFO - Context: Put up massive stats (21 PPG, 26% Usage) on a tanking team. TS% was elite (59%).
+2025-12-04 13:52:45,993 - INFO - Mechanism: Tests the Leverage Vector (Clutch) and Pressure Vector. Wood likely excelled in 'Low Leverage' moments but crumbled in 'High Leverage' moments.
+2025-12-04 13:52:45,993 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-04 13:52:45,993 - INFO - Test Usage: 26.0%
+2025-12-04 13:52:45,994 - INFO -   Actual Usage: 25.5%
+2025-12-04 13:52:45,995 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,995 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-04 13:52:45,995 - INFO -     Star-Level Potential: 26.70%
+2025-12-04 13:52:45,995 - INFO -     Probabilities:
+2025-12-04 13:52:45,995 - INFO -       King: 2.60%
+2025-12-04 13:52:45,995 - INFO -       Bulldozer: 24.10%
+2025-12-04 13:52:45,995 - INFO -       Sniper: 0.18%
+2025-12-04 13:52:45,995 - INFO -       Victim: 73.12%
+2025-12-04 13:52:45,995 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,995 - INFO -     ✅ PASS
+2025-12-04 13:52:45,995 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,995 - INFO - Test 10/16: Jamal Murray (2018-19)
+2025-12-04 13:52:45,995 - INFO - Category: True Positive - Playoff Riser
+2025-12-04 13:52:45,995 - INFO - ====================================================================================================
+2025-12-04 13:52:45,995 - INFO - Context: A solid but inconsistent RS player (18 PPG, 53% TS). Never an All-Star.
+2025-12-04 13:52:45,995 - INFO - Mechanism: Ultimate test of 'Resilience.' Murray's RS efficiency is often average. His Clutch efficiency is elite. Tests if model values Leverage Vector over Consistency.
+2025-12-04 13:52:45,995 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-04 13:52:45,995 - INFO - Test Usage: 30.0%
+2025-12-04 13:52:45,995 - INFO -   Actual Usage: 24.1%
+2025-12-04 13:52:45,996 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,996 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-04 13:52:45,996 - INFO -     Star-Level Potential: 76.78%
+2025-12-04 13:52:45,996 - INFO -     Probabilities:
+2025-12-04 13:52:45,996 - INFO -       King: 21.11%
+2025-12-04 13:52:45,996 - INFO -       Bulldozer: 55.67%
+2025-12-04 13:52:45,996 - INFO -       Sniper: 0.38%
+2025-12-04 13:52:45,996 - INFO -       Victim: 22.84%
+2025-12-04 13:52:45,996 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,996 - INFO -     ✅ PASS
+2025-12-04 13:52:45,996 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,996 - INFO - Test 11/16: D'Angelo Russell (2018-19)
+2025-12-04 13:52:45,996 - INFO - Category: False Positive - Fool's Gold
+2025-12-04 13:52:45,996 - INFO - ====================================================================================================
+2025-12-04 13:52:45,996 - INFO - Context: An All-Star season. Led team to playoffs. Usage 31%.
+2025-12-04 13:52:45,996 - INFO - Mechanism: Tests if model detects Physicality fragility. Russell relies on tough mid-range jumpers and floaters. Has extremely low Rim Pressure Resilience.
+2025-12-04 13:52:45,996 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-04 13:52:45,996 - INFO - Test Usage: 31.0%
+2025-12-04 13:52:45,996 - INFO -   Actual Usage: 31.1%
+2025-12-04 13:52:45,997 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,997 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-04 13:52:45,997 - INFO -     Star-Level Potential: 30.00%
+2025-12-04 13:52:45,997 - INFO -     Probabilities:
+2025-12-04 13:52:45,997 - INFO -       King: 0.00%
+2025-12-04 13:52:45,997 - INFO -       Bulldozer: 0.00%
+2025-12-04 13:52:45,997 - INFO -       Sniper: 0.52%
+2025-12-04 13:52:45,997 - INFO -       Victim: 99.48%
+2025-12-04 13:52:45,997 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,997 - INFO -     ❌ FAIL
+2025-12-04 13:52:45,997 - INFO -       - Expected low star-level (<30%), got 30.00%
+2025-12-04 13:52:45,997 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,997 - INFO - Test 12/16: Desmond Bane (2021-22)
+2025-12-04 13:52:45,997 - INFO - Category: True Positive - Secondary Creator
+2025-12-04 13:52:45,997 - INFO - ====================================================================================================
+2025-12-04 13:52:45,997 - INFO - Context: Elite shooter (43% 3PT), moderate usage (22%). Viewed as a 'Klay Thompson' type.
+2025-12-04 13:52:45,997 - INFO - Mechanism: Can the model distinguish a 'Shooter' from a 'Scorer'? Should see his Creation Vector (drives per game, pull-up efficiency) and predict that his efficiency is robust enough to scale.
+2025-12-04 13:52:45,997 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-04 13:52:45,997 - INFO - Test Usage: 27.0%
+2025-12-04 13:52:45,997 - INFO -   Actual Usage: 22.6%
+2025-12-04 13:52:45,998 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,998 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-04 13:52:45,998 - INFO -     Star-Level Potential: 65.58%
+2025-12-04 13:52:45,998 - INFO -     Probabilities:
+2025-12-04 13:52:45,998 - INFO -       King: 4.40%
+2025-12-04 13:52:45,998 - INFO -       Bulldozer: 61.18%
+2025-12-04 13:52:45,998 - INFO -       Sniper: 0.25%
+2025-12-04 13:52:45,998 - INFO -       Victim: 34.17%
+2025-12-04 13:52:45,998 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,998 - INFO -     ❌ FAIL
+2025-12-04 13:52:45,998 - INFO -       - Expected high star-level (≥70%), got 65.58%
+2025-12-04 13:52:45,998 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,998 - INFO - Test 13/16: Tobias Harris (2016-17)
+2025-12-04 13:52:45,998 - INFO - Category: False Positive - Max Contract Mistake
+2025-12-04 13:52:45,998 - INFO - ====================================================================================================
+2025-12-04 13:52:45,998 - INFO - Context: Received a max contract but was not a true playoff star. High usage (25-28%) but efficiency and impact don't scale to playoff success.
+2025-12-04 13:52:45,998 - INFO - Mechanism: Tests if model can identify players who get paid like stars but don't have the Creation/Leverage/Physicality vectors to succeed in playoffs. Should detect lack of self-creation ability or physicality floor.
+2025-12-04 13:52:45,998 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-04 13:52:45,998 - INFO - Test Usage: 28.0%
+2025-12-04 13:52:45,998 - INFO -   Actual Usage: 21.4%
+2025-12-04 13:52:45,999 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:45,999 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-04 13:52:45,999 - INFO -     Star-Level Potential: 57.75%
+2025-12-04 13:52:45,999 - INFO -     Probabilities:
+2025-12-04 13:52:45,999 - INFO -       King: 4.53%
+2025-12-04 13:52:45,999 - INFO -       Bulldozer: 53.23%
+2025-12-04 13:52:45,999 - INFO -       Sniper: 0.48%
+2025-12-04 13:52:45,999 - INFO -       Victim: 41.77%
+2025-12-04 13:52:45,999 - INFO - 
+  Evaluation:
+2025-12-04 13:52:45,999 - INFO -     ❌ FAIL
+2025-12-04 13:52:45,999 - INFO -       - Expected low star-level (<30%), got 57.75%
+2025-12-04 13:52:45,999 - INFO -       - Archetype mismatch: expected Victim, got Bulldozer (Fragile Star)
+2025-12-04 13:52:45,999 - INFO - 
+====================================================================================================
+2025-12-04 13:52:45,999 - INFO - Test 14/16: Domantas Sabonis (2021-22)
+2025-12-04 13:52:45,999 - INFO - Category: False Positive - Comparison Case
+2025-12-04 13:52:45,999 - INFO - ====================================================================================================
+2025-12-04 13:52:45,999 - INFO - Context: Traded 1-1 for Tyrese Haliburton in February 2022. Time has shown Haliburton is a true playoff star while Sabonis has not been. Both were All-Stars, but Sabonis lacks playoff resilience.
+2025-12-04 13:52:45,999 - INFO - Mechanism: Critical comparison test. Both players were similar caliber (All-Stars), but model should identify that Sabonis lacks the stress vectors (likely Physicality or Creation) needed for playoff success. Tests if model can distinguish regular season production from playoff capability.
+2025-12-04 13:52:45,999 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-04 13:52:45,999 - INFO - Test Usage: 28.0%
+2025-12-04 13:52:46,000 - INFO -   Actual Usage: 22.1%
+2025-12-04 13:52:46,001 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:46,001 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-04 13:52:46,001 - INFO -     Star-Level Potential: 78.87%
+2025-12-04 13:52:46,001 - INFO -     Probabilities:
+2025-12-04 13:52:46,001 - INFO -       King: 1.78%
+2025-12-04 13:52:46,001 - INFO -       Bulldozer: 77.09%
+2025-12-04 13:52:46,001 - INFO -       Sniper: 0.22%
+2025-12-04 13:52:46,001 - INFO -       Victim: 20.91%
+2025-12-04 13:52:46,001 - INFO - 
+  Evaluation:
+2025-12-04 13:52:46,001 - INFO -     ❌ FAIL
+2025-12-04 13:52:46,001 - INFO -       - Expected low star-level (<30%), got 78.87%
+2025-12-04 13:52:46,001 - INFO -       - Archetype mismatch: expected Victim, got Bulldozer (Fragile Star)
+2025-12-04 13:52:46,001 - INFO - 
+====================================================================================================
+2025-12-04 13:52:46,001 - INFO - Test 15/16: Tyrese Haliburton (2021-22)
+2025-12-04 13:52:46,001 - INFO - Category: True Positive - Comparison Case
+2025-12-04 13:52:46,001 - INFO - ====================================================================================================
+2025-12-04 13:52:46,001 - INFO - Context: Traded 1-1 for Domantas Sabonis in February 2022. Time has shown Haliburton is a true playoff star while Sabonis has not been. Both were All-Stars, but Haliburton has elite Creation and Leverage vectors.
+2025-12-04 13:52:46,001 - INFO - Mechanism: Critical comparison test. Model should identify that Haliburton has the stress vectors (Creation, Leverage, Pressure) needed for playoff success. Should show higher star-level than Sabonis despite similar regular season production.
+2025-12-04 13:52:46,001 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-04 13:52:46,001 - INFO - Test Usage: 28.0%
+2025-12-04 13:52:46,001 - INFO -   Actual Usage: 18.4%
+2025-12-04 13:52:46,002 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:46,002 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-04 13:52:46,002 - INFO -     Star-Level Potential: 46.40%
+2025-12-04 13:52:46,002 - INFO -     Probabilities:
+2025-12-04 13:52:46,002 - INFO -       King: 2.33%
+2025-12-04 13:52:46,002 - INFO -       Bulldozer: 44.07%
+2025-12-04 13:52:46,002 - INFO -       Sniper: 0.34%
+2025-12-04 13:52:46,002 - INFO -       Victim: 53.26%
+2025-12-04 13:52:46,002 - INFO - 
+  Evaluation:
+2025-12-04 13:52:46,002 - INFO -     ❌ FAIL
+2025-12-04 13:52:46,002 - INFO -       - Expected high star-level (≥70%), got 46.40%
+2025-12-04 13:52:46,002 - INFO -       - Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
+2025-12-04 13:52:46,002 - INFO - 
+====================================================================================================
+2025-12-04 13:52:46,002 - INFO - Test 16/16: Tyrese Maxey (2021-22)
+2025-12-04 13:52:46,002 - INFO - Category: True Positive - Latent Star
+2025-12-04 13:52:46,002 - INFO - ====================================================================================================
+2025-12-04 13:52:46,002 - INFO - Context: 22.2% Usage in 2021-22. Broke out to 27.3% usage in 2023-24. Elite Creation Vector and Leverage Vector even at lower usage.
+2025-12-04 13:52:46,002 - INFO - Mechanism: Should identify high Creation efficiency and positive Leverage USG Delta. Tests if model can see star potential through role constraints. Maxey maintained elite efficiency on self-created shots even at lower usage.
+2025-12-04 13:52:46,002 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-04 13:52:46,002 - INFO - Test Usage: 28.0%
+2025-12-04 13:52:46,002 - INFO -   Actual Usage: 19.9%
+2025-12-04 13:52:46,003 - INFO - 
+  Prediction Results:
+2025-12-04 13:52:46,003 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-04 13:52:46,003 - INFO -     Star-Level Potential: 75.50%
+2025-12-04 13:52:46,003 - INFO -     Probabilities:
+2025-12-04 13:52:46,003 - INFO -       King: 8.94%
+2025-12-04 13:52:46,003 - INFO -       Bulldozer: 66.56%
+2025-12-04 13:52:46,003 - INFO -       Sniper: 0.52%
+2025-12-04 13:52:46,003 - INFO -       Victim: 23.97%
+2025-12-04 13:52:46,003 - INFO - 
+  Evaluation:
+2025-12-04 13:52:46,003 - INFO -     ✅ PASS
+2025-12-04 13:52:46,003 - INFO - 
+====================================================================================================
+2025-12-04 13:52:46,003 - INFO - SUMMARY REPORT
+2025-12-04 13:52:46,003 - INFO - ====================================================================================================
+2025-12-04 13:52:46,003 - INFO - Total Test Cases: 16
+2025-12-04 13:52:46,003 - INFO - Data Found: 16
+2025-12-04 13:52:46,003 - INFO - Passed: 7
+2025-12-04 13:52:46,003 - INFO - Failed: 9
+2025-12-04 13:52:46,003 - INFO - Pass Rate: 43.8%
+2025-12-04 13:52:46,003 - INFO - 
+By Category:
+2025-12-04 13:52:46,003 - INFO -   True Positive: 4/8 passed (50.0%)
+2025-12-04 13:52:46,003 - INFO -   False Positive: 2/6 passed (33.3%)
+2025-12-04 13:52:46,003 - INFO -   System Player: 1/1 passed (100.0%)
+2025-12-04 13:52:46,003 - INFO -   Usage Shock: 0/1 passed (0.0%)
+2025-12-04 13:52:46,005 - INFO - 
+Detailed results saved to: results/latent_star_test_cases_results.csv
+2025-12-04 13:52:46,006 - INFO - Markdown report saved to: results/latent_star_test_cases_report.md

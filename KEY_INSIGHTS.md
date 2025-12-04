@@ -333,6 +333,83 @@ if rs_rim_appetite <= threshold:  # Bottom 20th percentile
 
 ---
 
+## 14. The "Flash Multiplier" - Scaling Zero vs. Flashes of Brilliance 🎯 NEW (Phase 3.6)
+
+**The Problem**: Projecting low volume linearly (0.1 × 1.5 = 0.15) still results in role player levels. The model doesn't recognize "flashes of brilliance" - elite efficiency on very low volume.
+
+**The Insight**: If a player takes only 2 isolation shots per game but scores at 90th percentile efficiency, that's a **Flash of Brilliance**. They're showing star-level skills in limited opportunities. If given the keys, they won't just scale incrementally; they will change their shot profile entirely.
+
+**The Fix**: If player has elite efficiency on low volume, project to star-level volume (not scalar):
+```
+If CREATION_VOLUME_RATIO < 25th percentile (Low Volume)
+AND (CREATION_TAX > 80th percentile OR EFG_ISO_WEIGHTED > 80th percentile):
+    PROJECTED_CREATION_VOLUME = League Average Star Level
+    # Instead of: 0.1 × 1.5 = 0.15
+    # Use: Median CREATION_VOLUME_RATIO for players with star-level archetypes
+```
+
+**Example**:
+- ❌ **Wrong**: Haliburton's CREATION_VOLUME_RATIO = 0.1, scale to 0.15 → Still role player → 46.40% star-level
+- ✅ **Right**: Haliburton has elite efficiency on low volume → Project to star-level volume → ≥70% star-level
+
+**Test Cases**: Haliburton (2021-22), Markkanen (2021-22) - Role constraint failures
+
+**Key Principle**: Elite efficiency on low volume = star-level projection, not scalar.
+
+---
+
+## 15. The "Playoff Translation Tax" - Radicalize Context Adjustment 🎯 NEW (Phase 3.6)
+
+**The Problem**: Context adjustment values (-0.01 to 0.01) are noise. They don't simulate playoff defense where wide-open shots disappear.
+
+**The Insight**: In the playoffs, "Wide Open" shots disappear. System merchants (Poole with Curry gravity, Sabonis with DHOs/cuts) rely on these. We need to simulate the Playoff Environment, not just adjust Regular Season EFG.
+
+**The Fix**: Apply "Playoff Translation Tax" based on open shot frequency:
+```
+OPEN_SHOT_FREQUENCY = FGA_6_PLUS / TOTAL_FGA  # Wide open shots (6+ feet)
+LEAGUE_AVG_OPEN_FREQ = Median(OPEN_SHOT_FREQUENCY)
+PLAYOFF_TAX = (OPEN_SHOT_FREQ - LEAGUE_AVG) × 0.5
+
+# For every 1% their Open Shot Freq is above league average, 
+# deduct 0.5% from their Projected EFG
+```
+
+**Example**:
+- ❌ **Wrong**: Poole's context adjustment = 0.01 → Minimal penalty → 84.23% star-level
+- ✅ **Right**: Poole's open shot frequency is high → Heavy playoff tax → <30% star-level
+
+**Test Cases**: Poole (2021-22), Sabonis (2021-22) - System merchant failures
+
+**Key Principle**: Simulate playoff defense by penalizing open shot reliance.
+
+---
+
+## 16. The "Bag Check" Gate - Self-Created Volume Requirement 🎯 NEW (Phase 3.6)
+
+**The Problem**: Sabonis has rim pressure, but it's **Assisted/System Rim Pressure**, not **Self-Created Rim Pressure**. He's a hub, not a creator. If the cuts stop, his offense stops.
+
+**The Insight**: A player who can't create their own offense can't be a primary initiator (King). They can be a "Bulldozer" (high volume, inefficient), but not a "King" (high volume, efficient).
+
+**The Fix**: Add gate for self-created volume:
+```
+ISO_FREQUENCY = FGA_ISO / TOTAL_FGA
+PNR_HANDLER_FREQUENCY = FGA_PNR_HANDLER / TOTAL_FGA
+SELF_CREATED_FREQ = ISO_FREQUENCY + PNR_HANDLER_FREQUENCY
+
+If SELF_CREATED_FREQ < 10%:
+    Cap at "Bulldozer" (cannot be King)
+```
+
+**Example**:
+- ❌ **Wrong**: Sabonis has high rim pressure → Model predicts King → 78.87% star-level
+- ✅ **Right**: Sabonis has low self-created frequency (<10%) → Cap at Bulldozer → <30% star-level
+
+**Test Case**: Sabonis (2021-22) - False positive (system merchant)
+
+**Key Principle**: Self-created volume is required for primary initiators (Kings).
+
+---
+
 ## Quick Reference Checklist
 
 When implementing new features, ask:
@@ -347,9 +424,12 @@ When implementing new features, ask:
 - [ ] Am I accounting for usage as a variable (not fixed)?
 - [ ] When predicting at high usage, am I projecting volume features (not just scaling)? (Fix #1 - Phase 3.5)
 - [ ] Am I accounting for context dependency? (Fix #2 - requires data calculation)
-- [ ] Am I using absolute volume metrics for floors (not ratios)? (Fix #3 - Phase 3.5)
+- [ ] Am I using absolute volume metrics for floors (not ratios)? (Fix #1 - Phase 3.5) ✅
 - [ ] Am I avoiding the ratio trap? (Ratios measure change, not state)
 - [ ] Am I avoiding the tree model trap? (Linear scaling doesn't cross decision boundaries)
+- [ ] Am I detecting "flashes of brilliance"? (Elite efficiency on low volume → star-level projection) (Fix #1 - Phase 3.6)
+- [ ] Am I simulating playoff defense? (Penalize open shot reliance heavily) (Fix #2 - Phase 3.6)
+- [ ] Am I checking for self-created volume? (Required for primary initiators) (Fix #3 - Phase 3.6)
 
 ---
 

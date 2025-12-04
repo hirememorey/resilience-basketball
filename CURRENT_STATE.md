@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
 **Date**: December 2025  
-**Status**: Phase 3 Implementation Complete - Ready for Validation Testing ✅
+**Status**: Phase 3.5 Complete - Phase 3.6 Ready for Implementation ✅
 
 ---
 
@@ -320,50 +320,97 @@ All three Phase 3 fixes have been implemented in `predict_conditional_archetype.
 
 ---
 
-## 🎯 Phase 3.5 Implementation Plan
+## ✅ Phase 3.5 Implementation (Complete - Validation Results)
+
+**Status**: ✅ **IMPLEMENTATION COMPLETE** | ⚠️ **PARTIAL SUCCESS** (December 2025)
+
+All three Phase 3.5 fixes have been implemented. Validation shows modest improvement with one fix working perfectly.
+
+### ✅ Fix #1: Fragility Gate - Switch to Absolute Volume (WORKING)
+
+**Status**: ✅ **SUCCESS**
+
+**Implementation**: Switched from `RIM_PRESSURE_RESILIENCE` (ratio) to `RS_RIM_APPETITE` (absolute frequency)
+
+**Results**:
+- **D'Angelo Russell (2018-19)**: 78.6% → 30.00% ✅ **FIXED**
+- **Impact**: Correctly caps players with low rim pressure at 30% (Sniper ceiling)
+
+**Key Insight**: Ratios measure change, not state. Use absolute metrics for floors.
+
+### ⚠️ Fix #2: Projected Volume Features - Simulate Usage Scaling (PARTIALLY WORKING)
+
+**Status**: ⚠️ **PARTIAL SUCCESS**
+
+**Implementation**: Replaced linear scaling with projected volume features that simulate usage scaling
+
+**Results**:
+- **Tyrese Maxey (2021-22)**: 75.50% ✅ **PASS** - Correctly identified as star
+- **Victor Oladipo (2016-17)**: 39.5% → 68.08% ⚠️ **IMPROVED** - Close to threshold
+- **Tyrese Haliburton (2021-22)**: 46.40% ❌ **FAILING** - Still not recognized
+- **Lauri Markkanen (2021-22)**: 15.31% ❌ **FAILING** - Still not recognized
+
+**Key Insight**: Projecting low volume linearly still results in low volume. Need "Flash Multiplier" for elite efficiency on low volume.
+
+### ⚠️ Fix #3: Context Adjustment Calculation (IMPLEMENTED - TOO WEAK)
+
+**Status**: ⚠️ **IMPLEMENTED BUT INSUFFICIENT**
+
+**Implementation**: Calculated `RS_CONTEXT_ADJUSTMENT = ACTUAL_EFG - EXPECTED_EFG` for all seasons
+
+**Results**:
+- **Context adjustment values**: Range -0.01 to 0.01 (essentially noise)
+- **Jordan Poole (2021-22)**: 84.23% ❌ **FAILING** - Still overvalued
+- **Domantas Sabonis (2021-22)**: 78.87% ❌ **FAILING** - Still overvalued
+
+**Key Insight**: Context adjustment is too weak. Need "Playoff Translation Tax" that heavily penalizes open shot reliance.
+
+**Validation Results**: See `results/phase3_5_validation_report.md`
+
+**Overall Pass Rate**: 43.8% (7/16) - Modest improvement from 42.9% (6/14)
+
+---
+
+## 🎯 Phase 3.6 Implementation Plan
 
 **Status**: 🎯 **READY FOR IMPLEMENTATION** (December 2025)
 
-Based on first principles analysis, Phase 3.5 addresses the fundamental flaws in Phase 3 implementation.
+Based on first principles feedback analysis, Phase 3.6 addresses the remaining physics failures identified in Phase 3.5 validation.
 
-### Fix #1: Fragility Gate - Switch to Absolute Volume
+### Fix #1: The "Flash Multiplier" - Scaling Zero vs. Flashes of Brilliance
 
-**Problem**: Used `RIM_PRESSURE_RESILIENCE` (ratio) which cannot detect floors.
+**Problem**: Projecting low volume linearly (0.1 × 1.5 = 0.15) still results in role player levels. The model doesn't recognize "flashes of brilliance" - elite efficiency on very low volume.
 
-**Solution**: Use `RS_RIM_APPETITE` (absolute frequency) instead.
+**Solution**: If player has elite efficiency on low volume, project to star-level volume (not scalar):
+- If `CREATION_VOLUME_RATIO < 25th percentile` AND (`CREATION_TAX > 80th percentile` OR `EFG_ISO_WEIGHTED > 80th percentile`)
+- Set `PROJECTED_CREATION_VOLUME = League Average Star Level` (not just 1.5x boost)
 
-**Implementation**:
-- Change threshold calculation to use `RS_RIM_APPETITE` (bottom 20th percentile: 0.1746)
-- Update fragility gate in `predict_conditional_archetype.py`
-- **Expected**: Russell should be capped at 30% (currently 78.6%)
+**Expected Impact**: Fixes Haliburton, Markkanen cases (role constraint failures)
 
-### Fix #2: Latent Star Projection - Simulate Usage Scaling
+### Fix #2: The "Playoff Translation Tax" - Radicalize Context Adjustment
 
-**Problem**: Linear scaling doesn't cross tree model decision boundaries.
+**Problem**: Context adjustment values (-0.01 to 0.01) are noise. They don't simulate playoff defense where wide-open shots disappear.
 
-**Solution**: Create projected volume features that simulate usage scaling:
-- `PROJECTED_CREATION_VOLUME = Current_Creation_Vol * (Target_Usage / Current_Usage)`
-- Feed projected volume + actual efficiency to model
+**Solution**: Apply "Playoff Translation Tax" based on open shot frequency:
+- `OPEN_SHOT_FREQUENCY = FGA_6_PLUS / TOTAL_FGA`
+- `PLAYOFF_TAX = (OPEN_SHOT_FREQ - LEAGUE_AVG) × 0.5`
+- For every 1% above league average, deduct 0.5% from projected EFG
 
-**Implementation**:
-- Update `prepare_features()` to calculate projected features
-- **Expected**: Oladipo, Markkanen, Bane, Bridges should improve to ≥70%
+**Expected Impact**: Fixes Poole, Sabonis cases (system merchant failures)
 
-### Fix #3: Calculate Context Adjustment Data
+### Fix #3: The "Bag Check" Gate - Self-Created Volume Requirement
 
-**Problem**: `RS_CONTEXT_ADJUSTMENT` is missing from dataset.
+**Problem**: Sabonis has rim pressure, but it's assisted/system-based, not self-created. He's a hub, not a creator.
 
-**Solution**: Calculate from shot quality data:
-- `RS_CONTEXT_ADJUSTMENT = ACTUAL_EFG - EXPECTED_EFG`
-- Add to dataset before validation
+**Solution**: Add gate for self-created volume:
+- `SELF_CREATED_FREQ = ISO_FREQUENCY + PNR_HANDLER_FREQUENCY`
+- If `SELF_CREATED_FREQ < 10%`: Cap at "Bulldozer" (cannot be King)
 
-**Implementation**:
-- Create `calculate_context_adjustment.py` script
-- **Expected**: Poole should decrease to <30% (currently 87.6%)
+**Expected Impact**: Fixes Sabonis case (false positive - system merchant)
 
-**See**: `PHASE3_5_IMPLEMENTATION_PLAN.md` for complete implementation details.
+**See**: `PHASE3_6_IMPLEMENTATION_PLAN.md` for complete implementation details.
 
-**Expected After Phase 3.5**: 10-11/14 passed (71-79%)
+**Expected After Phase 3.6**: 12-14/16 passed (75-88%)
 
 ---
 
@@ -380,8 +427,10 @@ Latent star detection work has been archived to `archive/latent_star_detection/`
 ---
 
 **See Also**:
-- `USAGE_AWARE_MODEL_PLAN.md` - Implementation plan
-- `KEY_INSIGHTS.md` - Hard-won lessons
+- `PHASE3_6_IMPLEMENTATION_PLAN.md` - **START HERE FOR PHASE 3.6** - Next implementation plan
+- `results/phase3_5_validation_report.md` - Phase 3.5 validation results
+- `USAGE_AWARE_MODEL_PLAN.md` - Historical implementation plan
+- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.5/3.6 insights)
 - `README.md` - Project overview
 
 

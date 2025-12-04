@@ -206,6 +206,26 @@ def get_test_cases() -> List[LatentStarTestCase]:
             context="Traded 1-1 for Tyrese Haliburton in February 2022. Time has shown Haliburton is a true playoff star while Sabonis has not been. Both were All-Stars, but Sabonis lacks playoff resilience.",
             mechanism="Critical comparison test. Both players were similar caliber (All-Stars), but model should identify that Sabonis lacks the stress vectors (likely Physicality or Creation) needed for playoff success. Tests if model can distinguish regular season production from playoff capability."
         ),
+        LatentStarTestCase(
+            name="Tyrese Haliburton",
+            season="2021-22",
+            category="True Positive - Comparison Case",
+            test_usage=0.28,
+            expected_outcome="Bulldozer",  # True playoff star
+            expected_star_level="High",  # >70%
+            context="Traded 1-1 for Domantas Sabonis in February 2022. Time has shown Haliburton is a true playoff star while Sabonis has not been. Both were All-Stars, but Haliburton has elite Creation and Leverage vectors.",
+            mechanism="Critical comparison test. Model should identify that Haliburton has the stress vectors (Creation, Leverage, Pressure) needed for playoff success. Should show higher star-level than Sabonis despite similar regular season production."
+        ),
+        LatentStarTestCase(
+            name="Tyrese Maxey",
+            season="2021-22",
+            category="True Positive - Latent Star",
+            test_usage=0.28,
+            expected_outcome="Bulldozer",  # True star
+            expected_star_level="High",  # >70%
+            context="22.2% Usage in 2021-22. Broke out to 27.3% usage in 2023-24. Elite Creation Vector and Leverage Vector even at lower usage.",
+            mechanism="Should identify high Creation efficiency and positive Leverage USG Delta. Tests if model can see star potential through role constraints. Maxey maintained elite efficiency on self-created shots even at lower usage."
+        ),
     ]
     
     return test_cases

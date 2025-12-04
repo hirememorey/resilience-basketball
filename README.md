@@ -2,9 +2,9 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status & Key Insight (V5.0 - Usage-Aware Model Complete, Phase 3.5 Ready for Implementation)**
+**Current Status & Key Insight (V5.0 - Usage-Aware Model Complete, Phase 3.5 Complete, Phase 3.6 Ready for Implementation)**
 
-The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience with **usage-aware conditional predictions**. Phase 3 fixes were implemented but validation revealed fundamental flaws. Phase 3.5 addresses these issues with first principles fixes.
+The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience with **usage-aware conditional predictions**. Phase 3.5 fixes have been implemented with partial success. Phase 3.6 addresses remaining physics failures with first principles fixes.
 
 - **`V5.0 Predictive Model`**: An XGBoost Classifier that achieves **62.22% accuracy** (improved from 59.4%) in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on five Regular Season "Stress Vectors" **plus usage-aware features**:
     1.  **Creation Vector**: Measures efficiency drop-off when forced to create own shot.
@@ -29,14 +29,12 @@ The model now predicts playoff archetypes at **different usage levels**, enablin
 
 ### 📚 Documentation
 
-**For Phase 2, 3, and 3.5 details, see:**
-- **`CURRENT_STATE.md`**: **START HERE** - Current project state with Phase 3 validation results and Phase 3.5 plan
-- **`PHASE3_5_IMPLEMENTATION_PLAN.md`**: **START HERE FOR PHASE 3.5** - Implementation plan for fixing Phase 3 flaws
-- **`PHASE3_VALIDATION_PLAN.md`**: Phase 3 validation strategy and results
-- **`results/phase3_validation_report.md`**: Phase 3 validation results
-- **`results/phase3_validation_analysis.md`**: Phase 3 validation analysis
-- **`results/phase2_implementation_summary.md`**: Phase 2 implementation summary
-- **`USAGE_AWARE_MODEL_PLAN.md`**: Implementation plan (Phase 2 & 3 complete)
+**For current status and next steps, see:**
+- **`CURRENT_STATE.md`**: **START HERE** - Current project state with Phase 3.5 results and Phase 3.6 plan
+- **`PHASE3_6_IMPLEMENTATION_PLAN.md`**: **START HERE FOR PHASE 3.6** - Implementation plan for remaining physics fixes
+- **`results/phase3_5_validation_report.md`**: Phase 3.5 validation results (43.8% pass rate)
+- **`PHASE3_5_IMPLEMENTATION_STATUS.md`**: Phase 3.5 implementation details
+- **`KEY_INSIGHTS.md`**: Hard-won lessons (updated with Phase 3.5/3.6 insights)
 
 ### Quick Reference
 
