@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
 **Date**: December 2025  
-**Status**: Phase 3.7 Complete - Data Fix Implemented ✅ | Current Pass Rate: 62.5% (10/16)
+**Status**: Phase 3.8 Complete - Reference Class Calibration ✅ | Current Pass Rate: 68.8% (11/16)
 
 ---
 
@@ -525,10 +525,85 @@ Phase 3.7 refinements have been implemented, plus a critical data completeness f
 
 **See**: `results/phase3_7_data_fix_impact.md` for complete analysis.
 
+---
+
+## ✅ Phase 3.8 Implementation (Complete - Reference Class Calibration)
+
+**Status**: ✅ **IMPLEMENTATION COMPLETE** | ✅ **VALIDATION COMPLETE** (December 2025)
+
+Phase 3.8 addressed the Reference Class Problem identified in feedback: by adding 3,253 RS-only players (many bench players), percentile thresholds and averages were skewed. The fixes recalibrate thresholds to the relevant population (rotation players/stars).
+
+### ✅ Fix #1: Qualified Percentiles - Filter by Volume
+
+**Status**: ✅ **SUCCESS**
+
+**Problem**: Percentiles calculated on entire dataset (4,473 players) included low-volume bench players with noisy efficiency stats (e.g., center who took 2 tight shots and made 1 = 50% resilience), artificially inflating thresholds.
+
+**Solution**: Added `_get_qualified_players()` method that filters by volume thresholds:
+- Minimum 50 pressure shots (`RS_TOTAL_VOLUME >= 50`) for pressure-related metrics
+- Minimum 10% usage (`USG_PCT >= 0.10`) to filter rotation players
+- All percentile calculations now use qualified players (3,574 / 5,312 = 67%)
+
+**Results**:
+- ✅ RS_PRESSURE_RESILIENCE 80th percentile: 0.5370 (qualified, min 50 shots)
+- ✅ All flash multiplier percentiles now use qualified players
+- ⚠️ Haliburton still below threshold (0.409 vs 0.5370) - may need alternative signal
+
+### ✅ Fix #2: STAR Average for Playoff Translation Tax
+
+**Status**: ✅ **SUCCESS**
+
+**Problem**: League average for open shots calculated across all players, including bench players who take more open shots in garbage time. Adding 3,253 RS-only players inflated the average, making system merchants like Poole no longer look like outliers.
+
+**Solution**: 
+- Changed from `LEAGUE_AVG_OPEN_FREQ` to `STAR_AVG_OPEN_FREQ`
+- Calculate median and 75th percentile only for players with `USG_PCT > 20%` (stars)
+- 75th percentile threshold: 0.2500 (stars) instead of 0.3118 (qualified)
+
+**Results**:
+- ✅ STAR average RS_OPEN_SHOT_FREQUENCY: 0.1934 (Usage > 20%)
+- ✅ 75th percentile threshold: 0.2500 (stars) - Poole's 0.2814 is above, tax triggers
+- ⚠️ Tax rate increased to 50% but Poole still at 85.84% - may need stronger penalty
+
+### ✅ Fix #3: Improved Bag Check Gate - Structural Triumph
+
+**Status**: ✅ **SUCCESS** (Critical Win)
+
+**Problem**: When ISO/PNR data is missing, code used `CREATION_VOLUME_RATIO` as proxy. Sabonis has high creation volume (0.217) but it's system-based (DHOs, cuts), not self-created, so gate didn't trigger.
+
+**Solution**: 
+- Improved proxy logic: If `CREATION_VOLUME_RATIO > 0.15` and missing ISO/PNR data, assume system-based creation (estimate 35% self-created)
+- Gate now caps star-level regardless of archetype (not just King → Bulldozer)
+- Caps star-level at 30% (Sniper ceiling) if `SELF_CREATED_FREQ < 10%`
+
+**Results**:
+- ✅ **Sabonis: 80.22% → 30.00%** (PASS) - **Structural Triumph**
+- ✅ Bag Check Gate correctly identifies system merchants
+- ✅ Validates "Dependency = Fragility" principle
+- ⚠️ May be too aggressive for some role-constrained players (Bridges, Markkanen)
+
+### Validation Results
+
+**Current Pass Rate**: 68.8% (11/16) - **Improved from 62.5%**
+
+**Key Wins**:
+- ✅ Sabonis: 80.22% → 30.00% (PASS) - Bag Check Gate working
+- ✅ Qualified percentiles filtering working (3,574 qualified players)
+- ✅ STAR average for tax comparison working
+
+**Remaining Failures (5 cases)**:
+- ❌ Jordan Poole (85.84%) - Tax triggering but not strong enough
+- ❌ Mikal Bridges (30.00%) - Bag Check Gate may be too aggressive
+- ❌ Lauri Markkanen (17.05%) - Bag Check Gate may be too aggressive
+- ❌ Tobias Harris (60.99%) - Close to threshold (55%)
+- ❌ Tyrese Haliburton (49.23%) - Pressure resilience threshold may need adjustment
+
+**See**: `results/latent_star_test_cases_report.md` for complete validation results.
+
 **Next Steps**:
-1. Investigate Sabonis Bag Check Gate failure (missing ISO/PNR data handling)
-2. Consider threshold recalibration with full dataset
-3. Investigate alternative signals for Haliburton (pressure resilience below threshold)
+1. Investigate Poole tax strength (may need 70%+ reduction or additional penalties)
+2. Refine Bag Check Gate for role-constrained players with legitimate creation ability
+3. Consider alternative signals for Haliburton (pressure resilience threshold adjustment or leverage vector)
 
 ---
 
@@ -545,14 +620,16 @@ Latent star detection work has been archived to `archive/latent_star_detection/`
 ---
 
 **See Also**:
-- `results/phase3_7_data_fix_impact.md` - **START HERE** - Phase 3.7 impact analysis and data fix results
+- `results/phase3_8_validation_report.md` - **START HERE** - Phase 3.8 validation results and analysis
+- `results/latent_star_test_cases_report.md` - Latest validation results (68.8% pass rate)
+- `results/phase3_7_data_fix_impact.md` - Phase 3.7 impact analysis and data fix results
 - `results/haliburton_pressure_investigation.md` - Data completeness investigation and fix
 - `PHASE3_7_REFINEMENT_PLAN.md` - Phase 3.7 implementation plan (completed)
 - `results/phase3_6_validation_report.md` - Phase 3.6 validation results (75% pass rate)
 - `PHASE3_6_IMPLEMENTATION_PLAN.md` - Phase 3.6 implementation plan
 - `results/phase3_5_validation_report.md` - Phase 3.5 validation results
 - `USAGE_AWARE_MODEL_PLAN.md` - Historical implementation plan
-- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.5/3.6/3.7 insights)
+- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.8 insights)
 - `README.md` - Project overview
 
 

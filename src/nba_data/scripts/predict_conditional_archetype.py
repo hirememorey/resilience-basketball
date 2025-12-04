@@ -1,5 +1,5 @@
 """
-Phase 2: Conditional Prediction Function (Enhanced with Phase 3.5, 3.6 & 3.7 Fixes)
+Phase 2: Conditional Prediction Function (Enhanced with Phase 3.5, 3.6, 3.7 & 3.8 Fixes)
 
 This script provides a function to predict archetype at different usage levels.
 This enables answering both questions:
@@ -19,6 +19,11 @@ Phase 3.6 Enhancements (First Principles Physics Fixes):
 Phase 3.7 Enhancements (Refinements Based on User Feedback):
 - Fix #1: Linear Tax Fallacy - Move Playoff Translation Tax from efficiency to volume (system merchants lose opportunity, not just efficiency)
 - Fix #2: Narrow Flash Problem - Widen Flash Multiplier to include Pressure Resilience (not just isolation efficiency)
+
+Phase 3.8 Enhancements (Reference Class Calibration Fixes):
+- Fix #1: Qualified Percentiles - Filter by volume (FGA > 200 or pressure shots > 50) before calculating percentiles to avoid small sample noise
+- Fix #2: STAR Average for Tax - Use STAR_AVG_OPEN_FREQ (Usage > 20%) instead of LEAGUE_AVG for Playoff Translation Tax comparison
+- Fix #3: Improved Bag Check Proxy - Better heuristic when ISO/PNR data is missing (check high creation vol + low ISO efficiency pattern)
 """
 
 import pandas as pd
@@ -104,57 +109,102 @@ class ConditionalArchetypePredictor:
         
         return df_features
     
+    def _get_qualified_players(self, min_fga: int = 200, min_pressure_shots: int = 50) -> pd.DataFrame:
+        """
+        Filter players by volume thresholds to avoid small sample noise.
+        
+        Phase 3.8 Fix: Reference Class Principle - Calculate percentiles only on 
+        rotation players (qualified by volume), not entire dataset including bench players.
+        
+        Args:
+            min_fga: Minimum field goal attempts (default: 200)
+            min_pressure_shots: Minimum pressure shots for pressure-related metrics (default: 50)
+        
+        Returns:
+            DataFrame filtered to qualified players
+        """
+        qualified = self.df_features.copy()
+        
+        # Filter by FGA if available (from pressure features or other sources)
+        if 'RS_TOTAL_VOLUME' in qualified.columns:
+            # RS_TOTAL_VOLUME is total tracked shots - use as proxy for FGA
+            qualified = qualified[qualified['RS_TOTAL_VOLUME'] >= min_pressure_shots]
+        elif 'TOTAL_FGA' in qualified.columns:
+            qualified = qualified[qualified['TOTAL_FGA'] >= min_fga]
+        
+        # Also filter by usage if available (rotation players typically have USG_PCT > 10%)
+        if 'USG_PCT' in qualified.columns:
+            qualified = qualified[qualified['USG_PCT'] >= 0.10]
+        
+        logger.info(f"Qualified players: {len(qualified)} / {len(self.df_features)} (filtered by volume thresholds)")
+        return qualified
+    
     def _calculate_feature_distributions(self):
         """Calculate feature distributions for Phase 3.5 & 3.6 fixes."""
+        # Phase 3.8 Fix: Use qualified players (rotation players) for percentile calculations
+        # This avoids small sample noise from bench players
+        qualified_players = self._get_qualified_players()
+        
         # Phase 3.5 Fix #1: Use RS_RIM_APPETITE (absolute volume) instead of RIM_PRESSURE_RESILIENCE (ratio)
         # Calculate bottom 20th percentile for RS_RIM_APPETITE (Fragility Gate)
-        if 'RS_RIM_APPETITE' in self.df_features.columns:
-            rim_appetite = self.df_features['RS_RIM_APPETITE'].dropna()
+        if 'RS_RIM_APPETITE' in qualified_players.columns:
+            rim_appetite = qualified_players['RS_RIM_APPETITE'].dropna()
             if len(rim_appetite) > 0:
                 self.rim_appetite_bottom_20th = rim_appetite.quantile(0.20)
-                logger.info(f"RS_RIM_APPETITE bottom 20th percentile: {self.rim_appetite_bottom_20th:.4f}")
+                logger.info(f"RS_RIM_APPETITE bottom 20th percentile (qualified): {self.rim_appetite_bottom_20th:.4f}")
             else:
                 self.rim_appetite_bottom_20th = None
         else:
             self.rim_appetite_bottom_20th = None
         
         # Phase 3.6 Fix #1: Flash Multiplier - Calculate percentiles for flash detection
-        if 'CREATION_VOLUME_RATIO' in self.df_features.columns:
-            creation_vol = self.df_features['CREATION_VOLUME_RATIO'].dropna()
+        # Phase 3.8 Fix: Use qualified players to avoid small sample noise
+        if 'CREATION_VOLUME_RATIO' in qualified_players.columns:
+            creation_vol = qualified_players['CREATION_VOLUME_RATIO'].dropna()
             if len(creation_vol) > 0:
                 self.creation_vol_25th = creation_vol.quantile(0.25)
-                logger.info(f"CREATION_VOLUME_RATIO 25th percentile: {self.creation_vol_25th:.4f}")
+                logger.info(f"CREATION_VOLUME_RATIO 25th percentile (qualified): {self.creation_vol_25th:.4f}")
             else:
                 self.creation_vol_25th = None
         else:
             self.creation_vol_25th = None
         
-        if 'CREATION_TAX' in self.df_features.columns:
-            creation_tax = self.df_features['CREATION_TAX'].dropna()
+        if 'CREATION_TAX' in qualified_players.columns:
+            creation_tax = qualified_players['CREATION_TAX'].dropna()
             if len(creation_tax) > 0:
                 self.creation_tax_80th = creation_tax.quantile(0.80)
-                logger.info(f"CREATION_TAX 80th percentile: {self.creation_tax_80th:.4f}")
+                logger.info(f"CREATION_TAX 80th percentile (qualified): {self.creation_tax_80th:.4f}")
             else:
                 self.creation_tax_80th = None
         else:
             self.creation_tax_80th = None
         
-        if 'EFG_ISO_WEIGHTED' in self.df_features.columns:
-            efg_iso = self.df_features['EFG_ISO_WEIGHTED'].dropna()
+        if 'EFG_ISO_WEIGHTED' in qualified_players.columns:
+            efg_iso = qualified_players['EFG_ISO_WEIGHTED'].dropna()
             if len(efg_iso) > 0:
                 self.efg_iso_80th = efg_iso.quantile(0.80)
-                logger.info(f"EFG_ISO_WEIGHTED 80th percentile: {self.efg_iso_80th:.4f}")
+                logger.info(f"EFG_ISO_WEIGHTED 80th percentile (qualified): {self.efg_iso_80th:.4f}")
             else:
                 self.efg_iso_80th = None
         else:
             self.efg_iso_80th = None
         
         # Phase 3.7 Fix #2: Flash Multiplier - Add RS_PRESSURE_RESILIENCE as alternative flash signal
-        if 'RS_PRESSURE_RESILIENCE' in self.df_features.columns:
-            pressure_resilience = self.df_features['RS_PRESSURE_RESILIENCE'].dropna()
+        # Phase 3.8 Fix: Filter by pressure shot volume for pressure resilience percentile
+        if 'RS_PRESSURE_RESILIENCE' in qualified_players.columns:
+            # For pressure resilience, filter by minimum pressure shots (RS_TOTAL_VOLUME)
+            if 'RS_TOTAL_VOLUME' in qualified_players.columns:
+                pressure_qualified = qualified_players[
+                    (qualified_players['RS_TOTAL_VOLUME'] >= 50) & 
+                    (qualified_players['RS_PRESSURE_RESILIENCE'].notna())
+                ]
+            else:
+                pressure_qualified = qualified_players[qualified_players['RS_PRESSURE_RESILIENCE'].notna()]
+            
+            pressure_resilience = pressure_qualified['RS_PRESSURE_RESILIENCE'].dropna()
             if len(pressure_resilience) > 0:
                 self.pressure_resilience_80th = pressure_resilience.quantile(0.80)
-                logger.info(f"RS_PRESSURE_RESILIENCE 80th percentile: {self.pressure_resilience_80th:.4f}")
+                logger.info(f"RS_PRESSURE_RESILIENCE 80th percentile (qualified, min 50 pressure shots): {self.pressure_resilience_80th:.4f}")
             else:
                 self.pressure_resilience_80th = None
         else:
@@ -176,9 +226,11 @@ class ConditionalArchetypePredictor:
         else:
             self.star_median_creation_vol = None
         
-        # Phase 3.6 Fix #2 & Phase 3.7 Fix #1: Playoff Translation Tax - Calculate league average and 75th percentile
-        # Phase 3.7: Move tax from efficiency to volume - need 75th percentile for volume tax threshold
-        self.league_avg_open_freq = None
+        # Phase 3.6 Fix #2 & Phase 3.7 Fix #1: Playoff Translation Tax - Calculate STAR average and 75th percentile
+        # Phase 3.8 Fix: Use STAR_AVG_OPEN_FREQ (Usage > 20%) instead of LEAGUE_AVG
+        # Phase 3.8.1 Fix: Use STARS (USG > 20%) for 75th percentile threshold, not qualified players
+        # This ensures Poole is compared to other stars, not bench players who take more open shots
+        self.star_avg_open_freq = None
         self.open_freq_75th = None
         # Check for RS_OPEN_SHOT_FREQUENCY (from pressure features) or OPEN_SHOT_FREQUENCY
         open_freq_col = None
@@ -188,12 +240,26 @@ class ConditionalArchetypePredictor:
             open_freq_col = 'OPEN_SHOT_FREQUENCY'
         
         if open_freq_col:
-            open_freq = self.df_features[open_freq_col].dropna()
-            if len(open_freq) > 0:
-                self.league_avg_open_freq = open_freq.median()
-                self.open_freq_75th = open_freq.quantile(0.75)
-                logger.info(f"League average {open_freq_col}: {self.league_avg_open_freq:.4f}")
-                logger.info(f"{open_freq_col} 75th percentile: {self.open_freq_75th:.4f}")
+            # Phase 3.8 Fix: Filter to stars (Usage > 20%) for both average and 75th percentile
+            if 'USG_PCT' in self.df_features.columns:
+                star_players = self.df_features[self.df_features['USG_PCT'] > 0.20]
+                star_open_freq = star_players[open_freq_col].dropna()
+                if len(star_open_freq) > 0:
+                    self.star_avg_open_freq = star_open_freq.median()
+                    # Phase 3.8.1: Use stars for 75th percentile threshold (not qualified players)
+                    self.open_freq_75th = star_open_freq.quantile(0.75)
+                    logger.info(f"STAR average {open_freq_col} (Usage > 20%): {self.star_avg_open_freq:.4f}")
+                    logger.info(f"{open_freq_col} 75th percentile (STARS, USG > 20%): {self.open_freq_75th:.4f}")
+            
+            # Fallback: if star data not available, use qualified players
+            if self.open_freq_75th is None:
+                open_freq = qualified_players[open_freq_col].dropna()
+                if len(open_freq) > 0:
+                    self.open_freq_75th = open_freq.quantile(0.75)
+                    logger.info(f"Fallback: {open_freq_col} 75th percentile (qualified): {self.open_freq_75th:.4f}")
+                if self.star_avg_open_freq is None and len(open_freq) > 0:
+                    self.star_avg_open_freq = open_freq.median()
+                    logger.info(f"Fallback: Using qualified players median {open_freq_col}: {self.star_avg_open_freq:.4f}")
         # If not in features, we'll calculate it on-the-fly from shot quality data if available
     
     def _get_expected_features(self) -> list:
@@ -435,9 +501,11 @@ class ConditionalArchetypePredictor:
                             # Phase 3.7 Fix #1: Apply playoff volume tax to CREATION_VOLUME_RATIO
                             # System merchants lose opportunity, not just efficiency
                             if feature_name == 'CREATION_VOLUME_RATIO' and playoff_volume_tax_applied:
-                                # Slash projected volume by 30% (multiply by 0.70)
-                                val = val * 0.70
-                                logger.debug(f"Playoff Volume Tax: CREATION_VOLUME_RATIO reduced by 30% (from {val / 0.70:.4f} to {val:.4f})")
+                                # Phase 3.8.1 Fix: Slash projected volume by 50% (multiply by 0.50) - increased from 30%
+                                # System merchants lose opportunity more dramatically in playoffs
+                                original_val = val
+                                val = val * 0.50
+                                logger.debug(f"Playoff Volume Tax: CREATION_VOLUME_RATIO reduced by 50% (from {original_val:.4f} to {val:.4f})")
                         elif feature_name in ['RS_PRESSURE_RESILIENCE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE', 
                                              'RS_EARLY_CLOCK_PRESSURE_RESILIENCE', 'CREATION_TAX', 'EFG_ISO_WEIGHTED',
                                              'EFG_PCT_0_DRIBBLE']:
@@ -545,8 +613,10 @@ class ConditionalArchetypePredictor:
         
         # Phase 3.6 Fix #3: Bag Check Gate - Cap players lacking self-created volume at Bulldozer (cannot be King)
         # Principle: Self-created volume is required for primary initiators (Kings)
+        # Phase 3.8 Fix: Improved proxy logic when ISO/PNR data is missing
         bag_check_gate_applied = False
         self_created_freq = None
+        bag_check_reason = None
         if apply_phase3_fixes:
             # Calculate self-created frequency (ISO + PNR Handler)
             iso_freq = player_data.get('ISO_FREQUENCY', None)
@@ -554,36 +624,85 @@ class ConditionalArchetypePredictor:
             
             # Try alternative column names if primary ones don't exist
             if pd.isna(iso_freq) or iso_freq is None:
-                # Try to calculate from playtype data if available
-                # For now, we'll use CREATION_VOLUME_RATIO as a proxy if playtype data isn't available
-                # This is a fallback - ideally we'd have explicit ISO_FREQUENCY and PNR_HANDLER_FREQUENCY
+                # Phase 3.8 Fix: Better proxy when ISO/PNR data is missing
+                # Check if player has high creation volume but low isolation efficiency
+                # This indicates system-based creation (like Sabonis), not self-creation
                 creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', 0)
-                if pd.notna(creation_vol_ratio):
-                    # Use CREATION_VOLUME_RATIO as proxy for self-created frequency
-                    # If it's very low (< 0.10), likely low self-creation
-                    self_created_freq = creation_vol_ratio
+                efg_iso = player_data.get('EFG_ISO_WEIGHTED', None)
+                
+                if pd.notna(creation_vol_ratio) and pd.notna(efg_iso):
+                    # Phase 3.8 Fix: Better heuristic for system-based creation
+                    # Sabonis pattern: High CREATION_VOLUME_RATIO (0.217) but this is system-based (DHOs, cuts)
+                    # Key insight: Even if ISO efficiency is decent, high creation volume without explicit ISO/PNR data
+                    # suggests system-based creation (hub players like Sabonis)
+                    if 'EFG_ISO_WEIGHTED' in self.df_features.columns:
+                        iso_median = self.df_features['EFG_ISO_WEIGHTED'].median()
+                        # More aggressive: If creation volume is high but we don't have explicit ISO/PNR data,
+                        # assume it's system-based (conservative estimate)
+                        # For players with high creation volume (>0.15) but missing ISO/PNR data, assume 30-40% is self-created
+                        if creation_vol_ratio > 0.15:
+                            # High creation volume without ISO/PNR data = likely system-based (hub player)
+                            self_created_freq = creation_vol_ratio * 0.35  # Assume only 35% is self-created
+                            bag_check_reason = f"Proxy: CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} (high, missing ISO/PNR) → estimated {self_created_freq:.3f} (system-based assumption)"
+                        elif pd.notna(iso_median) and efg_iso < iso_median:
+                            # Low ISO efficiency = likely system-based
+                            self_created_freq = creation_vol_ratio * 0.5  # Assume 50% is self-created
+                            bag_check_reason = f"Proxy: CREATION_VOLUME_RATIO={creation_vol_ratio:.3f}, EFG_ISO below median → estimated {self_created_freq:.3f}"
+                        else:
+                            # Moderate creation volume, decent ISO - use conservative estimate
+                            self_created_freq = creation_vol_ratio * 0.6
+                            bag_check_reason = f"Proxy: CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} → estimated {self_created_freq:.3f}"
+                    else:
+                        # Fallback: use conservative estimate
+                        if creation_vol_ratio > 0.15:
+                            self_created_freq = creation_vol_ratio * 0.35
+                        else:
+                            self_created_freq = creation_vol_ratio * 0.6
+                        bag_check_reason = f"Proxy: CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} → estimated {self_created_freq:.3f} (no ISO efficiency data)"
+                elif pd.notna(creation_vol_ratio):
+                    # Only creation vol available - use conservative estimate
+                    if creation_vol_ratio > 0.15:
+                        self_created_freq = creation_vol_ratio * 0.35
+                    else:
+                        self_created_freq = creation_vol_ratio * 0.6
+                    bag_check_reason = f"Proxy: CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} → estimated {self_created_freq:.3f} (no ISO efficiency data)"
                 else:
                     self_created_freq = 0.0
+                    bag_check_reason = "No ISO/PNR or creation data available - assuming 0% self-created"
             else:
                 # Use explicit playtype data if available
                 if pd.isna(pnr_freq) or pnr_freq is None:
                     pnr_freq = 0.0
                 self_created_freq = (iso_freq if pd.notna(iso_freq) else 0.0) + (pnr_freq if pd.notna(pnr_freq) else 0.0)
+                bag_check_reason = f"Explicit: ISO={iso_freq:.3f}, PNR={pnr_freq:.3f}"
             
-            # Gate threshold: 10% self-created frequency
+            # Gate threshold: 10% self-created frequency (absolute threshold)
+            # Phase 3.8 Fix: Cap star-level potential regardless of archetype if self-created freq < 10%
             if pd.notna(self_created_freq) and self_created_freq < 0.10:
-                # Cap at Bulldozer (cannot be King)
+                bag_check_gate_applied = True
+                # Cap star-level at 30% (Sniper ceiling) - cannot be a true star without self-creation
+                original_star_level = star_level_potential
+                star_level_potential = min(star_level_potential, 0.30)
+                
+                # If predicted as King, redistribute to Bulldozer
                 if pred_archetype == 'King (Resilient Star)':
-                    bag_check_gate_applied = True
-                    # Redistribute: King → Bulldozer
                     king_prob = prob_dict.get('King', 0)
                     prob_dict['Bulldozer'] = prob_dict.get('Bulldozer', 0) + king_prob
                     prob_dict['King'] = 0.0
-                    # Update predicted archetype
                     pred_archetype = 'Bulldozer (Fragile Star)'
-                    # Recalculate star-level (should stay same since King + Bulldozer = star-level)
-                    star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
-                    logger.debug(f"Bag Check Gate applied: Self-created freq {self_created_freq:.4f} < 0.10, capped at Bulldozer")
+                
+                # If star-level was capped, redistribute probabilities
+                if star_level_potential <= 0.30:
+                    # Cap at Sniper/Victim level
+                    prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                    prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                    prob_dict['King'] = 0.0
+                    prob_dict['Bulldozer'] = 0.0
+                    # Update predicted archetype if needed
+                    if original_star_level > 0.30:
+                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                
+                logger.info(f"Bag Check Gate applied: Self-created freq {self_created_freq:.4f} < 0.10, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}. Reason: {bag_check_reason}")
         
         # Check for missing data (confidence flags)
         confidence_flags = []
@@ -603,7 +722,7 @@ class ConditionalArchetypePredictor:
         if phase3_metadata['context_penalty'] > 0:
             phase3_flags.append(f"Context penalty applied: {phase3_metadata['context_penalty']:.4f}")
         if phase3_metadata.get('playoff_volume_tax_applied', False):
-            phase3_flags.append(f"Playoff Volume Tax applied: CREATION_VOLUME_RATIO reduced by 30%")
+            phase3_flags.append(f"Playoff Volume Tax applied: CREATION_VOLUME_RATIO reduced by 50%")
         if fragility_gate_applied and rim_appetite is not None:
             phase3_flags.append(f"Fragility gate applied (RS_RIM_APPETITE: {rim_appetite:.4f})")
         if bag_check_gate_applied and self_created_freq is not None:

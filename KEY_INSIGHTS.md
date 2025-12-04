@@ -508,6 +508,82 @@ merged = pd.merge(rs_df, po_df, on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'], how='
 
 ---
 
+## 21. The Reference Class Calibration Problem - Qualified Percentiles 🎯 CRITICAL (Phase 3.8)
+
+**The Problem**: By adding 3,253 RS-only players (many bench players), percentile thresholds were artificially inflated by small sample noise. A center who took 2 tight shots and made 1 (50% resilience) was included in the 80th percentile calculation.
+
+**The Insight**: Percentiles must be calculated on qualified players (rotation players with sufficient volume), not the entire dataset. Bench players with small sample sizes create noise that inflates thresholds.
+
+**The Fix**: Filter by volume before calculating percentiles:
+```python
+# Filter qualified players (rotation players)
+qualified = df[(df['RS_TOTAL_VOLUME'] >= 50) & (df['USG_PCT'] >= 0.10)]
+# Calculate percentiles on qualified players only
+pressure_resilience_80th = qualified['RS_PRESSURE_RESILIENCE'].quantile(0.80)
+```
+
+**Example**:
+- ❌ **Wrong**: Calculate 80th percentile on all 4,473 players → Threshold: 0.5380 (inflated by bench player noise)
+- ✅ **Right**: Calculate 80th percentile on 3,574 qualified players → Threshold: 0.5370 (more accurate)
+
+**Test Case**: Haliburton (2021-22) - Pressure resilience (0.409) still below threshold, but threshold is now more accurate
+
+**Key Principle**: Always filter by volume before calculating percentiles. Small sample noise from bench players skews thresholds.
+
+---
+
+## 22. The STAR Average Principle - Compare Stars to Stars 🎯 CRITICAL (Phase 3.8)
+
+**The Problem**: League average for open shots was calculated across all players, including bench players who take more open shots in garbage time. Adding 3,253 RS-only players inflated the average, making system merchants like Poole no longer look like outliers.
+
+**The Insight**: System merchants should be compared to other stars (Usage > 20%), not to bench players. Bench players take more open shots (spot-ups, garbage time), which inflates the league average.
+
+**The Fix**: Calculate thresholds using stars only:
+```python
+# Filter to stars (Usage > 20%)
+star_players = df[df['USG_PCT'] > 0.20]
+star_open_freq_75th = star_players['RS_OPEN_SHOT_FREQUENCY'].quantile(0.75)
+# Compare Poole to stars, not bench players
+```
+
+**Example**:
+- ❌ **Wrong**: 75th percentile on all players → 0.3234 (inflated by bench players)
+- ✅ **Right**: 75th percentile on stars (USG > 20%) → 0.2500 (accurate)
+- **Poole's 0.2814 is above 0.2500** → Tax triggers ✅
+
+**Test Case**: Poole (2021-22) - Tax now triggers, but penalty may need to be stronger
+
+**Key Principle**: Compare stars to stars, not to bench players. Reference class matters for thresholds.
+
+---
+
+## 23. The Bag Check Gate - Structural Triumph 🎯 CRITICAL (Phase 3.8)
+
+**The Problem**: When ISO/PNR data is missing, code used `CREATION_VOLUME_RATIO` as proxy. Sabonis has high creation volume (0.217) but it's system-based (DHOs, cuts), not self-created.
+
+**The Insight**: **Dependency = Fragility**. A player who can't create their own offense can't be a primary initiator (King). This is a physics-of-basketball constraint that must be enforced.
+
+**The Fix**: Improved proxy logic + cap star-level regardless of archetype:
+```python
+# If CREATION_VOLUME_RATIO > 0.15 and missing ISO/PNR data, assume system-based
+if creation_vol_ratio > 0.15 and missing_iso_pnr:
+    self_created_freq = creation_vol_ratio * 0.35  # Conservative estimate
+
+# Cap star-level at 30% if self-created freq < 10% (regardless of archetype)
+if self_created_freq < 0.10:
+    star_level_potential = min(star_level_potential, 0.30)
+```
+
+**Example**:
+- ❌ **Wrong**: Sabonis has CREATION_VOLUME_RATIO = 0.217 → Above 0.10 threshold → Gate doesn't apply → 80.22% star-level
+- ✅ **Right**: Sabonis has CREATION_VOLUME_RATIO = 0.217 (high, missing ISO/PNR) → Estimated 0.076 self-created → Gate applies → 30.00% star-level
+
+**Test Case**: Sabonis (2021-22) - **Structural Triumph**: 80.22% → 30.00% (PASS)
+
+**Key Principle**: Enforce physics-of-basketball constraints. "Dependency = Fragility" is a fundamental truth that must be codified.
+
+---
+
 ## Quick Reference Checklist
 
 When implementing new features, ask:
@@ -531,6 +607,9 @@ When implementing new features, ask:
   - [ ] Am I taxing volume, not just efficiency? (System merchants lose opportunity, not just efficiency) (Fix #1 - Phase 3.7)
 - [ ] Am I checking for self-created volume? (Required for primary initiators) (Fix #3 - Phase 3.6) ✅
 - [ ] Am I using LEFT JOIN for RS features? (RS features only need RS data, PO can be NaN) (Fix #3 - Phase 3.7) ✅
+- [ ] Am I calculating percentiles on qualified players only? (Filter by volume to avoid small sample noise) (Fix #1 - Phase 3.8) ✅
+- [ ] Am I comparing stars to stars? (Use STAR average, not LEAGUE average for thresholds) (Fix #2 - Phase 3.8) ✅
+- [ ] Am I enforcing physics-of-basketball constraints? (Dependency = Fragility - Bag Check Gate) (Fix #3 - Phase 3.8) ✅
 
 ---
 

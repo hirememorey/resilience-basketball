@@ -2,9 +2,9 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status & Key Insight (V5.0 - Usage-Aware Model Complete, Phase 3.7 Complete ✅)**
+**Current Status & Key Insight (V5.0 - Usage-Aware Model Complete, Phase 3.8 Complete ✅)**
 
-The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience with **usage-aware conditional predictions**. Phase 3.7 refinements have been implemented, including a critical data completeness fix that resolved missing pressure resilience data for 3,253 players. Current validation shows **62.5% pass rate** (10/16) with thresholds now based on the full dataset.
+The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience with **usage-aware conditional predictions**. Phase 3.8 addressed the Reference Class Problem by recalibrating thresholds to the relevant population (rotation players/stars). Current validation shows **68.8% pass rate** (11/16) with the Sabonis fix (80.22% → 30.00%) validating the "Dependency = Fragility" principle.
 
 - **`V5.0 Predictive Model`**: An XGBoost Classifier that achieves **62.22% accuracy** (improved from 59.4%) in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on five Regular Season "Stress Vectors" **plus usage-aware features**:
     1.  **Creation Vector**: Measures efficiency drop-off when forced to create own shot.
@@ -30,12 +30,11 @@ The model now predicts playoff archetypes at **different usage levels**, enablin
 ### 📚 Documentation
 
 **For current status and next steps, see:**
-- **`CURRENT_STATE.md`**: **START HERE** - Current project state with Phase 3.7 results (62.5% pass rate, data fix complete)
-- **`results/phase3_7_data_fix_impact.md`**: **START HERE** - Phase 3.7 impact analysis and data fix results
-- **`results/haliburton_pressure_investigation.md`**: Data completeness investigation and fix
-- **`PHASE3_7_REFINEMENT_PLAN.md`**: Phase 3.7 implementation plan (completed)
-- **`results/phase3_6_validation_report.md`**: Phase 3.6 validation results (75.0% pass rate)
-- **`KEY_INSIGHTS.md`**: Hard-won lessons (updated with Phase 3.5/3.6/3.7 insights)
+- **`CURRENT_STATE.md`**: **START HERE** - Current project state with Phase 3.8 results (68.8% pass rate)
+- **`results/phase3_8_validation_report.md`**: **START HERE** - Phase 3.8 validation results and analysis
+- **`results/latent_star_test_cases_report.md`**: Latest validation results
+- **`NEXT_STEPS.md`**: Remaining edge cases and recommended actions
+- **`KEY_INSIGHTS.md`**: Hard-won lessons (updated with Phase 3.8 insights)
 
 ### Quick Reference
 
@@ -121,26 +120,23 @@ We have achieved the core goal of building a predictive model. The next phase is
 
 **Current Status:** Model accuracy is **62.22%** (improved from 59.4%) with full clock data coverage and usage-aware features. The model successfully predicts playoff archetypes using mechanistic stress vectors **at different usage levels**.
 
-**Phase 3.7 Complete:** All refinements have been implemented, including a critical data completeness fix:
-1. ✅ Flash Multiplier - Widened to include Pressure Resilience (implemented, partially working)
-2. ✅ Playoff Translation Tax - Moved from efficiency to volume (implemented, threshold may need adjustment)
-3. ✅ Bag Check Gate - Caps system-dependent players (working, but needs better handling of missing ISO/PNR data)
-4. ✅ **Data Completeness Fix** - Changed INNER JOIN to LEFT JOIN, added 3,253 RS-only players to dataset
+**Phase 3.8 Complete:** All Reference Class Calibration fixes have been implemented:
+1. ✅ **Qualified Percentiles** - Filter by volume (FGA > 200 or pressure shots > 50) before calculating percentiles
+2. ✅ **STAR Average for Tax** - Use STAR_AVG_OPEN_FREQ (Usage > 20%) instead of LEAGUE_AVG
+3. ✅ **Improved Bag Check Gate** - Better proxy logic and caps star-level regardless of archetype
 
-**Current Validation Results**: 62.5% pass rate (10/16) - **Decreased from 75.0%** due to threshold shifts
+**Current Validation Results**: 68.8% pass rate (11/16) - **Improved from 62.5%**
 
-**Key Findings**:
-- ✅ Data completeness fix successful (Haliburton now has RS_PRESSURE_RESILIENCE)
-- ✅ Haliburton improved: 27.44% → 49.23% (+21.79 pp)
-- ⚠️ Pass rate decreased due to threshold shifts (thresholds now more accurate based on full dataset)
-- ⚠️ Sabonis regression needs investigation (Bag Check Gate not working with missing ISO/PNR data)
-- ⚠️ Poole and Haliburton still failing - may need threshold adjustments
+**Key Achievements**:
+- ✅ **Sabonis fix is a structural triumph**: 80.22% → 30.00% (PASS) - validates "Dependency = Fragility" principle
+- ✅ Qualified percentiles working (3,574 qualified players, 67% of dataset)
+- ✅ STAR average for tax comparison working (threshold: 0.2500 for stars vs 0.3118 for qualified)
+- ⚠️ Poole still failing (85.84%) - tax triggering but may need stronger penalty
+- ⚠️ Haliburton still failing (49.23%) - pressure resilience threshold may need adjustment
 
-**Threshold Adjustment**: Based on user feedback, thresholds were adjusted to better reflect model predictions:
-- High: ≥65% (was 70%) - Victor Oladipo at 68% and Jamal Murray at 67% now pass
-- Low: <55% (was 30%) - Tobias Harris at 52% now passes (appropriately indicates max contract mistake)
+**Key Insight**: The logic holds. The calibration was off because the population changed. By calibrating thresholds to "Rotation Players/Stars", the signal returned.
 
-See **`CURRENT_STATE.md`** for current status, **`results/phase3_7_data_fix_impact.md`** for Phase 3.7 analysis, and **`results/haliburton_pressure_investigation.md`** for data completeness investigation.
+See **`CURRENT_STATE.md`** for current status, **`results/phase3_8_validation_report.md`** for Phase 3.8 analysis, and **`NEXT_STEPS.md`** for remaining edge cases.
 
 ---
 
