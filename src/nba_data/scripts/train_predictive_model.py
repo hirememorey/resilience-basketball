@@ -169,6 +169,39 @@ class ResiliencePredictor:
         """Train the XGBoost Model."""
         df = self.load_and_merge_data()
         
+        # PHASE 2: Add Usage-Aware Features
+        # Add USG_PCT as explicit feature and create interaction terms
+        if 'USG_PCT' in df.columns:
+            logger.info("Adding usage-aware features (USG_PCT + interaction terms)...")
+            
+            # Ensure USG_PCT is numeric and fill NaN with median
+            df['USG_PCT'] = pd.to_numeric(df['USG_PCT'], errors='coerce')
+            usg_median = df['USG_PCT'].median()
+            df['USG_PCT'] = df['USG_PCT'].fillna(usg_median)
+            logger.info(f"USG_PCT coverage: {df['USG_PCT'].notna().sum()}/{len(df)} ({df['USG_PCT'].notna().sum()/len(df)*100:.1f}%)")
+            
+            # Create interaction terms with top stress vectors
+            # Based on feature importance: CREATION_VOLUME_RATIO (6.2%), LEVERAGE_USG_DELTA (9.2%), 
+            # RS_PRESSURE_APPETITE (4.5%), RS_LATE_CLOCK_PRESSURE_RESILIENCE (4.8%), EFG_ISO_WEIGHTED (4.1%)
+            interaction_terms = [
+                ('USG_PCT', 'CREATION_VOLUME_RATIO'),
+                ('USG_PCT', 'LEVERAGE_USG_DELTA'),
+                ('USG_PCT', 'RS_PRESSURE_APPETITE'),
+                ('USG_PCT', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE'),
+                ('USG_PCT', 'EFG_ISO_WEIGHTED')
+            ]
+            
+            for feat1, feat2 in interaction_terms:
+                if feat1 in df.columns and feat2 in df.columns:
+                    interaction_name = f'{feat1}_X_{feat2}'
+                    # Fill NaN with 0 for interaction terms (if either feature is missing, interaction is 0)
+                    df[interaction_name] = (df[feat1].fillna(0) * df[feat2].fillna(0))
+                    logger.info(f"Created interaction term: {interaction_name}")
+                else:
+                    logger.warning(f"Could not create interaction {feat1} * {feat2} - missing features")
+        else:
+            logger.warning("USG_PCT not found in dataset. Usage-aware features will not be added.")
+        
         # Define Features and Target
         features = [
             'CREATION_TAX', 'CREATION_VOLUME_RATIO',
@@ -205,6 +238,22 @@ class ResiliencePredictor:
             'RS_RIM_APPETITE',
             'RIM_PRESSURE_RESILIENCE'
         ]
+        
+        # PHASE 2: Conditionally add Usage-Aware Features
+        if 'USG_PCT' in df.columns:
+            features.append('USG_PCT')
+            # Add interaction terms if they were created
+            interaction_feature_names = [
+                'USG_PCT_X_CREATION_VOLUME_RATIO',
+                'USG_PCT_X_LEVERAGE_USG_DELTA',
+                'USG_PCT_X_RS_PRESSURE_APPETITE',
+                'USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE',
+                'USG_PCT_X_EFG_ISO_WEIGHTED'
+            ]
+            for interaction_feat in interaction_feature_names:
+                if interaction_feat in df.columns:
+                    features.append(interaction_feat)
+        
         target = 'ARCHETYPE'
         
         # Filter out features that don't exist in the dataframe
@@ -212,6 +261,8 @@ class ResiliencePredictor:
         missing_features = [f for f in features if f not in df.columns]
         if missing_features:
             logger.warning(f"Missing expected features, they will be ignored: {missing_features}")
+        
+        logger.info(f"Total features: {len(existing_features)} (including {len([f for f in existing_features if 'USG_PCT' in f])} usage-aware features)")
         
         X = df[existing_features].copy()
         y = df[target]

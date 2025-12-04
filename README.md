@@ -2,11 +2,11 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status & Key Insight (V4.2 - Complete)**
+**Current Status & Key Insight (V5.0 - Usage-Aware Model Complete)**
 
-The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience.
+The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience with **usage-aware conditional predictions**.
 
-- **`V4.2 Predictive Model`**: An XGBoost Classifier that achieves **59.4% accuracy** in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on five Regular Season "Stress Vectors":
+- **`V5.0 Predictive Model`**: An XGBoost Classifier that achieves **62.22% accuracy** (improved from 59.4%) in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on five Regular Season "Stress Vectors" **plus usage-aware features**:
     1.  **Creation Vector**: Measures efficiency drop-off when forced to create own shot.
     2.  **Leverage Vector**: Measures how efficiency and usage scale in clutch situations.
     3.  **Pressure Vector (V4.2 Refined)**: Measures willingness to take tight shots with **Clock Distinction** (late-clock bailouts vs. early-clock bad shots).
@@ -16,27 +16,23 @@ The project has successfully developed a complete "Stylistic Stress Test" system
 - **`Complete Dataset`**: **10 seasons (2015-2024)** with 5,312 player-season records and full historical context data.
 - **`Clock Data Coverage`**: **100% coverage** across all seasons (2015-16 through 2024-25) with optimized parallel collection.
 
-## Next Developer Mission: Implement Usage-Aware Conditional Prediction Model
+## ✅ Phase 2 Complete: Usage-Aware Conditional Prediction Model
 
-The current model predicts playoff archetypes based on regular season stress vectors, but it has a critical limitation: **it predicts performance at the current usage level, not at different usage levels**. This prevents it from answering both questions we need:
+The model now predicts playoff archetypes at **different usage levels**, enabling both use cases:
 
-1. **Question 1 (Archetype Prediction)**: "How will this player perform in playoffs given their current role?"
-2. **Question 2 (Latent Star Detection)**: "Who has the skills but hasn't been given opportunity?"
+1. **Question 1 (Archetype Prediction)**: ✅ "How will this player perform in playoffs given their current role?" - Can predict at any usage level
+2. **Question 2 (Latent Star Detection)**: ✅ "Who has the skills but hasn't been given opportunity?" - Can identify latent stars (age < 26, usage < 25%)
 
-**The Solution**: Make the model **usage-aware** by treating usage as an explicit feature with interactions, allowing it to predict performance at different usage levels.
+**The Solution**: Model is now **usage-aware** with `USG_PCT` as explicit feature (#1 feature: 15.0% importance) plus 5 interaction terms with top stress vectors.
 
-### ⚠️ CRITICAL: Read This First
+**Key Principle**: Skills (stress vectors) are relatively stable across seasons. Performance (archetype) depends on opportunity (usage). The model now learns: `archetype = f(stress_vectors, usage)` ✅
 
-**Before implementing, read `USAGE_AWARE_MODEL_PLAN.md`.**
+### 📚 Documentation
 
-This document includes:
-- The problem statement (why current model can't answer both questions)
-- Theoretical foundation (what we know about skills vs. performance)
-- Current model state (what exists and what's missing)
-- Implementation plan (step-by-step approach)
-- Validation approach (how to know it works)
-
-**Key Principle**: Skills (stress vectors) are relatively stable across seasons. Performance (archetype) depends on opportunity (usage). The model needs to learn: `archetype = f(stress_vectors, usage)`
+**For Phase 2 details, see:**
+- **`CURRENT_STATE.md`**: **START HERE** - Current project state with Phase 2 completion
+- **`results/phase2_implementation_summary.md`**: Complete Phase 2 implementation summary
+- **`USAGE_AWARE_MODEL_PLAN.md`**: Implementation plan (now complete)
 
 ### Quick Reference
 
@@ -110,7 +106,7 @@ python src/nba_data/scripts/component_analysis.py
 *   `results/component_analysis_report.md`: Detailed analysis with actionable insights
 *   `results/component_analysis_heatmap.png`: Correlation visualizations
 
-**Note**: Latent star detection work has been paused. See `archive/latent_star_detection/README.md` for details. Focus is now on implementing usage-aware conditional prediction model.
+**Note**: Latent star detection has been re-implemented in Phase 2. See `src/nba_data/scripts/detect_latent_stars_v2.py` for the new implementation with usage-aware conditional predictions.
 
 ---
 
@@ -120,9 +116,9 @@ We have achieved the core goal of building a predictive model. The next phase is
 
 **Core Finding Validated:** Playoff resilience is predicted by a player's ability to **create their own offense**, **absorb responsibility in the clutch**, and **force the issue** (Pressure Appetite).
 
-**Current Status:** Model accuracy is **59.4%** with full clock data coverage. The model successfully predicts playoff archetypes using mechanistic stress vectors.
+**Current Status:** Model accuracy is **62.22%** (improved from 59.4%) with full clock data coverage and usage-aware features. The model successfully predicts playoff archetypes using mechanistic stress vectors **at different usage levels**.
 
-**Next Step:** Implement usage-aware conditional prediction model to answer both questions (current performance + potential performance). See **`USAGE_AWARE_MODEL_PLAN.md`** for the implementation plan.
+**Next Step:** Phase 3 - Refine thresholds, expand validation, and prepare for Sloan paper submission. See **`CURRENT_STATE.md`** for next steps.
 
 ---
 
