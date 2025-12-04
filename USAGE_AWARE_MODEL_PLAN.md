@@ -1,8 +1,13 @@
 # Usage-Aware Conditional Prediction Model: Implementation Plan
 
-**Status**: 🎯 **Ready for Implementation**  
+**Status**: 🎯 **Phase 0 & 1 Complete - Ready for Phase 2 Implementation**  
 **Date**: December 2025  
 **Priority**: High - Core Model Enhancement
+
+**Progress Update:**
+- ✅ **Phase 0 Complete**: Model behavior discovery and validation
+- ✅ **Phase 1 Complete**: Quality filters infrastructure built
+- 🎯 **Phase 2 Next**: Add usage-aware features to model
 
 ## Executive Summary
 
@@ -151,6 +156,62 @@ def predict_archetype_at_usage(stress_vectors, usage_level):
     return model.predict(stress_vectors, usage_level)
 ```
 
+## Implementation Progress
+
+### ✅ Phase 0: Model Behavior Discovery (COMPLETE)
+
+**Status**: ✅ Complete (December 2025)
+
+**What Was Done:**
+1. Created validation test suite (`src/nba_data/scripts/validate_model_behavior.py`)
+2. Tested model on 20-30 known cases (Kings, Bulldogs, Breakouts, Non-Stars)
+3. Documented model behavior patterns (`results/model_behavior_rules.md`)
+
+**Key Findings:**
+- Model DOES predict "King" correctly for known stars (Jokić: 66%, LeBron: 74%, Giannis: 55%)
+- Predictions don't change with usage level (expected - USG_PCT not a feature yet)
+- Known Kings have high star-level potential (57-76%)
+- Known breakouts show varying potential pre-breakout (0.6-16%)
+- Known non-stars have low star-level potential (<2%)
+
+**Artifacts:**
+- `results/model_behavior_validation.csv`: Full validation results
+- `results/model_behavior_rules.md`: Documented behavior patterns
+
+**See**: `results/model_behavior_rules.md` for complete findings.
+
+---
+
+### ✅ Phase 1: Quality Filters Infrastructure (COMPLETE)
+
+**Status**: ✅ Complete (December 2025)
+
+**What Was Done:**
+1. Created quality filter module (`src/nba_data/scripts/quality_filters.py`)
+2. Implemented data completeness scoring
+3. Implemented base signal strength calculation
+4. Created quality filter validation on known cases
+
+**Key Features:**
+- **Quality Filter**: Checks positive signals across key stress vectors
+  - LEVERAGE_TS_DELTA > -0.15 (must not decline too much in clutch)
+  - CREATION_VOLUME_RATIO > 0.1 (minimal creation ability)
+  - LEVERAGE_USG_DELTA > -0.10 (must not be too passive)
+- **Data Completeness Score**: Requires 4 of 6 key features (67% completeness)
+- **Base Signal Strength**: Weighted average of top stress vectors (independent of usage)
+
+**Artifacts:**
+- `src/nba_data/scripts/quality_filters.py`: Quality filter implementation
+- `results/quality_filter_validation.csv`: Validation results on known cases
+
+**Note**: Quality filters are designed to catch FALSE POSITIVES in rankings, not to validate known stars. Thresholds can be refined in Phase 4 when we have actual rankings to validate against.
+
+---
+
+### 🎯 Phase 2: Usage-Aware Model (NEXT)
+
+**Status**: 🎯 Ready for Implementation
+
 ### Implementation Steps
 
 #### Step 1: Add Usage as Explicit Feature (1-2 days)
@@ -295,5 +356,45 @@ See `KEY_INSIGHTS.md` for detailed lessons learned. Key principles:
 
 ---
 
-**Status**: Ready for implementation. Start with Step 1 (add usage as explicit feature) and validate incrementally.
+**Status**: Phase 0 & 1 complete. Ready for Phase 2 implementation. Start with Step 1 (add usage as explicit feature) and validate incrementally.
+
+---
+
+## Quick Start for New Developer
+
+### What's Been Done
+
+1. **Phase 0**: Model behavior validated on known cases
+   - Script: `src/nba_data/scripts/validate_model_behavior.py`
+   - Results: `results/model_behavior_validation.csv`
+   - Documentation: `results/model_behavior_rules.md`
+
+2. **Phase 1**: Quality filters infrastructure built
+   - Script: `src/nba_data/scripts/quality_filters.py`
+   - Results: `results/quality_filter_validation.csv`
+   - Ready to use for filtering false positives in rankings
+
+### What Needs to Be Done (Phase 2)
+
+1. **Modify `train_predictive_model.py`**:
+   - Add `USG_PCT` as explicit feature
+   - Add interaction terms: `USG_PCT * CREATION_VOLUME_RATIO`, `USG_PCT * LEVERAGE_USG_DELTA`, etc.
+   - Retrain model
+
+2. **Test conditional predictions**:
+   - Use `validate_model_behavior.py` as template
+   - Test on known cases (Brunson, Haliburton, Maxey) at different usage levels
+   - Validate predictions change with usage (they should now!)
+
+3. **Create conditional prediction function**:
+   - Function: `predict_archetype_at_usage(stress_vectors, usage_level)`
+   - Should handle interaction term calculation
+
+### Key Files to Review
+
+- `src/nba_data/scripts/train_predictive_model.py`: Current model training (needs modification)
+- `src/nba_data/scripts/validate_model_behavior.py`: Validation template (can be adapted)
+- `src/nba_data/scripts/quality_filters.py`: Quality filters (ready to use in Phase 4)
+- `results/model_behavior_rules.md`: Model behavior patterns (important context)
+
 

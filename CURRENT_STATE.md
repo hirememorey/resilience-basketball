@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
 **Date**: December 2025  
-**Status**: Ready for Usage-Aware Model Implementation
+**Status**: Phase 0 & 1 Complete - Ready for Phase 2 (Usage-Aware Model Implementation)
 
 ---
 
@@ -57,11 +57,15 @@
 - `collect_shot_quality_with_clock.py`: Collects clock data (parallelized)
 
 **Model Training**:
-- `train_predictive_model.py`: Trains XGBoost classifier
+- `train_predictive_model.py`: Trains XGBoost classifier (needs modification for Phase 2)
 
 **Analysis**:
 - `component_analysis.py`: Correlates stress vectors with playoff outcomes
 - `calculate_simple_resilience.py`: Generates archetype labels
+
+**Phase 0 & 1 (New)**:
+- `validate_model_behavior.py`: Model behavior discovery and validation
+- `quality_filters.py`: Quality filter infrastructure for filtering false positives
 
 ---
 
@@ -98,7 +102,47 @@ The model predicts performance at the **current usage level**, not at different 
 
 ---
 
-## What Needs to Be Built
+## Implementation Progress
+
+### ✅ Phase 0: Model Behavior Discovery (COMPLETE)
+
+**What Was Done:**
+- Created validation test suite testing model on 20-30 known cases
+- Documented model behavior patterns
+- Confirmed model predicts "King" correctly for known stars
+- Identified that predictions don't change with usage (expected - USG_PCT not a feature yet)
+
+**Key Findings:**
+- Model DOES predict "King" (Jokić: 66%, LeBron: 74%, Giannis: 55%)
+- Known Kings have high star-level potential (57-76%)
+- Known breakouts show varying potential pre-breakout (0.6-16%)
+
+**Artifacts:**
+- `src/nba_data/scripts/validate_model_behavior.py`
+- `results/model_behavior_validation.csv`
+- `results/model_behavior_rules.md`
+
+### ✅ Phase 1: Quality Filters Infrastructure (COMPLETE)
+
+**What Was Done:**
+- Created quality filter module with data completeness scoring
+- Implemented base signal strength calculation
+- Created quality filter validation on known cases
+
+**Key Features:**
+- Quality filter checks positive signals across key stress vectors
+- Data completeness score (requires 4 of 6 key features)
+- Base signal strength (weighted average of top stress vectors)
+
+**Artifacts:**
+- `src/nba_data/scripts/quality_filters.py`
+- `results/quality_filter_validation.csv`
+
+**Note**: Quality filters are designed to catch FALSE POSITIVES in rankings, not to validate known stars. Thresholds can be refined in Phase 4.
+
+---
+
+## What Needs to Be Built (Phase 2)
 
 ### Usage-Aware Conditional Prediction Model
 
@@ -145,13 +189,15 @@ The model predicts performance at the **current usage level**, not at different 
 
 ---
 
-## Next Steps
+## Next Steps (Phase 2)
 
-1. **Read `USAGE_AWARE_MODEL_PLAN.md`**: Complete implementation plan
-2. **Review `KEY_INSIGHTS.md`**: Understand hard-won lessons
-3. **Understand current model**: Review `train_predictive_model.py` and `results/predictive_model_report.md`
-4. **Implement usage-aware features**: Add USG_PCT and interactions
-5. **Validate on test cases**: Brunson, Haliburton, Maxey
+1. **Read `USAGE_AWARE_MODEL_PLAN.md`**: Complete implementation plan (includes Phase 0 & 1 completion)
+2. **Review `results/model_behavior_rules.md`**: Understand model behavior patterns discovered in Phase 0
+3. **Review `src/nba_data/scripts/quality_filters.py`**: Understand quality filter infrastructure (for Phase 4)
+4. **Modify `train_predictive_model.py`**: Add USG_PCT and interaction terms
+5. **Retrain model**: Validate accuracy maintained/improved
+6. **Test conditional predictions**: Use `validate_model_behavior.py` as template, test on known cases at different usage levels
+7. **Create conditional prediction function**: `predict_archetype_at_usage(stress_vectors, usage_level)`
 
 ---
 
@@ -171,4 +217,5 @@ Latent star detection work has been archived to `archive/latent_star_detection/`
 - `USAGE_AWARE_MODEL_PLAN.md` - Implementation plan
 - `KEY_INSIGHTS.md` - Hard-won lessons
 - `README.md` - Project overview
+
 
