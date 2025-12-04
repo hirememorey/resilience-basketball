@@ -1,25 +1,44 @@
-# Next Steps: Phase 3.8 Follow-Up
+# Next Steps: Phase 3.9 Follow-Up
 
 **Date**: December 4, 2025  
-**Status**: Phase 3.8 Implementation Complete | Remaining Edge Cases Identified
+**Status**: Phase 3.9 Implementation Complete | Remaining Edge Cases Identified
 
 ---
 
-## What Was Completed (Phase 3.8)
+## What Was Completed (Phase 3.9)
 
-✅ **Phase 3.8 Fix #1**: Qualified Percentiles - Filter by volume (FGA > 200 or pressure shots > 50) before calculating percentiles  
-✅ **Phase 3.8 Fix #2**: STAR Average for Tax - Use STAR_AVG_OPEN_FREQ (Usage > 20%) instead of LEAGUE_AVG  
-✅ **Phase 3.8 Fix #3**: Improved Bag Check Gate - Better proxy logic and caps star-level regardless of archetype
+✅ **Phase 3.9 Fix #1**: Missing Leverage Data Penalty - Cap at 30% if leverage data missing or clutch minutes < 15  
+✅ **Phase 3.9 Fix #2**: Negative Signal Gate (Abdication Tax) - Cap at 30% if LEVERAGE_USG_DELTA < -0.05 or multiple negative signals  
+✅ **Phase 3.9 Fix #3**: Data Completeness Gate - Require 4 of 6 critical features (67% completeness)  
+✅ **Phase 3.9 Fix #4**: Minimum Sample Size Gate - Filter small sample size noise (pressure shots < 50, clutch minutes < 15, suspicious perfect efficiency)
 
-**Current Pass Rate**: 68.8% (11/16) - improved from 62.5%
+**Current Pass Rate**: 68.8% (11/16) - Same as Phase 3.8, but false positives successfully filtered
 
-**Key Achievement**: **Sabonis fix is a structural triumph** - dropping from 80.22% to 30.00% validates the "Dependency = Fragility" principle.
+**Key Achievement**: **All false positives removed** - Thanasis, KZ Okpala, Trevon Scott, Isaiah Mobley, Jahlil Okafor, and Ben Simmons all correctly filtered to 30% star-level.
 
 ---
 
 ## Remaining Edge Cases (5 failures)
 
-### 1. Poole Case (85.84%) - Tax Not Strong Enough (Priority: High)
+### 1. Victor Oladipo (2016-17) - Abdication Tax Threshold Too Strict (Priority: High)
+
+**Status**: Now failing due to Abdication Tax (was passing before)
+
+**Current State**:
+- LEVERAGE_USG_DELTA: -0.068 (just below -0.05 threshold)
+- LEVERAGE_TS_DELTA: +0.143 (positive - maintains efficiency in clutch)
+- Star-level: 30.00% (capped by Abdication Tax)
+- Expected: ≥65% (he was a legitimate breakout)
+
+**Issue**: He was a legitimate breakout, but the Abdication Tax threshold is catching him. However, he has positive LEVERAGE_TS_DELTA (maintains efficiency), which suggests the threshold might be too strict.
+
+**Fix Options**:
+- Use more lenient threshold if LEVERAGE_TS_DELTA is positive (e.g., -0.08 instead of -0.05)
+- Or: Only apply Abdication Tax if BOTH LEVERAGE_USG_DELTA < -0.05 AND LEVERAGE_TS_DELTA < 0
+
+**Files to Modify**: `src/nba_data/scripts/predict_conditional_archetype.py` - Negative Signal Gate section
+
+### 2. Poole Case (85.84%) - Tax Not Strong Enough (Priority: High)
 
 **Status**: Tax is triggering but penalty insufficient
 
@@ -37,7 +56,19 @@
 
 ---
 
-### 2. Haliburton Case (49.23%) - Threshold Still Too High (Priority: Medium)
+### 3. Haliburton Case (60.88%) - Close to Threshold (Priority: Medium)
+
+**Status**: Very close to threshold (65%)
+
+**Current State**:
+- Star-level: 60.88% (expected ≥65%)
+- Has negative CREATION_TAX (-0.152) and negative LEVERAGE_TS_DELTA (-0.072)
+- But LEVERAGE_USG_DELTA is -0.019 (not negative enough to trigger Abdication Tax)
+- Playoff Volume Tax is being applied
+
+**Fix Options**:
+- May need to consider LEVERAGE_TS_DELTA in combination with other negative signals
+- Or: Accept as close to threshold (60.88% vs 65% is only 4% difference)
 
 **Status**: Pressure resilience threshold may need adjustment
 
@@ -55,7 +86,7 @@
 
 ---
 
-### 3. Bridges/Markkanen - Bag Check Gate Too Aggressive? (Priority: Low)
+### 4. Bridges/Markkanen - Bag Check Gate Too Aggressive? (Priority: Low)
 
 **Status**: Gate correctly identifies system-based creation, but may be penalizing role-constrained players
 
@@ -75,7 +106,7 @@
 
 ---
 
-### 4. Tobias Harris (60.99%) - Marginal Fail (Priority: Low)
+### 5. Tobias Harris (60.99%) - Marginal Fail (Priority: Low)
 
 **Status**: Close to threshold (55%)
 
@@ -89,23 +120,24 @@
 
 ## Recommended Action Order
 
-1. **Increase Poole Tax Rate** (High Priority)
+1. **Refine Abdication Tax Threshold for Victor Oladipo** (High Priority)
+   - Use more lenient threshold if LEVERAGE_TS_DELTA is positive (maintains efficiency)
+   - Test threshold of -0.08 instead of -0.05 when TS delta is positive
+   - Run validation suite to verify improvement
+
+2. **Increase Poole Tax Rate** (High Priority)
    - Test 70%+ volume reduction
    - Or apply tax to additional volume features
    - Run validation suite to verify improvement
 
-2. **Adjust Haliburton Threshold** (Medium Priority)
-   - Lower pressure resilience threshold to 75th percentile
-   - Or use leverage vector as alternative signal
-   - Run validation suite to verify improvement
-
 3. **Evaluate Bridges/Markkanen** (Low Priority)
    - Determine if Bag Check Gate is correctly penalizing based on 2021 data
-   - Or if refinement is needed for role-constrained players
-   - May be acceptable as correct predictions
+   - The model is accurately saying "Based strictly on 2021 profile, they project as role players, not stars"
+   - May be acceptable as correct predictions (they were role players in 2021)
 
 4. **Accept Marginal Cases** (Low Priority)
    - Tobias Harris at 60.99% (threshold 55%) is appropriately uncertain
+   - Tyrese Haliburton at 60.88% (threshold 65%) is very close
    - Don't over-tune for edge cases
 
 ---
@@ -113,13 +145,21 @@
 ## Key Files for Next Developer
 
 **Start Here**:
-- `CURRENT_STATE.md` - **START HERE** - Complete current state with Phase 3.8 results
-- `results/phase3_8_validation_report.md` - **START HERE** - Phase 3.8 validation results and analysis
+- `CURRENT_STATE.md` - **START HERE** - Complete current state with Phase 3.9 results
+- `results/false_positive_fixes_implemented.md` - **START HERE** - Phase 3.9 implementation and validation
+- `results/top_100_and_test_cases_analysis.md` - Analysis of top 100 and test case results
 - `results/latent_star_test_cases_report.md` - Latest validation results
-- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.8 insights)
+- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.9 insights)
 
 **Code to Modify**:
-- `src/nba_data/scripts/predict_conditional_archetype.py` - Playoff Volume Tax (line ~503), Flash Multiplier (line ~192), Bag Check Gate (line ~620)
+- `src/nba_data/scripts/predict_conditional_archetype.py` - All gates in `predict_archetype_at_usage()` method:
+  - Missing Leverage Data Penalty
+  - Negative Signal Gate (Abdication Tax)
+  - Data Completeness Gate
+  - Minimum Sample Size Gate
+  - Playoff Volume Tax (line ~503)
+  - Flash Multiplier (line ~192)
+  - Bag Check Gate (line ~620)
 
 **Test Suite**:
 - `test_latent_star_cases.py` - Run after each fix to validate improvements
@@ -130,10 +170,13 @@
 
 **Updated**:
 - `results/pressure_features.csv` - Now includes 4,473 rows (up from 1,220)
+- `results/all_young_players_predictions.csv` - Full predictions for all players age 25 and under (2,625 player-seasons)
 - `results/latent_star_test_cases_results.csv` - Latest test results
 - `results/latent_star_test_cases_report.md` - Latest test report
+- `results/false_positive_fixes_implemented.md` - Phase 3.9 implementation details
+- `results/top_100_and_test_cases_analysis.md` - Analysis of top 100 and test cases
 
 ---
 
-**Status**: Phase 3.8 complete. Core fixes working (Sabonis fixed, qualified percentiles, STAR average). Remaining issues are edge cases that may need refinement or acceptance as model limitations.
+**Status**: Phase 3.9 complete. All false positives successfully filtered (Thanasis, KZ Okpala, Trevon Scott, Isaiah Mobley, Jahlil Okafor, Ben Simmons). Top 100 now shows only legitimate stars. Remaining issues are edge cases that may need refinement or acceptance as model limitations.
 

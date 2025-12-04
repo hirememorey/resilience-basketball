@@ -584,6 +584,95 @@ if self_created_freq < 0.10:
 
 ---
 
+## 24. Missing Leverage Data Penalty 🎯 CRITICAL (Phase 3.9)
+
+**The Problem**: Many false positives had missing LEVERAGE_USG_DELTA and LEVERAGE_TS_DELTA, but this wasn't being penalized. LEVERAGE_USG_DELTA is the #1 predictor - missing it is a critical gap.
+
+**The Insight**: **Missing Critical Data = Unreliable Prediction**. If we don't have the most important predictor, we can't make a reliable star-level prediction.
+
+**The Fix**: Cap star-level at 30% if leverage data is missing or clutch minutes < 15:
+```python
+if (pd.isna(clutch_min_total) or clutch_min_total < 15) or \
+   (pd.isna(leverage_ts_delta) and pd.isna(leverage_usg_delta)):
+    star_level_potential = min(star_level_potential, 0.30)
+```
+
+**Example**:
+- ❌ **Wrong**: Thanasis has missing LEVERAGE_USG_DELTA → Model predicts 77.60% star-level
+- ✅ **Right**: Thanasis has missing LEVERAGE_USG_DELTA → Gate applies → 30.00% star-level
+
+**Test Cases**: Thanasis, KZ Okpala, Trevon Scott, Isaiah Mobley all filtered
+
+**Key Principle**: Don't make high-confidence predictions with missing critical data. The #1 predictor must be present.
+
+---
+
+## 25. Negative Signal Gate (Abdication Tax) 🎯 CRITICAL (Phase 3.9)
+
+**The Problem**: Ben Simmons case - negative LEVERAGE_USG_DELTA (-0.067) indicates passivity ("Simmons Paradox"), but wasn't being filtered.
+
+**The Insight**: **Negative Signals = Red Flags**. A player who reduces their volume in clutch situations (LEVERAGE_USG_DELTA < -0.05) is abdicating responsibility. This is incompatible with star-level performance.
+
+**The Fix**: Hard filter - cap at 30% if LEVERAGE_USG_DELTA < -0.05 or multiple negative signals:
+```python
+if pd.notna(leverage_usg_delta) and leverage_usg_delta < -0.05:
+    star_level_potential = min(star_level_potential, 0.30)
+```
+
+**Example**:
+- ❌ **Wrong**: Ben Simmons has LEVERAGE_USG_DELTA = -0.067 → Model predicts 63.55% star-level
+- ✅ **Right**: Ben Simmons has LEVERAGE_USG_DELTA = -0.067 → Gate applies → 30.00% star-level
+
+**Test Cases**: Ben Simmons, Jahlil Okafor both filtered
+
+**Key Principle**: Negative signals are stronger than positive signals. One strong negative signal can disqualify a player.
+
+---
+
+## 26. Data Completeness Gate 🎯 CRITICAL (Phase 3.9)
+
+**The Problem**: Players with insufficient critical features were getting high predictions.
+
+**The Insight**: **Incomplete Data = Unreliable Prediction**. We need at least 67% of critical features to make a reliable prediction.
+
+**The Fix**: Require at least 4 of 6 critical features present:
+```python
+key_features = ['LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CREATION_VOLUME_RATIO', 
+                'RS_PRESSURE_APPETITE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE', 'RS_RIM_APPETITE']
+if len(present_features) < len(key_features) * 0.67:
+    star_level_potential = min(star_level_potential, 0.30)
+```
+
+**Key Principle**: Set minimum data completeness thresholds. Don't make high-confidence predictions with incomplete data.
+
+---
+
+## 27. Minimum Sample Size Gate 🎯 CRITICAL (Phase 3.9)
+
+**The Problem**: Players with tiny sample sizes getting perfect efficiency scores (e.g., KZ Okpala: CREATION_TAX = 1.0 from 1-2 shots).
+
+**The Insight**: **Small Sample Size = Noise, Not Signal**. Perfect efficiency on tiny samples is not predictive.
+
+**The Fix**: Require minimum sample sizes and flag suspicious perfect efficiency:
+```python
+if rs_total_volume < 50:  # Insufficient pressure shots
+    star_level_potential = min(star_level_potential, 0.30)
+if clutch_min_total < 15:  # Insufficient clutch minutes
+    star_level_potential = min(star_level_potential, 0.30)
+if creation_tax >= 0.9 and rs_usg_pct < 0.15:  # Suspicious perfect efficiency
+    star_level_potential = min(star_level_potential, 0.30)
+```
+
+**Example**:
+- ❌ **Wrong**: KZ Okpala has CREATION_TAX = 1.0 (from 1-2 shots) → Model predicts 77.60% star-level
+- ✅ **Right**: KZ Okpala has CREATION_TAX = 1.0 with usage < 15% → Gate applies → 30.00% star-level
+
+**Test Cases**: KZ Okpala, Thanasis, Trevon Scott all filtered
+
+**Key Principle**: Set minimum sample size thresholds. Don't trust extreme metrics from tiny samples.
+
+---
+
 ## Quick Reference Checklist
 
 When implementing new features, ask:
@@ -610,6 +699,10 @@ When implementing new features, ask:
 - [ ] Am I calculating percentiles on qualified players only? (Filter by volume to avoid small sample noise) (Fix #1 - Phase 3.8) ✅
 - [ ] Am I comparing stars to stars? (Use STAR average, not LEAGUE average for thresholds) (Fix #2 - Phase 3.8) ✅
 - [ ] Am I enforcing physics-of-basketball constraints? (Dependency = Fragility - Bag Check Gate) (Fix #3 - Phase 3.8) ✅
+- [ ] Am I penalizing missing critical data? (LEVERAGE_USG_DELTA is #1 predictor - missing it is a critical gap) (Fix #1 - Phase 3.9) ✅
+- [ ] Am I filtering negative signals? (Abdication Tax: LEVERAGE_USG_DELTA < -0.05 indicates passivity) (Fix #2 - Phase 3.9) ✅
+- [ ] Am I checking data completeness? (Require 67% of critical features for reliable predictions) (Fix #3 - Phase 3.9) ✅
+- [ ] Am I filtering small sample size noise? (Perfect efficiency on tiny samples is not predictive) (Fix #4 - Phase 3.9) ✅
 
 ---
 

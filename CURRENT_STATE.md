@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
-**Date**: December 2025  
-**Status**: Phase 3.8 Complete - Reference Class Calibration ✅ | Current Pass Rate: 68.8% (11/16)
+**Date**: December 4, 2025  
+**Status**: Phase 3.9 Complete - False Positive Filters ✅ | Current Pass Rate: 68.8% (11/16)
 
 ---
 
@@ -533,6 +533,12 @@ Phase 3.7 refinements have been implemented, plus a critical data completeness f
 
 Phase 3.8 addressed the Reference Class Problem identified in feedback: by adding 3,253 RS-only players (many bench players), percentile thresholds and averages were skewed. The fixes recalibrate thresholds to the relevant population (rotation players/stars).
 
+## ✅ Phase 3.9 Implementation (Complete - False Positive Filters)
+
+**Status**: ✅ **IMPLEMENTATION COMPLETE** | ✅ **VALIDATION COMPLETE** (December 4, 2025)
+
+Phase 3.9 addressed critical false positives identified in full dataset testing. Players with no business being ranked highly (Thanasis Antetokounmpo, KZ Okpala, Trevon Scott, etc.) were appearing at the top of predictions due to small sample size noise and missing data not being penalized.
+
 ### ✅ Fix #1: Qualified Percentiles - Filter by Volume
 
 **Status**: ✅ **SUCCESS**
@@ -600,10 +606,84 @@ Phase 3.8 addressed the Reference Class Problem identified in feedback: by addin
 
 **See**: `results/latent_star_test_cases_report.md` for complete validation results.
 
+---
+
+## ✅ Phase 3.9 Implementation (Complete - False Positive Filters)
+
+**Status**: ✅ **IMPLEMENTATION COMPLETE** | ✅ **VALIDATION COMPLETE** (December 4, 2025)
+
+Phase 3.9 addressed critical false positives identified when testing all players age 25 and under. Players with no business being ranked highly (Thanasis Antetokounmpo, KZ Okpala, Trevon Scott, Isaiah Mobley, Jahlil Okafor, Ben Simmons) were appearing at the top of predictions.
+
+### ✅ Fix #1: Missing Leverage Data Penalty
+
+**Status**: ✅ **SUCCESS**
+
+**Problem**: Many false positives had missing LEVERAGE_USG_DELTA and LEVERAGE_TS_DELTA, but this wasn't being penalized. LEVERAGE_USG_DELTA is the #1 predictor - missing it is a critical gap.
+
+**Solution**: Cap star-level at 30% if leverage data is missing or clutch minutes < 15.
+
+**Results**:
+- ✅ Thanasis, KZ Okpala, Trevon Scott, Isaiah Mobley all filtered (missing leverage data)
+- ✅ Catches players with insufficient clutch minutes
+
+### ✅ Fix #2: Negative Signal Gate (Abdication Tax)
+
+**Status**: ✅ **SUCCESS**
+
+**Problem**: Ben Simmons case - negative LEVERAGE_USG_DELTA (-0.067) indicates passivity ("Simmons Paradox"), but wasn't being filtered.
+
+**Solution**: Hard filter - if LEVERAGE_USG_DELTA < -0.05, cap star-level at 30%. Also penalize players with 2+ negative signals (negative CREATION_TAX, negative LEVERAGE_TS_DELTA).
+
+**Results**:
+- ✅ Ben Simmons: 63.55% → 30.00% (PASS) - Abdication Tax detected
+- ✅ Jahlil Okafor: 66.71% → 30.00% (PASS) - Multiple negative signals
+- ⚠️ Victor Oladipo: Now failing (68.08% → 30.00%) - threshold may be too strict (has positive LEVERAGE_TS_DELTA)
+
+### ✅ Fix #3: Data Completeness Gate
+
+**Status**: ✅ **SUCCESS**
+
+**Problem**: Players with insufficient critical features were getting high predictions.
+
+**Solution**: Require at least 4 of 6 critical features present (67% completeness). Cap star-level at 30% if insufficient.
+
+**Results**:
+- ✅ Catches players with missing critical features
+- ✅ Ensures reliable predictions require sufficient data
+
+### ✅ Fix #4: Minimum Sample Size Gate
+
+**Status**: ✅ **SUCCESS**
+
+**Problem**: Players with tiny sample sizes getting perfect efficiency scores (e.g., KZ Okpala: CREATION_TAX = 1.0 from 1-2 shots).
+
+**Solution**: 
+- Require minimum 50 pressure shots for reliable pressure resilience
+- Require minimum 15 clutch minutes for reliable leverage data
+- Flag suspicious perfect efficiency (CREATION_TAX ≥ 0.8 with usage < 20%)
+
+**Results**:
+- ✅ KZ Okpala: 77.60% → 30.00% (PASS) - Caught suspicious CREATION_TAX=1.0 with low usage
+- ✅ Thanasis, Trevon Scott: Filtered by insufficient sample sizes
+
+### Validation Results
+
+**Top 100 After Fixes**:
+- ✅ All false positives removed (Thanasis, KZ Okpala, Trevon Scott, Isaiah Mobley, Jahlil Okafor, Ben Simmons)
+- ✅ Top 10 now shows only legitimate stars (Giannis, Alperen Sengun, Kyrie Irving, Zion, etc.)
+
+**Test Cases**: 68.8% pass rate (11/16) - Same as before, but different failures:
+- ✅ False positives successfully filtered
+- ⚠️ Victor Oladipo now failing (Abdication Tax threshold may be too strict)
+- ⚠️ Jordan Poole still failing (tax not strong enough)
+- ⚠️ Mikal Bridges & Lauri Markkanen failing (Bag Check Gate - may be correct)
+
+**See**: `results/false_positive_fixes_implemented.md` for complete implementation details.
+
 **Next Steps**:
-1. Investigate Poole tax strength (may need 70%+ reduction or additional penalties)
-2. Refine Bag Check Gate for role-constrained players with legitimate creation ability
-3. Consider alternative signals for Haliburton (pressure resilience threshold adjustment or leverage vector)
+1. Refine Abdication Tax threshold for Victor Oladipo case (consider positive LEVERAGE_TS_DELTA)
+2. Strengthen Poole tax (70%+ reduction or additional penalties)
+3. Evaluate Bridges/Markkanen (determine if Bag Check Gate is correctly identifying role players)
 
 ---
 
@@ -620,7 +700,10 @@ Latent star detection work has been archived to `archive/latent_star_detection/`
 ---
 
 **See Also**:
-- `results/phase3_8_validation_report.md` - **START HERE** - Phase 3.8 validation results and analysis
+- `results/false_positive_fixes_implemented.md` - **START HERE** - Phase 3.9 implementation and validation
+- `results/top_100_and_test_cases_analysis.md` - Analysis of top 100 and test case results
+- `results/false_positive_analysis.md` - Root cause analysis of false positives
+- `results/phase3_8_validation_report.md` - Phase 3.8 validation results and analysis
 - `results/latent_star_test_cases_report.md` - Latest validation results (68.8% pass rate)
 - `results/phase3_7_data_fix_impact.md` - Phase 3.7 impact analysis and data fix results
 - `results/haliburton_pressure_investigation.md` - Data completeness investigation and fix
@@ -629,7 +712,7 @@ Latent star detection work has been archived to `archive/latent_star_detection/`
 - `PHASE3_6_IMPLEMENTATION_PLAN.md` - Phase 3.6 implementation plan
 - `results/phase3_5_validation_report.md` - Phase 3.5 validation results
 - `USAGE_AWARE_MODEL_PLAN.md` - Historical implementation plan
-- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.8 insights)
+- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.9 insights)
 - `README.md` - Project overview
 
 

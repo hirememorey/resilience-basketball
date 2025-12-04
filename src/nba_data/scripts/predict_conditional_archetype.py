@@ -617,6 +617,12 @@ class ConditionalArchetypePredictor:
         bag_check_gate_applied = False
         self_created_freq = None
         bag_check_reason = None
+        
+        # Initialize new gate flags
+        leverage_data_penalty_applied = False
+        negative_signal_gate_applied = False
+        data_completeness_gate_applied = False
+        sample_size_gate_applied = False
         if apply_phase3_fixes:
             # Calculate self-created frequency (ISO + PNR Handler)
             iso_freq = player_data.get('ISO_FREQUENCY', None)
@@ -704,6 +710,184 @@ class ConditionalArchetypePredictor:
                 
                 logger.info(f"Bag Check Gate applied: Self-created freq {self_created_freq:.4f} < 0.10, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}. Reason: {bag_check_reason}")
         
+        # Fix #2: Missing Leverage Data Penalty (Priority: High)
+        # LEVERAGE_USG_DELTA is the #1 predictor - missing it is a critical gap
+        leverage_data_penalty_applied = False
+        if apply_phase3_fixes:
+            leverage_usg = player_data.get('LEVERAGE_USG_DELTA', None)
+            leverage_ts = player_data.get('LEVERAGE_TS_DELTA', None)
+            clutch_min = player_data.get('CLUTCH_MIN_TOTAL', 0)
+            
+            # Check if missing leverage data or insufficient clutch minutes
+            missing_leverage = pd.isna(leverage_usg) or pd.isna(leverage_ts)
+            insufficient_clutch = pd.isna(clutch_min) or clutch_min < 15
+            
+            if missing_leverage or insufficient_clutch:
+                original_star_level = star_level_potential
+                # Cap at 30% (Sniper ceiling) - can't be a star without leverage data
+                star_level_potential = min(star_level_potential, 0.30)
+                leverage_data_penalty_applied = True
+                
+                # Redistribute probabilities if capped
+                if star_level_potential <= 0.30:
+                    prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                    prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                    prob_dict['King'] = 0.0
+                    prob_dict['Bulldozer'] = 0.0
+                    # Update predicted archetype if needed
+                    if original_star_level > 0.30:
+                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                
+                reason = []
+                if missing_leverage:
+                    reason.append("missing leverage data")
+                if insufficient_clutch:
+                    reason.append(f"insufficient clutch minutes ({clutch_min if pd.notna(clutch_min) else 'NaN'} < 15)")
+                logger.info(f"Leverage Data Penalty applied: {', '.join(reason)}, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+        
+        # Fix #3: Negative Signal Gate (Priority: High)
+        # Penalize players with multiple negative signals, especially negative LEVERAGE_USG_DELTA (Abdication Tax)
+        negative_signal_gate_applied = False
+        if apply_phase3_fixes:
+            creation_tax = player_data.get('CREATION_TAX', 0)
+            leverage_usg_delta = player_data.get('LEVERAGE_USG_DELTA', 0)
+            leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', 0)
+            
+            negative_signals = []
+            
+            # Negative creation tax (inefficient)
+            if pd.notna(creation_tax) and creation_tax < -0.10:
+                negative_signals.append(f"CREATION_TAX={creation_tax:.3f}")
+            
+            # Negative leverage USG delta (doesn't scale up - "Abdication Tax")
+            # This is the "Simmons Paradox" - hard filter
+            if pd.notna(leverage_usg_delta) and leverage_usg_delta < -0.05:
+                original_star_level = star_level_potential
+                # Hard filter: Cap at 30% (Sniper ceiling)
+                star_level_potential = min(star_level_potential, 0.30)
+                negative_signal_gate_applied = True
+                
+                # Redistribute probabilities if capped
+                if star_level_potential <= 0.30:
+                    prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                    prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                    prob_dict['King'] = 0.0
+                    prob_dict['Bulldozer'] = 0.0
+                    # Update predicted archetype if needed
+                    if original_star_level > 0.30:
+                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                
+                logger.info(f"Abdication Tax detected: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+            
+            # Negative leverage TS delta (declines in clutch)
+            if pd.notna(leverage_ts_delta) and leverage_ts_delta < -0.15:
+                negative_signals.append(f"LEVERAGE_TS_DELTA={leverage_ts_delta:.3f}")
+            
+            # If 2+ negative signals (excluding leverage USG delta which is already handled above), cap at 30%
+            if len(negative_signals) >= 2:
+                original_star_level = star_level_potential
+                star_level_potential = min(star_level_potential, 0.30)
+                negative_signal_gate_applied = True
+                
+                # Redistribute probabilities if capped
+                if star_level_potential <= 0.30:
+                    prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                    prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                    prob_dict['King'] = 0.0
+                    prob_dict['Bulldozer'] = 0.0
+                    # Update predicted archetype if needed
+                    if original_star_level > 0.30:
+                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                
+                logger.info(f"Multiple negative signals detected ({len(negative_signals)}): {', '.join(negative_signals)}, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+        
+        # Fix #4: Data Completeness Gate (Priority: Medium)
+        # Require at least 4 of 6 critical features present (67% completeness)
+        data_completeness_gate_applied = False
+        if apply_phase3_fixes:
+            critical_features = [
+                'CREATION_VOLUME_RATIO',
+                'CREATION_TAX',
+                'LEVERAGE_USG_DELTA',
+                'LEVERAGE_TS_DELTA',
+                'RS_PRESSURE_APPETITE',
+                'RS_PRESSURE_RESILIENCE',
+            ]
+            
+            present_features = sum(1 for f in critical_features if pd.notna(player_data.get(f, None)))
+            completeness = present_features / len(critical_features) if len(critical_features) > 0 else 0.0
+            
+            # Require at least 4 of 6 critical features (67% completeness)
+            if completeness < 0.67:
+                original_star_level = star_level_potential
+                # Cap at 30% (Sniper ceiling) - insufficient data for reliable prediction
+                star_level_potential = min(star_level_potential, 0.30)
+                data_completeness_gate_applied = True
+                
+                # Redistribute probabilities if capped
+                if star_level_potential <= 0.30:
+                    prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                    prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                    prob_dict['King'] = 0.0
+                    prob_dict['Bulldozer'] = 0.0
+                    # Update predicted archetype if needed
+                    if original_star_level > 0.30:
+                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                
+                missing_features = [f for f in critical_features if pd.isna(player_data.get(f, None))]
+                logger.info(f"Data Completeness Gate applied: {present_features}/{len(critical_features)} features present ({completeness:.1%} < 67%), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}. Missing: {', '.join(missing_features)}")
+        
+        # Fix #1: Minimum Sample Size Gate (Priority: High)
+        # Check for minimum sample sizes to avoid small sample size noise
+        sample_size_gate_applied = False
+        if apply_phase3_fixes:
+            # Check pressure shots (need minimum 50 for reliable pressure resilience)
+            pressure_shots = player_data.get('RS_TOTAL_VOLUME', 0)
+            insufficient_pressure = pd.isna(pressure_shots) or pressure_shots < 50
+            
+            # Check clutch minutes (need minimum 15 for reliable leverage data)
+            clutch_min = player_data.get('CLUTCH_MIN_TOTAL', 0)
+            insufficient_clutch = pd.isna(clutch_min) or clutch_min < 15
+            
+            # For creation metrics, we can't check ISO_FGA directly (not in dataset),
+            # but we can check if CREATION_TAX is suspiciously perfect (1.0) or near-perfect (>0.8)
+            # with low usage, which suggests tiny sample size
+            creation_tax = player_data.get('CREATION_TAX', None)
+            creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', None)
+            usage = player_data.get('USG_PCT', None)
+            
+            suspicious_creation = False
+            if pd.notna(creation_tax) and pd.notna(usage):
+                # If CREATION_TAX is perfect (1.0) or near-perfect (>0.8) with low usage (<20%),
+                # it's likely small sample size noise
+                if creation_tax >= 0.8 and usage < 0.20:
+                    suspicious_creation = True
+            
+            if insufficient_pressure or insufficient_clutch or suspicious_creation:
+                original_star_level = star_level_potential
+                # Cap at 30% (Sniper ceiling) - insufficient sample size for reliable metrics
+                star_level_potential = min(star_level_potential, 0.30)
+                sample_size_gate_applied = True
+                
+                # Redistribute probabilities if capped
+                if star_level_potential <= 0.30:
+                    prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                    prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                    prob_dict['King'] = 0.0
+                    prob_dict['Bulldozer'] = 0.0
+                    # Update predicted archetype if needed
+                    if original_star_level > 0.30:
+                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                
+                reasons = []
+                if insufficient_pressure:
+                    reasons.append(f"insufficient pressure shots ({pressure_shots if pd.notna(pressure_shots) else 'NaN'} < 50)")
+                if insufficient_clutch:
+                    reasons.append(f"insufficient clutch minutes ({clutch_min if pd.notna(clutch_min) else 'NaN'} < 15)")
+                if suspicious_creation:
+                    reasons.append(f"suspicious creation efficiency (CREATION_TAX={creation_tax:.3f} with usage={usage*100:.1f}% - likely small sample)")
+                logger.info(f"Sample Size Gate applied: {', '.join(reasons)}, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+        
         # Check for missing data (confidence flags)
         confidence_flags = []
         key_features = ['LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CREATION_VOLUME_RATIO', 
@@ -727,6 +911,14 @@ class ConditionalArchetypePredictor:
             phase3_flags.append(f"Fragility gate applied (RS_RIM_APPETITE: {rim_appetite:.4f})")
         if bag_check_gate_applied and self_created_freq is not None:
             phase3_flags.append(f"Bag Check Gate applied (Self-created freq: {self_created_freq:.4f})")
+        if leverage_data_penalty_applied:
+            phase3_flags.append("Leverage Data Penalty applied (missing leverage data or insufficient clutch minutes)")
+        if negative_signal_gate_applied:
+            phase3_flags.append("Negative Signal Gate applied (Abdication Tax or multiple negative signals)")
+        if data_completeness_gate_applied:
+            phase3_flags.append("Data Completeness Gate applied (insufficient critical features)")
+        if sample_size_gate_applied:
+            phase3_flags.append("Sample Size Gate applied (insufficient sample size for reliable metrics)")
         
         return {
             'predicted_archetype': pred_archetype,

@@ -2,9 +2,9 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status & Key Insight (V5.0 - Usage-Aware Model Complete, Phase 3.8 Complete ✅)**
+**Current Status & Key Insight (V5.0 - Usage-Aware Model Complete, Phase 3.9 Complete ✅)**
 
-The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience with **usage-aware conditional predictions**. Phase 3.8 addressed the Reference Class Problem by recalibrating thresholds to the relevant population (rotation players/stars). Current validation shows **68.8% pass rate** (11/16) with the Sabonis fix (80.22% → 30.00%) validating the "Dependency = Fragility" principle.
+The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience with **usage-aware conditional predictions**. Phase 3.8 addressed the Reference Class Problem by recalibrating thresholds to the relevant population (rotation players/stars). Phase 3.9 implemented false positive filters to remove players with no business being ranked highly (Thanasis, KZ Okpala, Ben Simmons, etc.). Current validation shows **68.8% pass rate** (11/16) with all false positives successfully filtered.
 
 - **`V5.0 Predictive Model`**: An XGBoost Classifier that achieves **62.22% accuracy** (improved from 59.4%) in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on five Regular Season "Stress Vectors" **plus usage-aware features**:
     1.  **Creation Vector**: Measures efficiency drop-off when forced to create own shot.
@@ -30,11 +30,12 @@ The model now predicts playoff archetypes at **different usage levels**, enablin
 ### 📚 Documentation
 
 **For current status and next steps, see:**
-- **`CURRENT_STATE.md`**: **START HERE** - Current project state with Phase 3.8 results (68.8% pass rate)
-- **`results/phase3_8_validation_report.md`**: **START HERE** - Phase 3.8 validation results and analysis
+- **`CURRENT_STATE.md`**: **START HERE** - Current project state with Phase 3.9 results (68.8% pass rate)
+- **`results/false_positive_fixes_implemented.md`**: **START HERE** - Phase 3.9 implementation and validation
+- **`results/top_100_and_test_cases_analysis.md`**: Analysis of top 100 and test case results
 - **`results/latent_star_test_cases_report.md`**: Latest validation results
 - **`NEXT_STEPS.md`**: Remaining edge cases and recommended actions
-- **`KEY_INSIGHTS.md`**: Hard-won lessons (updated with Phase 3.8 insights)
+- **`KEY_INSIGHTS.md`**: Hard-won lessons (updated with Phase 3.9 insights)
 
 ### Quick Reference
 
