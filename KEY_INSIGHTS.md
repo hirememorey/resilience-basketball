@@ -475,6 +475,39 @@ New: ISO_EFFICIENCY > 80th OR PRESSURE_RESILIENCE > 80th
 
 ---
 
+## 20. Data Completeness: INNER JOIN vs LEFT JOIN - The Missing Data Trap 🎯 CRITICAL (Phase 3.7)
+
+**The Problem**: Players without playoff data were completely missing from feature files, even though RS features (like `RS_PRESSURE_RESILIENCE`) only need RS data.
+
+**The Root Cause**: `calculate_shot_difficulty_features.py` used `how='inner'` when merging RS and PO data. This filtered out all players who didn't make playoffs, even though:
+- `RS_PRESSURE_RESILIENCE` only needs RS data (can be calculated from RS alone)
+- `PRESSURE_RESILIENCE_DELTA` needs both RS and PO (can be NaN if PO missing - expected)
+
+**The Impact**: 
+- 387 players missing in 2021-22 alone (including Haliburton, Markkanen)
+- Affects latent star detection (Use Case B) - exactly the use case where we need RS features for players without playoff opportunity
+
+**The Fix**: Change merge from `how='inner'` to `how='left'`:
+```python
+# WRONG: Only keeps players with BOTH RS and PO data
+merged = pd.merge(rs_df, po_df, on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'], how='inner')
+
+# RIGHT: Keeps all RS data, PO data is NaN if missing (expected)
+merged = pd.merge(rs_df, po_df, on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'], how='left')
+```
+
+**Example**:
+- ❌ **Wrong**: Haliburton (2021-22) has RS data but no PO data (traded mid-season, neither team made playoffs) → Filtered out completely → `RS_PRESSURE_RESILIENCE` = NaN
+- ✅ **Right**: Haliburton has RS data → Included in dataset → `RS_PRESSURE_RESILIENCE` = 0.409 (calculated from RS data), `PRESSURE_RESILIENCE_DELTA` = NaN (expected - no PO data)
+
+**Test Case**: Haliburton (2021-22) - Missing pressure data investigation
+
+**Key Principle**: RS features only need RS data. Use LEFT JOIN to preserve RS data even when PO data is missing. PO features can be NaN (expected for players who didn't make playoffs).
+
+**Impact**: After fix, dataset increased from 1,220 to 4,473 rows (+267%) - includes 3,253 RS-only players.
+
+---
+
 ## Quick Reference Checklist
 
 When implementing new features, ask:
@@ -497,6 +530,7 @@ When implementing new features, ask:
 - [ ] Am I simulating playoff defense? (Penalize open shot reliance heavily) (Fix #2 - Phase 3.6)
   - [ ] Am I taxing volume, not just efficiency? (System merchants lose opportunity, not just efficiency) (Fix #1 - Phase 3.7)
 - [ ] Am I checking for self-created volume? (Required for primary initiators) (Fix #3 - Phase 3.6) ✅
+- [ ] Am I using LEFT JOIN for RS features? (RS features only need RS data, PO can be NaN) (Fix #3 - Phase 3.7) ✅
 
 ---
 

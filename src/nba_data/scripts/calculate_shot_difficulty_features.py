@@ -184,10 +184,13 @@ def pivot_and_calculate_deltas(df, df_clock=None):
     po_df = po_df.rename(columns={c: f'PO_{c}' for c in feature_cols})
     
     # Merge
-    merged = pd.merge(rs_df, po_df, on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'], how='inner')
-    logger.info(f"Merged RS and PO data: {len(merged)} rows")
+    # FIX: Use LEFT JOIN to preserve RS data even when PO data is missing
+    # This allows RS_PRESSURE_RESILIENCE to be calculated for players who didn't make playoffs
+    merged = pd.merge(rs_df, po_df, on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'], how='left')
+    logger.info(f"Merged RS and PO data: {len(merged)} rows (RS: {len(rs_df)}, PO: {len(po_df)})")
     
     # Calculate Deltas
+    # Deltas will be NaN for players without PO data (expected and handled)
     merged['PRESSURE_APPETITE_DELTA'] = merged['PO_PRESSURE_APPETITE'] - merged['RS_PRESSURE_APPETITE']
     merged['PRESSURE_RESILIENCE_DELTA'] = merged['PO_PRESSURE_RESILIENCE'] - merged['RS_PRESSURE_RESILIENCE']
     
@@ -251,9 +254,14 @@ def main():
     final_df = pivot_and_calculate_deltas(feat_df, clock_feat_df)
     
     # Filter for meaningful sample size in playoffs
-    # e.g., at least 30 total tracked shots in playoffs
-    filtered_df = final_df[final_df['PO_TOTAL_VOLUME'] >= 30].copy()
-    logger.info(f"Filtered for PO volume >= 30: {len(filtered_df)} rows (dropped {len(final_df) - len(filtered_df)})")
+    # FIX: Only apply PO volume filter to players with PO data
+    # Players without PO data (NaN) should still be included (they have RS data)
+    filtered_df = final_df[
+        (final_df['PO_TOTAL_VOLUME'] >= 30) | (final_df['PO_TOTAL_VOLUME'].isna())
+    ].copy()
+    logger.info(f"Filtered for PO volume >= 30 (or no PO data): {len(filtered_df)} rows (dropped {len(final_df) - len(filtered_df)})")
+    logger.info(f"  - Players with PO data: {final_df['PO_TOTAL_VOLUME'].notna().sum()}")
+    logger.info(f"  - Players without PO data (RS only): {final_df['PO_TOTAL_VOLUME'].isna().sum()}")
     
     output_path = Path("results/pressure_features.csv")
     output_path.parent.mkdir(exist_ok=True)

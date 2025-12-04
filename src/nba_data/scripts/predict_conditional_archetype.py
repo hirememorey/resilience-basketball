@@ -1,5 +1,5 @@
 """
-Phase 2: Conditional Prediction Function (Enhanced with Phase 3.5 & 3.6 Fixes)
+Phase 2: Conditional Prediction Function (Enhanced with Phase 3.5, 3.6 & 3.7 Fixes)
 
 This script provides a function to predict archetype at different usage levels.
 This enables answering both questions:
@@ -15,6 +15,10 @@ Phase 3.6 Enhancements (First Principles Physics Fixes):
 - Fix #1: Flash Multiplier - Detect elite efficiency on low volume → project to star-level volume
 - Fix #2: Playoff Translation Tax - Heavily penalize open shot reliance (simulate playoff defense)
 - Fix #3: Bag Check Gate - Cap players lacking self-created volume at Bulldozer (cannot be King)
+
+Phase 3.7 Enhancements (Refinements Based on User Feedback):
+- Fix #1: Linear Tax Fallacy - Move Playoff Translation Tax from efficiency to volume (system merchants lose opportunity, not just efficiency)
+- Fix #2: Narrow Flash Problem - Widen Flash Multiplier to include Pressure Resilience (not just isolation efficiency)
 """
 
 import pandas as pd
@@ -145,6 +149,17 @@ class ConditionalArchetypePredictor:
         else:
             self.efg_iso_80th = None
         
+        # Phase 3.7 Fix #2: Flash Multiplier - Add RS_PRESSURE_RESILIENCE as alternative flash signal
+        if 'RS_PRESSURE_RESILIENCE' in self.df_features.columns:
+            pressure_resilience = self.df_features['RS_PRESSURE_RESILIENCE'].dropna()
+            if len(pressure_resilience) > 0:
+                self.pressure_resilience_80th = pressure_resilience.quantile(0.80)
+                logger.info(f"RS_PRESSURE_RESILIENCE 80th percentile: {self.pressure_resilience_80th:.4f}")
+            else:
+                self.pressure_resilience_80th = None
+        else:
+            self.pressure_resilience_80th = None
+        
         # Calculate star-level median CREATION_VOLUME_RATIO (for Flash Multiplier projection)
         if 'CREATION_VOLUME_RATIO' in self.df_features.columns and 'ARCHETYPE' in self.df_features.columns:
             star_archetypes = ['King (Resilient Star)', 'Bulldozer (Fragile Star)']
@@ -161,9 +176,10 @@ class ConditionalArchetypePredictor:
         else:
             self.star_median_creation_vol = None
         
-        # Phase 3.6 Fix #2: Playoff Translation Tax - Calculate league average open shot frequency
-        # Try to calculate from shot quality data if available
+        # Phase 3.6 Fix #2 & Phase 3.7 Fix #1: Playoff Translation Tax - Calculate league average and 75th percentile
+        # Phase 3.7: Move tax from efficiency to volume - need 75th percentile for volume tax threshold
         self.league_avg_open_freq = None
+        self.open_freq_75th = None
         # Check for RS_OPEN_SHOT_FREQUENCY (from pressure features) or OPEN_SHOT_FREQUENCY
         open_freq_col = None
         if 'RS_OPEN_SHOT_FREQUENCY' in self.df_features.columns:
@@ -175,7 +191,9 @@ class ConditionalArchetypePredictor:
             open_freq = self.df_features[open_freq_col].dropna()
             if len(open_freq) > 0:
                 self.league_avg_open_freq = open_freq.median()
+                self.open_freq_75th = open_freq.quantile(0.75)
                 logger.info(f"League average {open_freq_col}: {self.league_avg_open_freq:.4f}")
+                logger.info(f"{open_freq_col} 75th percentile: {self.open_freq_75th:.4f}")
         # If not in features, we'll calculate it on-the-fly from shot quality data if available
     
     def _get_expected_features(self) -> list:
@@ -270,11 +288,13 @@ class ConditionalArchetypePredictor:
             projection_factor = usage_level / current_usage
             use_projection = True
             
-            # Phase 3.6 Fix #1: Flash Multiplier - Detect elite efficiency on low volume
+            # Phase 3.6 Fix #1 & Phase 3.7 Fix #2: Flash Multiplier - Detect elite efficiency on low volume
+            # Phase 3.7: Expanded to include Pressure Resilience as alternative flash signal
             # If player has elite efficiency on low volume, project to star-level volume (not scalar)
             creation_vol = player_data.get('CREATION_VOLUME_RATIO', 0)
             creation_tax = player_data.get('CREATION_TAX', 0)
             efg_iso = player_data.get('EFG_ISO_WEIGHTED', 0)
+            pressure_resilience = player_data.get('RS_PRESSURE_RESILIENCE', 0)
             
             # Check if "Flash of Brilliance" (low volume + elite efficiency)
             is_low_volume = False
@@ -284,10 +304,14 @@ class ConditionalArchetypePredictor:
                 pd.notna(creation_vol) and creation_vol < self.creation_vol_25th):
                 is_low_volume = True
             
+            # Phase 3.7 Fix #2: Expanded flash definition - ISO efficiency OR Pressure Resilience
             if (self.creation_tax_80th is not None and pd.notna(creation_tax) and creation_tax > self.creation_tax_80th):
                 is_elite_efficiency = True
             elif (self.efg_iso_80th is not None and pd.notna(efg_iso) and efg_iso > self.efg_iso_80th):
                 is_elite_efficiency = True
+            elif (self.pressure_resilience_80th is not None and pd.notna(pressure_resilience) and 
+                  pressure_resilience > self.pressure_resilience_80th):
+                is_elite_efficiency = True  # NEW: Pressure Resilience as flash signal
             
             if is_low_volume and is_elite_efficiency and self.star_median_creation_vol is not None:
                 # Project to star-level volume instead of scalar projection
@@ -316,8 +340,10 @@ class ConditionalArchetypePredictor:
                 if context_adjustment > 0.05:
                     context_penalty = context_adjustment * penalty_scale * 0.5  # 50% of adjustment as penalty
         
-        # Phase 3.6 Fix #2: Playoff Translation Tax - Calculate tax based on open shot frequency
-        playoff_tax = 0.0
+        # Phase 3.7 Fix #1: Playoff Translation Tax - Moved from efficiency to volume
+        # Phase 3.6 Fix #2 (OLD): Was applied to efficiency features
+        # Phase 3.7 Fix #1 (NEW): Apply to volume instead - system merchants lose opportunity, not just efficiency
+        playoff_volume_tax_applied = False
         open_shot_freq = None
         if apply_phase3_fixes:
             # Try to get open shot frequency from player data (check RS_OPEN_SHOT_FREQUENCY first)
@@ -338,16 +364,13 @@ class ConditionalArchetypePredictor:
                 if pd.notna(fga_6_plus) and pd.notna(total_tracked) and total_tracked > 0:
                     open_shot_freq = fga_6_plus / total_tracked
             
-            # Calculate playoff tax if we have open shot frequency
-            if pd.notna(open_shot_freq) and self.league_avg_open_freq is not None:
-                if open_shot_freq > self.league_avg_open_freq:
-                    excess_open = open_shot_freq - self.league_avg_open_freq
-                    # For every 1% above average, deduct 0.5% from EFG
-                    playoff_tax = excess_open * 0.5
-                    logger.debug(f"Playoff Translation Tax: {open_shot_freq:.4f} vs {self.league_avg_open_freq:.4f} = {playoff_tax:.4f}")
+            # Phase 3.7 Fix #1: Check if open shot frequency > 75th percentile (volume tax threshold)
+            if pd.notna(open_shot_freq) and self.open_freq_75th is not None:
+                if open_shot_freq > self.open_freq_75th:
+                    playoff_volume_tax_applied = True
+                    logger.debug(f"Playoff Volume Tax applied: {open_shot_freq:.4f} > {self.open_freq_75th:.4f} (75th percentile)")
             elif pd.notna(open_shot_freq):
-                # If we have player's open shot freq but no league average, calculate on-the-fly
-                # This is a fallback - ideally league average should be pre-calculated
+                # Fallback: calculate 75th percentile on-the-fly if not pre-calculated
                 open_freq_col = None
                 if 'RS_OPEN_SHOT_FREQUENCY' in self.df_features.columns:
                     open_freq_col = 'RS_OPEN_SHOT_FREQUENCY'
@@ -355,10 +378,10 @@ class ConditionalArchetypePredictor:
                     open_freq_col = 'OPEN_SHOT_FREQUENCY'
                 
                 if open_freq_col:
-                    league_avg = self.df_features[open_freq_col].dropna().median()
-                    if pd.notna(league_avg) and open_shot_freq > league_avg:
-                        excess_open = open_shot_freq - league_avg
-                        playoff_tax = excess_open * 0.5
+                    open_freq_75th = self.df_features[open_freq_col].dropna().quantile(0.75)
+                    if pd.notna(open_freq_75th) and open_shot_freq > open_freq_75th:
+                        playoff_volume_tax_applied = True
+                        logger.debug(f"Playoff Volume Tax applied (on-the-fly): {open_shot_freq:.4f} > {open_freq_75th:.4f}")
         
         for feature_name in self.feature_names:
             if feature_name == 'USG_PCT':
@@ -408,15 +431,20 @@ class ConditionalArchetypePredictor:
                         if feature_name in volume_features:
                             # Project volume feature: simulate what it would be at higher usage
                             val = val * projection_factor
+                            
+                            # Phase 3.7 Fix #1: Apply playoff volume tax to CREATION_VOLUME_RATIO
+                            # System merchants lose opportunity, not just efficiency
+                            if feature_name == 'CREATION_VOLUME_RATIO' and playoff_volume_tax_applied:
+                                # Slash projected volume by 30% (multiply by 0.70)
+                                val = val * 0.70
+                                logger.debug(f"Playoff Volume Tax: CREATION_VOLUME_RATIO reduced by 30% (from {val / 0.70:.4f} to {val:.4f})")
                         elif feature_name in ['RS_PRESSURE_RESILIENCE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE', 
                                              'RS_EARLY_CLOCK_PRESSURE_RESILIENCE', 'CREATION_TAX', 'EFG_ISO_WEIGHTED',
                                              'EFG_PCT_0_DRIBBLE']:
-                            # Efficiency features: keep as-is, but apply context penalty and playoff tax if applicable
+                            # Efficiency features: keep as-is, but apply context penalty if applicable
+                            # Phase 3.7 Fix #1: Removed playoff tax from efficiency (moved to volume)
                             if context_penalty > 0:
                                 val = max(0.0, val - context_penalty)
-                            # Phase 3.6 Fix #2: Apply playoff translation tax to efficiency features
-                            if playoff_tax > 0:
-                                val = max(0.0, val - playoff_tax)
                         # All other features: use as-is
                     
                     features.append(val)
@@ -440,7 +468,7 @@ class ConditionalArchetypePredictor:
             'flash_multiplier_applied': flash_multiplier_applied,
             'context_penalty': context_penalty,
             'context_adjustment': context_adjustment if 'RS_CONTEXT_ADJUSTMENT' in player_data.index else None,
-            'playoff_tax': playoff_tax,
+            'playoff_volume_tax_applied': playoff_volume_tax_applied,  # Phase 3.7: Moved from efficiency to volume
             'open_shot_freq': open_shot_freq
         }
         
@@ -574,8 +602,8 @@ class ConditionalArchetypePredictor:
                 phase3_flags.append(f"Volume projection applied (factor: {phase3_metadata['projection_factor']:.2f}x)")
         if phase3_metadata['context_penalty'] > 0:
             phase3_flags.append(f"Context penalty applied: {phase3_metadata['context_penalty']:.4f}")
-        if phase3_metadata.get('playoff_tax', 0) > 0:
-            phase3_flags.append(f"Playoff Translation Tax applied: {phase3_metadata['playoff_tax']:.4f}")
+        if phase3_metadata.get('playoff_volume_tax_applied', False):
+            phase3_flags.append(f"Playoff Volume Tax applied: CREATION_VOLUME_RATIO reduced by 30%")
         if fragility_gate_applied and rim_appetite is not None:
             phase3_flags.append(f"Fragility gate applied (RS_RIM_APPETITE: {rim_appetite:.4f})")
         if bag_check_gate_applied and self_created_freq is not None:

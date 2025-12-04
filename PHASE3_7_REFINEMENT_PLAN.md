@@ -1,7 +1,7 @@
 # Phase 3.7 Refinement Plan: Addressing Feedback
 
 **Date**: December 2025  
-**Status**: Ready for Implementation  
+**Status**: ✅ **IMPLEMENTATION COMPLETE** | ⚠️ **VALIDATION IN PROGRESS**  
 **Based on**: User Feedback Analysis on Phase 3.6 Results
 
 ## Executive Summary
@@ -169,33 +169,46 @@ def apply_flash_multiplier(player_data, projection_factor, df_features):
 ## Implementation Checklist
 
 ### Phase 3.7.1: Move Playoff Tax to Volume (Priority: High)
-- [ ] Remove efficiency penalty from Playoff Translation Tax
-- [ ] Add volume penalty: If OPEN_SHOT_FREQ > 75th percentile → slash PROJECTED_CREATION_VOLUME by 30%
-- [ ] Update `prepare_features()` to apply volume tax instead of efficiency tax
-- [ ] Test on Poole case (should drop from 83.05% to <55%)
+- [x] Remove efficiency penalty from Playoff Translation Tax
+- [x] Add volume penalty: If OPEN_SHOT_FREQ > 75th percentile → slash PROJECTED_CREATION_VOLUME by 30%
+- [x] Update `prepare_features()` to apply volume tax instead of efficiency tax
+- [x] Test on Poole case (still failing - open shot freq below 75th percentile threshold)
 
 ### Phase 3.7.2: Widen Flash Multiplier Definition (Priority: High)
-- [ ] Add PRESSURE_RESILIENCE to flash detection logic
-- [ ] Update flash condition: ISO_EFFICIENCY > 80th OR PRESSURE_RESILIENCE > 80th
-- [ ] Calculate PRESSURE_RESILIENCE 80th percentile in `_calculate_feature_distributions()`
-- [ ] Test on Haliburton case (should improve from 27.44% to ≥65%)
+- [x] Add PRESSURE_RESILIENCE to flash detection logic
+- [x] Update flash condition: ISO_EFFICIENCY > 80th OR PRESSURE_RESILIENCE > 80th
+- [x] Calculate PRESSURE_RESILIENCE 80th percentile in `_calculate_feature_distributions()`
+- [x] Test on Haliburton case (improved from 27.44% to 49.23%, but still below 65% threshold)
 
-### Phase 3.7.3: Re-Validation
-- [ ] Run validation test suite with Phase 3.7 refinements
-- [ ] Expected: 13-14/16 passing (81-88%)
-- [ ] Document results
+### Phase 3.7.3: Data Completeness Fix (Critical Discovery)
+- [x] Investigate missing pressure resilience data (Haliburton case)
+- [x] Fix INNER JOIN to LEFT JOIN in `calculate_shot_difficulty_features.py`
+- [x] Update PO_TOTAL_VOLUME filter to handle NaN values
+- [x] Re-run calculation script (4,473 rows, up from 1,220)
+- [x] Verify Haliburton now has RS_PRESSURE_RESILIENCE
+
+### Phase 3.7.4: Re-Validation
+- [x] Run validation test suite with Phase 3.7 refinements
+- [x] Document results (62.5% pass rate - decreased due to threshold shifts)
+- [x] Create impact analysis report
 
 ---
 
-## Expected Outcomes
+## Actual Outcomes
 
 ### After Phase 3.7.1 (Volume Tax)
-- **Poole**: Should decrease from 83.05% to <55%
-- **Pass Rate**: Should improve to 13/16 (81.3%)
+- **Poole**: Still at 84.23% (expected <55%) - **Tax not triggering** (open shot freq at 66th percentile, below 75th threshold)
+- **Pass Rate**: 62.5% (10/16) - decreased due to threshold shifts
 
 ### After Phase 3.7.2 (Widened Flash)
-- **Haliburton**: Should improve from 27.44% to ≥65%
-- **Pass Rate**: Should improve to 13-14/16 (81-88%)
+- **Haliburton**: Improved from 27.44% to 49.23% (+21.79 pp) - **Still below 65% threshold**
+- **Issue**: Pressure resilience (0.409) below 80th percentile (0.538)
+
+### After Phase 3.7.3 (Data Fix)
+- **Haliburton**: Now has RS_PRESSURE_RESILIENCE (0.409) - data completeness issue resolved
+- **Dataset**: 4,473 rows (up from 1,220) - includes 3,253 RS-only players
+- **Impact**: Percentile thresholds shifted (now based on full dataset - more accurate)
+- **Pass Rate**: 62.5% (10/16) - some cases that were passing now fail due to threshold shifts
 
 ---
 
@@ -228,7 +241,19 @@ def apply_flash_multiplier(player_data, projection_factor, df_features):
 
 ---
 
-**Status**: Ready for Implementation
+**Status**: ✅ Implementation Complete | ⚠️ Validation In Progress
 
-**Expected After Phase 3.7**: 13-14/16 passing (81-88%)
+**Actual After Phase 3.7**: 10/16 passing (62.5%)
+
+**Key Findings**:
+- ✅ Both fixes implemented successfully
+- ✅ Data completeness fix resolved missing pressure data issue
+- ⚠️ Pass rate decreased due to threshold shifts (thresholds now more accurate based on full dataset)
+- ⚠️ Sabonis regression needs investigation (Bag Check Gate not working with missing ISO/PNR data)
+- ⚠️ Poole and Haliburton still failing - may need threshold adjustments or alternative approaches
+
+**See Also**:
+- `results/phase3_7_data_fix_impact.md` - Complete impact analysis
+- `results/haliburton_pressure_investigation.md` - Data completeness investigation
+- `CURRENT_STATE.md` - Updated current state with Phase 3.7 results
 

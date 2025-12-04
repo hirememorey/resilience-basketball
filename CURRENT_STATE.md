@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
 **Date**: December 2025  
-**Status**: Phase 3.6 Complete - 75.0% Pass Rate Achieved ✅
+**Status**: Phase 3.7 Complete - Data Fix Implemented ✅ | Current Pass Rate: 62.5% (10/16)
 
 ---
 
@@ -458,35 +458,77 @@ All three Phase 3.6 fixes have been implemented and validated. With adjusted thr
 
 ---
 
-## 🎯 Phase 3.7 Refinement Plan
+## ✅ Phase 3.7 Implementation (Complete - Data Fix Included)
 
-**Status**: 🎯 **READY FOR IMPLEMENTATION** (December 2025)
+**Status**: ✅ **IMPLEMENTATION COMPLETE** | ⚠️ **DATA FIX COMPLETE** (December 2025)
 
-Based on user feedback analysis, Phase 3.7 addresses two critical refinements:
+Phase 3.7 refinements have been implemented, plus a critical data completeness fix that resolved missing pressure resilience data.
 
-### Fix #1: The "Linear Tax Fallacy" - Move Tax from Efficiency to Volume
+### ✅ Fix #1: The "Linear Tax Fallacy" - Move Tax from Efficiency to Volume
 
-**Problem**: Playoff Translation Tax penalizes efficiency, but for system merchants like Poole, the real issue is that **opportunity drops**, not just efficiency.
+**Status**: ✅ **IMPLEMENTED**
 
-**Solution**: Move tax from efficiency to volume:
-- If `OPEN_SHOT_FREQ > 75th percentile` → Slash `PROJECTED_CREATION_VOLUME` by 30%
-- Logic: "You physically will not get these shots in the playoffs"
+**Implementation**: Moved Playoff Translation Tax from efficiency to volume. If `OPEN_SHOT_FREQ > 75th percentile`, slash `PROJECTED_CREATION_VOLUME` by 30%.
 
-**Expected Impact**: Fixes Poole case (83.05% → <55%)
+**Results**:
+- ✅ Implementation complete
+- ⚠️ **Poole still failing**: Open shot frequency (66th percentile) below 75th threshold - tax not triggering
+- **Next Step**: May need to lower threshold to 70th percentile or use different metric
 
-### Fix #2: The "Narrow Flash" Problem - Widen Flash Definition
+### ✅ Fix #2: The "Narrow Flash" Problem - Widen Flash Definition
 
-**Problem**: Flash Multiplier only looks for isolation efficiency, but Haliburton shows flashes through **pressure resilience** (contested shots), not just isolation.
+**Status**: ✅ **IMPLEMENTED**
 
-**Solution**: Expand flash definition:
-- Current: `ISO_EFFICIENCY > 80th percentile`
-- New: `ISO_EFFICIENCY > 80th OR PRESSURE_RESILIENCE > 80th`
+**Implementation**: Expanded Flash Multiplier to include `RS_PRESSURE_RESILIENCE > 80th percentile` as alternative flash signal.
 
-**Expected Impact**: Fixes Haliburton case (27.44% → ≥65%)
+**Results**:
+- ✅ Implementation complete
+- ⚠️ **Haliburton improved but still failing**: 27.44% → 49.23% (+21.79 pp)
+- **Issue**: Haliburton's pressure resilience (0.409) below 80th percentile (0.538)
+- **Next Step**: May need to lower threshold or investigate alternative signals
 
-**See**: `PHASE3_7_REFINEMENT_PLAN.md` for complete implementation details.
+### ✅ Fix #3: Data Completeness Fix - Missing Pressure Resilience Data
 
-**Expected After Phase 3.7**: 13-14/16 passing (81-88%)
+**Status**: ✅ **COMPLETE** (Critical Discovery)
+
+**Problem Discovered**: Haliburton (and 387 other players in 2021-22) were missing from `pressure_features.csv` because the calculation script used INNER JOIN between RS and PO data. Players without playoff data were completely filtered out.
+
+**Root Cause**: `calculate_shot_difficulty_features.py` line 187 used `how='inner'`, which only kept players with BOTH RS and PO data. Haliburton had RS data but no PO data (traded mid-season, neither team made playoffs).
+
+**Fix Implemented**:
+- Changed merge from `how='inner'` to `how='left'` in `calculate_shot_difficulty_features.py`
+- Updated PO_TOTAL_VOLUME filter to handle NaN (preserves RS-only players)
+- Re-ran calculation: 4,473 rows (up from 1,220) - includes 3,253 RS-only players
+
+**Impact**:
+- ✅ Haliburton now has `RS_PRESSURE_RESILIENCE` (0.409, calculated from RS data)
+- ✅ Star-level improved: 27.44% → 49.23% (+21.79 pp)
+- ✅ 3,253 additional players now have RS pressure features
+- ⚠️ Percentile thresholds shifted (now based on full dataset) - more accurate but caused some cases to fail
+
+**See**: `results/haliburton_pressure_investigation.md` for complete investigation details.
+
+### Validation Results
+
+**Current Pass Rate**: 62.5% (10/16) - **Decreased from 75.0%**
+
+**Why Pass Rate Decreased**:
+- Thresholds shifted due to 3x larger dataset (more accurate but stricter)
+- Some cases that were passing are now failing (Tobias Harris, Sabonis)
+- **Sabonis Regression**: Jumped from 22.80% to 80.22% - Bag Check Gate not working (ISO/PNR data missing)
+
+**Key Findings**:
+- ✅ Data completeness fix successful
+- ✅ Haliburton and Markkanen improved
+- ⚠️ Sabonis regression needs investigation (Bag Check Gate issue)
+- ⚠️ Thresholds may need recalibration with full dataset
+
+**See**: `results/phase3_7_data_fix_impact.md` for complete analysis.
+
+**Next Steps**:
+1. Investigate Sabonis Bag Check Gate failure (missing ISO/PNR data handling)
+2. Consider threshold recalibration with full dataset
+3. Investigate alternative signals for Haliburton (pressure resilience below threshold)
 
 ---
 
@@ -503,7 +545,9 @@ Latent star detection work has been archived to `archive/latent_star_detection/`
 ---
 
 **See Also**:
-- `PHASE3_7_REFINEMENT_PLAN.md` - **START HERE FOR PHASE 3.7** - Refinement plan based on user feedback
+- `results/phase3_7_data_fix_impact.md` - **START HERE** - Phase 3.7 impact analysis and data fix results
+- `results/haliburton_pressure_investigation.md` - Data completeness investigation and fix
+- `PHASE3_7_REFINEMENT_PLAN.md` - Phase 3.7 implementation plan (completed)
 - `results/phase3_6_validation_report.md` - Phase 3.6 validation results (75% pass rate)
 - `PHASE3_6_IMPLEMENTATION_PLAN.md` - Phase 3.6 implementation plan
 - `results/phase3_5_validation_report.md` - Phase 3.5 validation results
