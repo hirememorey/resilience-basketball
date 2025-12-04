@@ -338,14 +338,94 @@ See `KEY_INSIGHTS.md` for detailed lessons learned. Key principles:
 
 ---
 
-## 9. Next Steps After Implementation (Phase 3)
+## 9. Phase 2 Validation: Critical Case Studies Test Suite
 
-1. ✅ **Validate on more test cases**: Completed - Tested on known breakouts, Kings, and non-stars
-2. ✅ **Improve model accuracy**: Completed - Model accuracy improved from 59.4% to 62.22%
-3. ✅ **Resume latent star detection**: Completed - Implemented `detect_latent_stars_v2.py` with age < 26, usage < 25% filters
-4. **Sloan paper preparation**: Document usage-aware conditional prediction as key innovation
-5. **Threshold optimization**: Test different star-level potential thresholds for latent star detection
-6. **Use Case A production**: Create production-ready script for current performance prediction
+**Status**: ✅ **COMPLETE** (December 2025)
+
+**Test Suite**: 12 critical case studies testing latent star detection across different failure modes
+
+**Results**: 6/12 passed (50.0% pass rate)
+
+### Test Results Summary
+
+**Passed (6/12)**:
+- ✅ Shai Gilgeous-Alexander (2018-19): 90.29% star-level
+- ✅ Jalen Brunson (2020-21): 94.02% star-level
+- ✅ Talen Horton-Tucker (2020-21): 16.79% star-level
+- ✅ Tyus Jones (2021-22): 6.88% star-level
+- ✅ Christian Wood (2020-21): 13.73% star-level
+- ✅ Jamal Murray (2018-19): 72.39% star-level
+
+**Failed (6/12)**:
+- ❌ Victor Oladipo (2016-17): 39.56% star-level (expected ≥70%) - **Role Constraint Failure**
+- ❌ Jordan Poole (2021-22): 87.09% star-level (expected <30%) - **Context Mirage Failure**
+- ❌ Mikal Bridges (2021-22): 57.11% star-level (expected ≥70%) - **Role Constraint Failure**
+- ❌ Lauri Markkanen (2021-22): 10.72% star-level (expected ≥70%) - **Role Constraint Failure** + Missing Data
+- ❌ D'Angelo Russell (2018-19): 66.03% star-level (expected <30%) - **Softness Failure**
+- ❌ Desmond Bane (2021-22): 50.44% star-level (expected ≥70%) - **Role Constraint Failure**
+
+**Key Findings**:
+1. **Role Constraint Problem**: Model confuses opportunity with ability
+2. **Context Dependency**: Model doesn't account for "Difficulty of Life"
+3. **Physicality Underweighted**: Model underestimates "Physicality Floor"
+
+**Test Artifacts**:
+- `test_latent_star_cases.py`: Comprehensive test suite
+- `results/latent_star_test_cases_results.csv`: Detailed results
+- `results/latent_star_test_cases_report.md`: Markdown report
+
+---
+
+## 10. Next Steps After Implementation (Phase 3: Model Refinement)
+
+Based on test suite results, three critical fixes identified:
+
+### Fix #1: Usage-Dependent Feature Weighting (Priority: High)
+
+**Problem**: Model confuses opportunity with ability. When predicting at high usage (>25%), it overweights `CREATION_VOLUME_RATIO` and underweights `CREATION_TAX` and `EFG_ISO_WEIGHTED`.
+
+**Solution**: Implement "Latent Star Toggle" - dynamically re-weight features based on target usage level.
+
+**Expected Impact**: Fixes Oladipo, Markkanen, Bane, Bridges cases
+
+**Implementation**: Modify `predict_conditional_archetype.py` to re-weight features based on target usage level
+
+### Fix #2: Context-Adjusted Efficiency (Priority: Medium)
+
+**Problem**: Model doesn't account for "Difficulty of Life" - overvalues context-dependent efficiency.
+
+**Solution**: Add "System Merchant" penalty - calculate `ACTUAL_EFG - EXPECTED_EFG` based on shot openness.
+
+**Expected Impact**: Fixes Poole case
+
+**Implementation**: Use existing `leaguedashplayerptshot` data to calculate context adjustment
+
+### Fix #3: Fragility Gate (Priority: High)
+
+**Problem**: Model underestimates "Physicality Floor" - doesn't cap players with zero rim pressure.
+
+**Solution**: Implement "Fragility Gate" - if `RIM_PRESSURE_RESILIENCE` is bottom 20th percentile, cap star-level at 30% (Sniper ceiling).
+
+**Expected Impact**: Fixes Russell case
+
+**Implementation**: Add fragility gate to `predict_conditional_archetype.py`
+
+### Fix #4: Missing Data Pipeline (Priority: High)
+
+**Problem**: Missing pressure data for some players (Markkanen, Bane).
+
+**Solution**: Fix `collect_shot_quality_with_clock.py` to ensure 100% coverage
+
+**Expected Impact**: Improves Markkanen, Bane predictions
+
+**Implementation**: Investigate and fix data collection pipeline
+
+### Expected Outcomes After Phase 3
+
+**Current**: 6/12 passed (50.0%)
+**Expected**: 10-11/12 passed (83-92%)
+
+See `CURRENT_STATE.md` for detailed implementation plan.
 
 ---
 

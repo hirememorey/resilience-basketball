@@ -198,13 +198,115 @@ The model now predicts performance at **different usage levels**, not just curre
 
 ---
 
-## Next Steps (Phase 3)
+## ✅ Phase 2 Validation: Critical Case Studies Test Suite
 
-1. **Refine latent star detection**: Test different thresholds and usage levels to optimize identification
-2. **Expand validation**: Test conditional predictions on more seasons and known breakouts
-3. **Use Case A implementation**: Create production-ready script for current performance prediction
-4. **Threshold optimization**: Analyze optimal star-level potential thresholds for different use cases
-5. **Documentation**: Prepare findings for Sloan paper submission
+**Status**: ✅ **COMPLETE** (December 2025)
+
+**Test Suite**: 12 critical case studies testing latent star detection across different failure modes
+
+**Results**: 6/12 passed (50.0% pass rate)
+
+### Test Results Summary
+
+**Passed (6/12)**:
+- ✅ Shai Gilgeous-Alexander (2018-19): 90.29% star-level - Correctly identified Physicality Vector
+- ✅ Jalen Brunson (2020-21): 94.02% star-level - Already validated
+- ✅ Talen Horton-Tucker (2020-21): 16.79% star-level - Correctly identified as Victim
+- ✅ Tyus Jones (2021-22): 6.88% star-level - Correctly identified system player ceiling
+- ✅ Christian Wood (2020-21): 13.73% star-level - Correctly identified empty calories
+- ✅ Jamal Murray (2018-19): 72.39% star-level - Correctly valued Leverage Vector over consistency
+
+**Failed (6/12)**:
+- ❌ Victor Oladipo (2016-17): 39.56% star-level (expected ≥70%) - **Role Constraint Failure**
+- ❌ Jordan Poole (2021-22): 87.09% star-level (expected <30%) - **Context Mirage Failure**
+- ❌ Mikal Bridges (2021-22): 57.11% star-level (expected ≥70%) - **Role Constraint Failure**
+- ❌ Lauri Markkanen (2021-22): 10.72% star-level (expected ≥70%) - **Role Constraint Failure** + Missing Data
+- ❌ D'Angelo Russell (2018-19): 66.03% star-level (expected <30%) - **Softness Failure**
+- ❌ Desmond Bane (2021-22): 50.44% star-level (expected ≥70%) - **Role Constraint Failure**
+
+**Key Findings**:
+1. **Role Constraint Problem**: Model confuses opportunity with ability - penalizes players forced into 3-and-D roles
+2. **Context Dependency**: Model doesn't account for "Difficulty of Life" - overvalues context-dependent efficiency
+3. **Physicality Underweighted**: Model underestimates "Physicality Floor" - doesn't cap players with zero rim pressure
+
+**Test Artifacts**:
+- `test_latent_star_cases.py`: Comprehensive test suite (12 critical cases)
+- `results/latent_star_test_cases_results.csv`: Detailed results
+- `results/latent_star_test_cases_report.md`: Markdown report
+
+---
+
+## Next Steps (Phase 3: Model Refinement)
+
+Based on test suite results, three critical fixes identified:
+
+### Fix #1: Usage-Dependent Feature Weighting (Priority: High)
+
+**Problem**: Model confuses opportunity with ability. When predicting at high usage (>25%), it overweights `CREATION_VOLUME_RATIO` (how often they create) and underweights `CREATION_TAX` and `EFG_ISO_WEIGHTED` (efficiency on limited opportunities).
+
+**Solution**: Implement "Latent Star Toggle" - dynamically re-weight features based on target usage level:
+- When `target_usage > 25%`: Suppress `CREATION_VOLUME_RATIO`, amplify `CREATION_TAX` and `EFG_ISO_WEIGHTED`
+- Logic: "If Oladipo is 90th percentile efficiency on his 2 isolations/game, assume he stays elite at 10"
+
+**Expected Impact**: Fixes Oladipo, Markkanen, Bane, Bridges cases
+
+**Implementation**: Modify `predict_conditional_archetype.py` to re-weight features based on target usage level
+
+### Fix #2: Context-Adjusted Efficiency (Priority: Medium)
+
+**Problem**: Model doesn't account for "Difficulty of Life" - overvalues context-dependent efficiency (e.g., Poole benefiting from Curry gravity).
+
+**Solution**: Add "System Merchant" penalty:
+- Calculate `ACTUAL_EFG - EXPECTED_EFG` based on shot openness
+- Penalize players who outperform expected eFG% due to wide-open shots
+- Add `CONTEXT_ADJUSTED_EFFICIENCY` feature
+
+**Expected Impact**: Fixes Poole case
+
+**Implementation**: 
+- Use existing `leaguedashplayerptshot` data (defender distance)
+- Calculate expected eFG% by shot type/location/defender distance
+- Add context adjustment feature to training pipeline
+
+### Fix #3: Fragility Gate (Priority: High)
+
+**Problem**: Model underestimates "Physicality Floor" - doesn't cap players with zero rim pressure (e.g., Russell).
+
+**Solution**: Implement "Fragility Gate":
+- **Soft Gate**: Heavily weight `RIM_PRESSURE_RESILIENCE` (increase from current ~5.3%)
+- **Hard Gate**: If `RIM_PRESSURE_RESILIENCE` is bottom 20th percentile, cap star-level potential at 30% (Sniper ceiling)
+- Logic: "No matter how good your jumper is, if you can't touch the paint, you are capped"
+
+**Expected Impact**: Fixes Russell case
+
+**Implementation**: 
+- Add fragility gate to `predict_conditional_archetype.py`
+- Optionally retrain model with increased `RIM_PRESSURE_RESILIENCE` weight
+
+### Fix #4: Missing Data Pipeline (Priority: High)
+
+**Problem**: Missing pressure data for some players (Markkanen, Bane had missing `RS_PRESSURE_APPETITE` and `RS_LATE_CLOCK_PRESSURE_RESILIENCE`).
+
+**Solution**: Fix `collect_shot_quality_with_clock.py` to ensure 100% coverage
+
+**Expected Impact**: Improves Markkanen, Bane predictions
+
+**Implementation**: Investigate and fix data collection pipeline
+
+---
+
+## Expected Outcomes After Phase 3
+
+**Current**: 6/12 passed (50.0%)
+**Expected**: 10-11/12 passed (83-92%)
+
+**Cases Likely Fixed**:
+- Oladipo: Fix #1 (usage-dependent weighting)
+- Markkanen: Fix #1 + Fix #4 (missing data)
+- Bane: Fix #1 + Fix #4 (missing data)
+- Bridges: Fix #1 (close to threshold)
+- Russell: Fix #3 (fragility gate)
+- Poole: Fix #2 (context adjustment)
 
 ---
 

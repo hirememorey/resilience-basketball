@@ -224,6 +224,99 @@ normalized = (value - actual_min) / (actual_max - actual_min)
 
 ---
 
+## 11. Opportunity vs. Ability (Role Constraint Failure) 🎯 NEW
+
+**The Problem**: Model confuses opportunity with ability. When predicting at high usage (>25%), it overweights `CREATION_VOLUME_RATIO` (how often they create) and underweights `CREATION_TAX` and `EFG_ISO_WEIGHTED` (efficiency on limited opportunities).
+
+**The Insight**: Talent is scalable; Role is not. When predicting for high usage, you must assume the volume will come. The only variable that matters is the efficiency on the limited attempts they currently get.
+
+**The Fix**: Implement "Latent Star Toggle" - dynamically re-weight features based on target usage level:
+- When `target_usage > 25%`: Suppress `CREATION_VOLUME_RATIO`, amplify `CREATION_TAX` and `EFG_ISO_WEIGHTED`
+- Logic: "If Oladipo is 90th percentile efficiency on his 2 isolations/game, assume he stays elite at 10"
+
+**Example**:
+- ❌ **Wrong**: Markkanen in Cleveland (19.4% usage, catch-and-shoot role) → Model sees low `CREATION_VOLUME_RATIO` → Predicts "Victim"
+- ✅ **Right**: Markkanen at 26% usage → Model should see high `CREATION_TAX` (efficiency on limited opportunities) → Predicts "Bulldozer"
+
+**Implementation**:
+```python
+# WRONG: Same feature weights regardless of target usage
+features = prepare_features(player_data, usage_level=0.30)
+prediction = model.predict(features)  # Uses CREATION_VOLUME_RATIO heavily
+
+# RIGHT: Re-weight features based on target usage
+if target_usage > 0.25:
+    # Suppress volume ratio, amplify efficiency metrics
+    features['CREATION_VOLUME_RATIO'] *= 0.1  # Suppress
+    features['CREATION_TAX'] *= 2.0  # Amplify
+    features['EFG_ISO_WEIGHTED'] *= 2.0  # Amplify
+prediction = model.predict(features)
+```
+
+**Test Cases**: Oladipo (2016-17), Markkanen (2021-22), Bane (2021-22), Bridges (2021-22)
+
+---
+
+## 12. Context Dependency (System Merchant Penalty) 🎯 NEW
+
+**The Problem**: Model doesn't account for "Difficulty of Life" - overvalues context-dependent efficiency (e.g., Poole benefiting from Curry gravity).
+
+**The Insight**: Stats are downstream of Context. A 60% TS% as a #3 option facing single coverage is worth less than a 56% TS% as a #1 option facing blitzes.
+
+**The Fix**: Add "System Merchant" penalty:
+- Calculate `ACTUAL_EFG - EXPECTED_EFG` based on shot openness
+- Penalize players who outperform expected eFG% due to wide-open shots
+- Add `CONTEXT_ADJUSTED_EFFICIENCY` feature
+
+**Example**:
+- ❌ **Wrong**: Poole (2021-22) has 60% TS → Model predicts high star-level
+- ✅ **Right**: Poole's efficiency is context-dependent (Curry gravity) → Model should penalize → Predicts low star-level
+
+**Implementation**:
+```python
+# Calculate expected eFG% based on shot quality
+expected_efg = calculate_expected_efg(shot_quality_data)
+actual_efg = player_data['EFG_PCT']
+
+# Penalize if outperforming due to wide-open shots
+context_adjustment = actual_efg - expected_efg
+if context_adjustment > 0.05:  # Significantly outperforming
+    # Penalize - this is context-dependent, not skill
+    adjusted_efficiency = actual_efg - (context_adjustment * 0.5)
+```
+
+**Test Case**: Poole (2021-22) - False positive (87.09% star-level, expected <30%)
+
+---
+
+## 13. Physicality Floor (Fragility Gate) 🎯 NEW
+
+**The Problem**: Model underestimates "Physicality Floor" - doesn't cap players with zero rim pressure (e.g., Russell).
+
+**The Insight**: The Whistle Disappears in May. In the playoffs, jump shooting variance kills you. The only stabilizer is Rim Pressure and Free Throws. If you cannot get to the rim, you cannot be a King.
+
+**The Fix**: Implement "Fragility Gate":
+- **Soft Gate**: Heavily weight `RIM_PRESSURE_RESILIENCE` (increase from current ~5.3%)
+- **Hard Gate**: If `RIM_PRESSURE_RESILIENCE` is bottom 20th percentile, cap star-level potential at 30% (Sniper ceiling)
+- Logic: "No matter how good your jumper is, if you can't touch the paint, you are capped"
+
+**Example**:
+- ❌ **Wrong**: Russell (2018-19) has elite shooting → Model predicts 66.03% star-level
+- ✅ **Right**: Russell has zero rim pressure → Model should cap at Sniper (30% star-level max)
+
+**Implementation**:
+```python
+# Hard gate: Cap star-level if rim pressure is too low
+rim_pressure_percentile = calculate_percentile(player_data['RIM_PRESSURE_RESILIENCE'])
+if rim_pressure_percentile < 0.20:  # Bottom 20th percentile
+    star_level_potential = min(star_level_potential, 0.30)  # Cap at Sniper
+    max_archetype = "Sniper"  # Can't be King or Bulldozer
+```
+
+**Test Case**: Russell (2018-19) - False positive (66.03% star-level, expected <30%)
+
+---
+
 ## Quick Reference Checklist
 
 When implementing new features, ask:
@@ -236,6 +329,9 @@ When implementing new features, ask:
 - [ ] Have I validated the formula on test cases before building?
 - [ ] Do I understand the actual data distribution?
 - [ ] Am I accounting for usage as a variable (not fixed)?
+- [ ] When predicting at high usage, am I weighting efficiency over volume? (Fix #1)
+- [ ] Am I accounting for context dependency? (Fix #2)
+- [ ] Am I capping players with zero rim pressure? (Fix #3)
 
 ---
 
