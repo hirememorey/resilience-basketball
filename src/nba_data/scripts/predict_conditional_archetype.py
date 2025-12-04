@@ -287,7 +287,8 @@ class ConditionalArchetypePredictor:
     def predict_archetype_at_usage(
         self, 
         player_data: pd.Series, 
-        usage_level: float
+        usage_level: float,
+        apply_phase3_fixes: bool = True
     ) -> Dict:
         """
         Predict archetype at specified usage level.
@@ -295,6 +296,7 @@ class ConditionalArchetypePredictor:
         Args:
             player_data: Player's stress vector data (Series)
             usage_level: Usage percentage as decimal (e.g., 0.25 for 25%)
+            apply_phase3_fixes: Whether to apply Phase 3 fixes (default: True)
         
         Returns:
             Dictionary with:
@@ -304,7 +306,7 @@ class ConditionalArchetypePredictor:
             - confidence_flags: List of missing data flags
         """
         # Prepare features
-        features, phase3_metadata = self.prepare_features(player_data, usage_level)
+        features, phase3_metadata = self.prepare_features(player_data, usage_level, apply_phase3_fixes)
         
         # Predict
         probs = self.model.predict_proba(features)[0]
@@ -332,7 +334,7 @@ class ConditionalArchetypePredictor:
         # Cap star-level if RIM_PRESSURE_RESILIENCE is bottom 20th percentile
         fragility_gate_applied = False
         rim_pressure = None
-        if 'RIM_PRESSURE_RESILIENCE' in player_data.index:
+        if apply_phase3_fixes and 'RIM_PRESSURE_RESILIENCE' in player_data.index:
             rim_pressure = player_data['RIM_PRESSURE_RESILIENCE']
             if pd.notna(rim_pressure) and self.rim_pressure_bottom_20th is not None:
                 if rim_pressure <= self.rim_pressure_bottom_20th:

@@ -1,0 +1,20 @@
+name,season,category,expected,found,result_type,age,note,star_potential,archetype,confidence,quality_filter,data_completeness,base_signal_strength,in_dataset,age_in_dataset,usg_in_dataset,reason_not_found
+Jalen Brunson,2020-21,known_breakouts,True,True,TRUE_POSITIVE,24.0,,0.68060964,King (Resilient Star),Low,False,0.5,0.5198214285714287,,,,
+Tyrese Haliburton,2020-21,known_breakouts,True,False,FALSE_NEGATIVE,21.0,,,,,,,,True,21.0,0.175,Failed star potential threshold or quality filters
+Tyrese Maxey,2020-21,known_breakouts,True,False,FALSE_NEGATIVE,20.0,,,,,,,,True,20.0,0.222,Failed star potential threshold or quality filters
+Pascal Siakam,2017-18,known_breakouts,True,False,FALSE_NEGATIVE,24.0,,,,,,,,True,24.0,0.154,Failed star potential threshold or quality filters
+Pascal Siakam,2018-19,known_breakouts,True,False,FALSE_NEGATIVE,25.0,,,,,,,,True,25.0,0.205,Failed star potential threshold or quality filters
+Anthony Edwards,2020-21,known_breakouts,True,False,FALSE_NEGATIVE,19.0,,,,,,,,True,19.0,0.264,USG 26.4% ≥ 25% (high usage)
+Shai Gilgeous-Alexander,2018-19,known_breakouts,True,True,TRUE_POSITIVE,20.0,,0.5185657,Victim (Fragile Role),Low,False,0.5,0.6098007323285924,,,,
+Devin Booker,2015-16,known_breakouts,True,False,FALSE_NEGATIVE,19.0,,,,,,,,True,19.0,0.228,Failed star potential threshold or quality filters
+Donovan Mitchell,2017-18,known_breakouts,True,False,FALSE_NEGATIVE,21.0,,,,,,,,True,21.0,0.283,USG 28.3% ≥ 25% (high usage)
+T.J. McConnell,2020-21,known_non_breakouts,False,False,TRUE_NEGATIVE,29.0,,,,,,,,True,29.0,0.149,Age 29.0 ≥ 26 (veteran)
+Dwayne Bacon,2020-21,known_non_breakouts,False,False,TRUE_NEGATIVE,25.0,,,,,,,,True,25.0,0.193,Failed star potential threshold or quality filters
+Cory Joseph,2020-21,known_non_breakouts,False,False,TRUE_NEGATIVE,29.0,,,,,,,,True,29.0,0.159,Age 29.0 ≥ 26 (veteran)
+Delon Wright,2020-21,known_non_breakouts,False,False,TRUE_NEGATIVE,29.0,,,,,,,,True,29.0,0.163,Age 29.0 ≥ 26 (veteran)
+Evan Turner,2015-16,known_non_breakouts,False,False,TRUE_NEGATIVE,27.0,,,,,,,,True,27.0,0.184,Age 27.0 ≥ 26 (veteran)
+Evan Turner,2016-17,known_non_breakouts,False,False,TRUE_NEGATIVE,28.0,,,,,,,,True,28.0,0.182,Age 28.0 ≥ 26 (veteran)
+T.J. McConnell,2015-16,known_non_breakouts,False,True,FALSE_POSITIVE,24.0,Young but didn't break out,0.518245,Victim (Fragile Role),Low,False,0.5,0.3839693046261274,,,,
+Dwayne Bacon,2019-20,known_non_breakouts,False,True,FALSE_POSITIVE,24.0,Young but didn't break out,0.5124909,Victim (Fragile Role),Low,False,0.5,0.7223396501457723,,,,
+Ben Simmons,2020-21,fragility_cases,False,False,TRUE_NEGATIVE,24.0,Fragile - should not be identified,,,,,,,True,24.0,0.2,Failed star potential threshold or quality filters
+Karl-Anthony Towns,2015-16,fragility_cases,False,False,TRUE_NEGATIVE,20.0,Fragile - should not be identified,,,,,,,True,20.0,0.243,Failed star potential threshold or quality filters

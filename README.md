@@ -2,9 +2,9 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status & Key Insight (V5.0 - Usage-Aware Model Complete, Phase 3 Implementation Complete)**
+**Current Status & Key Insight (V5.0 - Usage-Aware Model Complete, Phase 3.5 Ready for Implementation)**
 
-The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience with **usage-aware conditional predictions**. Phase 3 fixes have been implemented and are ready for validation testing.
+The project has successfully developed a complete "Stylistic Stress Test" system to predict and explain playoff resilience with **usage-aware conditional predictions**. Phase 3 fixes were implemented but validation revealed fundamental flaws. Phase 3.5 addresses these issues with first principles fixes.
 
 - **`V5.0 Predictive Model`**: An XGBoost Classifier that achieves **62.22% accuracy** (improved from 59.4%) in predicting a player's Playoff Archetype (King, Bulldozer, Sniper, Victim) based on five Regular Season "Stress Vectors" **plus usage-aware features**:
     1.  **Creation Vector**: Measures efficiency drop-off when forced to create own shot.
@@ -29,10 +29,12 @@ The model now predicts playoff archetypes at **different usage levels**, enablin
 
 ### 📚 Documentation
 
-**For Phase 2 & 3 details, see:**
-- **`CURRENT_STATE.md`**: **START HERE** - Current project state with Phase 3 implementation complete
-- **`PHASE3_VALIDATION_PLAN.md`**: **START HERE FOR VALIDATION** - Validation testing strategy
-- **`results/phase3_implementation_summary.md`**: Phase 3 implementation details
+**For Phase 2, 3, and 3.5 details, see:**
+- **`CURRENT_STATE.md`**: **START HERE** - Current project state with Phase 3 validation results and Phase 3.5 plan
+- **`PHASE3_5_IMPLEMENTATION_PLAN.md`**: **START HERE FOR PHASE 3.5** - Implementation plan for fixing Phase 3 flaws
+- **`PHASE3_VALIDATION_PLAN.md`**: Phase 3 validation strategy and results
+- **`results/phase3_validation_report.md`**: Phase 3 validation results
+- **`results/phase3_validation_analysis.md`**: Phase 3 validation analysis
 - **`results/phase2_implementation_summary.md`**: Phase 2 implementation summary
 - **`USAGE_AWARE_MODEL_PLAN.md`**: Implementation plan (Phase 2 & 3 complete)
 
@@ -120,12 +122,17 @@ We have achieved the core goal of building a predictive model. The next phase is
 
 **Current Status:** Model accuracy is **62.22%** (improved from 59.4%) with full clock data coverage and usage-aware features. The model successfully predicts playoff archetypes using mechanistic stress vectors **at different usage levels**.
 
-**Next Step:** Phase 3 Validation Testing - All three fixes have been implemented:
-1. ✅ Usage-Dependent Feature Weighting (Fix role constraint failures) - IMPLEMENTED
-2. ✅ Context-Adjusted Efficiency (Fix context mirage failures) - IMPLEMENTED (requires data calculation)
-3. ✅ Fragility Gate (Fix softness failures) - IMPLEMENTED
+**Next Step:** Phase 3.5 Implementation - Phase 3 fixes were implemented but validation revealed fundamental flaws:
+1. ⚠️ Usage-Dependent Feature Weighting - Failed (linear scaling doesn't cross tree model boundaries)
+2. ⚠️ Context-Adjusted Efficiency - Cannot be applied (missing data)
+3. ⚠️ Fragility Gate - Failed (used ratio instead of absolute volume)
 
-See **`CURRENT_STATE.md`** for current status and **`PHASE3_VALIDATION_PLAN.md`** for validation strategy. Test suite results: 6/14 passed (42.9%), expected 10-11/14 (71-79%) after Phase 3 validation.
+**Phase 3.5 Fixes**:
+1. Switch fragility gate to `RS_RIM_APPETITE` (absolute volume) instead of `RIM_PRESSURE_RESILIENCE` (ratio)
+2. Implement projected volume features instead of linear scaling
+3. Calculate `RS_CONTEXT_ADJUSTMENT` data before re-validation
+
+See **`CURRENT_STATE.md`** for current status and **`PHASE3_5_IMPLEMENTATION_PLAN.md`** for implementation plan. Phase 3 validation: 6/14 passed (42.9%), expected 10-11/14 (71-79%) after Phase 3.5.
 
 ---
 

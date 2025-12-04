@@ -1,0 +1,71 @@
+{
+  "version": "5.0",
+  "model_type": "Usage-Aware XGBoost Classifier",
+  "training_date": "2025-12-03T14:13:22.427419",
+  "features": {
+    "total": 37,
+    "usage_aware": [
+      "LEVERAGE_USG_DELTA",
+      "QOC_USG_DELTA",
+      "ELITE_WEAK_USG_DELTA",
+      "USG_PCT",
+      "USG_x_CREATION",
+      "USG_x_LEVERAGE",
+      "USG_x_PRESSURE",
+      "USG_x_PHYSICALITY"
+    ],
+    "interaction_terms": [
+      "USG_x_CREATION",
+      "USG_x_LEVERAGE",
+      "USG_x_PRESSURE",
+      "USG_x_PHYSICALITY"
+    ],
+    "all_features": [
+      "CREATION_TAX",
+      "CREATION_VOLUME_RATIO",
+      "LEVERAGE_TS_DELTA",
+      "LEVERAGE_USG_DELTA",
+      "CLUTCH_MIN_TOTAL",
+      "EFG_PCT_0_DRIBBLE",
+      "EFG_ISO_WEIGHTED",
+      "QOC_TS_DELTA",
+      "QOC_USG_DELTA",
+      "AVG_OPPONENT_DCS",
+      "MEAN_OPPONENT_DCS",
+      "ELITE_WEAK_TS_DELTA",
+      "ELITE_WEAK_USG_DELTA",
+      "SHOT_DISTANCE_DELTA",
+      "SPATIAL_VARIANCE_DELTA",
+      "PO_EFG_BEYOND_RS_MEDIAN",
+      "RS_PRESSURE_APPETITE",
+      "RS_PRESSURE_RESILIENCE",
+      "PRESSURE_APPETITE_DELTA",
+      "PRESSURE_RESILIENCE_DELTA",
+      "RS_LATE_CLOCK_PRESSURE_APPETITE",
+      "RS_EARLY_CLOCK_PRESSURE_APPETITE",
+      "RS_LATE_CLOCK_PRESSURE_RESILIENCE",
+      "RS_EARLY_CLOCK_PRESSURE_RESILIENCE",
+      "LATE_CLOCK_PRESSURE_APPETITE_DELTA",
+      "EARLY_CLOCK_PRESSURE_APPETITE_DELTA",
+      "LATE_CLOCK_PRESSURE_RESILIENCE_DELTA",
+      "EARLY_CLOCK_PRESSURE_RESILIENCE_DELTA",
+      "FTr_RESILIENCE",
+      "RS_FTr",
+      "RS_RIM_APPETITE",
+      "RIM_PRESSURE_RESILIENCE",
+      "USG_PCT",
+      "USG_x_CREATION",
+      "USG_x_LEVERAGE",
+      "USG_x_PRESSURE",
+      "USG_x_PHYSICALITY"
+    ]
+  },
+  "hyperparameters": {
+    "n_estimators": 200,
+    "max_depth": 6,
+    "learning_rate": 0.05,
+    "importance_type": "gain"
+  },
+  "training_samples": 719,
+  "test_samples": 180
+}

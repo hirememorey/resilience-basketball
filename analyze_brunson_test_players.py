@@ -204,3 +204,4 @@ for _, row in df_2021.iterrows():
 
 print("\n" + "=" * 80)
 
+

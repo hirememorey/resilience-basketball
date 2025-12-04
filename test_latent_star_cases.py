@@ -1,12 +1,14 @@
 """
 Critical Case Studies for Latent Star Detection
 
-This script tests the model on 12 critical case studies that probe different
+This script tests the model on critical case studies that probe different
 failure modes and validate the model's ability to distinguish:
 - Good breakouts (should predict high star-level = Bulldozer)
 - Mediocre breakouts (should predict low star-level = Victim)
 - System players (should predict Sniper at high usage)
 - Context-dependent players (should account for teammate gravity)
+- Max contract mistakes (players paid like stars but not playoff stars)
+- Comparison cases (similar caliber players with different playoff outcomes)
 
 Based on first principles framework and user insights that breakouts typically
 become "Bulldozer" (not "King") when scaled up.
@@ -52,7 +54,7 @@ class LatentStarTestCase:
 
 
 def get_test_cases() -> List[LatentStarTestCase]:
-    """Define all 12 critical test cases."""
+    """Define all critical test cases for latent star detection validation."""
     
     test_cases = [
         # ========== Category 1: The "Latent Stars" (True Positives) ==========
@@ -183,6 +185,26 @@ def get_test_cases() -> List[LatentStarTestCase]:
             expected_star_level="High",  # >70%
             context="Elite shooter (43% 3PT), moderate usage (22%). Viewed as a 'Klay Thompson' type.",
             mechanism="Can the model distinguish a 'Shooter' from a 'Scorer'? Should see his Creation Vector (drives per game, pull-up efficiency) and predict that his efficiency is robust enough to scale."
+        ),
+        LatentStarTestCase(
+            name="Tobias Harris",
+            season="2016-17",
+            category="False Positive - Max Contract Mistake",
+            test_usage=0.28,
+            expected_outcome="Victim",  # Not a true star despite max contract
+            expected_star_level="Low",  # <30%
+            context="Received a max contract but was not a true playoff star. High usage (25-28%) but efficiency and impact don't scale to playoff success.",
+            mechanism="Tests if model can identify players who get paid like stars but don't have the Creation/Leverage/Physicality vectors to succeed in playoffs. Should detect lack of self-creation ability or physicality floor."
+        ),
+        LatentStarTestCase(
+            name="Domantas Sabonis",
+            season="2021-22",
+            category="False Positive - Comparison Case",
+            test_usage=0.28,
+            expected_outcome="Victim",  # Not a playoff star
+            expected_star_level="Low",  # <30%
+            context="Traded 1-1 for Tyrese Haliburton in February 2022. Time has shown Haliburton is a true playoff star while Sabonis has not been. Both were All-Stars, but Sabonis lacks playoff resilience.",
+            mechanism="Critical comparison test. Both players were similar caliber (All-Stars), but model should identify that Sabonis lacks the stress vectors (likely Physicality or Creation) needed for playoff success. Tests if model can distinguish regular season production from playoff capability."
         ),
     ]
     

@@ -1,0 +1,707 @@
+2025-12-04 09:56:22,245 - INFO - Model expects 38 features
+================================================================================
+CRITICAL CASE STUDIES TEST SUITE
+================================================================================
+
+Loading model and data...
+✓ Model loaded
+
+
+================================================================================
+TEST 1/12: Shai Gilgeous-Alexander (2018-19)
+Category: Latent Star (True Positive)
+================================================================================
+Context: Rookie year. 18.3% Usage. Role player behind Lou Williams and Danilo Gallinari.
+Breakout: Became an MVP candidate in OKC.
+Tests: Physicality Vector (Rim Pressure) at low volume
+Expected: King
+Test Usage: 30.0%
+
+Actual Usage: 18.2%
+
+Prediction at 30.0% Usage:
+  Predicted Archetype: Bulldozer
+  Star-Level Potential: 90.29%
+  Probabilities:
+    King: 15.73%
+    Bulldozer: 74.56%
+    Sniper: 1.40%
+    Victim: 8.31%
+
+✗ FAIL: Predicted 'Bulldozer' but expected 'King'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.0814
+    CREATION_VOLUME_RATIO: 0.7429
+    EFG_ISO_WEIGHTED: 0.5036
+
+  Leverage:
+    LEVERAGE_TS_DELTA: 0.0400
+    LEVERAGE_USG_DELTA: -0.0370
+    CLUTCH_MIN_TOTAL: 70.0000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: 0.5023
+    RS_PRESSURE_RESILIENCE: 0.5090
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: 0.4582
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: 0.8476
+
+  Physicality:
+    RS_FTr: 0.2759
+    FTr_RESILIENCE: 1.2083
+    RIM_PRESSURE_RESILIENCE: 0.8295
+    RS_RIM_APPETITE: 0.3617
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.1820
+    AGE: 20.0000
+
+================================================================================
+TEST 2/12: Victor Oladipo (2016-17)
+Category: Latent Star (True Positive)
+================================================================================
+Context: Russell Westbrook's MVP usage-hole year. Oladipo was relegated to a spot-up shooter (21% Usage).
+Breakout: Traded to Indiana (2017-18), immediately became All-NBA (30% Usage).
+Tests: Creation Vector through role constraints
+Expected: King
+Test Usage: 30.0%
+
+Actual Usage: 21.0%
+
+Prediction at 30.0% Usage:
+  Predicted Archetype: Victim
+  Star-Level Potential: 39.56%
+  Probabilities:
+    King: 3.71%
+    Bulldozer: 35.85%
+    Sniper: 0.31%
+    Victim: 60.12%
+
+✗ FAIL: Predicted 'Victim' but expected 'King'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.1426
+    CREATION_VOLUME_RATIO: 0.4089
+    EFG_ISO_WEIGHTED: 0.4254
+
+  Leverage:
+    LEVERAGE_TS_DELTA: 0.1430
+    LEVERAGE_USG_DELTA: -0.0680
+    CLUTCH_MIN_TOTAL: 125.8000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: 0.4623
+    RS_PRESSURE_RESILIENCE: 0.4610
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: 0.4842
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: 0.7073
+
+  Physicality:
+    RS_FTr: 0.1655
+    FTr_RESILIENCE: 0.5944
+    RIM_PRESSURE_RESILIENCE: 0.8488
+    RS_RIM_APPETITE: 0.2897
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.2100
+    AGE: 25.0000
+
+================================================================================
+TEST 3/12: Jalen Brunson (2020-21)
+Category: Latent Star (True Positive)
+================================================================================
+Context: 19.6% Usage. Backup to Luka Dončić.
+Breakout: NY Knicks superstar.
+Tests: Gold Standard validation - Creation + Leverage
+Expected: King
+Test Usage: 30.0%
+
+Actual Usage: 19.6%
+
+Prediction at 30.0% Usage:
+  Predicted Archetype: Bulldozer
+  Star-Level Potential: 78.05%
+  Probabilities:
+    King: 28.95%
+    Bulldozer: 49.10%
+    Sniper: 0.33%
+    Victim: 21.62%
+
+✗ FAIL: Predicted 'Bulldozer' but expected 'King'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.0796
+    CREATION_VOLUME_RATIO: 0.6920
+    EFG_ISO_WEIGHTED: 0.5764
+
+  Leverage:
+    LEVERAGE_TS_DELTA: -0.0600
+    LEVERAGE_USG_DELTA: 0.0290
+    CLUTCH_MIN_TOTAL: 45.6000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: 0.4913
+    RS_PRESSURE_RESILIENCE: 0.6610
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: 0.3975
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: 0.6818
+
+  Physicality:
+    RS_FTr: 0.2391
+    FTr_RESILIENCE: 1.2355
+    RIM_PRESSURE_RESILIENCE: 1.0364
+    RS_RIM_APPETITE: 0.2632
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.1960
+    AGE: 24.0000
+
+================================================================================
+TEST 4/12: Jordan Poole (2021-22)
+Category: Mirage Breakout (False Positive)
+================================================================================
+Context: 26% Usage, 60% TS. Looked like the next Curry.
+Breakout: Traded to Wizards (2023-24). Usage stayed ~27%, but efficiency cratered (51% TS), became net negative.
+Tests: Pressure Vector - distinguishing assisted vs self-created shots
+Expected: Bulldozer or Victim
+Test Usage: 30.0%
+
+Actual Usage: 25.2%
+
+Prediction at 30.0% Usage:
+  Predicted Archetype: Bulldozer
+  Star-Level Potential: 87.09%
+  Probabilities:
+    King: 4.30%
+    Bulldozer: 82.78%
+    Sniper: 0.59%
+    Victim: 12.33%
+
+✓ PASS: Predicted 'Bulldozer' matches expected 'Bulldozer or Victim'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.0472
+    CREATION_VOLUME_RATIO: 0.4806
+    EFG_ISO_WEIGHTED: 0.5368
+
+  Leverage:
+    LEVERAGE_TS_DELTA: -0.0620
+    LEVERAGE_USG_DELTA: -0.0010
+    CLUTCH_MIN_TOTAL: 75.9000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: 0.3891
+    RS_PRESSURE_RESILIENCE: 0.4230
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: 0.3018
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: 0.7467
+
+  Physicality:
+    RS_FTr: 0.2518
+    FTr_RESILIENCE: 1.1101
+    RIM_PRESSURE_RESILIENCE: 0.8996
+    RS_RIM_APPETITE: 0.2013
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.2520
+    AGE: 23.0000
+
+================================================================================
+TEST 5/12: Talen Horton-Tucker (2020-21)
+Category: Mirage Breakout (False Positive)
+================================================================================
+Context: 18% Usage. The 'Baby LeBron' hype. Elite rim pressure numbers on low volume.
+Breakout: Never developed efficiency when given more responsibility in Utah.
+Tests: Creation Efficiency vs Physicality (empty calories)
+Expected: Bulldozer or Victim
+Test Usage: 25.0%
+
+Actual Usage: 21.0%
+
+Prediction at 25.0% Usage:
+  Predicted Archetype: Victim
+  Star-Level Potential: 16.79%
+  Probabilities:
+    King: 8.39%
+    Bulldozer: 8.39%
+    Sniper: 0.59%
+    Victim: 82.62%
+
+✓ PASS: Predicted 'Victim' matches expected 'Bulldozer or Victim'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: 0.0805
+    CREATION_VOLUME_RATIO: 0.7206
+    EFG_ISO_WEIGHTED: 0.5295
+
+  Leverage:
+    LEVERAGE_TS_DELTA: 0.2250
+    LEVERAGE_USG_DELTA: 0.0650
+    CLUTCH_MIN_TOTAL: 23.1000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: MISSING
+    RS_PRESSURE_RESILIENCE: MISSING
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: MISSING
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: MISSING
+
+  Physicality:
+    RS_FTr: MISSING
+    FTr_RESILIENCE: MISSING
+    RIM_PRESSURE_RESILIENCE: MISSING
+    RS_RIM_APPETITE: MISSING
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.2100
+    AGE: 20.0000
+
+⚠ Confidence Flags: Missing RS_PRESSURE_APPETITE, Missing RS_LATE_CLOCK_PRESSURE_RESILIENCE
+
+================================================================================
+TEST 6/12: Tyus Jones (2021-22)
+Category: System Player (Ceiling Test)
+================================================================================
+Context: The 'God of Assist-to-Turnover Ratio.' Elite efficiency metrics.
+Breakout: A fantastic 'Sniper' (Resilient Role Player), but physically incapable of being a 'King' due to size/athleticism.
+Tests: Plasticity vs Creation/Physicality
+Expected: Sniper or Victim
+Test Usage: 25.0%
+
+Actual Usage: 16.4%
+
+Prediction at 25.0% Usage:
+  Predicted Archetype: Victim
+  Star-Level Potential: 6.88%
+  Probabilities:
+    King: 4.44%
+    Bulldozer: 2.43%
+    Sniper: 1.39%
+    Victim: 91.74%
+
+✓ PASS: Predicted 'Victim' matches expected 'Sniper or Victim'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.1738
+    CREATION_VOLUME_RATIO: 0.5922
+    EFG_ISO_WEIGHTED: 0.4362
+
+  Leverage:
+    LEVERAGE_TS_DELTA: 0.1980
+    LEVERAGE_USG_DELTA: -0.0570
+    CLUTCH_MIN_TOTAL: 39.0000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: 0.4663
+    RS_PRESSURE_RESILIENCE: 0.3850
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: 0.4943
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: 0.5143
+
+  Physicality:
+    RS_FTr: 0.1184
+    FTr_RESILIENCE: 1.2795
+    RIM_PRESSURE_RESILIENCE: 0.8081
+    RS_RIM_APPETITE: 0.1250
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.1640
+    AGE: 26.0000
+
+================================================================================
+TEST 7/12: Mikal Bridges (2021-22)
+Category: Usage Shock
+================================================================================
+Context: Elite 3-and-D (15% Usage).
+Breakout: 2024: Primary Option (27% Usage). Scaled Volume successfully ('Bulldozer/King' border), but efficiency dipped significantly.
+Tests: Creation Vector detection in 3-and-D role
+Expected: Bulldozer or King
+Test Usage: 28.0%
+
+Actual Usage: 14.9%
+
+Prediction at 28.0% Usage:
+  Predicted Archetype: Bulldozer
+  Star-Level Potential: 57.11%
+  Probabilities:
+    King: 6.68%
+    Bulldozer: 50.42%
+    Sniper: 0.34%
+    Victim: 42.56%
+
+✓ PASS: Predicted 'Bulldozer' matches expected 'Bulldozer or King'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.0514
+    CREATION_VOLUME_RATIO: 0.1991
+    EFG_ISO_WEIGHTED: 0.5626
+
+  Leverage:
+    LEVERAGE_TS_DELTA: 0.0790
+    LEVERAGE_USG_DELTA: -0.0180
+    CLUTCH_MIN_TOTAL: 117.0000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: 0.4084
+    RS_PRESSURE_RESILIENCE: 0.5560
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: 0.4341
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: 0.7282
+
+  Physicality:
+    RS_FTr: 0.1810
+    FTr_RESILIENCE: 1.2014
+    RIM_PRESSURE_RESILIENCE: 1.3132
+    RS_RIM_APPETITE: 0.2704
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.1490
+    AGE: 25.0000
+
+================================================================================
+TEST 8/12: Lauri Markkanen (2021-22)
+Category: Wrong Role Test
+================================================================================
+Context: Played as a 'Tower' Small Forward alongside Mobley/Allen. Usage 19.4%, primarily a spot-up threat.
+Breakout: Traded to Utah (2022-23), usage spiked to 26%, became an All-Star 'King.'
+Tests: Creation Vector hidden in catch-and-shoot role
+Expected: King or High-End Bulldozer
+Test Usage: 26.0%
+
+Actual Usage: 19.2%
+
+Prediction at 26.0% Usage:
+  Predicted Archetype: Victim
+  Star-Level Potential: 10.72%
+  Probabilities:
+    King: 2.37%
+    Bulldozer: 8.35%
+    Sniper: 0.51%
+    Victim: 88.77%
+
+✗ FAIL: Predicted 'Victim' but expected 'King or High-End Bulldozer'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.1319
+    CREATION_VOLUME_RATIO: 0.1123
+    EFG_ISO_WEIGHTED: 0.4461
+
+  Leverage:
+    LEVERAGE_TS_DELTA: 0.1250
+    LEVERAGE_USG_DELTA: -0.0100
+    CLUTCH_MIN_TOTAL: 93.0000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: MISSING
+    RS_PRESSURE_RESILIENCE: MISSING
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: MISSING
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: MISSING
+
+  Physicality:
+    RS_FTr: MISSING
+    FTr_RESILIENCE: MISSING
+    RIM_PRESSURE_RESILIENCE: MISSING
+    RS_RIM_APPETITE: MISSING
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.1920
+    AGE: 25.0000
+
+⚠ Confidence Flags: Missing RS_PRESSURE_APPETITE, Missing RS_LATE_CLOCK_PRESSURE_RESILIENCE
+
+================================================================================
+TEST 9/12: Christian Wood (2020-21)
+Category: Empty Calories Test
+================================================================================
+Context: Put up massive stats (21 PPG, 26% Usage) on a tanking team. TS% was elite (59%).
+Breakout: Has bounced around the league as a minimum-contract player because he doesn't impact winning.
+Tests: Leverage Vector (Clutch) and Pressure Vector (garbage time)
+Expected: Bulldozer or Victim
+Test Usage: 26.0%
+
+Actual Usage: 25.5%
+
+Prediction at 26.0% Usage:
+  Predicted Archetype: Victim
+  Star-Level Potential: 13.73%
+  Probabilities:
+    King: 1.48%
+    Bulldozer: 12.26%
+    Sniper: 0.28%
+    Victim: 85.99%
+
+✓ PASS: Predicted 'Victim' matches expected 'Bulldozer or Victim'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.1305
+    CREATION_VOLUME_RATIO: 0.1889
+    EFG_ISO_WEIGHTED: 0.4935
+
+  Leverage:
+    LEVERAGE_TS_DELTA: -0.0590
+    LEVERAGE_USG_DELTA: -0.0310
+    CLUTCH_MIN_TOTAL: 59.5000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: MISSING
+    RS_PRESSURE_RESILIENCE: MISSING
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: MISSING
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: MISSING
+
+  Physicality:
+    RS_FTr: MISSING
+    FTr_RESILIENCE: MISSING
+    RIM_PRESSURE_RESILIENCE: MISSING
+    RS_RIM_APPETITE: MISSING
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.2550
+    AGE: 25.0000
+
+⚠ Confidence Flags: Missing RS_PRESSURE_APPETITE, Missing RS_LATE_CLOCK_PRESSURE_RESILIENCE
+
+================================================================================
+TEST 10/12: Jamal Murray (2018-19)
+Category: Playoff Riser Test
+================================================================================
+Context: A solid but inconsistent RS player (18 PPG, 53% TS). Never an All-Star.
+Breakout: One of the greatest playoff risers in history (The Bubble, 2023 Title Run).
+Tests: Leverage Vector over Consistency
+Expected: King
+Test Usage: 30.0%
+
+Actual Usage: 24.1%
+
+Prediction at 30.0% Usage:
+  Predicted Archetype: Bulldozer
+  Star-Level Potential: 72.39%
+  Probabilities:
+    King: 17.73%
+    Bulldozer: 54.66%
+    Sniper: 0.24%
+    Victim: 27.37%
+
+✗ FAIL: Predicted 'Bulldozer' but expected 'King'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.1866
+    CREATION_VOLUME_RATIO: 0.6308
+    EFG_ISO_WEIGHTED: 0.4334
+
+  Leverage:
+    LEVERAGE_TS_DELTA: -0.0620
+    LEVERAGE_USG_DELTA: 0.0300
+    CLUTCH_MIN_TOTAL: 128.0000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: 0.3881
+    RS_PRESSURE_RESILIENCE: 0.3600
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: 0.3870
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: 0.4272
+
+  Physicality:
+    RS_FTr: 0.1923
+    FTr_RESILIENCE: 1.2794
+    RIM_PRESSURE_RESILIENCE: 0.9829
+    RS_RIM_APPETITE: 0.2140
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.2410
+    AGE: 22.0000
+
+================================================================================
+TEST 11/12: D'Angelo Russell (2018-19)
+Category: Fool's Gold Test
+================================================================================
+Context: An All-Star season. Led team to playoffs. Usage 31%.
+Breakout: Consistently targeted and played off the floor in the playoffs (vs. PHI '19, vs. DEN '23). A classic 'Regular Season Floor Raiser' who cannot survive the postseason.
+Tests: Physicality fragility
+Expected: Victim
+Test Usage: 31.0%
+
+Actual Usage: 31.1%
+
+Prediction at 31.0% Usage:
+  Predicted Archetype: Bulldozer
+  Star-Level Potential: 66.03%
+  Probabilities:
+    King: 20.29%
+    Bulldozer: 45.74%
+    Sniper: 0.52%
+    Victim: 33.45%
+
+✗ FAIL: Predicted 'Bulldozer' but expected 'Victim'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.1013
+    CREATION_VOLUME_RATIO: 0.7521
+    EFG_ISO_WEIGHTED: 0.4817
+
+  Leverage:
+    LEVERAGE_TS_DELTA: 0.0220
+    LEVERAGE_USG_DELTA: 0.0340
+    CLUTCH_MIN_TOTAL: 129.6000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: 0.4752
+    RS_PRESSURE_RESILIENCE: 0.4130
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: 0.4871
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: 0.7678
+
+  Physicality:
+    RS_FTr: 0.1337
+    FTr_RESILIENCE: 0.9441
+    RIM_PRESSURE_RESILIENCE: 1.2223
+    RS_RIM_APPETITE: 0.1589
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.3110
+    AGE: 23.0000
+
+================================================================================
+TEST 12/12: Desmond Bane (2021-22)
+Category: Secondary Creator Test
+================================================================================
+Context: Elite shooter (43% 3PT), moderate usage (22%). Viewed as a 'Klay Thompson' type.
+Breakout: Developed into a legitimate secondary ball-handler/creator (26% Usage in '24).
+Tests: Shooter vs Scorer distinction
+Expected: Bulldozer or King (Not Sniper)
+Test Usage: 27.0%
+
+Actual Usage: 22.6%
+
+Prediction at 27.0% Usage:
+  Predicted Archetype: Victim
+  Star-Level Potential: 50.44%
+  Probabilities:
+    King: 3.69%
+    Bulldozer: 46.75%
+    Sniper: 0.19%
+    Victim: 49.37%
+
+✗ FAIL: Predicted 'Victim' but expected 'Bulldozer or King (Not Sniper)'
+
+Stress Vectors:
+
+  Creation:
+    CREATION_TAX: -0.1304
+    CREATION_VOLUME_RATIO: 0.3874
+    EFG_ISO_WEIGHTED: 0.5286
+
+  Leverage:
+    LEVERAGE_TS_DELTA: -0.0160
+    LEVERAGE_USG_DELTA: -0.0340
+    CLUTCH_MIN_TOTAL: 118.9000
+
+  Pressure:
+    RS_PRESSURE_APPETITE: 0.4369
+    RS_PRESSURE_RESILIENCE: 0.4440
+    RS_LATE_CLOCK_PRESSURE_RESILIENCE: 0.3713
+    RS_EARLY_CLOCK_PRESSURE_APPETITE: 0.6954
+
+  Physicality:
+    RS_FTr: 0.1379
+    FTr_RESILIENCE: 1.5959
+    RIM_PRESSURE_RESILIENCE: 0.8944
+    RS_RIM_APPETITE: 0.1899
+
+  Plasticity:
+    SHOT_DISTANCE_DELTA: MISSING
+    SPATIAL_VARIANCE_DELTA: MISSING
+
+  Context:
+    USG_PCT: 0.2260
+    AGE: 24.0000
+
+
+================================================================================
+SUMMARY REPORT
+================================================================================
+
+Total Tests: 12
+Passed: 5 (41.7%)
+Failed: 7 (58.3%)
+No Data: 0 (0.0%)
+
+Results by Category:
+  Latent Star (True Positive): 0/3 passed (0.0%)
+  Mirage Breakout (False Positive): 2/2 passed (100.0%)
+  System Player (Ceiling Test): 1/1 passed (100.0%)
+  Usage Shock: 1/1 passed (100.0%)
+  Wrong Role Test: 0/1 passed (0.0%)
+  Empty Calories Test: 1/1 passed (100.0%)
+  Playoff Riser Test: 0/1 passed (0.0%)
+  Fool's Gold Test: 0/1 passed (0.0%)
+  Secondary Creator Test: 0/1 passed (0.0%)
+
+Failed Tests:
+  Shai Gilgeous-Alexander (2018-19): Expected 'King', Got 'Bulldozer'
+  Victor Oladipo (2016-17): Expected 'King', Got 'Victim'
+  Jalen Brunson (2020-21): Expected 'King', Got 'Bulldozer'
+  Lauri Markkanen (2021-22): Expected 'King or High-End Bulldozer', Got 'Victim'
+  Jamal Murray (2018-19): Expected 'King', Got 'Bulldozer'
+  D'Angelo Russell (2018-19): Expected 'Victim', Got 'Bulldozer'
+  Desmond Bane (2021-22): Expected 'Bulldozer or King (Not Sniper)', Got 'Victim'
+
+✓ Detailed results saved to: results/critical_cases_test_results.csv
+✓ Stress vector details saved to: results/critical_cases_stress_vectors.json

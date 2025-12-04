@@ -224,36 +224,44 @@ normalized = (value - actual_min) / (actual_max - actual_min)
 
 ---
 
-## 11. Opportunity vs. Ability (Role Constraint Failure) 🎯 NEW
+## 11. Opportunity vs. Ability (Role Constraint Failure) - The Tree Model Trap 🎯 CRITICAL
 
 **The Problem**: Model confuses opportunity with ability. When predicting at high usage (>25%), it overweights `CREATION_VOLUME_RATIO` (how often they create) and underweights `CREATION_TAX` and `EFG_ISO_WEIGHTED` (efficiency on limited opportunities).
 
 **The Insight**: Talent is scalable; Role is not. When predicting for high usage, you must assume the volume will come. The only variable that matters is the efficiency on the limited attempts they currently get.
 
-**The Fix**: Implement "Latent Star Toggle" - dynamically re-weight features based on target usage level:
-- When `target_usage > 25%`: Suppress `CREATION_VOLUME_RATIO`, amplify `CREATION_TAX` and `EFG_ISO_WEIGHTED`
-- Logic: "If Oladipo is 90th percentile efficiency on his 2 isolations/game, assume he stays elite at 10"
+**The Original Fix (FAILED)**: Linear scaling of features (multiply CREATION_TAX by 2.0, etc.).
+
+**Why It Failed**: **The Tree Model Trap** - XGBoost is tree-based. It makes decisions based on splits (e.g., "If Creation > 0.5, go Left"). Simply multiplying a feature doesn't necessarily cross decision boundaries. If the split is at 2.0 and you scale 0.8 to 1.6, you're still in the same bucket.
+
+**The Correct Fix**: Create projected volume features that simulate usage scaling:
+- `PROJECTED_CREATION_VOLUME = Current_Creation_Vol * (Target_Usage / Current_Usage)`
+- Feed projected volume + actual efficiency to model
+- This forces model to evaluate "Latent Star" profile directly
 
 **Example**:
-- ❌ **Wrong**: Markkanen in Cleveland (19.4% usage, catch-and-shoot role) → Model sees low `CREATION_VOLUME_RATIO` → Predicts "Victim"
-- ✅ **Right**: Markkanen at 26% usage → Model should see high `CREATION_TAX` (efficiency on limited opportunities) → Predicts "Bulldozer"
+- ❌ **Wrong**: Oladipo's CREATION_TAX = 0.8, scale to 1.6 → Still below split at 2.0 → No change (39.6% → 39.5%)
+- ✅ **Right**: Oladipo's projected CREATION_VOLUME = 0.15 * (30/21) = 0.214 → Crosses split → High star-level (≥70%)
 
 **Implementation**:
 ```python
-# WRONG: Same feature weights regardless of target usage
-features = prepare_features(player_data, usage_level=0.30)
-prediction = model.predict(features)  # Uses CREATION_VOLUME_RATIO heavily
+# WRONG: Linear scaling (doesn't cross decision boundaries)
+features['CREATION_TAX'] *= 2.0  # Scale from 0.8 to 1.6
+prediction = model.predict(features)  # Still in same bucket
 
-# RIGHT: Re-weight features based on target usage
-if target_usage > 0.25:
-    # Suppress volume ratio, amplify efficiency metrics
-    features['CREATION_VOLUME_RATIO'] *= 0.1  # Suppress
-    features['CREATION_TAX'] *= 2.0  # Amplify
-    features['EFG_ISO_WEIGHTED'] *= 2.0  # Amplify
-prediction = model.predict(features)
+# RIGHT: Project volume features (simulates usage scaling)
+current_usage = player_data['USG_PCT']
+projection_factor = target_usage / current_usage
+projected_creation_vol = player_data['CREATION_VOLUME_RATIO'] * projection_factor
+# Feed projected volume + actual efficiency
+features['PROJECTED_CREATION_VOLUME'] = projected_creation_vol
+features['CREATION_TAX'] = player_data['CREATION_TAX']  # Keep efficiency as-is
+prediction = model.predict(features)  # Now crosses decision boundary
 ```
 
 **Test Cases**: Oladipo (2016-17), Markkanen (2021-22), Bane (2021-22), Bridges (2021-22)
+
+**Key Principle**: Tree models make decisions based on splits. Simulate the result, don't just weight the input.
 
 ---
 
@@ -289,31 +297,39 @@ if context_adjustment > 0.05:  # Significantly outperforming
 
 ---
 
-## 13. Physicality Floor (Fragility Gate) 🎯 NEW
+## 13. Physicality Floor (Fragility Gate) - The Ratio Trap 🎯 CRITICAL
 
 **The Problem**: Model underestimates "Physicality Floor" - doesn't cap players with zero rim pressure (e.g., Russell).
 
 **The Insight**: The Whistle Disappears in May. In the playoffs, jump shooting variance kills you. The only stabilizer is Rim Pressure and Free Throws. If you cannot get to the rim, you cannot be a King.
 
-**The Fix**: Implement "Fragility Gate":
-- **Soft Gate**: Heavily weight `RIM_PRESSURE_RESILIENCE` (increase from current ~5.3%)
-- **Hard Gate**: If `RIM_PRESSURE_RESILIENCE` is bottom 20th percentile, cap star-level potential at 30% (Sniper ceiling)
-- Logic: "No matter how good your jumper is, if you can't touch the paint, you are capped"
+**The Original Fix (FAILED)**: Used `RIM_PRESSURE_RESILIENCE` (ratio) to detect physicality floor.
+
+**Why It Failed**: **The Ratio Trap** - Resilience is a rate of change. Physicality is a state of being. A ratio cannot detect a floor. If Russell takes 2 rim shots in RS and 2.4 in PO, his resilience is 1.22, but he's still fundamentally a jump shooter (zero pressure).
+
+**The Correct Fix**: Use `RS_RIM_APPETITE` (absolute frequency), not `RIM_PRESSURE_RESILIENCE` (ratio).
 
 **Example**:
-- ❌ **Wrong**: Russell (2018-19) has elite shooting → Model predicts 66.03% star-level
-- ✅ **Right**: Russell has zero rim pressure → Model should cap at Sniper (30% star-level max)
+- ❌ **Wrong**: Russell's `RIM_PRESSURE_RESILIENCE` = 1.22 (above threshold) → Gate doesn't apply → 78.6% star-level
+- ✅ **Right**: Russell's `RS_RIM_APPETITE` = 0.1589 (below threshold 0.1746) → Gate applies → 30% star-level max
 
 **Implementation**:
 ```python
-# Hard gate: Cap star-level if rim pressure is too low
-rim_pressure_percentile = calculate_percentile(player_data['RIM_PRESSURE_RESILIENCE'])
-if rim_pressure_percentile < 0.20:  # Bottom 20th percentile
+# WRONG: Using ratio (measures change, not state)
+rim_pressure_resilience = player_data['RIM_PRESSURE_RESILIENCE']  # Ratio
+if rim_pressure_resilience <= threshold:
+    cap_star_level()  # Doesn't work - Russell's ratio is high
+
+# RIGHT: Using absolute frequency (measures state)
+rs_rim_appetite = player_data['RS_RIM_APPETITE']  # Absolute frequency
+if rs_rim_appetite <= threshold:  # Bottom 20th percentile
     star_level_potential = min(star_level_potential, 0.30)  # Cap at Sniper
     max_archetype = "Sniper"  # Can't be King or Bulldozer
 ```
 
-**Test Case**: Russell (2018-19) - False positive (66.03% star-level, expected <30%)
+**Test Case**: Russell (2018-19) - False positive (78.6% star-level, expected <30%)
+
+**Key Principle**: Ratios measure change, not state. Use absolute metrics for floors.
 
 ---
 
@@ -329,9 +345,11 @@ When implementing new features, ask:
 - [ ] Have I validated the formula on test cases before building?
 - [ ] Do I understand the actual data distribution?
 - [ ] Am I accounting for usage as a variable (not fixed)?
-- [ ] When predicting at high usage, am I weighting efficiency over volume? (Fix #1)
-- [ ] Am I accounting for context dependency? (Fix #2)
-- [ ] Am I capping players with zero rim pressure? (Fix #3)
+- [ ] When predicting at high usage, am I projecting volume features (not just scaling)? (Fix #1 - Phase 3.5)
+- [ ] Am I accounting for context dependency? (Fix #2 - requires data calculation)
+- [ ] Am I using absolute volume metrics for floors (not ratios)? (Fix #3 - Phase 3.5)
+- [ ] Am I avoiding the ratio trap? (Ratios measure change, not state)
+- [ ] Am I avoiding the tree model trap? (Linear scaling doesn't cross decision boundaries)
 
 ---
 

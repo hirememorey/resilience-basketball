@@ -235,22 +235,33 @@ result = predictor.predict_archetype_at_usage(
 
 ---
 
-## Next Steps After Validation
+## Validation Results
 
-1. **If Validation Successful**:
-   - Document results
-   - Update model if needed
-   - Proceed with Fix #4 (Missing Data Pipeline)
+**Status**: ✅ **VALIDATION COMPLETE** (December 2025)
 
-2. **If Validation Partially Successful**:
-   - Analyze which fixes work and which don't
-   - Refine implementation based on results
-   - Re-test
+**Results**: 6/14 passed (42.9%) - Same as baseline. No improvement.
 
-3. **If Validation Unsuccessful**:
-   - Investigate root causes
-   - Review implementation against expected behavior
-   - Consider alternative approaches
+**Key Findings**:
+1. **Fix #1 Failed**: Linear scaling doesn't cross tree model decision boundaries
+2. **Fix #2 Cannot Be Applied**: Missing `RS_CONTEXT_ADJUSTMENT` data
+3. **Fix #3 Failed**: Used ratio metric instead of absolute volume metric
+
+**Detailed Results**: See `results/phase3_validation_report.md` and `results/phase3_validation_analysis.md`
+
+## Next Steps: Phase 3.5 Implementation
+
+**Status**: 🎯 **READY FOR IMPLEMENTATION** (December 2025)
+
+Based on first principles analysis, Phase 3.5 addresses the fundamental flaws identified in validation.
+
+**See**: `PHASE3_5_IMPLEMENTATION_PLAN.md` for complete implementation plan.
+
+**Key Fixes**:
+1. Switch fragility gate to `RS_RIM_APPETITE` (absolute volume) instead of `RIM_PRESSURE_RESILIENCE` (ratio)
+2. Implement projected volume features instead of linear scaling
+3. Calculate `RS_CONTEXT_ADJUSTMENT` data before re-validation
+
+**Expected After Phase 3.5**: 10-11/14 passed (71-79%)
 
 ---
 
