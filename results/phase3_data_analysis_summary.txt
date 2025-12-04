@@ -1,0 +1,12 @@
+Phase 3 Data Analysis Summary
+================================================================================
+
+Total player-seasons: 5,312
+Test cases: 14
+Pass rate: 6/14 (42.9%)
+
+Missing Data:
+  RS_PRESSURE_APPETITE: 690 (13.0%)
+  RS_PRESSURE_RESILIENCE: 690 (13.0%)
+  RS_LATE_CLOCK_PRESSURE_APPETITE: 699 (13.2%)
+  RS_LATE_CLOCK_PRESSURE_RESILIENCE: 1,593 (30.0%)

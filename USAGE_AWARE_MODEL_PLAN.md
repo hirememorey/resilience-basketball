@@ -376,39 +376,50 @@ See `KEY_INSIGHTS.md` for detailed lessons learned. Key principles:
 
 ---
 
-## 10. Next Steps After Implementation (Phase 3: Model Refinement)
+## ✅ Phase 3 Implementation (Complete - December 2025)
 
-Based on test suite results, three critical fixes identified:
+**Status**: ✅ **IMPLEMENTATION COMPLETE** - All three fixes implemented in `predict_conditional_archetype.py`
 
-### Fix #1: Usage-Dependent Feature Weighting (Priority: High)
+See `results/phase3_implementation_summary.md` for complete implementation details.
+
+## 10. Next Steps: Phase 3 Validation Testing
+
+**Status**: 🎯 **READY FOR VALIDATION** (December 2025)
+
+All Phase 3 fixes have been implemented. Next step is validation testing to measure improvement.
+
+Based on test suite results, three critical fixes were identified and implemented:
+
+### ✅ Fix #1: Usage-Dependent Feature Weighting (IMPLEMENTED)
 
 **Problem**: Model confuses opportunity with ability. When predicting at high usage (>25%), it overweights `CREATION_VOLUME_RATIO` and underweights `CREATION_TAX` and `EFG_ISO_WEIGHTED`.
 
-**Solution**: Implement "Latent Star Toggle" - dynamically re-weight features based on target usage level.
+**Solution**: ✅ **IMPLEMENTED** - Gradual scaling based on target usage level (20% → 32% usage)
 
 **Expected Impact**: Fixes Oladipo, Markkanen, Bane, Bridges cases
 
-**Implementation**: Modify `predict_conditional_archetype.py` to re-weight features based on target usage level
+**Implementation**: ✅ Complete in `predict_conditional_archetype.py` - `prepare_features()` method
 
-### Fix #2: Context-Adjusted Efficiency (Priority: Medium)
+### ✅ Fix #2: Context-Adjusted Efficiency (IMPLEMENTED - Requires Data)
 
 **Problem**: Model doesn't account for "Difficulty of Life" - overvalues context-dependent efficiency.
 
-**Solution**: Add "System Merchant" penalty - calculate `ACTUAL_EFG - EXPECTED_EFG` based on shot openness.
+**Solution**: ✅ **IMPLEMENTED** - Usage-scaled system merchant penalty (stronger at low usage, weaker at high usage)
 
 **Expected Impact**: Fixes Poole case
 
-**Implementation**: Use existing `leaguedashplayerptshot` data to calculate context adjustment
+**Implementation**: ✅ Complete in `predict_conditional_archetype.py` - `prepare_features()` method
+**Note**: `RS_CONTEXT_ADJUSTMENT` needs to be calculated from shot quality data (not yet in dataset)
 
-### Fix #3: Fragility Gate (Priority: High)
+### ✅ Fix #3: Fragility Gate (IMPLEMENTED)
 
 **Problem**: Model underestimates "Physicality Floor" - doesn't cap players with zero rim pressure.
 
-**Solution**: Implement "Fragility Gate" - if `RIM_PRESSURE_RESILIENCE` is bottom 20th percentile, cap star-level at 30% (Sniper ceiling).
+**Solution**: ✅ **IMPLEMENTED** - Hard gate based on distribution (bottom 20th percentile threshold: 0.7555)
 
 **Expected Impact**: Fixes Russell case
 
-**Implementation**: Add fragility gate to `predict_conditional_archetype.py`
+**Implementation**: ✅ Complete in `predict_conditional_archetype.py` - `predict_archetype_at_usage()` method
 
 ### Fix #4: Missing Data Pipeline (Priority: High)
 
@@ -439,7 +450,7 @@ See `CURRENT_STATE.md` for detailed implementation plan.
 
 ---
 
-**Status**: ✅ Phase 2 complete. Model is now usage-aware and can predict at different usage levels. Ready for Phase 3 (refinement and optimization).
+**Status**: ✅ Phase 2 complete. Model is now usage-aware and can predict at different usage levels. ✅ Phase 3 implementation complete. Ready for validation testing.
 
 ---
 

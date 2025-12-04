@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
 **Date**: December 2025  
-**Status**: Phase 2 Complete - Usage-Aware Model Implemented ✅
+**Status**: Phase 3 Implementation Complete - Ready for Validation Testing ✅
 
 ---
 
@@ -202,9 +202,9 @@ The model now predicts performance at **different usage levels**, not just curre
 
 **Status**: ✅ **COMPLETE** (December 2025)
 
-**Test Suite**: 12 critical case studies testing latent star detection across different failure modes
+**Test Suite**: 14 critical case studies testing latent star detection across different failure modes
 
-**Results**: 6/12 passed (50.0% pass rate)
+**Results**: 6/14 passed (42.9% pass rate)
 
 ### Test Results Summary
 
@@ -236,52 +236,53 @@ The model now predicts performance at **different usage levels**, not just curre
 
 ---
 
-## Next Steps (Phase 3: Model Refinement)
+## ✅ Phase 3 Implementation (Complete - Ready for Validation)
 
-Based on test suite results, three critical fixes identified:
+**Status**: ✅ **IMPLEMENTATION COMPLETE** (December 2025)
 
-### Fix #1: Usage-Dependent Feature Weighting (Priority: High)
+All three Phase 3 fixes have been implemented in `predict_conditional_archetype.py`. Ready for validation testing.
+
+### ✅ Fix #1: Usage-Dependent Feature Weighting (IMPLEMENTED)
 
 **Problem**: Model confuses opportunity with ability. When predicting at high usage (>25%), it overweights `CREATION_VOLUME_RATIO` (how often they create) and underweights `CREATION_TAX` and `EFG_ISO_WEIGHTED` (efficiency on limited opportunities).
 
-**Solution**: Implement "Latent Star Toggle" - dynamically re-weight features based on target usage level:
-- When `target_usage > 25%`: Suppress `CREATION_VOLUME_RATIO`, amplify `CREATION_TAX` and `EFG_ISO_WEIGHTED`
-- Logic: "If Oladipo is 90th percentile efficiency on his 2 isolations/game, assume he stays elite at 10"
+**Solution**: ✅ **IMPLEMENTED** - Gradual scaling based on target usage level:
+- **At 20% usage**: No scaling (normal weights)
+- **At 25% usage**: Moderate suppression of volume, moderate amplification of efficiency
+- **At 32%+ usage**: Strong suppression (90%) of `CREATION_VOLUME_RATIO`, strong amplification (100%) of `CREATION_TAX` and `EFG_ISO_WEIGHTED`
 
 **Expected Impact**: Fixes Oladipo, Markkanen, Bane, Bridges cases
 
-**Implementation**: Modify `predict_conditional_archetype.py` to re-weight features based on target usage level
+**Implementation**: ✅ Complete in `predict_conditional_archetype.py` - `prepare_features()` method
 
-### Fix #2: Context-Adjusted Efficiency (Priority: Medium)
+### ✅ Fix #2: Context-Adjusted Efficiency (IMPLEMENTED - Requires Data)
 
 **Problem**: Model doesn't account for "Difficulty of Life" - overvalues context-dependent efficiency (e.g., Poole benefiting from Curry gravity).
 
-**Solution**: Add "System Merchant" penalty:
-- Calculate `ACTUAL_EFG - EXPECTED_EFG` based on shot openness
-- Penalize players who outperform expected eFG% due to wide-open shots
-- Add `CONTEXT_ADJUSTED_EFFICIENCY` feature
+**Solution**: ✅ **IMPLEMENTED** - Usage-scaled system merchant penalty:
+- **At 20% usage**: Full penalty (context dependency matters most)
+- **At 25% usage**: Moderate penalty
+- **At 30%+ usage**: Minimal penalty (10% - player creates own shots)
+- Penalty applied to efficiency features if `RS_CONTEXT_ADJUSTMENT` > 0.05 (top 10-15%)
 
 **Expected Impact**: Fixes Poole case
 
-**Implementation**: 
-- Use existing `leaguedashplayerptshot` data (defender distance)
-- Calculate expected eFG% by shot type/location/defender distance
-- Add context adjustment feature to training pipeline
+**Implementation**: ✅ Complete in `predict_conditional_archetype.py` - `prepare_features()` method
+**Note**: `RS_CONTEXT_ADJUSTMENT` needs to be calculated from shot quality data (not yet in dataset)
 
-### Fix #3: Fragility Gate (Priority: High)
+### ✅ Fix #3: Fragility Gate (IMPLEMENTED)
 
 **Problem**: Model underestimates "Physicality Floor" - doesn't cap players with zero rim pressure (e.g., Russell).
 
-**Solution**: Implement "Fragility Gate":
-- **Soft Gate**: Heavily weight `RIM_PRESSURE_RESILIENCE` (increase from current ~5.3%)
-- **Hard Gate**: If `RIM_PRESSURE_RESILIENCE` is bottom 20th percentile, cap star-level potential at 30% (Sniper ceiling)
-- Logic: "No matter how good your jumper is, if you can't touch the paint, you are capped"
+**Solution**: ✅ **IMPLEMENTED** - Hard gate based on distribution:
+- **Threshold**: Bottom 20th percentile of `RIM_PRESSURE_RESILIENCE` (calculated: 0.7555)
+- **Action**: If player is below threshold, cap star-level at 30% (Sniper ceiling)
+- **Logic**: "No matter how good your jumper is, if you can't touch the paint, you are capped"
+- Redistributes probabilities: King and Bulldozer set to 0, Sniper capped at 30%, Victim gets remainder
 
 **Expected Impact**: Fixes Russell case
 
-**Implementation**: 
-- Add fragility gate to `predict_conditional_archetype.py`
-- Optionally retrain model with increased `RIM_PRESSURE_RESILIENCE` weight
+**Implementation**: ✅ Complete in `predict_conditional_archetype.py` - `predict_archetype_at_usage()` method
 
 ### Fix #4: Missing Data Pipeline (Priority: High)
 
@@ -295,18 +296,35 @@ Based on test suite results, three critical fixes identified:
 
 ---
 
-## Expected Outcomes After Phase 3
+## Next Steps: Phase 3 Validation Testing
 
-**Current**: 6/12 passed (50.0%)
-**Expected**: 10-11/12 passed (83-92%)
+**Status**: 🎯 **READY FOR VALIDATION** (December 2025)
+
+All Phase 3 fixes have been implemented. Next step is validation testing to measure improvement.
+
+**Current**: 6/14 passed (42.9%)  
+**Expected After Phase 3**: 10-11/14 passed (71-79%)
 
 **Cases Likely Fixed**:
 - Oladipo: Fix #1 (usage-dependent weighting)
-- Markkanen: Fix #1 + Fix #4 (missing data)
-- Bane: Fix #1 + Fix #4 (missing data)
-- Bridges: Fix #1 (close to threshold)
+- Markkanen: Fix #1 (usage-dependent weighting) + Fix #4 (missing data - still needed)
+- Bane: Fix #1 (usage-dependent weighting) + Fix #4 (missing data - still needed)
+- Bridges: Fix #1 (usage-dependent weighting)
 - Russell: Fix #3 (fragility gate)
-- Poole: Fix #2 (context adjustment)
+- Poole: Fix #2 (context adjustment) - **requires RS_CONTEXT_ADJUSTMENT calculation**
+
+**Validation Tasks**:
+1. Run test suite with Phase 3 fixes enabled
+2. Measure improvement by failure mode pattern (not just individual cases)
+3. Check for regressions in passing cases
+4. Calculate `RS_CONTEXT_ADJUSTMENT` for Fix #2 validation
+5. Investigate missing data pipeline (Fix #4) for Markkanen and Bane
+
+**Key Files for Validation**:
+- `test_latent_star_cases.py`: Test suite (14 critical cases)
+- `src/nba_data/scripts/predict_conditional_archetype.py`: Enhanced with Phase 3 fixes
+- `analyze_phase3_data.py`: Data analysis script
+- `results/phase3_implementation_summary.md`: Implementation details
 
 ---
 

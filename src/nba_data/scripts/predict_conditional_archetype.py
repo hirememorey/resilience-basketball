@@ -1,10 +1,15 @@
 """
-Phase 2: Conditional Prediction Function
+Phase 2: Conditional Prediction Function (Enhanced with Phase 3 Fixes)
 
 This script provides a function to predict archetype at different usage levels.
 This enables answering both questions:
 1. "What would this player's archetype be at their current usage?" (Use Case A)
 2. "What would this player's archetype be at 25% usage?" (Use Case B - Latent Star Detection)
+
+Phase 3 Enhancements:
+- Fix #1: Usage-Dependent Feature Weighting (gradual scaling based on target usage)
+- Fix #2: Context-Adjusted Efficiency (usage-scaled system merchant penalty)
+- Fix #3: Fragility Gate (cap star-level if rim pressure is too low)
 """
 
 import pandas as pd
@@ -38,6 +43,9 @@ class ConditionalArchetypePredictor:
         else:
             # Fallback: use expected features
             self.feature_names = self._get_expected_features()
+        
+        # Calculate feature distributions for Phase 3 fixes
+        self._calculate_feature_distributions()
         
         logger.info(f"Model expects {len(self.feature_names)} features")
     
@@ -86,6 +94,19 @@ class ConditionalArchetypePredictor:
             df_features = df_features.drop(columns=cols_to_drop)
         
         return df_features
+    
+    def _calculate_feature_distributions(self):
+        """Calculate feature distributions for Phase 3 fixes (fragility gate threshold)."""
+        # Calculate bottom 20th percentile for RIM_PRESSURE_RESILIENCE (Fragility Gate)
+        if 'RIM_PRESSURE_RESILIENCE' in self.df_features.columns:
+            rim_pressure = self.df_features['RIM_PRESSURE_RESILIENCE'].dropna()
+            if len(rim_pressure) > 0:
+                self.rim_pressure_bottom_20th = rim_pressure.quantile(0.20)
+                logger.info(f"RIM_PRESSURE_RESILIENCE bottom 20th percentile: {self.rim_pressure_bottom_20th:.4f}")
+            else:
+                self.rim_pressure_bottom_20th = None
+        else:
+            self.rim_pressure_bottom_20th = None
     
     def _get_expected_features(self) -> list:
         """Get expected feature names (fallback if model doesn't have feature_names_in_)."""
@@ -137,19 +158,63 @@ class ConditionalArchetypePredictor:
         
         return player_data.iloc[0]
     
-    def prepare_features(self, player_data: pd.Series, usage_level: float) -> np.ndarray:
+    def prepare_features(
+        self, 
+        player_data: pd.Series, 
+        usage_level: float,
+        apply_phase3_fixes: bool = True
+    ) -> Tuple[np.ndarray, Dict]:
         """
         Prepare feature vector for prediction at specified usage level.
+        
+        Phase 3 Fixes Applied:
+        - Fix #1: Usage-Dependent Feature Weighting (gradual scaling)
+        - Fix #2: Context-Adjusted Efficiency (usage-scaled penalty)
         
         Args:
             player_data: Player's stress vector data (Series)
             usage_level: Usage percentage as decimal (e.g., 0.25 for 25%)
+            apply_phase3_fixes: Whether to apply Phase 3 fixes (default: True)
         
         Returns:
             Feature array ready for model prediction
         """
         features = []
         missing_features = []
+        
+        # Phase 3 Fix #1: Calculate usage-dependent scaling factors
+        # Gradual scaling: stronger effect at higher usage levels
+        if apply_phase3_fixes and usage_level > 0.20:
+            # Scale from 0 (at 20% usage) to 1.0 (at 32% usage)
+            usage_scale = min(1.0, (usage_level - 0.20) / (0.32 - 0.20))
+            # Suppress volume ratio, amplify efficiency metrics
+            volume_suppress = 1.0 - (usage_scale * 0.9)  # Suppress by up to 90%
+            efficiency_amplify = 1.0 + (usage_scale * 1.0)  # Amplify by up to 100%
+        else:
+            usage_scale = 0.0
+            volume_suppress = 1.0
+            efficiency_amplify = 1.0
+        
+        # Phase 3 Fix #2: Calculate context adjustment (if available)
+        context_adjustment = 0.0
+        context_penalty = 0.0
+        if apply_phase3_fixes and 'RS_CONTEXT_ADJUSTMENT' in player_data.index:
+            context_adjustment = player_data['RS_CONTEXT_ADJUSTMENT']
+            if pd.notna(context_adjustment) and context_adjustment > 0:
+                # Usage-scaled penalty: stronger at low usage, weaker at high usage
+                # At 20% usage: full penalty, at 30%+ usage: minimal penalty
+                if usage_level <= 0.20:
+                    penalty_scale = 1.0
+                elif usage_level >= 0.30:
+                    penalty_scale = 0.1  # Minimal penalty at high usage
+                else:
+                    # Linear interpolation between 20% and 30%
+                    penalty_scale = 1.0 - ((usage_level - 0.20) / (0.30 - 0.20)) * 0.9
+                
+                # Apply penalty to efficiency features
+                # Penalize if context adjustment > 0.05 (top 10-15% as per analysis)
+                if context_adjustment > 0.05:
+                    context_penalty = context_adjustment * penalty_scale * 0.5  # 50% of adjustment as penalty
         
         for feature_name in self.feature_names:
             if feature_name == 'USG_PCT':
@@ -182,6 +247,20 @@ class ConditionalArchetypePredictor:
                             val = self.df_features[feature_name].median()
                         else:
                             val = 0.0
+                    
+                    # Phase 3 Fix #1: Apply usage-dependent weighting
+                    if apply_phase3_fixes:
+                        if feature_name == 'CREATION_VOLUME_RATIO':
+                            # Suppress volume ratio at high usage
+                            val = val * volume_suppress
+                        elif feature_name in ['CREATION_TAX', 'EFG_ISO_WEIGHTED']:
+                            # Amplify efficiency metrics at high usage
+                            val = val * efficiency_amplify
+                        elif feature_name in ['RS_PRESSURE_RESILIENCE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE']:
+                            # Apply context penalty to efficiency features
+                            if context_penalty > 0:
+                                val = max(0.0, val - context_penalty)
+                    
                     features.append(val)
                 else:
                     # Feature missing from player data
@@ -196,7 +275,14 @@ class ConditionalArchetypePredictor:
         if missing_features:
             logger.debug(f"Missing features filled with defaults: {missing_features[:5]}...")
         
-        return np.array(features).reshape(1, -1)
+        # Return features and phase3 metadata
+        phase3_metadata = {
+            'usage_scale': usage_scale,
+            'context_penalty': context_penalty,
+            'context_adjustment': context_adjustment if 'RS_CONTEXT_ADJUSTMENT' in player_data.index else None
+        }
+        
+        return np.array(features).reshape(1, -1), phase3_metadata
     
     def predict_archetype_at_usage(
         self, 
@@ -218,7 +304,7 @@ class ConditionalArchetypePredictor:
             - confidence_flags: List of missing data flags
         """
         # Prepare features
-        features = self.prepare_features(player_data, usage_level)
+        features, phase3_metadata = self.prepare_features(player_data, usage_level)
         
         # Predict
         probs = self.model.predict_proba(features)[0]
@@ -242,6 +328,28 @@ class ConditionalArchetypePredictor:
         # Calculate star-level potential (King + Bulldozer)
         star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
         
+        # Phase 3 Fix #3: Fragility Gate
+        # Cap star-level if RIM_PRESSURE_RESILIENCE is bottom 20th percentile
+        fragility_gate_applied = False
+        rim_pressure = None
+        if 'RIM_PRESSURE_RESILIENCE' in player_data.index:
+            rim_pressure = player_data['RIM_PRESSURE_RESILIENCE']
+            if pd.notna(rim_pressure) and self.rim_pressure_bottom_20th is not None:
+                if rim_pressure <= self.rim_pressure_bottom_20th:
+                    # Hard gate: Cap at 30% (Sniper ceiling)
+                    star_level_potential = min(star_level_potential, 0.30)
+                    fragility_gate_applied = True
+                    # Also cap archetype probabilities - can't be King or Bulldozer
+                    if star_level_potential <= 0.30:
+                        # Redistribute: Victim gets remainder, Sniper gets capped amount
+                        prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                        prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                        prob_dict['King'] = 0.0
+                        prob_dict['Bulldozer'] = 0.0
+                        # Update predicted archetype if needed
+                        if pred_archetype in ['King (Resilient Star)', 'Bulldozer (Fragile Star)']:
+                            pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+        
         # Check for missing data (confidence flags)
         confidence_flags = []
         key_features = ['LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CREATION_VOLUME_RATIO', 
@@ -250,11 +358,21 @@ class ConditionalArchetypePredictor:
             if feat in player_data.index and pd.isna(player_data[feat]):
                 confidence_flags.append(f"Missing {feat}")
         
+        # Add Phase 3 fix flags
+        phase3_flags = []
+        if phase3_metadata['usage_scale'] > 0:
+            phase3_flags.append(f"Usage-dependent weighting applied (scale: {phase3_metadata['usage_scale']:.2f})")
+        if phase3_metadata['context_penalty'] > 0:
+            phase3_flags.append(f"Context penalty applied: {phase3_metadata['context_penalty']:.4f}")
+        if fragility_gate_applied and rim_pressure is not None:
+            phase3_flags.append(f"Fragility gate applied (rim pressure: {rim_pressure:.4f})")
+        
         return {
             'predicted_archetype': pred_archetype,
             'probabilities': prob_dict,
             'star_level_potential': star_level_potential,
-            'confidence_flags': confidence_flags
+            'confidence_flags': confidence_flags,
+            'phase3_flags': phase3_flags
         }
     
     def predict_at_multiple_usage_levels(
