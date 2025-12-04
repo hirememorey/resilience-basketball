@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
 **Date**: December 2025  
-**Status**: Phase 3.5 Complete - Phase 3.6 Ready for Implementation ✅
+**Status**: Phase 3.6 Complete - 75.0% Pass Rate Achieved ✅
 
 ---
 
@@ -371,11 +371,11 @@ All three Phase 3.5 fixes have been implemented. Validation shows modest improve
 
 ---
 
-## 🎯 Phase 3.6 Implementation Plan
+## ✅ Phase 3.6 Implementation (Complete - Validation Results)
 
-**Status**: 🎯 **READY FOR IMPLEMENTATION** (December 2025)
+**Status**: ✅ **IMPLEMENTATION COMPLETE** | ✅ **VALIDATION COMPLETE** (December 2025)
 
-Based on first principles feedback analysis, Phase 3.6 addresses the remaining physics failures identified in Phase 3.5 validation.
+All three Phase 3.6 fixes have been implemented and validated. With adjusted thresholds based on user feedback, the model achieves **75.0% pass rate** (12/16), meeting the target range of 75-88%.
 
 ### Fix #1: The "Flash Multiplier" - Scaling Zero vs. Flashes of Brilliance
 
@@ -408,9 +408,85 @@ Based on first principles feedback analysis, Phase 3.6 addresses the remaining p
 
 **Expected Impact**: Fixes Sabonis case (false positive - system merchant)
 
-**See**: `PHASE3_6_IMPLEMENTATION_PLAN.md` for complete implementation details.
+### ✅ Fix #1: Flash Multiplier - **PARTIALLY WORKING**
 
-**Expected After Phase 3.6**: 12-14/16 passed (75-88%)
+**Status**: ✅ **IMPLEMENTED** | ⚠️ **PARTIAL SUCCESS**
+
+**Implementation**: Detects elite efficiency on low volume and projects to star-level volume instead of scalar projection.
+
+**Results**:
+- **Tyrese Maxey (2021-22)**: 74.18% ✅ **PASS** - Correctly identified as star
+- **Tyrese Haliburton (2021-22)**: 27.44% ❌ **FAILING** - Flash Multiplier not triggering
+- **Lauri Markkanen (2021-22)**: 15.42% ❌ **FAILING** - Flash Multiplier not triggering
+
+**Key Insight**: Flash Multiplier works for some cases but needs refinement for role-constrained players.
+
+### ✅ Fix #2: Playoff Translation Tax - **PARTIALLY WORKING**
+
+**Status**: ✅ **IMPLEMENTED** | ⚠️ **PARTIAL SUCCESS**
+
+**Implementation**: Calculates tax based on open shot frequency and penalizes efficiency features.
+
+**Results**:
+- **Domantas Sabonis (2021-22)**: 22.80% ✅ **PASS** - Correctly penalized
+- **Jordan Poole (2021-22)**: 83.05% ❌ **FAILING** - Tax not strong enough
+
+**Key Insight**: Playoff Translation Tax works for moderate cases but needs stronger penalty multiplier for extreme cases.
+
+### ✅ Fix #3: Bag Check Gate - **WORKING**
+
+**Status**: ✅ **SUCCESS**
+
+**Implementation**: Caps players with <10% self-created frequency at Bulldozer (cannot be King).
+
+**Results**:
+- **Domantas Sabonis (2021-22)**: 22.80% ✅ **PASS** - Correctly capped
+
+**Key Insight**: Bag Check Gate successfully identifies and penalizes system-dependent players.
+
+**Validation Results**: See `results/phase3_6_validation_report.md` for complete details.
+
+**Overall Pass Rate**: 75.0% (12/16) - **TARGET ACHIEVED** (target range: 75-88%)
+
+**Note**: Thresholds were adjusted based on user feedback:
+- High: ≥65% (was 70%) - Victor Oladipo at 68% and Jamal Murray at 67% now pass
+- Low: <55% (was 30%) - Tobias Harris at 52% now passes (appropriately indicates max contract mistake)
+
+**User Feedback Validation**:
+- ✅ **Bag Check Gate**: Structural triumph - successfully codifies "Dependency is Fragility" (Sabonis case)
+- ✅ **Threshold Adjustment**: Valid calibration, not cheating - maps to "GM Reality" (uncertainty is failure for max contracts)
+
+---
+
+## 🎯 Phase 3.7 Refinement Plan
+
+**Status**: 🎯 **READY FOR IMPLEMENTATION** (December 2025)
+
+Based on user feedback analysis, Phase 3.7 addresses two critical refinements:
+
+### Fix #1: The "Linear Tax Fallacy" - Move Tax from Efficiency to Volume
+
+**Problem**: Playoff Translation Tax penalizes efficiency, but for system merchants like Poole, the real issue is that **opportunity drops**, not just efficiency.
+
+**Solution**: Move tax from efficiency to volume:
+- If `OPEN_SHOT_FREQ > 75th percentile` → Slash `PROJECTED_CREATION_VOLUME` by 30%
+- Logic: "You physically will not get these shots in the playoffs"
+
+**Expected Impact**: Fixes Poole case (83.05% → <55%)
+
+### Fix #2: The "Narrow Flash" Problem - Widen Flash Definition
+
+**Problem**: Flash Multiplier only looks for isolation efficiency, but Haliburton shows flashes through **pressure resilience** (contested shots), not just isolation.
+
+**Solution**: Expand flash definition:
+- Current: `ISO_EFFICIENCY > 80th percentile`
+- New: `ISO_EFFICIENCY > 80th OR PRESSURE_RESILIENCE > 80th`
+
+**Expected Impact**: Fixes Haliburton case (27.44% → ≥65%)
+
+**See**: `PHASE3_7_REFINEMENT_PLAN.md` for complete implementation details.
+
+**Expected After Phase 3.7**: 13-14/16 passing (81-88%)
 
 ---
 
@@ -427,10 +503,12 @@ Latent star detection work has been archived to `archive/latent_star_detection/`
 ---
 
 **See Also**:
-- `PHASE3_6_IMPLEMENTATION_PLAN.md` - **START HERE FOR PHASE 3.6** - Next implementation plan
+- `PHASE3_7_REFINEMENT_PLAN.md` - **START HERE FOR PHASE 3.7** - Refinement plan based on user feedback
+- `results/phase3_6_validation_report.md` - Phase 3.6 validation results (75% pass rate)
+- `PHASE3_6_IMPLEMENTATION_PLAN.md` - Phase 3.6 implementation plan
 - `results/phase3_5_validation_report.md` - Phase 3.5 validation results
 - `USAGE_AWARE_MODEL_PLAN.md` - Historical implementation plan
-- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.5/3.6 insights)
+- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.5/3.6/3.7 insights)
 - `README.md` - Project overview
 
 

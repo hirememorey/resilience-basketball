@@ -159,6 +159,11 @@ def calculate_features(df):
     weighted_tight_efg = ((df['EFG_0_2'] * df['FGA_0_2']) + (df['EFG_2_4'] * df['FGA_2_4'])) / total_tight_fga.replace(0, np.nan)
     df['PRESSURE_RESILIENCE_BROAD'] = weighted_tight_efg.clip(upper=1.0).fillna(0)
     
+    # Phase 3.6 Fix #2: Calculate OPEN_SHOT_FREQUENCY (6+ feet defender distance)
+    # This is used for Playoff Translation Tax
+    df['OPEN_SHOT_FREQUENCY'] = df['FGA_6_PLUS'] / df['TOTAL_TRACKED_FGA_PER_GAME']
+    df['OPEN_SHOT_FREQUENCY'] = df['OPEN_SHOT_FREQUENCY'].fillna(0)
+    
     return df
 
 def pivot_and_calculate_deltas(df, df_clock=None):
@@ -170,7 +175,7 @@ def pivot_and_calculate_deltas(df, df_clock=None):
     po_df = df[df['SEASON_TYPE'] == 'PO'].copy()
     
     # Add prefixes
-    feature_cols = ['PRESSURE_APPETITE', 'PRESSURE_RESILIENCE', 'PRESSURE_RESILIENCE_BROAD', 'TOTAL_VOLUME', 'GP']
+    feature_cols = ['PRESSURE_APPETITE', 'PRESSURE_RESILIENCE', 'PRESSURE_RESILIENCE_BROAD', 'TOTAL_VOLUME', 'GP', 'OPEN_SHOT_FREQUENCY']
     
     rs_df = rs_df[['PLAYER_ID', 'PLAYER_NAME', 'SEASON'] + feature_cols]
     po_df = po_df[['PLAYER_ID', 'PLAYER_NAME', 'SEASON'] + feature_cols]
