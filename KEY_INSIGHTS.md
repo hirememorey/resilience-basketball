@@ -740,8 +740,71 @@ When implementing new features, ask:
 
 ---
 
+## 30. The Double-Penalization Problem 🎯 CRITICAL (Phase 4.1)
+
+**The Problem**: Model learns from gate features (e.g., `ABDICATION_RISK`), but hard gates still cap at 30%, causing double-penalization.
+
+**The Insight**: **Model vs. Heuristic Conflict**. When model accuracy improves (+1.67%) but validation pass rate decreases (-6.3%), you're likely double-penalizing edge cases. The model is already down-weighting players due to gate features, but then hard gates step in and decapitate them.
+
+**The Fix**: Make gates smarter, not just softer. Phase 4.1 refined gates to be conditional rather than removing them entirely.
+
+**Example**:
+- ❌ **Wrong**: Model learns `ABDICATION_RISK` feature → down-weights Oladipo → Hard gate also caps at 30% → Double penalty
+- ✅ **Right**: Model learns `ABDICATION_RISK` feature → Hard gate only applies if conditions not met (Smart Deference exemption) → Single penalty
+
+**Key Principle**: If model is getting smarter, gates should get smarter too, not just be removed.
+
+---
+
+## 31. Smart Deference vs. Panic Abdication 🎯 CRITICAL (Phase 4.1)
+
+**The Problem**: Abdication Tax caught Victor Oladipo (-0.068 USG delta) even though he had positive TS delta (+0.143).
+
+**The Insight**: **There are two types of usage drops in the clutch**:
+- **Panic Abdication** (Ben Simmons): Usage drops AND efficiency doesn't spike → I am scared to shoot, so I pass to a worse option
+- **Smart Deference** (Victor Oladipo): Usage drops BUT efficiency spikes → I am being trapped, so I make the right play, or I only take wide-open shots
+
+**The Fix**: Conditional Abdication Tax - Only apply if BOTH `LEVERAGE_USG_DELTA < -0.05 AND LEVERAGE_TS_DELTA <= 0.05`
+
+**Example**:
+- ❌ **Wrong**: Oladipo has LEVERAGE_USG_DELTA = -0.068 → Abdication Tax applies → 30% star-level
+- ✅ **Right**: Oladipo has LEVERAGE_USG_DELTA = -0.068 BUT LEVERAGE_TS_DELTA = +0.143 → Smart Deference → Tax exempted → 58.14% star-level
+
+**Key Principle**: Efficiency spikes indicate smart play, not cowardice. Penalize panic, not smart deference.
+
+---
+
+## 32. Capacity vs. Role (Flash Multiplier Exemption) 🎯 CRITICAL (Phase 4.1)
+
+**The Problem**: Bag Check Gate caught role-constrained players (Bridges, Markkanen) who had elite efficiency but low volume.
+
+**The Insight**: **Capacity vs. Role**. The Bag Check assumes that "Low Volume = Low Skill." But for Latent Stars, "Low Volume = Low Opportunity." If a player triggers Flash Multiplier (elite efficiency on low volume), they must be exempt from Bag Check.
+
+**The Fix**: Exempt from Bag Check Gate if Flash Multiplier conditions are met (low volume + elite efficiency).
+
+**Example**:
+- ❌ **Wrong**: Markkanen has SELF_CREATED_FREQ = 0.056 < 0.10 → Bag Check applies → 30% star-level
+- ✅ **Right**: Markkanen has low volume (0.112) + elite pressure resilience (0.59) → Flash Multiplier conditions met → Bag Check exempted → Model prediction (15.52%) - gate no longer caps
+
+**Key Principle**: Elite efficiency on low volume = role constraint, not skill deficit. Exempt from Bag Check.
+
+---
+
+## 33. The Trust Fall Experiment 🎯 NEW (Phase 4.2)
+
+**The Problem**: Hard gates remain active even though model learns from gate features.
+
+**The Insight**: **Learn, Don't Patch**. Since `NEGATIVE_SIGNAL_COUNT` is #3 feature (4.4% importance), the model might be smart enough to fail Thanasis/Simmons naturally without hard caps.
+
+**The Test**: Disable all hard gates and run test suite. If pass rate maintains or improves → Gates can be removed. If pass rate decreases → Keep nuanced gates (Phase 4.1 fixes are sufficient).
+
+**Key Principle**: Test if model can learn patterns without hard rules. If yes, achieve true "Sloan Worthiness."
+
+---
+
 **See Also**:
-- `PHASE4_IMPLEMENTATION_PLAN.md` - **START HERE** - Phase 4 implementation plan
+- `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)
+- `NEXT_STEPS.md` - **START HERE** - Phase 4.2 priorities
 - `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
 - `extended_resilience_framework.md` - Stress vectors explained
 

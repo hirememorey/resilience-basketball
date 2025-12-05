@@ -107,6 +107,36 @@ class ConditionalArchetypePredictor:
             cols_to_drop = [c for c in df_features.columns if '_rim' in c]
             df_features = df_features.drop(columns=cols_to_drop)
         
+        # PHASE 4: Load Trajectory Features
+        trajectory_path = self.results_dir / "trajectory_features.csv"
+        if trajectory_path.exists():
+            df_trajectory = pd.read_csv(trajectory_path)
+            df_features = pd.merge(
+                df_features,
+                df_trajectory,
+                on=['PLAYER_ID', 'SEASON'],
+                how='left',
+                suffixes=('', '_traj')
+            )
+            cols_to_drop = [c for c in df_features.columns if '_traj' in c]
+            df_features = df_features.drop(columns=cols_to_drop)
+            logger.info(f"Loaded trajectory features: {len(df_trajectory)} rows")
+        
+        # PHASE 4: Load Gate Features
+        gate_path = self.results_dir / "gate_features.csv"
+        if gate_path.exists():
+            df_gate = pd.read_csv(gate_path)
+            df_features = pd.merge(
+                df_features,
+                df_gate,
+                on=['PLAYER_ID', 'SEASON'],
+                how='left',
+                suffixes=('', '_gate')
+            )
+            cols_to_drop = [c for c in df_features.columns if '_gate' in c]
+            df_features = df_features.drop(columns=cols_to_drop)
+            logger.info(f"Loaded gate features: {len(df_gate)} rows")
+        
         return df_features
     
     def _get_qualified_players(self, min_fga: int = 200, min_pressure_shots: int = 50) -> pd.DataFrame:
@@ -473,10 +503,30 @@ class ConditionalArchetypePredictor:
                     val = player_data[feature_name]
                     # Handle NaN
                     if pd.isna(val):
-                        # Fill with 0 for clock features, median for others
-                        if 'CLOCK' in feature_name:
+                        # PHASE 4: Special handling for trajectory and gate features
+                        if '_YOY_DELTA' in feature_name:
+                            # Trajectory features (YoY deltas): fill NaN with 0 (no change = neutral signal for first seasons)
+                            val = 0.0
+                        elif feature_name.startswith('PREV_'):
+                            # Prior features: fill NaN with median (no prior = use population average)
+                            if feature_name in self.df_features.columns:
+                                val = self.df_features[feature_name].median()
+                            else:
+                                val = 0.0
+                        elif 'AGE_X_' in feature_name and '_YOY_DELTA' in feature_name:
+                            # Age-trajectory interactions: fill NaN with 0 (calculated after filling trajectory)
+                            val = 0.0
+                        elif feature_name in ['DATA_COMPLETENESS_SCORE', 'SAMPLE_SIZE_CONFIDENCE', 'LEVERAGE_DATA_CONFIDENCE']:
+                            # Gate confidence features: fill NaN with 0 (no data = no confidence)
+                            val = 0.0
+                        elif feature_name in ['ABDICATION_RISK', 'PHYSICALITY_FLOOR', 'SELF_CREATED_FREQ', 'NEGATIVE_SIGNAL_COUNT']:
+                            # Gate risk/count features: fill NaN with 0 (no risk = 0, no signals = 0)
+                            val = 0.0
+                        elif 'CLOCK' in feature_name:
+                            # Clock features: fill NaN with 0 (neutral signal when no data)
                             val = 0.0
                         elif feature_name in self.df_features.columns:
+                            # Other features: fill with median
                             val = self.df_features[feature_name].median()
                         else:
                             val = 0.0
@@ -565,6 +615,10 @@ class ConditionalArchetypePredictor:
         """
         # Prepare features
         features, phase3_metadata = self.prepare_features(player_data, usage_level, apply_phase3_fixes)
+        
+        # Store flash_multiplier_applied in player_data for use in gates
+        flash_multiplier_applied = phase3_metadata.get('flash_multiplier_applied', False)
+        player_data['_FLASH_MULTIPLIER_ACTIVE'] = flash_multiplier_applied
         
         # Predict
         probs = self.model.predict_proba(features)[0]
@@ -683,32 +737,62 @@ class ConditionalArchetypePredictor:
                 bag_check_reason = f"Explicit: ISO={iso_freq:.3f}, PNR={pnr_freq:.3f}"
             
             # Gate threshold: 10% self-created frequency (absolute threshold)
-            # Phase 3.8 Fix: Cap star-level potential regardless of archetype if self-created freq < 10%
+            # PHASE 4.1 FIX: Bag Check Gate with Flash Multiplier Exemption
+            # If Flash Multiplier conditions are met (low volume + elite efficiency), low volume = role constraint, not skill deficit
+            # Phase 3.8 Fix: Cap star-level potential regardless of archetype if self_created freq < 10%
+            
+            # Check Flash Multiplier conditions directly (don't rely on flag which may not be set if star_median_creation_vol is None)
+            flash_multiplier_conditions_met = False
+            creation_vol = player_data.get('CREATION_VOLUME_RATIO', 0)
+            creation_tax = player_data.get('CREATION_TAX', 0)
+            efg_iso = player_data.get('EFG_ISO_WEIGHTED', 0)
+            pressure_resilience = player_data.get('RS_PRESSURE_RESILIENCE', 0)
+            
+            # Check if low volume
+            is_low_volume = (self.creation_vol_25th is not None and 
+                            pd.notna(creation_vol) and creation_vol < self.creation_vol_25th)
+            
+            # Check if elite efficiency (any of the three signals)
+            is_elite_efficiency = False
+            if (self.creation_tax_80th is not None and pd.notna(creation_tax) and creation_tax > self.creation_tax_80th):
+                is_elite_efficiency = True
+            elif (self.efg_iso_80th is not None and pd.notna(efg_iso) and efg_iso > self.efg_iso_80th):
+                is_elite_efficiency = True
+            elif (self.pressure_resilience_80th is not None and pd.notna(pressure_resilience) and 
+                  pressure_resilience > self.pressure_resilience_80th):
+                is_elite_efficiency = True
+            
+            flash_multiplier_conditions_met = is_low_volume and is_elite_efficiency
+            
             if pd.notna(self_created_freq) and self_created_freq < 0.10:
-                bag_check_gate_applied = True
-                # Cap star-level at 30% (Sniper ceiling) - cannot be a true star without self-creation
-                original_star_level = star_level_potential
-                star_level_potential = min(star_level_potential, 0.30)
-                
-                # If predicted as King, redistribute to Bulldozer
-                if pred_archetype == 'King (Resilient Star)':
-                    king_prob = prob_dict.get('King', 0)
-                    prob_dict['Bulldozer'] = prob_dict.get('Bulldozer', 0) + king_prob
-                    prob_dict['King'] = 0.0
-                    pred_archetype = 'Bulldozer (Fragile Star)'
-                
-                # If star-level was capped, redistribute probabilities
-                if star_level_potential <= 0.30:
-                    # Cap at Sniper/Victim level
-                    prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
-                    prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
-                    prob_dict['King'] = 0.0
-                    prob_dict['Bulldozer'] = 0.0
-                    # Update predicted archetype if needed
-                    if original_star_level > 0.30:
-                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
-                
-                logger.info(f"Bag Check Gate applied: Self-created freq {self_created_freq:.4f} < 0.10, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}. Reason: {bag_check_reason}")
+                # PHASE 4.1: Exempt if Flash Multiplier conditions are met (showing elite skills despite low volume)
+                if flash_multiplier_conditions_met:
+                    logger.info(f"Bag Check Gate EXEMPTED: Self-created freq {self_created_freq:.4f} < 0.10 BUT Flash Multiplier conditions met (low volume={creation_vol:.4f} + elite efficiency) = role constraint, not skill deficit")
+                else:
+                    bag_check_gate_applied = True
+                    # Cap star-level at 30% (Sniper ceiling) - cannot be a true star without self-creation
+                    original_star_level = star_level_potential
+                    star_level_potential = min(star_level_potential, 0.30)
+                    
+                    # If predicted as King, redistribute to Bulldozer
+                    if pred_archetype == 'King (Resilient Star)':
+                        king_prob = prob_dict.get('King', 0)
+                        prob_dict['Bulldozer'] = prob_dict.get('Bulldozer', 0) + king_prob
+                        prob_dict['King'] = 0.0
+                        pred_archetype = 'Bulldozer (Fragile Star)'
+                    
+                    # If star-level was capped, redistribute probabilities
+                    if star_level_potential <= 0.30:
+                        # Cap at Sniper/Victim level
+                        prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                        prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                        prob_dict['King'] = 0.0
+                        prob_dict['Bulldozer'] = 0.0
+                        # Update predicted archetype if needed
+                        if original_star_level > 0.30:
+                            pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                    
+                    logger.info(f"Bag Check Gate applied: Self-created freq {self_created_freq:.4f} < 0.10, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}. Reason: {bag_check_reason}")
         
         # Fix #2: Missing Leverage Data Penalty (Priority: High)
         # LEVERAGE_USG_DELTA is the #1 predictor - missing it is a critical gap
@@ -760,24 +844,34 @@ class ConditionalArchetypePredictor:
                 negative_signals.append(f"CREATION_TAX={creation_tax:.3f}")
             
             # Negative leverage USG delta (doesn't scale up - "Abdication Tax")
-            # This is the "Simmons Paradox" - hard filter
+            # PHASE 4.1 FIX: Conditional Abdication Tax - Distinguish "Panic Abdication" (Simmons) from "Smart Deference" (Oladipo)
+            # If LEVERAGE_TS_DELTA > 0.05 (elite efficiency), the usage drop is smart, not cowardly
+            # Logic: Only penalize if BOTH usage drops AND efficiency doesn't spike
             if pd.notna(leverage_usg_delta) and leverage_usg_delta < -0.05:
-                original_star_level = star_level_potential
-                # Hard filter: Cap at 30% (Sniper ceiling)
-                star_level_potential = min(star_level_potential, 0.30)
-                negative_signal_gate_applied = True
+                # Check if efficiency spikes (Smart Deference) or stays flat/drops (Panic Abdication)
+                efficiency_spikes = pd.notna(leverage_ts_delta) and leverage_ts_delta > 0.05
                 
-                # Redistribute probabilities if capped
-                if star_level_potential <= 0.30:
-                    prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
-                    prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
-                    prob_dict['King'] = 0.0
-                    prob_dict['Bulldozer'] = 0.0
-                    # Update predicted archetype if needed
-                    if original_star_level > 0.30:
-                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
-                
-                logger.info(f"Abdication Tax detected: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                if not efficiency_spikes:
+                    # Panic Abdication: Usage drops AND efficiency doesn't spike → Penalize
+                    original_star_level = star_level_potential
+                    # Hard filter: Cap at 30% (Sniper ceiling)
+                    star_level_potential = min(star_level_potential, 0.30)
+                    negative_signal_gate_applied = True
+                    
+                    # Redistribute probabilities if capped
+                    if star_level_potential <= 0.30:
+                        prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                        prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                        prob_dict['King'] = 0.0
+                        prob_dict['Bulldozer'] = 0.0
+                        # Update predicted archetype if needed
+                        if original_star_level > 0.30:
+                            pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                    
+                    logger.info(f"Abdication Tax detected: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 AND LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} <= 0.05 (Panic Abdication), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                else:
+                    # Smart Deference: Usage drops BUT efficiency spikes → Exempt
+                    logger.info(f"Smart Deference detected: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 BUT LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} > 0.05 (efficiency spikes) → Abdication Tax EXEMPTED")
             
             # Negative leverage TS delta (declines in clutch)
             if pd.notna(leverage_ts_delta) and leverage_ts_delta < -0.15:

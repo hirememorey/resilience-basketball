@@ -157,6 +157,46 @@ class ResiliencePredictor:
         else:
             logger.warning("No rim pressure features file found.")
         
+        # PHASE 4: Trajectory Features (New)
+        trajectory_path = self.results_dir / "trajectory_features.csv"
+        if trajectory_path.exists():
+            df_trajectory = pd.read_csv(trajectory_path)
+            logger.info(f"Loaded Trajectory Features: {len(df_trajectory)} rows.")
+            
+            df_merged = pd.merge(
+                df_merged,
+                df_trajectory,
+                on=['PLAYER_ID', 'SEASON'],
+                how='left',
+                suffixes=('', '_traj')
+            )
+            
+            # Drop duplicate columns
+            cols_to_drop = [c for c in df_merged.columns if '_traj' in c]
+            df_merged = df_merged.drop(columns=cols_to_drop)
+        else:
+            logger.warning("No trajectory features file found. Run generate_trajectory_features.py first.")
+        
+        # PHASE 4: Gate Features (New)
+        gate_path = self.results_dir / "gate_features.csv"
+        if gate_path.exists():
+            df_gate = pd.read_csv(gate_path)
+            logger.info(f"Loaded Gate Features: {len(df_gate)} rows.")
+            
+            df_merged = pd.merge(
+                df_merged,
+                df_gate,
+                on=['PLAYER_ID', 'SEASON'],
+                how='left',
+                suffixes=('', '_gate')
+            )
+            
+            # Drop duplicate columns
+            cols_to_drop = [c for c in df_merged.columns if '_gate' in c]
+            df_merged = df_merged.drop(columns=cols_to_drop)
+        else:
+            logger.warning("No gate features file found. Run generate_gate_features.py first.")
+        
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
         
         # Drop missing values (some players might be missing leverage data)
@@ -254,6 +294,57 @@ class ResiliencePredictor:
                 if interaction_feat in df.columns:
                     features.append(interaction_feat)
         
+        # PHASE 4: Add Trajectory Features (YoY Deltas and Priors)
+        trajectory_yoy_features = [
+            'CREATION_VOLUME_RATIO_YOY_DELTA',
+            'CREATION_TAX_YOY_DELTA',
+            'LEVERAGE_USG_DELTA_YOY_DELTA',
+            'LEVERAGE_TS_DELTA_YOY_DELTA',
+            'RS_PRESSURE_RESILIENCE_YOY_DELTA',
+            'RS_PRESSURE_APPETITE_YOY_DELTA',
+            'RS_RIM_APPETITE_YOY_DELTA',
+            'EFG_ISO_WEIGHTED_YOY_DELTA',
+            'RS_LATE_CLOCK_PRESSURE_RESILIENCE_YOY_DELTA',
+        ]
+        
+        trajectory_prior_features = [
+            'PREV_CREATION_VOLUME_RATIO',
+            'PREV_CREATION_TAX',
+            'PREV_LEVERAGE_USG_DELTA',
+            'PREV_LEVERAGE_TS_DELTA',
+            'PREV_RS_PRESSURE_RESILIENCE',
+            'PREV_RS_PRESSURE_APPETITE',
+            'PREV_RS_RIM_APPETITE',
+            'PREV_EFG_ISO_WEIGHTED',
+        ]
+        
+        trajectory_age_interaction_features = [
+            'AGE_X_CREATION_VOLUME_RATIO_YOY_DELTA',
+            'AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA',
+            'AGE_X_RS_PRESSURE_RESILIENCE_YOY_DELTA',
+        ]
+        
+        # Add trajectory features that exist in dataframe
+        for feat in trajectory_yoy_features + trajectory_prior_features + trajectory_age_interaction_features:
+            if feat in df.columns:
+                features.append(feat)
+        
+        # PHASE 4: Add Gate Features (Soft Features)
+        gate_features = [
+            'ABDICATION_RISK',
+            'PHYSICALITY_FLOOR',
+            'SELF_CREATED_FREQ',
+            'DATA_COMPLETENESS_SCORE',
+            'SAMPLE_SIZE_CONFIDENCE',
+            'LEVERAGE_DATA_CONFIDENCE',
+            'NEGATIVE_SIGNAL_COUNT',
+        ]
+        
+        # Add gate features that exist in dataframe
+        for feat in gate_features:
+            if feat in df.columns:
+                features.append(feat)
+        
         target = 'ARCHETYPE'
         
         # Filter out features that don't exist in the dataframe
@@ -268,19 +359,32 @@ class ResiliencePredictor:
         y = df[target]
         
         # Handle NaN values in features
-        # For clock features with low coverage, fill NaN with 0 (no clock pressure data = neutral signal)
-        # For other features, fill with median
+        # PHASE 4: Special handling for trajectory and gate features
         for col in X.columns:
             if X[col].isna().sum() > 0:
                 if 'CLOCK' in col:
                     # Clock features: fill NaN with 0 (neutral signal when no data)
                     X[col] = X[col].fillna(0)
-                    logger.info(f"Filled {X[col].isna().sum()} NaN values in {col} with 0")
+                elif '_YOY_DELTA' in col:
+                    # Trajectory features (YoY deltas): fill NaN with 0 (no change = neutral signal for first seasons)
+                    X[col] = X[col].fillna(0)
+                elif col.startswith('PREV_'):
+                    # Prior features: fill NaN with median (no prior = use population average)
+                    median_val = X[col].median()
+                    X[col] = X[col].fillna(median_val)
+                elif 'AGE_X_' in col and '_YOY_DELTA' in col:
+                    # Age-trajectory interactions: fill NaN with 0 (calculated after filling trajectory)
+                    X[col] = X[col].fillna(0)
+                elif col in ['DATA_COMPLETENESS_SCORE', 'SAMPLE_SIZE_CONFIDENCE', 'LEVERAGE_DATA_CONFIDENCE']:
+                    # Gate confidence features: fill NaN with 0 (no data = no confidence)
+                    X[col] = X[col].fillna(0)
+                elif col in ['ABDICATION_RISK', 'PHYSICALITY_FLOOR', 'SELF_CREATED_FREQ', 'NEGATIVE_SIGNAL_COUNT']:
+                    # Gate risk/count features: fill NaN with 0 (no risk = 0, no signals = 0)
+                    X[col] = X[col].fillna(0)
                 else:
                     # Other features: fill with median
                     median_val = X[col].median()
                     X[col] = X[col].fillna(median_val)
-                    logger.info(f"Filled {X[col].isna().sum()} NaN values in {col} with median ({median_val:.4f})")
         
         # Encode Labels
         le = LabelEncoder()
