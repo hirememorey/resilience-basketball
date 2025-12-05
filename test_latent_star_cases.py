@@ -289,11 +289,18 @@ def evaluate_prediction(
     return result
 
 
-def run_test_suite():
-    """Run all test cases and generate comprehensive report."""
+def run_test_suite(apply_hard_gates: bool = True):
+    """
+    Run all test cases and generate comprehensive report.
     
+    Args:
+        apply_hard_gates: Whether to apply hard-coded gates/taxes (default: True)
+                          Set to False for Trust Fall experiment
+    """
+    
+    gate_status = "ENABLED" if apply_hard_gates else "DISABLED (Trust Fall)"
     logger.info("=" * 100)
-    logger.info("CRITICAL CASE STUDIES FOR LATENT STAR DETECTION")
+    logger.info(f"CRITICAL CASE STUDIES FOR LATENT STAR DETECTION - Gates: {gate_status}")
     logger.info("=" * 100)
     
     predictor = ConditionalArchetypePredictor()
@@ -353,7 +360,7 @@ def run_test_suite():
             logger.info(f"  Actual Usage: {actual_usage*100:.1f}%")
         
         # Predict at test usage level
-        prediction = predictor.predict_archetype_at_usage(player_data, test_case.test_usage)
+        prediction = predictor.predict_archetype_at_usage(player_data, test_case.test_usage, apply_hard_gates=apply_hard_gates)
         
         predicted_archetype = prediction['predicted_archetype']
         star_level_potential = prediction['star_level_potential']
@@ -446,12 +453,13 @@ def run_test_suite():
     logger.info(f"\nDetailed results saved to: {output_path}")
     
     # Generate markdown report
-    generate_markdown_report(df_results, summary_stats, output_path.parent / "latent_star_test_cases_report.md")
+    report_filename = "latent_star_test_cases_report_trust_fall.md" if not apply_hard_gates else "latent_star_test_cases_report.md"
+    generate_markdown_report(df_results, summary_stats, output_path.parent / report_filename, apply_hard_gates)
     
     return df_results, summary_stats
 
 
-def generate_markdown_report(df_results: pd.DataFrame, summary_stats: Dict, output_path: Path):
+def generate_markdown_report(df_results: pd.DataFrame, summary_stats: Dict, output_path: Path, apply_hard_gates: bool = True):
     """Generate a markdown report of test results."""
     
     with open(output_path, 'w') as f:
@@ -508,5 +516,13 @@ def generate_markdown_report(df_results: pd.DataFrame, summary_stats: Dict, outp
 
 
 if __name__ == "__main__":
-    results, stats = run_test_suite()
+    import sys
+    
+    # Check for Trust Fall flag
+    apply_hard_gates = True
+    if len(sys.argv) > 1 and sys.argv[1] == "--trust-fall":
+        apply_hard_gates = False
+        logger.info("🔬 TRUST FALL EXPERIMENT: Running with hard gates DISABLED")
+    
+    results, stats = run_test_suite(apply_hard_gates=apply_hard_gates)
 

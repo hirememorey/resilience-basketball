@@ -1,16 +1,55 @@
 # Next Steps
 
 **Date**: December 5, 2025  
-**Status**: Phase 4.2 Complete ✅ | Current Pass Rate: 87.5% (14/16)
+**Status**: Trust Fall Experiment Complete ✅ | Ground Truth Trap Identified | Ready for 2D Risk Matrix
 
 ---
 
 ## Current Status Summary
 
 - **Model Accuracy**: 63.33% (RFE-optimized with 10 features)
-- **Test Case Pass Rate**: 87.5% (14/16)
-- **False Positive Detection**: 100% pass rate (6/6) - **Perfect** ✅
-- **True Positive Detection**: 87.5% pass rate (7/8) - Strong performance
+- **Test Case Pass Rate (with gates)**: 87.5% (14/16)
+- **Test Case Pass Rate (without gates)**: 56.2% (9/16) - **Trust Fall Experiment**
+- **False Positive Detection (with gates)**: 100% pass rate (6/6) - **Perfect** ✅
+- **True Positive Detection (with gates)**: 87.5% pass rate (7/8) - Strong performance
+
+**Key Discovery**: Trust Fall experiment revealed **Ground Truth Trap** - model correctly predicts Performance (outcomes), but we need a separate dimension for Dependence (portability).
+
+---
+
+## Trust Fall Experiment: Complete ✅
+
+**Status**: Experiment completed December 5, 2025
+
+**Results**:
+- **With gates**: 87.5% pass rate (14/16)
+- **Without gates**: 56.2% pass rate (9/16)
+- **Diagnosis**: Model cannot learn system merchant patterns from current features
+
+**Key Finding**: Jordan Poole returns to "King" status (97% star-level) when gates disabled - **he actually succeeded** (17 PPG, 62.7% TS in championship run). This confirms the **Ground Truth Trap**: Training labels are based on outcomes, but we want to predict portability.
+
+**See**: `results/latent_star_test_cases_report_trust_fall.md` for complete results.
+
+---
+
+## Next Priority: 2D Risk Matrix Implementation
+
+**Status**: Ready for implementation
+
+**The Problem**: Model correctly predicts Performance (outcomes), but we're trying to predict two different things in one dimension.
+
+**The Solution**: **2D Risk Matrix** separating:
+- **X-Axis: Performance Score** (what happened) - Current model
+- **Y-Axis: Dependence Score** (is it portable?) - New calculation from quantitative proxies
+
+**Implementation Plan**: See `2D_RISK_MATRIX_IMPLEMENTATION.md` for detailed plan.
+
+**Estimated Time**: 1 week
+
+**Key Files**:
+- `2D_RISK_MATRIX_IMPLEMENTATION.md` - Complete implementation plan
+- `src/nba_data/scripts/predict_conditional_archetype.py` - Add `calculate_system_dependence()` method
+- `test_latent_star_cases.py` - Update test cases to validate both dimensions
 
 ---
 
@@ -25,26 +64,6 @@
 - ⚠️ **Desmond Bane** (26.05%, expected ≥65%) - Unclear if actually broke out (as of Dec 2025)
 
 **Action**: Evaluate if these are legitimate model predictions or actual failures. If accurately rated, remove from test suite.
-
----
-
-## Optional Improvements
-
-### 1. The "Trust Fall" Experiment (Priority: Low)
-
-**Goal**: Test if model can learn patterns without hard gates.
-
-**Hypothesis**: Since `NEGATIVE_SIGNAL_COUNT` is #3 feature (10.5% importance), model might be smart enough to fail false positives naturally without hard caps.
-
-**Test Plan**:
-1. Disable all hard gates in `predict_conditional_archetype.py`
-2. Run test suite
-3. If pass rate maintains or improves → Gates can be removed
-4. If pass rate decreases → Keep nuanced gates
-
-**Files to Modify**: `src/nba_data/scripts/predict_conditional_archetype.py` - Add `apply_hard_gates=False` parameter
-
-**Expected Outcome**: Either gates become unnecessary (model learns) OR nuanced gates remain (current state is sufficient)
 
 ---
 
@@ -82,4 +101,4 @@
 
 ---
 
-**Status**: Phase 4.2 complete. Multi-Signal Tax System successfully addresses "The Poole Problem" - system merchants are now correctly identified and penalized. Ready for next developer to continue with any remaining refinements.
+**Status**: Trust Fall experiment complete. Ground Truth Trap identified. Ready for 2D Risk Matrix implementation to separate Performance (outcomes) from Dependence (portability). See `2D_RISK_MATRIX_IMPLEMENTATION.md` for next steps.

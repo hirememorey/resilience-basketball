@@ -425,7 +425,8 @@ class ConditionalArchetypePredictor:
         self, 
         player_data: pd.Series, 
         usage_level: float,
-        apply_phase3_fixes: bool = True
+        apply_phase3_fixes: bool = True,
+        apply_hard_gates: bool = True
     ) -> Tuple[np.ndarray, Dict]:
         """
         Prepare feature vector for prediction at specified usage level.
@@ -442,6 +443,8 @@ class ConditionalArchetypePredictor:
             player_data: Player's stress vector data (Series)
             usage_level: Usage percentage as decimal (e.g., 0.25 for 25%)
             apply_phase3_fixes: Whether to apply Phase 3.5 & 3.6 fixes (default: True)
+            apply_hard_gates: Whether to apply hard-coded gates/taxes (default: True)
+                              Set to False for Trust Fall experiment
         
         Returns:
             Feature array ready for model prediction
@@ -592,7 +595,7 @@ class ConditionalArchetypePredictor:
         multi_signal_efficiency_penalty = 1.0
         tax_applied_flags = []
         
-        if not is_exempt and apply_phase3_fixes:
+        if not is_exempt and apply_phase3_fixes and apply_hard_gates:
             # Tax #1: Open Shot Dependency (50% reduction - reverted from 40%)
             if playoff_volume_tax_applied:  # Already calculated above
                 multi_signal_volume_penalty *= 0.50
@@ -653,7 +656,7 @@ class ConditionalArchetypePredictor:
         taxed_leverage_usg = None
         
         # Tax base features now (before feature loop) so they're available for interaction calculations
-        if not is_exempt and apply_phase3_fixes:
+        if not is_exempt and apply_phase3_fixes and apply_hard_gates:
             # Tax CREATION_VOLUME_RATIO
             if 'CREATION_VOLUME_RATIO' in player_data.index:
                 creation_vol_base = player_data['CREATION_VOLUME_RATIO']
@@ -923,7 +926,8 @@ class ConditionalArchetypePredictor:
         self, 
         player_data: pd.Series, 
         usage_level: float,
-        apply_phase3_fixes: bool = True
+        apply_phase3_fixes: bool = True,
+        apply_hard_gates: bool = True
     ) -> Dict:
         """
         Predict archetype at specified usage level.
@@ -932,6 +936,8 @@ class ConditionalArchetypePredictor:
             player_data: Player's stress vector data (Series)
             usage_level: Usage percentage as decimal (e.g., 0.25 for 25%)
             apply_phase3_fixes: Whether to apply Phase 3 fixes (default: True)
+            apply_hard_gates: Whether to apply hard-coded gates/taxes (default: True)
+                              Set to False for Trust Fall experiment
         
         Returns:
             Dictionary with:
@@ -941,7 +947,7 @@ class ConditionalArchetypePredictor:
             - confidence_flags: List of missing data flags
         """
         # Prepare features
-        features, phase3_metadata = self.prepare_features(player_data, usage_level, apply_phase3_fixes)
+        features, phase3_metadata = self.prepare_features(player_data, usage_level, apply_phase3_fixes, apply_hard_gates)
         
         # Store flash_multiplier_applied in player_data for use in gates
         flash_multiplier_applied = phase3_metadata.get('flash_multiplier_applied', False)
@@ -974,7 +980,7 @@ class ConditionalArchetypePredictor:
         # Principle: Ratios measure change, not state. Use absolute metrics for floors.
         fragility_gate_applied = False
         rim_appetite = None
-        if apply_phase3_fixes and 'RS_RIM_APPETITE' in player_data.index:
+        if apply_phase3_fixes and apply_hard_gates and 'RS_RIM_APPETITE' in player_data.index:
             rim_appetite = player_data['RS_RIM_APPETITE']
             if pd.notna(rim_appetite) and self.rim_appetite_bottom_20th is not None:
                 if rim_appetite <= self.rim_appetite_bottom_20th:
@@ -1004,7 +1010,7 @@ class ConditionalArchetypePredictor:
         negative_signal_gate_applied = False
         data_completeness_gate_applied = False
         sample_size_gate_applied = False
-        if apply_phase3_fixes:
+        if apply_phase3_fixes and apply_hard_gates:
             # Calculate self-created frequency (ISO + PNR Handler)
             iso_freq = player_data.get('ISO_FREQUENCY', None)
             pnr_freq = player_data.get('PNR_HANDLER_FREQUENCY', None)
@@ -1124,7 +1130,7 @@ class ConditionalArchetypePredictor:
         # Fix #2: Missing Leverage Data Penalty (Priority: High)
         # LEVERAGE_USG_DELTA is the #1 predictor - missing it is a critical gap
         leverage_data_penalty_applied = False
-        if apply_phase3_fixes:
+        if apply_phase3_fixes and apply_hard_gates:
             leverage_usg = player_data.get('LEVERAGE_USG_DELTA', None)
             leverage_ts = player_data.get('LEVERAGE_TS_DELTA', None)
             clutch_min = player_data.get('CLUTCH_MIN_TOTAL', 0)
@@ -1159,7 +1165,7 @@ class ConditionalArchetypePredictor:
         # Fix #3: Negative Signal Gate (Priority: High)
         # Penalize players with multiple negative signals, especially negative LEVERAGE_USG_DELTA (Abdication Tax)
         negative_signal_gate_applied = False
-        if apply_phase3_fixes:
+        if apply_phase3_fixes and apply_hard_gates:
             creation_tax = player_data.get('CREATION_TAX', 0)
             leverage_usg_delta = player_data.get('LEVERAGE_USG_DELTA', 0)
             leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', 0)
@@ -1225,7 +1231,7 @@ class ConditionalArchetypePredictor:
         # Fix #4: Data Completeness Gate (Priority: Medium)
         # Require at least 4 of 6 critical features present (67% completeness)
         data_completeness_gate_applied = False
-        if apply_phase3_fixes:
+        if apply_phase3_fixes and apply_hard_gates:
             critical_features = [
                 'CREATION_VOLUME_RATIO',
                 'CREATION_TAX',
@@ -1261,7 +1267,7 @@ class ConditionalArchetypePredictor:
         # Fix #1: Minimum Sample Size Gate (Priority: High)
         # Check for minimum sample sizes to avoid small sample size noise
         sample_size_gate_applied = False
-        if apply_phase3_fixes:
+        if apply_phase3_fixes and apply_hard_gates:
             # Check pressure shots (need minimum 50 for reliable pressure resilience)
             pressure_shots = player_data.get('RS_TOTAL_VOLUME', 0)
             insufficient_pressure = pd.isna(pressure_shots) or pressure_shots < 50

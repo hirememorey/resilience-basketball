@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
 **Date**: December 5, 2025  
-**Status**: Phase 4.2 Complete ✅ | Current Pass Rate: 87.5% (14/16) | Model Accuracy: 63.33% (10 features)
+**Status**: Trust Fall Experiment Complete ✅ | Ground Truth Trap Identified | Ready for 2D Risk Matrix Implementation
 
 ---
 
@@ -142,10 +142,27 @@ Converted hard gates to soft features that the model learns:
 
 ---
 
+## Trust Fall Experiment Results (December 2025)
+
+**The Discovery**: The model correctly predicts **Performance** (outcomes), but we're trying to predict two different things in one dimension.
+
+**Results**:
+- **With gates**: 87.5% pass rate (14/16) - Hard-coded logic catches system merchants
+- **Without gates**: 56.2% pass rate (9/16) - Model cannot learn system merchant patterns
+- **Jordan Poole**: Returns to "King" status (97% star-level) when gates disabled - **he actually succeeded** (17 PPG, 62.7% TS in championship run)
+
+**The Ground Truth Trap**: Training labels are based on **outcomes** (Poole = "King" because he succeeded), but we want to predict **portability** (Poole = "System Merchant" because his production isn't portable).
+
+**The Solution**: **2D Risk Matrix** separating Performance (what happened) from Dependence (is it portable?). See `2D_RISK_MATRIX_IMPLEMENTATION.md` for implementation plan.
+
+**See**: `results/latent_star_test_cases_report_trust_fall.md` for complete Trust Fall results.
+
+---
+
 ## Known Issues & Limitations
 
 1. **Two test cases may be removed from test suite**: Mikal Bridges and Desmond Bane may be accurately rated (not actual failures)
-2. **Hard gates still active**: Model learns from gate features, but hard gates remain as fallback (see "Trust Fall" experiment in NEXT_STEPS.md)
+2. **Ground Truth Trap**: Model predicts Performance (outcomes) correctly, but we need a separate dimension for Dependence (portability) - **2D Risk Matrix required**
 
 ---
 
@@ -164,14 +181,16 @@ Converted hard gates to soft features that the model learns:
 - **`results/pressure_features.csv`**: Pressure vector features
 
 ### Scripts
-- **`src/nba_data/scripts/predict_conditional_archetype.py`**: Main prediction function
+- **`src/nba_data/scripts/predict_conditional_archetype.py`**: Main prediction function (supports `apply_hard_gates` parameter for Trust Fall)
 - **`src/nba_data/scripts/train_rfe_model.py`**: Train RFE-optimized model
-- **`test_latent_star_cases.py`**: Validation test suite
+- **`test_latent_star_cases.py`**: Validation test suite (supports `--trust-fall` flag)
 
 ---
 
 **See Also**:
+- `2D_RISK_MATRIX_IMPLEMENTATION.md` - **NEXT PRIORITY** - Implementation plan for 2D framework
 - `NEXT_STEPS.md` - Next priorities
-- `results/latent_star_test_cases_report.md` - Latest validation results
+- `results/latent_star_test_cases_report_trust_fall.md` - Trust Fall experiment results
+- `results/latent_star_test_cases_report.md` - Latest validation results (with gates)
 - `results/rfe_model_comparison.md` - RFE model analysis
-- `KEY_INSIGHTS.md` - Hard-won lessons
+- `KEY_INSIGHTS.md` - Hard-won lessons (see Insight #37: Trust Fall & Ground Truth Trap)

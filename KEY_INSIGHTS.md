@@ -909,9 +909,41 @@ is_exempt = (
 
 ---
 
+---
+
+## 37. The Trust Fall Experiment & Ground Truth Trap 🎯 CRITICAL (December 2025)
+
+**The Problem**: Model correctly predicts Performance (outcomes), but we're trying to predict two different things in one dimension.
+
+**The Discovery**: Trust Fall experiment revealed:
+- **With gates**: 87.5% pass rate (14/16) - Hard-coded logic catches system merchants
+- **Without gates**: 56.2% pass rate (9/16) - Model cannot learn system merchant patterns
+- **Jordan Poole**: Returns to "King" status (97% star-level) when gates disabled - **he actually succeeded** (17 PPG, 62.7% TS in championship run)
+
+**The Ground Truth Trap**: Training labels are based on **outcomes** (Poole = "King" because he succeeded), but we want to predict **portability** (Poole = "System Merchant" because his production isn't portable).
+
+**The Insight**: **Performance and Portability are orthogonal dimensions**. Forcing them into one prediction creates the Ground Truth Trap.
+
+**The Solution**: **2D Risk Matrix** separating:
+- **X-Axis: Performance Score** (what happened) - Current model
+- **Y-Axis: Dependence Score** (is it portable?) - New calculation from quantitative proxies
+
+**Key Principle**: Acknowledge reality (Poole was good) while capturing nuance (Poole is risky). Don't inject hindsight bias into training labels. Instead, add a separate dimension that captures risk.
+
+**Implementation**: See `2D_RISK_MATRIX_IMPLEMENTATION.md` for complete plan.
+
+**Test Cases**:
+- **Poole**: Should be High Performance + High Dependence (Luxury Component)
+- **Luka**: Should be High Performance + Low Dependence (Franchise Cornerstone)
+
+**Key Principle**: Check training labels FIRST before building features. The most expensive mistake is building features to catch patterns that don't exist in your data.
+
+---
+
 **See Also**:
+- `2D_RISK_MATRIX_IMPLEMENTATION.md` - **NEXT PRIORITY** - Implementation plan for 2D framework
 - `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)
-- `NEXT_STEPS.md` - **START HERE** - Phase 4.2 priorities
+- `NEXT_STEPS.md` - **START HERE** - Current priorities
 - `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
 - `extended_resilience_framework.md` - Stress vectors explained
 
