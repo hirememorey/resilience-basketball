@@ -986,16 +986,41 @@ class ConditionalArchetypePredictor:
             rim_appetite = player_data['RS_RIM_APPETITE']
             if pd.notna(rim_appetite) and self.rim_appetite_bottom_20th is not None:
                 if rim_appetite <= self.rim_appetite_bottom_20th:
-                    # Check High-Usage Creator Exemption
+                    # Check High-Usage Creator Exemption (Refined)
+                    # PHASE 4.3 REFINEMENT: Must have efficient creation OR minimal rim pressure
+                    # Distinguishes between versatile creators (Luka) and limited creators (Russell)
                     creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', None)
                     rs_usg_pct = player_data.get('USG_PCT', None)
+                    creation_tax = player_data.get('CREATION_TAX', None)
                     
                     has_creator_exemption = False
                     if pd.notna(creation_vol_ratio) and pd.notna(rs_usg_pct):
-                        # High-usage creators can score without rim pressure
-                        if creation_vol_ratio > 0.60 and rs_usg_pct > 0.25:
-                            has_creator_exemption = True
-                            logger.info(f"High-Usage Creator Exemption: CREATION_VOLUME_RATIO={creation_vol_ratio:.2f} > 0.60 AND USG_PCT={rs_usg_pct:.1%} > 25% → Fragility Gate EXEMPTED (can score without rim pressure)")
+                        # High-usage creators can score without rim pressure IF:
+                        # 1. They have high creation volume (>60%) AND high usage (>25%)
+                        # 2. AND (efficient creation OR minimal rim pressure)
+                        has_high_creation_volume = (creation_vol_ratio > 0.60 and rs_usg_pct > 0.25)
+                        
+                        if has_high_creation_volume:
+                            # Check creation efficiency (essentially neutral or positive)
+                            # Threshold: -0.05 allows for slight negative (like Luka's -0.019) but catches strongly negative (like Russell's -0.101)
+                            has_efficient_creation = (pd.notna(creation_tax) and creation_tax >= -0.05)
+                            
+                            # Check minimal rim pressure (has some rim pressure, even if low)
+                            # Threshold: Use bottom 20th percentile (0.1746) as minimum - if below this, it's truly zero pressure
+                            # Russell's 0.159 is below bottom 20th percentile, so shouldn't qualify
+                            rim_pressure_threshold = self.rim_appetite_bottom_20th if self.rim_appetite_bottom_20th is not None else 0.17
+                            has_minimal_rim_pressure = (rim_appetite >= rim_pressure_threshold)
+                            
+                            if has_efficient_creation or has_minimal_rim_pressure:
+                                has_creator_exemption = True
+                                exemption_reason = []
+                                if has_efficient_creation:
+                                    exemption_reason.append(f"efficient creation (CREATION_TAX={creation_tax:.3f} >= -0.05)")
+                                if has_minimal_rim_pressure:
+                                    exemption_reason.append(f"minimal rim pressure (RS_RIM_APPETITE={rim_appetite:.3f} >= 0.15)")
+                                logger.info(f"High-Usage Creator Exemption: CREATION_VOLUME_RATIO={creation_vol_ratio:.2f} > 0.60 AND USG_PCT={rs_usg_pct:.1%} > 25% AND ({' OR '.join(exemption_reason)}) → Fragility Gate EXEMPTED")
+                            else:
+                                logger.info(f"High-Usage Creator Exemption DENIED: CREATION_VOLUME_RATIO={creation_vol_ratio:.2f} > 0.60 AND USG_PCT={rs_usg_pct:.1%} > 25%, but CREATION_TAX={creation_tax:.3f} < -0.05 AND RS_RIM_APPETITE={rim_appetite:.3f} < {rim_pressure_threshold:.3f} → Fragility Gate APPLIES")
                     
                     if not has_creator_exemption:
                         # Hard gate: Cap at 30% (Sniper ceiling)

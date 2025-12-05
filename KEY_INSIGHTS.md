@@ -972,10 +972,45 @@ high_threshold = dependence_scores.quantile(0.66)  # 0.4482
 
 ---
 
+## 39. The Creator's Dilemma: Volume vs. Stabilizers 🎯 CRITICAL (D'Angelo Russell Fix)
+
+**The Problem**: High-usage creators with high creation volume but inefficient creation were being exempted from the Fragility Gate (e.g., D'Angelo Russell).
+
+**The Physics**: To survive as a high-usage engine in the playoffs, you must have a "Stabilizer":
+- **Stabilizer A (The Foul Line)**: Rim Pressure generates free throws, which stop runs and provide a floor during cold shooting nights (Giannis, Jimmy Butler).
+- **Stabilizer B (The Sniper)**: Elite shot-making efficiency that transcends coverage (Curry, KD, Dirk).
+
+**The Russell Failure**: D'Angelo Russell has High Volume but Zero Stabilizers. He has no Rim Pressure (no free throws) and Negative Creation Tax (inefficient shot-making).
+
+**The Fix**: Refined High-Usage Creator Exemption to require:
+1. High creation volume (>60%) AND high usage (>25%)
+2. **AND** (efficient creation OR minimal rim pressure)
+   - **Efficient creation**: CREATION_TAX >= -0.05 (essentially neutral or positive)
+   - **Minimal rim pressure**: RS_RIM_APPETITE >= bottom 20th percentile (0.1746)
+
+**Key Principle**: Creation volume ≠ creation quality. The exemption must distinguish between:
+- **Versatile creators** (Luka): Can score without rim pressure because creation is efficient
+- **Limited creators** (Russell): Cannot score without rim pressure because creation is inefficient
+
+**The Model Limitation**: The XGBoost model likely rewards CREATION_VOLUME so heavily (it's a proxy for "Star") that it overrides the subtler signal of CREATION_TAX. The Gate acts as a "Physics Constraint" that the ML model is too "greedy" to respect.
+
+**Future Iteration**: Create interaction feature `VOLUME_ADJUSTED_EFFICIENCY = CREATION_VOLUME * CREATION_TAX`. The model would likely learn that high volume × negative tax = bad.
+
+**Test Cases**:
+- ✅ Luka: Exempted (Efficient Creation: -0.019 >= -0.05)
+- ✅ Russell: Capped (Inefficient Creation: -0.101 < -0.05 AND No Rim Pressure: 0.159 < 0.1746)
+- ✅ Haliburton: Likely Exempted (Efficient Creation)
+
+**Key Principle**: Successfully codified the difference between "Empty Calories" and "Nutritious Volume."
+
+**See**: `results/dangelo_russell_deep_dive.md` for complete analysis.
+
+---
+
 **See Also**:
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)
-- `NEXT_STEPS.md` - **START HERE** - Current priorities (D'Angelo Russell investigation)
+- `NEXT_STEPS.md` - **START HERE** - Current priorities and completed work
 - `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
 - `extended_resilience_framework.md` - Stress vectors explained
 

@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** 2D Risk Matrix implementation complete ✅ | Data-driven thresholds calculated | RFE-optimized model with **63.33% accuracy** and **87.5% test case pass rate** (14/16 with gates). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles).
+**Current Status:** 2D Risk Matrix implementation complete ✅ | Data-driven thresholds calculated | RFE-optimized model with **63.33% accuracy** and **87.5% test case pass rate** (14/16 with gates). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles). **D'Angelo Russell fix** (Dec 2025) refined High-Usage Creator Exemption to distinguish between versatile creators (Luka) and limited creators (Russell).
 
 ---
 

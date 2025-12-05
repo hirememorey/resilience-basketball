@@ -1,14 +1,14 @@
 # Latent Star Detection: Critical Case Studies Test Report
 
-**Date**: 2025-12-05 11:25:15
+**Date**: 2025-12-05 11:54:04
 
 ## Executive Summary
 
 - **Total Test Cases**: 16
 - **Data Found**: 16
-- **Passed**: 13
-- **Failed**: 3
-- **Pass Rate**: 81.2%
+- **Passed**: 14
+- **Failed**: 2
+- **Pass Rate**: 87.5%
 
 ## Results by Category
 
@@ -20,9 +20,9 @@
 
 ### False Positive
 - **Total**: 6
-- **Passed**: 5
-- **Failed**: 1
-- **Pass Rate**: 83.3%
+- **Passed**: 6
+- **Failed**: 0
+- **Pass Rate**: 100.0%
 
 ### System Player
 - **Total**: 1
@@ -50,7 +50,7 @@
 | 8 | Lauri Markkanen | 2021-22 | True Positive - Wrong Role | Bulldozer (High) | King (Resilient Star) | 71.79% | ✅ PASS |
 | 9 | Christian Wood | 2020-21 | False Positive - Empty Calories | Victim (Low) | Victim (Fragile Role) | 30.00% | ✅ PASS |
 | 10 | Jamal Murray | 2018-19 | True Positive - Playoff Riser | Bulldozer (High) | King (Resilient Star) | 97.65% | ✅ PASS |
-| 11 | D'Angelo Russell | 2018-19 | False Positive - Fool's Gold | Victim (Low) | King (Resilient Star) | 99.00% | ❌ FAIL |
+| 11 | D'Angelo Russell | 2018-19 | False Positive - Fool's Gold | Victim (Low) | Victim (Fragile Role) | 30.00% | ✅ PASS |
 | 12 | Desmond Bane | 2021-22 | True Positive - Secondary Creator | Bulldozer (High) | Victim (Fragile Role) | 26.05% | ❌ FAIL |
 | 13 | Tobias Harris | 2016-17 | False Positive - Max Contract Mistake | Victim (Low) | Victim (Fragile Role) | 30.00% | ✅ PASS |
 | 14 | Domantas Sabonis | 2021-22 | False Positive - Comparison Case | Victim (Low) | Victim (Fragile Role) | 30.00% | ✅ PASS |
@@ -62,8 +62,6 @@
 ### Failed Tests
 
 **Mikal Bridges (2021-22)**: Expected high star-level (≥65%), got 30.00%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
-
-**D'Angelo Russell (2018-19)**: Expected low star-level (<55%), got 99.00%; Archetype mismatch: expected Victim, got King (Resilient Star)
 
 **Desmond Bane (2021-22)**: Expected high star-level (≥65%), got 26.05%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
 

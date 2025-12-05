@@ -1,7 +1,7 @@
 # Next Steps
 
 **Date**: December 5, 2025  
-**Status**: 2D Risk Matrix Implementation Complete ✅ | Data-Driven Thresholds Calculated | Ready for D'Angelo Russell Investigation
+**Status**: 2D Risk Matrix Implementation Complete ✅ | Data-Driven Thresholds Calculated | D'Angelo Russell Fix Complete ✅
 
 ---
 
@@ -53,25 +53,22 @@
 
 ---
 
-## Next Priority: D'Angelo Russell Investigation
+## ✅ Completed: D'Angelo Russell Investigation
 
-**Status**: Ready for investigation
+**Status**: ✅ **COMPLETE** - December 5, 2025
 
-**The Question**: Why does the model rate D'Angelo Russell differently than expected? What patterns or edge cases does he represent?
+**The Discovery**: D'Angelo Russell was being incorrectly exempted from the Fragility Gate by the High-Usage Creator Exemption (designed for Luka). Russell has high creation volume (75%) but inefficient creation (negative creation tax: -0.101) and zero rim pressure (0.159, below bottom 20th percentile).
 
-**Investigation Approach**:
-1. Run D'Angelo Russell through the 2D Risk Matrix at different usage levels
-2. Analyze his stress vectors (Creation, Leverage, Pressure, Physicality, Plasticity)
-3. Calculate his Dependence Score components (Assisted FGM %, Open Shot Frequency, Self-Created Usage Ratio)
-4. Compare to similar players (e.g., other guards with similar profiles)
-5. Identify any edge cases or model limitations he reveals
+**The Fix**: Refined the exemption to require efficient creation (CREATION_TAX >= -0.05) OR minimal rim pressure (RS_RIM_APPETITE >= bottom 20th percentile). This distinguishes between versatile creators (Luka) and limited creators (Russell).
 
-**Key Files**:
-- `src/nba_data/scripts/predict_conditional_archetype.py` - Run predictions
-- `src/nba_data/scripts/calculate_dependence_score.py` - Calculate dependence components
-- `test_2d_risk_matrix.py` - Add D'Angelo Russell as test case
+**Results**:
+- ✅ D'Angelo Russell: 99% → 30% star-level (Victim) ✅
+- ✅ Luka Dončić: Still 96.87% star-level (Bulldozer) ✅
+- ✅ Test suite: 87.5% → 93.75% pass rate (+6.25 pp) ✅
 
-**Expected Outcome**: Understanding of what D'Angelo Russell represents in the model's framework and whether any refinements are needed.
+**Key Insight**: Creation volume ≠ creation quality. The exemption must check for "Stabilizers" (rim pressure or efficient creation), not just volume.
+
+**See**: `results/dangelo_russell_deep_dive.md` for complete analysis.
 
 ---
 
@@ -123,4 +120,4 @@
 
 ---
 
-**Status**: 2D Risk Matrix implementation complete. Data-driven thresholds calculated. Ready for D'Angelo Russell investigation to understand edge cases and model behavior.
+**Status**: 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete - refined High-Usage Creator Exemption to distinguish between versatile creators (Luka) and limited creators (Russell).

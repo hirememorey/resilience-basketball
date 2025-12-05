@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
 **Date**: December 5, 2025  
-**Status**: 2D Risk Matrix Implementation Complete ✅ | Data-Driven Thresholds Calculated | Ready for D'Angelo Russell Investigation
+**Status**: 2D Risk Matrix Implementation Complete ✅ | Data-Driven Thresholds Calculated | D'Angelo Russell Fix Complete ✅
 
 ---
 
@@ -107,7 +107,7 @@ The model can predict at **any usage level**, enabling two use cases:
 **False Positives**: 100% (6/6) - **Perfect** ✅
 - ✅ Jordan Poole: 52.84% (PASS - correctly downgraded)
 - ✅ Domantas Sabonis: 30.00% (PASS - correctly filtered)
-- ✅ D'Angelo Russell: 30.00% (PASS - correctly filtered)
+- ✅ D'Angelo Russell: 30.00% (PASS - correctly filtered) - **FIXED December 2025**
 - ✅ Ben Simmons: 30.00% (PASS - correctly filtered)
 - ✅ All other false positives correctly filtered
 
@@ -199,7 +199,7 @@ Converted hard gates to soft features that the model learns:
 ## Known Issues & Limitations
 
 1. **Two test cases may be removed from test suite**: Mikal Bridges and Desmond Bane may be accurately rated (not actual failures)
-2. **D'Angelo Russell Phenomenon**: Needs investigation - why does the model rate him differently than expected? (See `NEXT_STEPS.md`)
+2. ~~**D'Angelo Russell Phenomenon**: Needs investigation - why does the model rate him differently than expected?~~ ✅ **FIXED** - Refined High-Usage Creator Exemption to distinguish between versatile creators (Luka) and limited creators (Russell). See `results/dangelo_russell_deep_dive.md`.
 
 ---
 
@@ -226,7 +226,7 @@ Converted hard gates to soft features that the model learns:
 
 **See Also**:
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
-- `NEXT_STEPS.md` - Next priorities (D'Angelo Russell investigation)
+- `NEXT_STEPS.md` - Current priorities and completed work
 - `results/data_driven_thresholds_summary.md` - Data-driven threshold analysis
 - `results/luka_gate_fix_summary.md` - Gate logic refinements
 - `results/latent_star_test_cases_report.md` - Latest validation results (with gates)
