@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
-**Date**: December 4, 2025  
-**Status**: Phase 3.9 Complete - False Positive Filters ✅ | Current Pass Rate: 68.8% (11/16)
+**Date**: December 2025  
+**Status**: Phase 3.9 Complete ✅ | Phase 4 Ready for Implementation 🎯 | Current Pass Rate: 68.8% (11/16)
 
 ---
 
@@ -605,6 +605,59 @@ Phase 3.9 addressed critical false positives identified in full dataset testing.
 - ❌ Tyrese Haliburton (49.23%) - Pressure resilience threshold may need adjustment
 
 **See**: `results/latent_star_test_cases_report.md` for complete validation results.
+
+---
+
+## 🎯 Phase 4: Multi-Season Trajectory & Gates-to-Features (READY FOR IMPLEMENTATION)
+
+**Status**: 🎯 **READY FOR IMPLEMENTATION** (December 2025)
+
+**Based on**: First Principles Feedback Analysis - Addresses core model limitations
+
+### The Problem Identified
+
+External feedback identified two critical limitations:
+
+1. **Over-Reliance on Hard Gates**: 7 hard gates (if/else statements) cap star-level at 30%. These are post-hoc patches rather than learned patterns. A robust ML model should learn these patterns from features.
+
+2. **Missing Trajectory Context**: Model treats Jalen Brunson (Age 22) and Jalen Brunson (Age 24) as independent entities. We're missing the "alpha" in rate of improvement - the trajectory matters more than the snapshot.
+
+### The Solution
+
+**Part 1: Multi-Season Trajectory Features**
+- Add Year-over-Year (YoY) deltas for key stress vectors
+- Add Bayesian priors (previous season values as features)
+- Add Age × trajectory interactions (young players improving = stronger signal)
+
+**Part 2: Convert Gates to Features**
+- Convert 7 hard gates to 7 soft features:
+  - Abdication Tax → `ABDICATION_RISK`
+  - Fragility Gate → `PHYSICALITY_FLOOR`
+  - Bag Check Gate → `SELF_CREATED_FREQ` (already calculated)
+  - Data Completeness → `DATA_COMPLETENESS_SCORE`
+  - Sample Size → `SAMPLE_SIZE_CONFIDENCE`
+  - Missing Leverage Data → `LEVERAGE_DATA_CONFIDENCE`
+  - Multiple Negative Signals → `NEGATIVE_SIGNAL_COUNT`
+
+### Expected Impact
+
+- **Trajectory Features**: Capture "alpha" in rate of improvement (Player A: 0.4→0.5→0.6 ranks higher than Player B: 0.8→0.7→0.6)
+- **Gates to Features**: More elegant model (unified theory vs. "model + 7 exception rules")
+- **Combined**: Expected test case pass rate improvement from 68.8% to 80-85%
+
+### Implementation Plan
+
+**See**: `PHASE4_IMPLEMENTATION_PLAN.md` - **START HERE** for complete implementation details
+
+**Key Files to Create**:
+- `src/nba_data/scripts/generate_trajectory_features.py` - Calculate YoY deltas and priors
+- `src/nba_data/scripts/generate_gate_features.py` - Convert gate logic to features
+
+**Key Files to Modify**:
+- `src/nba_data/scripts/train_predictive_model.py` - Add trajectory and gate features
+- `src/nba_data/scripts/predict_conditional_archetype.py` - Support new features
+
+**Priority**: High - Addresses fundamental model limitations identified in feedback
 
 ---
 

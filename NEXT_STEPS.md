@@ -1,7 +1,38 @@
-# Next Steps: Phase 3.9 Follow-Up
+# Next Steps: Phase 4 Implementation
 
-**Date**: December 4, 2025  
-**Status**: Phase 3.9 Implementation Complete | Remaining Edge Cases Identified
+**Date**: December 2025  
+**Status**: Phase 3.9 Complete ✅ | Phase 4 Ready for Implementation 🎯
+
+---
+
+## 🎯 Phase 4: Multi-Season Trajectory & Gates-to-Features (NEXT PRIORITY)
+
+**Status**: 🎯 **READY FOR IMPLEMENTATION**
+
+**Based on**: First Principles Feedback Analysis - Addresses core model limitations
+
+### The Problem
+
+External feedback identified two critical limitations:
+
+1. **Over-Reliance on Hard Gates**: 7 hard gates (if/else statements) are post-hoc patches. Model should learn patterns from features.
+2. **Missing Trajectory Context**: Model treats player-seasons as independent. Missing "alpha" in rate of improvement.
+
+### The Solution
+
+**Part 1: Multi-Season Trajectory Features**
+- Year-over-Year (YoY) deltas for key stress vectors
+- Bayesian priors (previous season values)
+- Age × trajectory interactions
+
+**Part 2: Convert Gates to Features**
+- Convert 7 hard gates to 7 soft features (let model learn patterns)
+
+### Implementation Plan
+
+**See**: `PHASE4_IMPLEMENTATION_PLAN.md` - **START HERE** for complete implementation details
+
+**Priority**: High - Addresses fundamental model limitations
 
 ---
 
@@ -12,13 +43,13 @@
 ✅ **Phase 3.9 Fix #3**: Data Completeness Gate - Require 4 of 6 critical features (67% completeness)  
 ✅ **Phase 3.9 Fix #4**: Minimum Sample Size Gate - Filter small sample size noise (pressure shots < 50, clutch minutes < 15, suspicious perfect efficiency)
 
-**Current Pass Rate**: 68.8% (11/16) - Same as Phase 3.8, but false positives successfully filtered
+**Current Pass Rate**: 68.8% (11/16) - All false positives successfully filtered
 
 **Key Achievement**: **All false positives removed** - Thanasis, KZ Okpala, Trevon Scott, Isaiah Mobley, Jahlil Okafor, and Ben Simmons all correctly filtered to 30% star-level.
 
 ---
 
-## Remaining Edge Cases (5 failures)
+## Remaining Edge Cases (5 failures - Lower Priority)
 
 ### 1. Victor Oladipo (2016-17) - Abdication Tax Threshold Too Strict (Priority: High)
 
@@ -120,49 +151,41 @@
 
 ## Recommended Action Order
 
-1. **Refine Abdication Tax Threshold for Victor Oladipo** (High Priority)
-   - Use more lenient threshold if LEVERAGE_TS_DELTA is positive (maintains efficiency)
-   - Test threshold of -0.08 instead of -0.05 when TS delta is positive
-   - Run validation suite to verify improvement
+1. **🎯 Implement Phase 4: Multi-Season Trajectory & Gates-to-Features** (Highest Priority)
+   - See `PHASE4_IMPLEMENTATION_PLAN.md` for complete implementation plan
+   - Expected to address many edge cases through trajectory features
+   - Expected to improve model elegance by converting gates to features
 
-2. **Increase Poole Tax Rate** (High Priority)
-   - Test 70%+ volume reduction
-   - Or apply tax to additional volume features
-   - Run validation suite to verify improvement
-
-3. **Evaluate Bridges/Markkanen** (Low Priority)
-   - Determine if Bag Check Gate is correctly penalizing based on 2021 data
-   - The model is accurately saying "Based strictly on 2021 profile, they project as role players, not stars"
-   - May be acceptable as correct predictions (they were role players in 2021)
-
-4. **Accept Marginal Cases** (Low Priority)
-   - Tobias Harris at 60.99% (threshold 55%) is appropriately uncertain
-   - Tyrese Haliburton at 60.88% (threshold 65%) is very close
-   - Don't over-tune for edge cases
+2. **Edge Case Refinements** (Lower Priority - After Phase 4)
+   - These may be resolved by Phase 4 trajectory features
+   - If not, consider:
+     - Refine Abdication Tax Threshold for Victor Oladipo
+     - Increase Poole Tax Rate
+     - Evaluate Bridges/Markkanen (may be correct as-is)
+     - Accept Marginal Cases (Tobias Harris, Haliburton are close)
 
 ---
 
 ## Key Files for Next Developer
 
-**Start Here**:
-- `CURRENT_STATE.md` - **START HERE** - Complete current state with Phase 3.9 results
-- `results/false_positive_fixes_implemented.md` - **START HERE** - Phase 3.9 implementation and validation
-- `results/top_100_and_test_cases_analysis.md` - Analysis of top 100 and test case results
-- `results/latent_star_test_cases_report.md` - Latest validation results
-- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.9 insights)
+**START HERE**:
+- `PHASE4_IMPLEMENTATION_PLAN.md` - **START HERE** - Complete Phase 4 implementation plan
+- `CURRENT_STATE.md` - Current project state with Phase 3.9 results and Phase 4 overview
+- `KEY_INSIGHTS.md` - Hard-won lessons (critical reference)
 
-**Code to Modify**:
-- `src/nba_data/scripts/predict_conditional_archetype.py` - All gates in `predict_archetype_at_usage()` method:
-  - Missing Leverage Data Penalty
-  - Negative Signal Gate (Abdication Tax)
-  - Data Completeness Gate
-  - Minimum Sample Size Gate
-  - Playoff Volume Tax (line ~503)
-  - Flash Multiplier (line ~192)
-  - Bag Check Gate (line ~620)
+**Phase 4 Implementation**:
+- `PHASE4_IMPLEMENTATION_PLAN.md` - Complete implementation plan with code examples
+- `src/nba_data/scripts/generate_trajectory_features.py` - **TO CREATE** - Calculate YoY deltas and priors
+- `src/nba_data/scripts/generate_gate_features.py` - **TO CREATE** - Convert gate logic to features
+- `src/nba_data/scripts/train_predictive_model.py` - **TO MODIFY** - Add trajectory and gate features
+- `src/nba_data/scripts/predict_conditional_archetype.py` - **TO MODIFY** - Support new features
+
+**Historical Context** (if needed):
+- `results/false_positive_fixes_implemented.md` - Phase 3.9 implementation details
+- `results/latent_star_test_cases_report.md` - Latest validation results (68.8% pass rate)
 
 **Test Suite**:
-- `test_latent_star_cases.py` - Run after each fix to validate improvements
+- `test_latent_star_cases.py` - Run after Phase 4 implementation to validate improvements
 
 ---
 
@@ -178,5 +201,5 @@
 
 ---
 
-**Status**: Phase 3.9 complete. All false positives successfully filtered (Thanasis, KZ Okpala, Trevon Scott, Isaiah Mobley, Jahlil Okafor, Ben Simmons). Top 100 now shows only legitimate stars. Remaining issues are edge cases that may need refinement or acceptance as model limitations.
+**Status**: Phase 3.9 complete. All false positives successfully filtered. **Phase 4 is the next priority** - addresses fundamental model limitations (hard gates and missing trajectory context) identified in external feedback. See `PHASE4_IMPLEMENTATION_PLAN.md` for complete implementation plan.
 

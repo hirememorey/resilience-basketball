@@ -706,8 +706,42 @@ When implementing new features, ask:
 
 ---
 
+## 28. Multi-Season Trajectory Features 🎯 NEW (Phase 4)
+
+**The Problem**: Model treats Jalen Brunson (Age 22) and Jalen Brunson (Age 24) as independent entities. Missing the "alpha" in rate of improvement.
+
+**The Insight**: **Trajectory > Snapshot**. Star potential has Magnitude (current ability) and Direction (rate of improvement). A player going 0.4 → 0.5 → 0.6 is a Latent Star; a player going 0.8 → 0.7 → 0.6 is declining.
+
+**The Fix**: Add trajectory features:
+- **YoY Deltas**: `CREATION_VOLUME_RATIO_YOY_DELTA`, `LEVERAGE_USG_DELTA_YOY_DELTA`, etc.
+- **Bayesian Priors**: Previous season values as features (`PREV_CREATION_VOLUME_RATIO`, etc.)
+- **Age Interactions**: `AGE_X_CREATION_VOLUME_RATIO_YOY_DELTA` (young players improving = stronger signal)
+
+**Key Principle**: The "alpha" is in the slope of the line, not just the y-intercept.
+
+---
+
+## 29. Convert Gates to Features 🎯 NEW (Phase 4)
+
+**The Problem**: 7 hard gates (if/else statements) cap star-level at 30%. These are post-hoc patches, not learned patterns.
+
+**The Insight**: **Learn, Don't Patch**. A robust ML model should learn patterns from features, not hard rules. If LEVERAGE_USG_DELTA is the #1 predictor, the model should naturally punish negative values.
+
+**The Fix**: Convert hard gates to soft features:
+- **Abdication Tax Gate** → `ABDICATION_RISK = max(0, -LEVERAGE_USG_DELTA)`
+- **Fragility Gate** → `PHYSICALITY_FLOOR = RS_RIM_APPETITE` (let model learn threshold)
+- **Bag Check Gate** → `SELF_CREATED_FREQ` (already calculated, let model learn threshold)
+- **Data Completeness Gate** → `DATA_COMPLETENESS_SCORE = present_features / total_features`
+- **Sample Size Gate** → `SAMPLE_SIZE_CONFIDENCE = min(1.0, pressure_shots/50, clutch_min/15)`
+- **Missing Leverage Data** → `LEVERAGE_DATA_CONFIDENCE = 1.0 if present else 0.0`
+- **Multiple Negative Signals** → `NEGATIVE_SIGNAL_COUNT = count(negative_signals)`
+
+**Key Principle**: Better features (trajectory, gates) > more complex models. Model should learn patterns, not rely on hard rules.
+
+---
+
 **See Also**:
-- `USAGE_AWARE_MODEL_PLAN.md` - Implementation plan
+- `PHASE4_IMPLEMENTATION_PLAN.md` - **START HERE** - Phase 4 implementation plan
 - `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
 - `extended_resilience_framework.md` - Stress vectors explained
 
