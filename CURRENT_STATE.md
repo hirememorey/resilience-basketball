@@ -760,9 +760,8 @@ Latent star detection work has been archived to `archive/latent_star_detection/`
 - `results/latent_star_test_cases_report.md` - Latest validation results (68.8% pass rate)
 - `results/phase3_7_data_fix_impact.md` - Phase 3.7 impact analysis and data fix results
 - `results/haliburton_pressure_investigation.md` - Data completeness investigation and fix
-- `PHASE3_7_REFINEMENT_PLAN.md` - Phase 3.7 implementation plan (completed)
+- `archive/phase3_plans/` - Historical Phase 3 implementation plans (completed)
 - `results/phase3_6_validation_report.md` - Phase 3.6 validation results (75% pass rate)
-- `PHASE3_6_IMPLEMENTATION_PLAN.md` - Phase 3.6 implementation plan
 - `results/phase3_5_validation_report.md` - Phase 3.5 validation results
 - `USAGE_AWARE_MODEL_PLAN.md` - Historical implementation plan
 - `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 3.9 insights)
