@@ -1007,6 +1007,45 @@ high_threshold = dependence_scores.quantile(0.66)  # 0.4482
 
 ---
 
+## 40. The "Empty Calories" Creator Pattern 🎯 CRITICAL (Expanded Dataset Analysis)
+
+**The Problem**: Volume Exemption (`CREATION_VOLUME_RATIO > 0.60`) is too broad. It exempts "Empty Calories" creators (high volume + negative creation tax) from Multi-Signal Tax, when it should only exempt "True Creators" (high volume + efficient creation OR rim pressure).
+
+**The Pattern**: "Empty Calories" creators have:
+- **High creation volume** (>0.60) → Volume Exemption protects them
+- **Negative creation tax** (<-0.10) → But they're inefficient creators
+- **Result**: Model predicts "King" but they're actually "Volume Scorers"
+
+**Examples from Expanded Dataset**:
+- **Devonte' Graham (2019-20)**: CREATION_VOLUME_RATIO = 0.688, CREATION_TAX = -0.199 → Predicted "King" (83.83%) but is actually a volume scorer
+- **Dion Waiters (2016-17)**: CREATION_VOLUME_RATIO = 0.645, CREATION_TAX = -0.164 → Predicted "King" (74.98%) but is actually a volume scorer
+- **Kris Dunn (2017-18)**: CREATION_VOLUME_RATIO = 0.817, CREATION_TAX = -0.062 → Predicted "King" (83.20%) but is actually a volume scorer
+
+**The Physics**: These players create a lot of shots (high volume), but their efficiency drops when creating (negative tax). In playoffs, defenses force them to create → efficiency collapses. They're "volume scorers" not "efficient creators."
+
+**The Fix**: Refine Volume Exemption to require efficient creation OR rim pressure:
+```python
+# WRONG: High volume alone exempts
+if CREATION_VOLUME_RATIO > 0.60:
+    is_exempt = True  # Too broad - catches "Empty Calories"
+
+# RIGHT: High volume + efficient creation OR rim pressure
+if CREATION_VOLUME_RATIO > 0.60:
+    has_efficient_creation = CREATION_TAX >= -0.05
+    has_rim_pressure = RS_RIM_APPETITE >= 0.1746  # Bottom 20th percentile
+    is_exempt = has_efficient_creation or has_rim_pressure
+```
+
+**Key Principle**: High volume alone doesn't make you a star. Need either efficient creation (CREATION_TAX >= -0.05) OR rim pressure (stabilizer). This catches "Empty Calories" creators while preserving true creators (Schröder, Fultz).
+
+**Test Cases**:
+- ❌ **Wrong**: Devonte' Graham exempted (Volume=0.688 > 0.60) → Predicted "King" (83.83%)
+- ✅ **Right**: Devonte' Graham taxed (Volume=0.688 BUT Tax=-0.199 < -0.05) → Should be capped at "Bulldozer" or lower
+
+**See**: `results/model_misses_analysis.md` for complete analysis.
+
+---
+
 **See Also**:
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)

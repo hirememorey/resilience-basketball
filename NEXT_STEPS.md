@@ -72,6 +72,66 @@
 
 ---
 
+## ✅ Completed: Expanded Dataset Analysis
+
+**Status**: ✅ **COMPLETE** - December 5, 2025
+
+**What Was Done**:
+- ✅ Created `run_expanded_predictions.py` script to run model on expanded dataset
+- ✅ Ran predictions on 1,849 player-seasons (Age ≤ 25, Min 500 minutes)
+- ✅ Generated comprehensive results with 2D Risk Matrix predictions
+- ✅ Analyzed model misses and identified root causes
+
+**Key Findings**:
+- ✅ Model performing well overall - 7/10 "misses" are either correct or debatable
+- ⚠️ **Volume Exemption Too Broad**: Catches "Empty Calories" creators (high volume + negative tax)
+- ⚠️ **Missing Rim Pressure Data**: 80% of misses lack data, preventing Fragility Gate
+
+**See**: `results/expanded_predictions.csv` for full results and `results/model_misses_analysis.md` for detailed analysis.
+
+---
+
+## Current Priority: Refine Volume Exemption Logic
+
+**Status**: 🔴 **HIGH PRIORITY** - Ready for implementation
+
+**The Problem**: Volume Exemption (`CREATION_VOLUME_RATIO > 0.60`) is too broad. It exempts "Empty Calories" creators (high volume + negative creation tax) from Multi-Signal Tax, when it should only exempt "True Creators" (high volume + efficient creation OR rim pressure).
+
+**The Pattern**: "Empty Calories" creators like Devonte' Graham, Dion Waiters, Kris Dunn have:
+- High creation volume (>0.60) → Volume Exemption protects them
+- Negative creation tax (<-0.10) → But they're inefficient creators
+- Result: Model predicts "King" but they're actually "Volume Scorers"
+
+**The Fix**: Refine Volume Exemption to require:
+```
+CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.1746)
+```
+
+**Rationale**:
+- High volume alone doesn't make you a star
+- Need either efficient creation (CREATION_TAX >= -0.05) OR rim pressure (stabilizer)
+- This catches "Empty Calories" creators while preserving true creators (Schröder, Fultz)
+
+**Expected Impact**:
+- Would catch Devonte' Graham (CREATION_TAX = -0.199)
+- Would catch Dion Waiters (CREATION_TAX = -0.164)
+- Would catch Kris Dunn (CREATION_TAX = -0.062)
+- Would preserve Dennis Schröder (CREATION_TAX = +0.058)
+- Would preserve Markelle Fultz (CREATION_TAX = -0.033, essentially neutral)
+
+**Implementation Location**: `src/nba_data/scripts/predict_conditional_archetype.py`
+- Find Multi-Signal Tax exemption logic (around line 570-590)
+- Update Volume Exemption condition to include efficiency/stabilizer check
+
+**Validation**:
+- Run `test_latent_star_cases.py` to ensure no regressions
+- Check that Devonte' Graham, Dion Waiters, Kris Dunn are now correctly filtered
+- Verify that Dennis Schröder, Markelle Fultz are still correctly exempted
+
+**See**: `results/model_misses_analysis.md` for complete analysis and recommendations.
+
+---
+
 ## Remaining Considerations
 
 ### Test Suite Refinement
@@ -83,6 +143,19 @@
 - ⚠️ **Desmond Bane** (26.05%, expected ≥65%) - Unclear if actually broke out (as of Dec 2025)
 
 **Action**: Evaluate if these are legitimate model predictions or actual failures. If accurately rated, remove from test suite.
+
+### Missing Rim Pressure Data
+
+**Status**: Data pipeline issue identified
+
+**Problem**: 80% of model misses lack `RS_RIM_APPETITE` data, preventing Fragility Gate from catching them.
+
+**Action**: 
+- Investigate why rim pressure data is missing for some players
+- Ensure data pipeline collects rim pressure for all players
+- Or apply Fragility Gate more conservatively when data is missing
+
+**See**: `results/model_misses_analysis.md` for details.
 
 ---
 
@@ -120,4 +193,4 @@
 
 ---
 
-**Status**: 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete - refined High-Usage Creator Exemption to distinguish between versatile creators (Luka) and limited creators (Russell).
+**Status**: 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. **Next Priority**: Refine Volume Exemption logic to catch "Empty Calories" creators.

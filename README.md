@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** 2D Risk Matrix implementation complete ✅ | Data-driven thresholds calculated | RFE-optimized model with **63.33% accuracy** and **87.5% test case pass rate** (14/16 with gates). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles). **D'Angelo Russell fix** (Dec 2025) refined High-Usage Creator Exemption to distinguish between versatile creators (Luka) and limited creators (Russell).
+**Current Status:** 2D Risk Matrix implementation complete ✅ | Data-driven thresholds calculated | RFE-optimized model with **63.33% accuracy** and **87.5% test case pass rate** (14/16 with gates). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles). **Expanded dataset analysis complete** (1,849 player-seasons, Age ≤ 25). **D'Angelo Russell fix** (Dec 2025) refined High-Usage Creator Exemption. **Next Priority**: Refine Volume Exemption logic to catch "Empty Calories" creators.
 
 ---
 
@@ -12,7 +12,7 @@
 - **`LUKA_SIMMONS_PARADOX.md`** - **START HERE** - Theoretical foundation (why we built this)
 - **`CURRENT_STATE.md`** - What exists, current metrics, what works
 - **`2D_RISK_MATRIX_IMPLEMENTATION.md`** - ✅ **COMPLETE** - 2D framework implementation
-- **`NEXT_STEPS.md`** - What to work on next (D'Angelo Russell investigation)
+- **`NEXT_STEPS.md`** - Current priorities and completed work
 - **`KEY_INSIGHTS.md`** - Critical lessons to avoid mistakes (see Insight #37: Trust Fall & Ground Truth Trap)
 
 ### 2. Set Up Environment
@@ -51,6 +51,9 @@ python src/nba_data/scripts/train_rfe_model.py
 ```bash
 # Run test suite
 python test_latent_star_cases.py
+
+# Run expanded dataset predictions (optional)
+python run_expanded_predictions.py --min-minutes 500 --max-age 25
 ```
 
 ---
@@ -132,6 +135,8 @@ The model can predict at **any usage level**, enabling two use cases:
 
 ### Test Scripts
 - `test_latent_star_cases.py` - Validation test suite (16 critical cases)
+- `run_expanded_predictions.py` - Run model on expanded dataset (Age ≤ 25, Min minutes)
+- `analyze_model_misses.py` - Diagnostic script to analyze specific model misses
 
 ### Data Files
 - `results/predictive_dataset.csv` - Stress vectors (5,312 player-seasons)
@@ -157,12 +162,14 @@ The model can predict at **any usage level**, enabling two use cases:
 
 - **`CURRENT_STATE.md`** - Detailed current state, what exists, known issues
 - **`2D_RISK_MATRIX_IMPLEMENTATION.md`** - ✅ **COMPLETE** - 2D framework implementation
-- **`NEXT_STEPS.md`** - What to work on next (D'Angelo Russell investigation)
+- **`NEXT_STEPS.md`** - Current priorities and completed work
 - **`KEY_INSIGHTS.md`** - Hard-won lessons (37+ principles, see #37: Trust Fall & Ground Truth Trap)
 - **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation
 - **`results/latent_star_test_cases_report_trust_fall.md`** - Trust Fall experiment results
 - **`results/latent_star_test_cases_report.md`** - Latest validation results (with gates)
 - **`results/rfe_model_comparison.md`** - RFE model analysis
+- **`results/expanded_predictions.csv`** - Expanded dataset predictions (1,849 player-seasons)
+- **`results/model_misses_analysis.md`** - Analysis of model misses and recommendations
 
 ---
 

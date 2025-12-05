@@ -196,10 +196,32 @@ Converted hard gates to soft features that the model learns:
 
 ---
 
+## Expanded Dataset Analysis: Complete ✅
+
+**Status**: Expanded predictions run on 1,849 player-seasons (Age ≤ 25, Min 500 minutes)
+
+**Results**:
+- **Dataset**: 1,849 player-seasons from 2015-2024
+- **Top Latent Stars**: Shai Gilgeous-Alexander (97.69%), Deandre Ayton (96.88%), Derrick White (96.58%)
+- **Risk Categories**: 1,080 "Avoid" (58.4%), 98 "Franchise Cornerstone" (5.3%)
+- **2D Risk Matrix**: Working correctly - Performance Score at current usage, potential at 25% usage
+
+**Key Findings from Model Misses Analysis**:
+- **7/10 "misses" are either correct or debatable** (Kawhi, Tatum, Schröder cases)
+- **3/10 are true misses**: "Empty Calories" creators (high volume + negative creation tax)
+- **Root Cause**: Volume Exemption too broad - doesn't distinguish efficient vs. inefficient creators
+- **Data Issue**: 80% of misses lack rim pressure data, preventing Fragility Gate from working
+
+**See**: `results/expanded_predictions.csv` for full results and `results/model_misses_analysis.md` for detailed analysis.
+
+---
+
 ## Known Issues & Limitations
 
 1. **Two test cases may be removed from test suite**: Mikal Bridges and Desmond Bane may be accurately rated (not actual failures)
 2. ~~**D'Angelo Russell Phenomenon**: Needs investigation - why does the model rate him differently than expected?~~ ✅ **FIXED** - Refined High-Usage Creator Exemption to distinguish between versatile creators (Luka) and limited creators (Russell). See `results/dangelo_russell_deep_dive.md`.
+3. **Volume Exemption Too Broad**: High creation volume (>0.60) exempts players from Multi-Signal Tax, even when creation is inefficient. Need to refine to require efficient creation OR rim pressure. See `results/model_misses_analysis.md`.
+4. **Missing Rim Pressure Data**: 80% of model misses lack `RS_RIM_APPETITE` data, preventing Fragility Gate from catching them. Need to fix data pipeline.
 
 ---
 
@@ -221,6 +243,8 @@ Converted hard gates to soft features that the model learns:
 - **`src/nba_data/scripts/predict_conditional_archetype.py`**: Main prediction function (supports `apply_hard_gates` parameter for Trust Fall)
 - **`src/nba_data/scripts/train_rfe_model.py`**: Train RFE-optimized model
 - **`test_latent_star_cases.py`**: Validation test suite (supports `--trust-fall` flag)
+- **`run_expanded_predictions.py`**: Run model on expanded dataset (Age ≤ 25, Min minutes threshold)
+- **`analyze_model_misses.py`**: Diagnostic script to analyze specific model misses
 
 ---
 
