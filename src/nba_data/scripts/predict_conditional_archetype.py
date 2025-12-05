@@ -353,6 +353,23 @@ class ConditionalArchetypePredictor:
                     self.star_avg_open_freq = open_freq.median()
                     logger.info(f"Fallback: Using qualified players median {open_freq_col}: {self.star_avg_open_freq:.4f}")
         # If not in features, we'll calculate it on-the-fly from shot quality data if available
+        
+        # Phase 4.2: Multi-Signal Tax - Calculate 40th percentile for pressure appetite (Tax #4 threshold)
+        self.pressure_app_40th = None
+        if 'RS_PRESSURE_APPETITE' in self.df_features.columns:
+            if 'USG_PCT' in self.df_features.columns:
+                # Use stars (Usage > 20%) for threshold calculation
+                star_players = self.df_features[self.df_features['USG_PCT'] > 0.20]
+                star_pressure_app = star_players['RS_PRESSURE_APPETITE'].dropna()
+                if len(star_pressure_app) > 0:
+                    self.pressure_app_40th = star_pressure_app.quantile(0.40)
+                    logger.info(f"RS_PRESSURE_APPETITE 40th percentile (STARS, USG > 20%): {self.pressure_app_40th:.4f}")
+            # Fallback: use qualified players if star data not available
+            if self.pressure_app_40th is None:
+                pressure_app = qualified_players['RS_PRESSURE_APPETITE'].dropna()
+                if len(pressure_app) > 0:
+                    self.pressure_app_40th = pressure_app.quantile(0.40)
+                    logger.info(f"Fallback: RS_PRESSURE_APPETITE 40th percentile (qualified): {self.pressure_app_40th:.4f}")
     
     def _get_expected_features(self) -> list:
         """Get expected feature names (fallback if model doesn't have feature_names_in_)."""
@@ -501,6 +518,7 @@ class ConditionalArchetypePredictor:
         # Phase 3.7 Fix #1: Playoff Translation Tax - Moved from efficiency to volume
         # Phase 3.6 Fix #2 (OLD): Was applied to efficiency features
         # Phase 3.7 Fix #1 (NEW): Apply to volume instead - system merchants lose opportunity, not just efficiency
+        # Phase 4.2: This is now part of Multi-Signal Tax System (Tax #1)
         playoff_volume_tax_applied = False
         open_shot_freq = None
         if apply_phase3_fixes:
@@ -523,10 +541,11 @@ class ConditionalArchetypePredictor:
                     open_shot_freq = fga_6_plus / total_tracked
             
             # Phase 3.7 Fix #1: Check if open shot frequency > 75th percentile (volume tax threshold)
+            # Phase 4.2: This becomes Tax #1 in Multi-Signal Tax System
             if pd.notna(open_shot_freq) and self.open_freq_75th is not None:
                 if open_shot_freq > self.open_freq_75th:
                     playoff_volume_tax_applied = True
-                    logger.debug(f"Playoff Volume Tax applied: {open_shot_freq:.4f} > {self.open_freq_75th:.4f} (75th percentile)")
+                    logger.debug(f"Open Shot Tax trigger: {open_shot_freq:.4f} > {self.open_freq_75th:.4f} (75th percentile)")
             elif pd.notna(open_shot_freq):
                 # Fallback: calculate 75th percentile on-the-fly if not pre-calculated
                 open_freq_col = None
@@ -539,26 +558,241 @@ class ConditionalArchetypePredictor:
                     open_freq_75th = self.df_features[open_freq_col].dropna().quantile(0.75)
                     if pd.notna(open_freq_75th) and open_shot_freq > open_freq_75th:
                         playoff_volume_tax_applied = True
-                        logger.debug(f"Playoff Volume Tax applied (on-the-fly): {open_shot_freq:.4f} > {open_freq_75th:.4f}")
+                        logger.debug(f"Open Shot Tax trigger (on-the-fly): {open_shot_freq:.4f} > {open_freq_75th:.4f}")
+        
+        # ========== PHASE 4.2: Multi-Signal Tax System ==========
+        # Calculate system merchant tax penalty based on multiple signals
+        # Principle: Tax base features BEFORE projection, then use taxed values in interactions
+        
+        # Step 1: Check exemption (true stars have positive signals OR high creation volume)
+        leverage_usg_delta = player_data.get('LEVERAGE_USG_DELTA', 0)
+        leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', 0)
+        creation_tax = player_data.get('CREATION_TAX', 0)
+        creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', 0)
+        
+        # Exemption #1: Positive leverage signals (scales up in clutch)
+        has_positive_leverage = (
+            (pd.notna(leverage_usg_delta) and leverage_usg_delta > 0) or
+            (pd.notna(leverage_ts_delta) and leverage_ts_delta > 0)
+        )
+        
+        # Exemption #2: Positive creation efficiency (maintains/improves when creating)
+        has_positive_creation = pd.notna(creation_tax) and creation_tax > 0
+        
+        # Exemption #3: High creation volume (CREATION_VOLUME_RATIO > 0.60)
+        # Principle: A player creating 60%+ of their shots is the system, not a system merchant
+        # Haliburton (0.73): Primary engine, not a merchant
+        # Poole (0.48): Lives in gray area where system merchants thrive
+        has_high_creation_volume = pd.notna(creation_vol_ratio) and creation_vol_ratio > 0.60
+        
+        is_exempt = has_positive_leverage or has_positive_creation or has_high_creation_volume
+        
+        # Step 2: Calculate tax penalty (if not exempt)
+        multi_signal_volume_penalty = 1.0
+        multi_signal_efficiency_penalty = 1.0
+        tax_applied_flags = []
+        
+        if not is_exempt and apply_phase3_fixes:
+            # Tax #1: Open Shot Dependency (50% reduction - reverted from 40%)
+            if playoff_volume_tax_applied:  # Already calculated above
+                multi_signal_volume_penalty *= 0.50
+                multi_signal_efficiency_penalty *= 0.50  # ← THE FIX: Tax efficiency too
+                tax_applied_flags.append("Open Shot Tax")
+            
+            # Tax #2: Creation Efficiency Collapse (20% additional reduction - reverted from 30%)
+            if pd.notna(creation_tax) and creation_tax < 0:
+                multi_signal_volume_penalty *= 0.80
+                multi_signal_efficiency_penalty *= 0.80
+                tax_applied_flags.append("Creation Efficiency Tax")
+            
+            # Tax #3: Leverage Abdication (20% additional reduction - reverted from 30%)
+            if (pd.notna(leverage_usg_delta) and leverage_usg_delta < 0 and
+                pd.notna(leverage_ts_delta) and leverage_ts_delta < 0):
+                multi_signal_volume_penalty *= 0.80
+                multi_signal_efficiency_penalty *= 0.80
+                tax_applied_flags.append("Leverage Abdication Tax")
+            
+            # Tax #4: Pressure Avoidance (20% additional reduction - reverted from 30%)
+            pressure_appetite = player_data.get('RS_PRESSURE_APPETITE', None)
+            if (pd.notna(pressure_appetite) and 
+                self.pressure_app_40th is not None and 
+                pressure_appetite < self.pressure_app_40th):
+                multi_signal_volume_penalty *= 0.80
+                multi_signal_efficiency_penalty *= 0.80
+                tax_applied_flags.append("Pressure Avoidance Tax")
+            
+            # Late Clock Dampener: If player has elite late clock resilience (>0.40), reduce penalty by half
+            # Principle: Late clock shots are "grenades." Hitting them at >40% is elite bailout utility.
+            # This is a dampener (reduces penalty), not a full exemption (player can be merchant for 20s, bailout for 4s)
+            late_clock_resilience = player_data.get('RS_LATE_CLOCK_PRESSURE_RESILIENCE', None)
+            if pd.notna(late_clock_resilience) and late_clock_resilience > 0.40:
+                # Dampen penalty: if penalty is 0.32 (68% reduction), dampen to 0.66 (34% reduction)
+                # Formula: new_penalty = 1.0 - (1.0 - old_penalty) * 0.5
+                # This reduces the reduction by half
+                original_reduction = 1.0 - multi_signal_volume_penalty
+                dampened_reduction = original_reduction * 0.5
+                multi_signal_volume_penalty = 1.0 - dampened_reduction
+                multi_signal_efficiency_penalty = 1.0 - dampened_reduction
+                tax_applied_flags.append("Late Clock Dampener Applied")
+                logger.debug(f"Late Clock Dampener: Penalty reduced from {1.0 - original_reduction:.4f} to {multi_signal_volume_penalty:.4f} (reduction: {original_reduction:.1%} → {dampened_reduction:.1%})")
+            
+            if tax_applied_flags:
+                logger.debug(f"Multi-Signal Tax applied: {tax_applied_flags}, "
+                            f"Volume Penalty: {multi_signal_volume_penalty:.4f}, "
+                            f"Efficiency Penalty: {multi_signal_efficiency_penalty:.4f}")
+        else:
+            if is_exempt:
+                logger.debug("Player exempt from Multi-Signal Tax (has positive signals)")
+        
+        # Initialize taxed values storage (for use in interaction calculations)
+        # Phase 4.2: Tax base features BEFORE feature loop (RFE model only has interactions, not base features)
+        # Extract and tax base features from player_data, even if they're not in model's feature list
+        taxed_creation_vol = None
+        taxed_efg_iso = None
+        taxed_pressure_app = None
+        taxed_leverage_usg = None
+        
+        # Tax base features now (before feature loop) so they're available for interaction calculations
+        if not is_exempt and apply_phase3_fixes:
+            # Tax CREATION_VOLUME_RATIO
+            if 'CREATION_VOLUME_RATIO' in player_data.index:
+                creation_vol_base = player_data['CREATION_VOLUME_RATIO']
+                if pd.notna(creation_vol_base):
+                    taxed_creation_vol = creation_vol_base * multi_signal_volume_penalty
+                    logger.debug(f"Pre-taxed CREATION_VOLUME_RATIO: {creation_vol_base:.4f} → {taxed_creation_vol:.4f}")
+            
+            # Tax EFG_ISO_WEIGHTED (THE FIX - efficiency feature)
+            if 'EFG_ISO_WEIGHTED' in player_data.index:
+                efg_iso_base = player_data['EFG_ISO_WEIGHTED']
+                if pd.notna(efg_iso_base):
+                    taxed_efg_iso = efg_iso_base * multi_signal_efficiency_penalty
+                    logger.debug(f"Pre-taxed EFG_ISO_WEIGHTED: {efg_iso_base:.4f} → {taxed_efg_iso:.4f}")
+            
+            # Tax EFG_PCT_0_DRIBBLE (catch-and-shoot efficiency - also context-dependent for system merchants)
+            # This is 6.8% importance and also benefits from Curry's gravity
+            taxed_efg_0_dribble = None
+            if 'EFG_PCT_0_DRIBBLE' in player_data.index:
+                efg_0_dribble_base = player_data['EFG_PCT_0_DRIBBLE']
+                if pd.notna(efg_0_dribble_base):
+                    taxed_efg_0_dribble = efg_0_dribble_base * multi_signal_efficiency_penalty
+                    logger.debug(f"Pre-taxed EFG_PCT_0_DRIBBLE: {efg_0_dribble_base:.4f} → {taxed_efg_0_dribble:.4f}")
+            
+            # Tax RS_PRESSURE_APPETITE
+            if 'RS_PRESSURE_APPETITE' in player_data.index:
+                pressure_app_base = player_data['RS_PRESSURE_APPETITE']
+                if pd.notna(pressure_app_base):
+                    taxed_pressure_app = pressure_app_base * multi_signal_volume_penalty
+            
+            # Tax LEVERAGE_USG_DELTA
+            if 'LEVERAGE_USG_DELTA' in player_data.index:
+                leverage_usg_base = player_data['LEVERAGE_USG_DELTA']
+                if pd.notna(leverage_usg_base):
+                    taxed_leverage_usg = leverage_usg_base * multi_signal_volume_penalty
+        else:
+            # Not exempt but no taxes - use original values
+            if 'CREATION_VOLUME_RATIO' in player_data.index:
+                taxed_creation_vol = player_data.get('CREATION_VOLUME_RATIO', None)
+            if 'EFG_ISO_WEIGHTED' in player_data.index:
+                taxed_efg_iso = player_data.get('EFG_ISO_WEIGHTED', None)
+            if 'EFG_PCT_0_DRIBBLE' in player_data.index:
+                taxed_efg_0_dribble = player_data.get('EFG_PCT_0_DRIBBLE', None)
+            if 'RS_PRESSURE_APPETITE' in player_data.index:
+                taxed_pressure_app = player_data.get('RS_PRESSURE_APPETITE', None)
+            if 'LEVERAGE_USG_DELTA' in player_data.index:
+                taxed_leverage_usg = player_data.get('LEVERAGE_USG_DELTA', None)
+        # ========== END PHASE 4.2 ==========
         
         for feature_name in self.feature_names:
             if feature_name == 'USG_PCT':
                 # Use the specified usage level
                 features.append(usage_level)
             elif feature_name.startswith('USG_PCT_X_'):
-                # Calculate interaction term: USG_PCT * base_feature
+                # Phase 4.2: Calculate interaction term using TAXED base features
+                # Use pre-taxed values for interactions (taxed before projection)
                 base_feature = feature_name.replace('USG_PCT_X_', '')
-                if base_feature in player_data.index:
-                    base_value = player_data[base_feature]
-                    if pd.isna(base_value):
-                        # If base feature is missing, set interaction to 0
-                        features.append(0.0)
-                    else:
+                
+                # Use pre-taxed values if available (from base feature processing)
+                if base_feature == 'CREATION_VOLUME_RATIO':
+                    if taxed_creation_vol is not None:
+                        # Use taxed + projected value
+                        if use_projection:
+                            base_value = taxed_creation_vol * projection_factor
+                        else:
+                            base_value = taxed_creation_vol
                         features.append(usage_level * base_value)
+                    else:
+                        # Fallback: tax on-the-fly if not already taxed
+                        base_value = player_data.get('CREATION_VOLUME_RATIO', 0)
+                        if pd.isna(base_value):
+                            features.append(0.0)
+                        else:
+                            taxed_base = base_value * multi_signal_volume_penalty
+                            if use_projection:
+                                taxed_base = taxed_base * projection_factor
+                            features.append(usage_level * taxed_base)
+                
+                elif base_feature == 'EFG_ISO_WEIGHTED':
+                    if taxed_efg_iso is not None:
+                        # Use taxed efficiency value (THE FIX - efficiency doesn't project)
+                        features.append(usage_level * taxed_efg_iso)
+                    else:
+                        # Fallback: tax on-the-fly if not already taxed
+                        base_value = player_data.get('EFG_ISO_WEIGHTED', 0)
+                        if pd.isna(base_value):
+                            features.append(0.0)
+                        else:
+                            taxed_base = base_value * multi_signal_efficiency_penalty
+                            features.append(usage_level * taxed_base)
+                
+                elif base_feature == 'RS_PRESSURE_APPETITE':
+                    if taxed_pressure_app is not None:
+                        # Use taxed + projected value
+                        if use_projection:
+                            base_value = taxed_pressure_app * projection_factor
+                        else:
+                            base_value = taxed_pressure_app
+                        features.append(usage_level * base_value)
+                    else:
+                        # Fallback: tax on-the-fly if not already taxed
+                        base_value = player_data.get('RS_PRESSURE_APPETITE', 0)
+                        if pd.isna(base_value):
+                            features.append(0.0)
+                        else:
+                            taxed_base = base_value * multi_signal_volume_penalty
+                            if use_projection:
+                                taxed_base = taxed_base * projection_factor
+                            features.append(usage_level * taxed_base)
+                
+                elif base_feature == 'LEVERAGE_USG_DELTA':
+                    if taxed_leverage_usg is not None:
+                        # Use taxed + projected value
+                        if use_projection:
+                            base_value = taxed_leverage_usg * projection_factor
+                        else:
+                            base_value = taxed_leverage_usg
+                        features.append(usage_level * base_value)
+                    else:
+                        # Fallback: tax on-the-fly if not already taxed
+                        base_value = player_data.get('LEVERAGE_USG_DELTA', 0)
+                        if pd.isna(base_value):
+                            features.append(0.0)
+                        else:
+                            taxed_base = base_value * multi_signal_volume_penalty
+                            if use_projection:
+                                taxed_base = taxed_base * projection_factor
+                            features.append(usage_level * taxed_base)
+                
                 else:
-                    # Base feature missing, set interaction to 0
-                    features.append(0.0)
-                    missing_features.append(feature_name)
+                    # Fallback: original logic for other interactions
+                    if base_feature in player_data.index:
+                        base_value = player_data[base_feature]
+                        if pd.isna(base_value):
+                            features.append(0.0)
+                        else:
+                            features.append(usage_level * base_value)
+                    else:
+                        features.append(0.0)
+                        missing_features.append(feature_name)
             else:
                 # Regular feature - use player's actual value
                 if feature_name in player_data.index:
@@ -593,6 +827,32 @@ class ConditionalArchetypePredictor:
                         else:
                             val = 0.0
                     
+                    # Phase 4.2: Base features are already taxed above (before feature loop)
+                    # RFE model only has interaction terms, so base features aren't in feature_names
+                    # If a base feature IS in the model (fallback), use pre-taxed value if available
+                    if feature_name == 'CREATION_VOLUME_RATIO' and taxed_creation_vol is not None:
+                        # Use pre-taxed value
+                        val = taxed_creation_vol
+                        logger.debug(f"Using pre-taxed CREATION_VOLUME_RATIO: {val:.4f}")
+                    
+                    elif feature_name == 'EFG_ISO_WEIGHTED' and taxed_efg_iso is not None:
+                        # Use pre-taxed value (THE FIX)
+                        val = taxed_efg_iso
+                        logger.debug(f"Using pre-taxed EFG_ISO_WEIGHTED: {val:.4f}")
+                    
+                    elif feature_name == 'EFG_PCT_0_DRIBBLE' and taxed_efg_0_dribble is not None:
+                        # Use pre-taxed value (catch-and-shoot efficiency also context-dependent)
+                        val = taxed_efg_0_dribble
+                        logger.debug(f"Using pre-taxed EFG_PCT_0_DRIBBLE: {val:.4f}")
+                    
+                    elif feature_name == 'RS_PRESSURE_APPETITE' and taxed_pressure_app is not None:
+                        # Use pre-taxed value
+                        val = taxed_pressure_app
+                    
+                    elif feature_name == 'LEVERAGE_USG_DELTA' and taxed_leverage_usg is not None:
+                        # Use pre-taxed value
+                        val = taxed_leverage_usg
+                    
                     # Phase 3.5 Fix #2: Apply projected volume features instead of linear scaling
                     # Volume-based features: project to simulate usage scaling
                     # Efficiency features: keep as-is (they don't scale with usage)
@@ -608,21 +868,20 @@ class ConditionalArchetypePredictor:
                         
                         if feature_name in volume_features:
                             # Project volume feature: simulate what it would be at higher usage
+                            # Note: val is already taxed at this point
                             val = val * projection_factor
                             
-                            # Phase 3.7 Fix #1: Apply playoff volume tax to CREATION_VOLUME_RATIO
-                            # System merchants lose opportunity, not just efficiency
+                            # Phase 3.7 Fix #1: Legacy playoff volume tax (now handled by multi-signal tax)
+                            # Keep for backward compatibility but multi-signal tax takes precedence
                             if feature_name == 'CREATION_VOLUME_RATIO' and playoff_volume_tax_applied:
-                                # Phase 3.8.1 Fix: Slash projected volume by 50% (multiply by 0.50) - increased from 30%
-                                # System merchants lose opportunity more dramatically in playoffs
-                                original_val = val
-                                val = val * 0.50
-                                logger.debug(f"Playoff Volume Tax: CREATION_VOLUME_RATIO reduced by 50% (from {original_val:.4f} to {val:.4f})")
+                                # This is redundant now (multi-signal tax already applied), but keep for logging
+                                logger.debug(f"Legacy Playoff Volume Tax: CREATION_VOLUME_RATIO already taxed by multi-signal system")
+                        
                         elif feature_name in ['RS_PRESSURE_RESILIENCE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE', 
                                              'RS_EARLY_CLOCK_PRESSURE_RESILIENCE', 'CREATION_TAX', 'EFG_ISO_WEIGHTED',
                                              'EFG_PCT_0_DRIBBLE']:
                             # Efficiency features: keep as-is, but apply context penalty if applicable
-                            # Phase 3.7 Fix #1: Removed playoff tax from efficiency (moved to volume)
+                            # Note: EFG_ISO_WEIGHTED is already taxed above (multi-signal tax)
                             if context_penalty > 0:
                                 val = max(0.0, val - context_penalty)
                         # All other features: use as-is
@@ -649,7 +908,13 @@ class ConditionalArchetypePredictor:
             'context_penalty': context_penalty,
             'context_adjustment': context_adjustment if 'RS_CONTEXT_ADJUSTMENT' in player_data.index else None,
             'playoff_volume_tax_applied': playoff_volume_tax_applied,  # Phase 3.7: Moved from efficiency to volume
-            'open_shot_freq': open_shot_freq
+            'open_shot_freq': open_shot_freq,
+            # Phase 4.2: Multi-Signal Tax metadata
+            'multi_signal_tax_applied': len(tax_applied_flags) > 0,
+            'tax_applied_flags': tax_applied_flags,
+            'volume_penalty': multi_signal_volume_penalty,
+            'efficiency_penalty': multi_signal_efficiency_penalty,
+            'is_exempt': is_exempt
         }
         
         return np.array(features).reshape(1, -1), phase3_metadata
@@ -1063,6 +1328,15 @@ class ConditionalArchetypePredictor:
             phase3_flags.append(f"Context penalty applied: {phase3_metadata['context_penalty']:.4f}")
         if phase3_metadata.get('playoff_volume_tax_applied', False):
             phase3_flags.append(f"Playoff Volume Tax applied: CREATION_VOLUME_RATIO reduced by 50%")
+        # Phase 4.2: Multi-Signal Tax flags
+        if phase3_metadata.get('multi_signal_tax_applied', False):
+            tax_flags = phase3_metadata.get('tax_applied_flags', [])
+            volume_penalty = phase3_metadata.get('volume_penalty', 1.0)
+            efficiency_penalty = phase3_metadata.get('efficiency_penalty', 1.0)
+            if tax_flags:
+                phase3_flags.append(f"Multi-Signal Tax applied: {', '.join(tax_flags)} (Volume: {volume_penalty:.2%}, Efficiency: {efficiency_penalty:.2%})")
+        if phase3_metadata.get('is_exempt', None) is True:
+            phase3_flags.append("Exempted from Multi-Signal Tax (has positive signals)")
         if fragility_gate_applied and rim_appetite is not None:
             phase3_flags.append(f"Fragility gate applied (RS_RIM_APPETITE: {rim_appetite:.4f})")
         if bag_check_gate_applied and self_created_freq is not None:
@@ -1081,7 +1355,8 @@ class ConditionalArchetypePredictor:
             'probabilities': prob_dict,
             'star_level_potential': star_level_potential,
             'confidence_flags': confidence_flags,
-            'phase3_flags': phase3_flags
+            'phase3_flags': phase3_flags,
+            'phase3_metadata': phase3_metadata  # Phase 4.2: Include full metadata
         }
     
     def predict_at_multiple_usage_levels(

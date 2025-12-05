@@ -834,6 +834,81 @@ selected_features = [features[i] for i in range(len(features)) if rfe.support_[i
 
 ---
 
+## 35. Multi-Signal Tax System (The Poole Problem) 🎯 CRITICAL (Phase 4.2)
+
+**The Problem**: Single-signal taxes (e.g., open shot frequency) are insufficient. System merchants like Jordan Poole have multiple negative signals that compound: high open shot reliance, negative creation tax, leverage abdication, and pressure avoidance.
+
+**The Insight**: **System merchants fail on multiple vectors simultaneously**. A single tax (50% reduction) isn't strong enough. Need cumulative penalties that compound: 50% × 80% × 80% × 80% = 25.6% (74.4% reduction).
+
+**The Fix**: Implement multi-signal tax system with 4 cumulative taxes:
+1. **Open Shot Dependency** (50% reduction) - System merchants rely on open shots
+2. **Creation Efficiency Collapse** (20% additional) - Efficiency drops when creating
+3. **Leverage Abdication** (20% additional) - Doesn't scale up in clutch
+4. **Pressure Avoidance** (20% additional) - Avoids tight defense
+
+**Critical Fix**: Tax **both volume AND efficiency** features. System merchants lose both opportunity and efficiency in playoffs.
+
+**Results**:
+- ✅ **Jordan Poole**: 95.50% → 52.84% (PASS) - Successfully downgraded from "Superstar" to "Volume Scorer"
+- ✅ **False Positives**: 100% pass rate (6/6) - All system merchants correctly filtered
+- ✅ **Test case pass rate**: 87.5% (14/16) - Improved from 81.2%
+
+**Key Principle**: **Multiple negative signals compound**. A player with 1 negative signal might be a role player. A player with 4 negative signals is a system merchant.
+
+**Implementation**:
+```python
+# Calculate cumulative penalty
+penalty = 1.0
+if open_shot_freq > 75th_percentile:
+    penalty *= 0.50  # Tax #1
+if creation_tax < 0:
+    penalty *= 0.80  # Tax #2
+if leverage_usg < 0 and leverage_ts < 0:
+    penalty *= 0.80  # Tax #3
+if pressure_appetite < 40th_percentile:
+    penalty *= 0.80  # Tax #4
+# Apply to BOTH volume and efficiency features
+```
+
+**Test Cases**: Multi-Signal Tax improves pass rate from 81.2% to 87.5% (+6.3 pp)
+
+---
+
+## 36. Volume Exemption (System Merchant vs. Primary Engine) 🎯 CRITICAL (Phase 4.2)
+
+**The Problem**: Multi-signal tax was penalizing true stars like Tyrese Haliburton who had negative creation tax but high creation volume. The tax couldn't distinguish between "system merchant" (Poole: 0.48 creation volume) and "primary engine" (Haliburton: 0.73 creation volume).
+
+**The Insight**: **A player creating 60%+ of their shots is the system, not a system merchant**. Even if efficiency drops (negative creation tax), the sheer burden of creating 73% of shots disqualifies them from being a "merchant." They are a primary engine.
+
+**The Fix**: Add `CREATION_VOLUME_RATIO > 0.60` exemption to multi-signal tax:
+- **Haliburton (0.73)**: Exempted - Primary engine, not a merchant
+- **Maxey (0.70)**: Exempted - Primary engine, not a merchant
+- **Poole (0.48)**: Taxed - Lives in gray area where system merchants thrive
+
+**Results**:
+- ✅ **Tyrese Haliburton**: Restored to 93.76% (PASS) - Volume exemption working
+- ✅ **Tyrese Maxey**: Restored to 96.16% (PASS) - Volume exemption working
+- ✅ **Jordan Poole**: Still correctly taxed at 52.84% (PASS)
+
+**Key Principle**: **Volume > Efficiency for exemption**. A player with high creation volume (60%+) is the system, regardless of efficiency. A player with moderate creation volume (40-60%) in the gray area is vulnerable to system merchant detection.
+
+**Implementation**:
+```python
+# Check exemption before applying tax
+creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', 0)
+has_high_creation_volume = creation_vol_ratio > 0.60
+
+is_exempt = (
+    has_positive_leverage or
+    has_positive_creation or
+    has_high_creation_volume  # ← THE FIX
+)
+```
+
+**Test Cases**: Volume exemption restores Haliburton and Maxey without saving Poole
+
+---
+
 **See Also**:
 - `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)
 - `NEXT_STEPS.md` - **START HERE** - Phase 4.2 priorities
