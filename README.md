@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** Trust Fall experiment complete ✅ | Ground Truth Trap identified | Ready for 2D Risk Matrix implementation. RFE-optimized model with **63.33% accuracy** and **87.5% test case pass rate** (14/16 with gates). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions.
+**Current Status:** 2D Risk Matrix implementation complete ✅ | Data-driven thresholds calculated | RFE-optimized model with **63.33% accuracy** and **87.5% test case pass rate** (14/16 with gates). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles).
 
 ---
 
@@ -11,8 +11,8 @@
 ### 1. Understand the Project
 - **`LUKA_SIMMONS_PARADOX.md`** - **START HERE** - Theoretical foundation (why we built this)
 - **`CURRENT_STATE.md`** - What exists, current metrics, what works
-- **`2D_RISK_MATRIX_IMPLEMENTATION.md`** - **NEXT PRIORITY** - Implementation plan for 2D framework
-- **`NEXT_STEPS.md`** - What to work on next
+- **`2D_RISK_MATRIX_IMPLEMENTATION.md`** - ✅ **COMPLETE** - 2D framework implementation
+- **`NEXT_STEPS.md`** - What to work on next (D'Angelo Russell investigation)
 - **`KEY_INSIGHTS.md`** - Critical lessons to avoid mistakes (see Insight #37: Trust Fall & Ground Truth Trap)
 
 ### 2. Set Up Environment
@@ -156,8 +156,8 @@ The model can predict at **any usage level**, enabling two use cases:
 ## Documentation
 
 - **`CURRENT_STATE.md`** - Detailed current state, what exists, known issues
-- **`2D_RISK_MATRIX_IMPLEMENTATION.md`** - **NEXT PRIORITY** - Implementation plan for 2D framework
-- **`NEXT_STEPS.md`** - What to work on next
+- **`2D_RISK_MATRIX_IMPLEMENTATION.md`** - ✅ **COMPLETE** - 2D framework implementation
+- **`NEXT_STEPS.md`** - What to work on next (D'Angelo Russell investigation)
 - **`KEY_INSIGHTS.md`** - Hard-won lessons (37+ principles, see #37: Trust Fall & Ground Truth Trap)
 - **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation
 - **`results/latent_star_test_cases_report_trust_fall.md`** - Trust Fall experiment results

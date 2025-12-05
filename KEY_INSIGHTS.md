@@ -940,10 +940,42 @@ is_exempt = (
 
 ---
 
+---
+
+## 38. Data-Driven Thresholds - Fit the Model to the Data, Not the Data to the Model 🎯 CRITICAL (2D Risk Matrix)
+
+**The Problem**: Initial 2D Risk Matrix implementation used fixed thresholds (0.30/0.70) that didn't match the actual distribution of Dependence Scores. Most players are moderately dependent (30-70% range), not polarized.
+
+**The Insight**: Don't force the data to fit your mental model. Calculate percentiles from the actual distribution and use those as thresholds.
+
+**The Fix**: Calculate 33rd and 66th percentiles from star-level players (USG_PCT > 25%) in the dataset:
+- **Low Dependence**: < 0.3570 (33rd percentile)
+- **High Dependence**: ≥ 0.4482 (66th percentile)
+
+**Implementation**:
+```python
+# Calculate percentiles from star-level players
+star_players = df[df['USG_PCT'] > 0.25]
+dependence_scores = star_players['DEPENDENCE_SCORE'].dropna()
+low_threshold = dependence_scores.quantile(0.33)  # 0.3570
+high_threshold = dependence_scores.quantile(0.66)  # 0.4482
+```
+
+**Key Principle**: The "Replacement Level" vs. "Luxury" line is at the 66th percentile (0.4482), not an arbitrary 0.70. Fit the model to the data, not the data to the model.
+
+**Impact**: 
+- ✅ Thresholds now reflect actual distribution (most players in moderate range)
+- ✅ Better separation of Low/Moderate/High dependence categories
+- ✅ More accurate risk categorization
+
+**See**: `results/data_driven_thresholds_summary.md` for complete analysis.
+
+---
+
 **See Also**:
-- `2D_RISK_MATRIX_IMPLEMENTATION.md` - **NEXT PRIORITY** - Implementation plan for 2D framework
+- `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)
-- `NEXT_STEPS.md` - **START HERE** - Current priorities
+- `NEXT_STEPS.md` - **START HERE** - Current priorities (D'Angelo Russell investigation)
 - `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
 - `extended_resilience_framework.md` - Stress vectors explained
 

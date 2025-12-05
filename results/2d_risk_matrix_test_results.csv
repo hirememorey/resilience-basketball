@@ -1,0 +1,6 @@
+player,season,performance_score,dependence_score,risk_category,expected_category,performance_match,dependence_match,category_match,status
+Jordan Poole,2021-22,0.5862241387367249,0.5142152111267237,"Moderate Performance, High Dependence",Luxury Component,False,True,False,FAIL
+Luka Dončić,2023-24,0.968672513961792,0.26592191707370116,Franchise Cornerstone,Franchise Cornerstone,True,True,True,PASS
+Domantas Sabonis,2021-22,0.3,0.6019694736842105,"Moderate Performance, High Dependence",Luxury Component,False,True,False,FAIL
+Jalen Brunson,2020-21,0.3231874108314514,0.3931272234273319,"Moderate Performance, Moderate Dependence",Depth,False,False,False,FAIL
+Tyrese Haliburton,2021-22,0.22502045333385468,0.3986924137500141,Depth (Moderate Dependence),Franchise Cornerstone,False,False,False,FAIL

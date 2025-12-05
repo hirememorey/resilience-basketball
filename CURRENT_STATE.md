@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
 **Date**: December 5, 2025  
-**Status**: Trust Fall Experiment Complete ✅ | Ground Truth Trap Identified | Ready for 2D Risk Matrix Implementation
+**Status**: 2D Risk Matrix Implementation Complete ✅ | Data-Driven Thresholds Calculated | Ready for D'Angelo Russell Investigation
 
 ---
 
@@ -142,27 +142,64 @@ Converted hard gates to soft features that the model learns:
 
 ---
 
-## Trust Fall Experiment Results (December 2025)
+## 2D Risk Matrix Implementation (December 2025) ✅ COMPLETE
 
 **The Discovery**: The model correctly predicts **Performance** (outcomes), but we're trying to predict two different things in one dimension.
 
-**Results**:
-- **With gates**: 87.5% pass rate (14/16) - Hard-coded logic catches system merchants
-- **Without gates**: 56.2% pass rate (9/16) - Model cannot learn system merchant patterns
-- **Jordan Poole**: Returns to "King" status (97% star-level) when gates disabled - **he actually succeeded** (17 PPG, 62.7% TS in championship run)
-
 **The Ground Truth Trap**: Training labels are based on **outcomes** (Poole = "King" because he succeeded), but we want to predict **portability** (Poole = "System Merchant" because his production isn't portable).
 
-**The Solution**: **2D Risk Matrix** separating Performance (what happened) from Dependence (is it portable?). See `2D_RISK_MATRIX_IMPLEMENTATION.md` for implementation plan.
+**The Solution**: **2D Risk Matrix** separating Performance (what happened) from Dependence (is it portable?).
 
-**See**: `results/latent_star_test_cases_report_trust_fall.md` for complete Trust Fall results.
+### Implementation Status: ✅ COMPLETE
+
+**Components Implemented**:
+1. **Dependence Score Calculation** (`calculate_dependence_score.py`)
+   - Quantitative formula: `ASSISTED_FGM_PCT * 0.40 + OPEN_SHOT_FREQUENCY * 0.35 + (1 - SELF_CREATED_USAGE_RATIO) * 0.25`
+   - Calculated from objective data (no training labels needed)
+   - Integrated into `predict_conditional_archetype.py`
+
+2. **2D Prediction Function** (`predict_with_risk_matrix()`)
+   - Returns both Performance Score and Dependence Score
+   - Categorizes players into 4 risk quadrants:
+     - **Franchise Cornerstone**: High Performance + Low Dependence
+     - **Luxury Component**: High Performance + High Dependence
+     - **Depth**: Low Performance + Low Dependence
+     - **Avoid**: Low Performance + High Dependence
+
+3. **Data-Driven Thresholds** ✅
+   - Calculated 33rd and 66th percentiles from 533 star-level players (USG_PCT > 25%)
+   - **Low Dependence**: < 0.3570 (33rd percentile)
+   - **High Dependence**: ≥ 0.4482 (66th percentile)
+   - Replaced arbitrary 0.30/0.70 thresholds with data-driven values
+   - Saved to `results/dependence_thresholds.json`
+
+4. **Gate Logic Refinements** ✅
+   - **High-Usage Immunity** (Abdication Tax): Players with RS_USG_PCT > 30% exempted from small usage drops
+   - **High-Usage Creator Exemption** (Fragility Gate): Players with CREATION_VOLUME_RATIO > 0.60 and USG_PCT > 0.25 exempted
+   - Fixed "Luka Performance Cap" showstopper (Luka now correctly identified as 96.87% Performance)
+
+**Validation Results**:
+- ✅ Luka Dončić: **Franchise Cornerstone** (96.87% Performance, 26.59% Dependence)
+- ✅ Jordan Poole: **Luxury Component** (58.62% Performance, 51.42% Dependence)
+- ✅ Dependence scores properly distributed (most players in moderate range)
+
+**Key Files**:
+- `src/nba_data/scripts/calculate_dependence_score.py` - Dependence score calculation
+- `src/nba_data/scripts/predict_conditional_archetype.py` - 2D prediction function
+- `test_2d_risk_matrix.py` - Validation test suite
+- `calculate_dependence_thresholds.py` - Threshold calculation script
+- `results/dependence_thresholds.json` - Data-driven thresholds
+- `results/data_driven_thresholds_summary.md` - Implementation summary
+- `results/luka_gate_fix_summary.md` - Gate logic fixes
+
+**See**: `2D_RISK_MATRIX_IMPLEMENTATION.md` for complete implementation plan and `results/data_driven_thresholds_summary.md` for threshold analysis.
 
 ---
 
 ## Known Issues & Limitations
 
 1. **Two test cases may be removed from test suite**: Mikal Bridges and Desmond Bane may be accurately rated (not actual failures)
-2. **Ground Truth Trap**: Model predicts Performance (outcomes) correctly, but we need a separate dimension for Dependence (portability) - **2D Risk Matrix required**
+2. **D'Angelo Russell Phenomenon**: Needs investigation - why does the model rate him differently than expected? (See `NEXT_STEPS.md`)
 
 ---
 
@@ -188,9 +225,10 @@ Converted hard gates to soft features that the model learns:
 ---
 
 **See Also**:
-- `2D_RISK_MATRIX_IMPLEMENTATION.md` - **NEXT PRIORITY** - Implementation plan for 2D framework
-- `NEXT_STEPS.md` - Next priorities
-- `results/latent_star_test_cases_report_trust_fall.md` - Trust Fall experiment results
+- `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
+- `NEXT_STEPS.md` - Next priorities (D'Angelo Russell investigation)
+- `results/data_driven_thresholds_summary.md` - Data-driven threshold analysis
+- `results/luka_gate_fix_summary.md` - Gate logic refinements
 - `results/latent_star_test_cases_report.md` - Latest validation results (with gates)
 - `results/rfe_model_comparison.md` - RFE model analysis
-- `KEY_INSIGHTS.md` - Hard-won lessons (see Insight #37: Trust Fall & Ground Truth Trap)
+- `KEY_INSIGHTS.md` - Hard-won lessons (see Insight #37: Trust Fall & Ground Truth Trap, Insight #38: Data-Driven Thresholds)

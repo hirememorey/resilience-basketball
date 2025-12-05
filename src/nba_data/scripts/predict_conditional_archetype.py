@@ -978,25 +978,39 @@ class ConditionalArchetypePredictor:
         # Phase 3.5 Fix #1: Fragility Gate - Use RS_RIM_APPETITE (absolute volume) instead of ratio
         # Cap star-level if RS_RIM_APPETITE is bottom 20th percentile
         # Principle: Ratios measure change, not state. Use absolute metrics for floors.
+        # PHASE 4.3 FIX: High-Usage Creator Exemption - Players with high creation volume (>60%) and high usage (>25%)
+        # can score without rim pressure because they create their own offense (e.g., Luka, Harden)
         fragility_gate_applied = False
         rim_appetite = None
         if apply_phase3_fixes and apply_hard_gates and 'RS_RIM_APPETITE' in player_data.index:
             rim_appetite = player_data['RS_RIM_APPETITE']
             if pd.notna(rim_appetite) and self.rim_appetite_bottom_20th is not None:
                 if rim_appetite <= self.rim_appetite_bottom_20th:
-                    # Hard gate: Cap at 30% (Sniper ceiling)
-                    star_level_potential = min(star_level_potential, 0.30)
-                    fragility_gate_applied = True
-                    # Also cap archetype probabilities - can't be King or Bulldozer
-                    if star_level_potential <= 0.30:
-                        # Redistribute: Victim gets remainder, Sniper gets capped amount
-                        prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
-                        prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
-                        prob_dict['King'] = 0.0
-                        prob_dict['Bulldozer'] = 0.0
-                        # Update predicted archetype if needed
-                        if pred_archetype in ['King (Resilient Star)', 'Bulldozer (Fragile Star)']:
-                            pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                    # Check High-Usage Creator Exemption
+                    creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', None)
+                    rs_usg_pct = player_data.get('USG_PCT', None)
+                    
+                    has_creator_exemption = False
+                    if pd.notna(creation_vol_ratio) and pd.notna(rs_usg_pct):
+                        # High-usage creators can score without rim pressure
+                        if creation_vol_ratio > 0.60 and rs_usg_pct > 0.25:
+                            has_creator_exemption = True
+                            logger.info(f"High-Usage Creator Exemption: CREATION_VOLUME_RATIO={creation_vol_ratio:.2f} > 0.60 AND USG_PCT={rs_usg_pct:.1%} > 25% → Fragility Gate EXEMPTED (can score without rim pressure)")
+                    
+                    if not has_creator_exemption:
+                        # Hard gate: Cap at 30% (Sniper ceiling)
+                        star_level_potential = min(star_level_potential, 0.30)
+                        fragility_gate_applied = True
+                        # Also cap archetype probabilities - can't be King or Bulldozer
+                        if star_level_potential <= 0.30:
+                            # Redistribute: Victim gets remainder, Sniper gets capped amount
+                            prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                            prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                            prob_dict['King'] = 0.0
+                            prob_dict['Bulldozer'] = 0.0
+                            # Update predicted archetype if needed
+                            if pred_archetype in ['King (Resilient Star)', 'Bulldozer (Fragile Star)']:
+                                pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
         
         # Phase 3.6 Fix #3: Bag Check Gate - Cap players lacking self-created volume at Bulldozer (cannot be King)
         # Principle: Self-created volume is required for primary initiators (Kings)
@@ -1180,31 +1194,45 @@ class ConditionalArchetypePredictor:
             # PHASE 4.1 FIX: Conditional Abdication Tax - Distinguish "Panic Abdication" (Simmons) from "Smart Deference" (Oladipo)
             # If LEVERAGE_TS_DELTA > 0.05 (elite efficiency), the usage drop is smart, not cowardly
             # Logic: Only penalize if BOTH usage drops AND efficiency doesn't spike
+            # PHASE 4.3 FIX: High-Usage Immunity - Players with RS_USG_PCT > 30% cannot be accused of abdication
+            # A player carrying 35% usage cannot scale up further - dropping to 27% is still elite usage, not passivity
             if pd.notna(leverage_usg_delta) and leverage_usg_delta < -0.05:
-                # Check if efficiency spikes (Smart Deference) or stays flat/drops (Panic Abdication)
-                efficiency_spikes = pd.notna(leverage_ts_delta) and leverage_ts_delta > 0.05
+                # Check High-Usage Immunity first
+                rs_usg_pct = player_data.get('USG_PCT', None)
+                has_high_usage_immunity = False
                 
-                if not efficiency_spikes:
-                    # Panic Abdication: Usage drops AND efficiency doesn't spike → Penalize
-                    original_star_level = star_level_potential
-                    # Hard filter: Cap at 30% (Sniper ceiling)
-                    star_level_potential = min(star_level_potential, 0.30)
-                    negative_signal_gate_applied = True
+                if pd.notna(rs_usg_pct) and rs_usg_pct > 0.30:
+                    # High-usage player: Only trigger if drop is massive (> -10%)
+                    # At 35% usage, dropping to 25% is still elite - not abdication
+                    if leverage_usg_delta > -0.10:
+                        has_high_usage_immunity = True
+                        logger.info(f"High-Usage Immunity: RS_USG_PCT={rs_usg_pct:.1%} > 30%, LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} > -0.10 → Abdication Tax EXEMPTED (cannot scale up from {rs_usg_pct:.1%})")
+                
+                if not has_high_usage_immunity:
+                    # Check if efficiency spikes (Smart Deference) or stays flat/drops (Panic Abdication)
+                    efficiency_spikes = pd.notna(leverage_ts_delta) and leverage_ts_delta > 0.05
                     
-                    # Redistribute probabilities if capped
-                    if star_level_potential <= 0.30:
-                        prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
-                        prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
-                        prob_dict['King'] = 0.0
-                        prob_dict['Bulldozer'] = 0.0
-                        # Update predicted archetype if needed
-                        if original_star_level > 0.30:
-                            pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
-                    
-                    logger.info(f"Abdication Tax detected: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 AND LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} <= 0.05 (Panic Abdication), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
-                else:
-                    # Smart Deference: Usage drops BUT efficiency spikes → Exempt
-                    logger.info(f"Smart Deference detected: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 BUT LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} > 0.05 (efficiency spikes) → Abdication Tax EXEMPTED")
+                    if not efficiency_spikes:
+                        # Panic Abdication: Usage drops AND efficiency doesn't spike → Penalize
+                        original_star_level = star_level_potential
+                        # Hard filter: Cap at 30% (Sniper ceiling)
+                        star_level_potential = min(star_level_potential, 0.30)
+                        negative_signal_gate_applied = True
+                        
+                        # Redistribute probabilities if capped
+                        if star_level_potential <= 0.30:
+                            prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                            prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                            prob_dict['King'] = 0.0
+                            prob_dict['Bulldozer'] = 0.0
+                            # Update predicted archetype if needed
+                            if original_star_level > 0.30:
+                                pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                        
+                        logger.info(f"Abdication Tax detected: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 AND LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} <= 0.05 (Panic Abdication), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                    else:
+                        # Smart Deference: Usage drops BUT efficiency spikes → Exempt
+                        logger.info(f"Smart Deference detected: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 BUT LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} > 0.05 (efficiency spikes) → Abdication Tax EXEMPTED")
             
             # Negative leverage TS delta (declines in clutch)
             if pd.notna(leverage_ts_delta) and leverage_ts_delta < -0.15:
@@ -1397,6 +1425,170 @@ class ConditionalArchetypePredictor:
             })
         
         return pd.DataFrame(results)
+    
+    def calculate_system_dependence(self, player_data: pd.Series) -> dict:
+        """
+        Calculate System Dependence Score for a player.
+        
+        This is the Y-axis of the 2D Risk Matrix, measuring how portable/system-dependent
+        a player's production is.
+        
+        Args:
+            player_data: Player's stress vector data (Series)
+            
+        Returns:
+            Dictionary with dependence score and component breakdown
+        """
+        import sys
+        from pathlib import Path
+        
+        # Import from same directory
+        script_dir = Path(__file__).parent
+        if str(script_dir) not in sys.path:
+            sys.path.insert(0, str(script_dir))
+        
+        from calculate_dependence_score import calculate_dependence_score
+        
+        return calculate_dependence_score(player_data)
+    
+    def predict_with_risk_matrix(
+        self,
+        player_data: pd.Series,
+        usage_level: float,
+        apply_phase3_fixes: bool = True,
+        apply_hard_gates: bool = True
+    ) -> Dict:
+        """
+        Predict archetype with 2D Risk Matrix (Performance + Dependence).
+        
+        Returns both Performance Score (X-axis) and Dependence Score (Y-axis),
+        enabling categorization into risk quadrants.
+        
+        Args:
+            player_data: Player's stress vector data (Series)
+            usage_level: Usage percentage as decimal (e.g., 0.25 for 25%)
+            apply_phase3_fixes: Whether to apply Phase 3 fixes (default: True)
+            apply_hard_gates: Whether to apply hard-coded gates/taxes (default: True)
+            
+        Returns:
+            Dictionary with:
+            - performance_score: Star-level potential (0-1, X-axis)
+            - dependence_score: System dependence (0-1, Y-axis, higher = more dependent)
+            - risk_category: Quadrant categorization
+            - archetype: Predicted archetype (for compatibility)
+            - probabilities: Archetype probabilities
+            - metadata: Full prediction and dependence details
+        """
+        # Dimension 1: Performance (existing model)
+        performance_result = self.predict_archetype_at_usage(
+            player_data, 
+            usage_level,
+            apply_phase3_fixes=apply_phase3_fixes,
+            apply_hard_gates=apply_hard_gates
+        )
+        performance_score = performance_result['star_level_potential']
+        
+        # Dimension 2: Dependence (new calculation)
+        dependence_result = self.calculate_system_dependence(player_data)
+        dependence_score = dependence_result.get('dependence_score', None)
+        
+        # Categorize into risk quadrants
+        risk_category = self._categorize_risk(performance_score, dependence_score)
+        
+        return {
+            'performance_score': performance_score,
+            'dependence_score': dependence_score,
+            'risk_category': risk_category,
+            'archetype': performance_result['predicted_archetype'],
+            'probabilities': performance_result['probabilities'],
+            'star_level_potential': performance_score,  # For compatibility
+            'confidence_flags': performance_result.get('confidence_flags', []),
+            'phase3_flags': performance_result.get('phase3_flags', []),
+            'metadata': {
+                'performance_details': performance_result,
+                'dependence_details': dependence_result
+            }
+        }
+    
+    def _categorize_risk(self, performance_score: float, dependence_score: Optional[float]) -> str:
+        """
+        Categorize player into risk quadrant based on Performance and Dependence scores.
+        
+        Uses data-driven thresholds calculated from star-level players (USG_PCT > 25%):
+        - Low Dependence: < 0.3570 (33rd percentile)
+        - High Dependence: ≥ 0.4482 (66th percentile)
+        
+        Quadrants:
+        - Franchise Cornerstone: High Performance (≥70%) + Low Dependence (<0.3570)
+        - Luxury Component: High Performance (≥70%) + High Dependence (≥0.4482)
+        - Depth: Low Performance (<30%) + Low Dependence (<0.3570)
+        - Avoid: Low Performance (<30%) + High Dependence (≥0.4482)
+        
+        Args:
+            performance_score: Star-level potential (0-1)
+            dependence_score: System dependence (0-1, None if unavailable)
+            
+        Returns:
+            Risk category string
+        """
+        # Load data-driven thresholds
+        import json
+        thresholds_path = self.results_dir / "dependence_thresholds.json"
+        if thresholds_path.exists():
+            with open(thresholds_path, 'r') as f:
+                thresholds = json.load(f)
+                low_dep_threshold = thresholds.get('low_threshold', 0.3570)  # 33rd percentile
+                high_dep_threshold = thresholds.get('high_threshold', 0.4482)  # 66th percentile
+        else:
+            # Fallback to calculated values if file doesn't exist
+            low_dep_threshold = 0.3570  # 33rd percentile
+            high_dep_threshold = 0.4482  # 66th percentile
+        
+        if dependence_score is None:
+            # If dependence score unavailable, categorize based on performance only
+            if performance_score >= 0.70:
+                return "High Performance (Dependence Unknown)"
+            elif performance_score < 0.30:
+                return "Low Performance (Dependence Unknown)"
+            else:
+                return "Moderate Performance (Dependence Unknown)"
+        
+        # Categorize into quadrants using data-driven thresholds
+        high_performance = performance_score >= 0.70
+        low_performance = performance_score < 0.30
+        high_dependence = dependence_score >= high_dep_threshold  # ≥ 0.4482 (66th percentile)
+        low_dependence = dependence_score < low_dep_threshold  # < 0.3570 (33rd percentile)
+        
+        if high_performance and low_dependence:
+            return "Franchise Cornerstone"
+        elif high_performance and high_dependence:
+            return "Luxury Component"
+        elif low_performance and low_dependence:
+            return "Depth"
+        elif low_performance and high_dependence:
+            return "Avoid"
+        else:
+            # Moderate scores - use more nuanced categorization with data-driven thresholds
+            if performance_score >= 0.70:
+                # High performance, moderate dependence
+                if dependence_score >= high_dep_threshold:
+                    return "Luxury Component (Moderate Dependence)"
+                else:
+                    return "Franchise Cornerstone (Moderate Dependence)"
+            elif performance_score < 0.30:
+                # Low performance, moderate dependence
+                if dependence_score >= high_dep_threshold:
+                    return "Avoid (Moderate Dependence)"
+                else:
+                    return "Depth (Moderate Dependence)"
+            else:
+                # Moderate performance
+                if dependence_score >= high_dep_threshold:
+                    return "Moderate Performance, High Dependence"
+                elif dependence_score < low_dep_threshold:
+                    return "Moderate Performance, Low Dependence"
+                else:
+                    return "Moderate Performance, Moderate Dependence"
 
 
 if __name__ == "__main__":

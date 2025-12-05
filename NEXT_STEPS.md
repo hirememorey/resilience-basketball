@@ -1,7 +1,7 @@
 # Next Steps
 
 **Date**: December 5, 2025  
-**Status**: Trust Fall Experiment Complete ✅ | Ground Truth Trap Identified | Ready for 2D Risk Matrix
+**Status**: 2D Risk Matrix Implementation Complete ✅ | Data-Driven Thresholds Calculated | Ready for D'Angelo Russell Investigation
 
 ---
 
@@ -32,24 +32,46 @@
 
 ---
 
-## Next Priority: 2D Risk Matrix Implementation
+## 2D Risk Matrix Implementation: ✅ COMPLETE
 
-**Status**: Ready for implementation
+**Status**: Implementation complete (December 5, 2025)
 
-**The Problem**: Model correctly predicts Performance (outcomes), but we're trying to predict two different things in one dimension.
+**What Was Implemented**:
+- ✅ Dependence Score calculation from quantitative proxies
+- ✅ 2D prediction function (`predict_with_risk_matrix()`)
+- ✅ Data-driven thresholds (33rd/66th percentiles: 0.3570/0.4482)
+- ✅ Risk quadrant categorization (Franchise Cornerstone, Luxury Component, Depth, Avoid)
+- ✅ Gate logic refinements (High-Usage Immunity, High-Usage Creator Exemption)
+- ✅ Validation test suite (`test_2d_risk_matrix.py`)
 
-**The Solution**: **2D Risk Matrix** separating:
-- **X-Axis: Performance Score** (what happened) - Current model
-- **Y-Axis: Dependence Score** (is it portable?) - New calculation from quantitative proxies
+**Key Results**:
+- ✅ Luka Dončić correctly identified as **Franchise Cornerstone** (96.87% Performance, 26.59% Dependence)
+- ✅ Jordan Poole correctly identified as **Luxury Component** (58.62% Performance, 51.42% Dependence)
+- ✅ Data-driven thresholds replace arbitrary 0.30/0.70 cutoffs
 
-**Implementation Plan**: See `2D_RISK_MATRIX_IMPLEMENTATION.md` for detailed plan.
+**See**: `2D_RISK_MATRIX_IMPLEMENTATION.md` for complete implementation details and `results/data_driven_thresholds_summary.md` for threshold analysis.
 
-**Estimated Time**: 1 week
+---
+
+## Next Priority: D'Angelo Russell Investigation
+
+**Status**: Ready for investigation
+
+**The Question**: Why does the model rate D'Angelo Russell differently than expected? What patterns or edge cases does he represent?
+
+**Investigation Approach**:
+1. Run D'Angelo Russell through the 2D Risk Matrix at different usage levels
+2. Analyze his stress vectors (Creation, Leverage, Pressure, Physicality, Plasticity)
+3. Calculate his Dependence Score components (Assisted FGM %, Open Shot Frequency, Self-Created Usage Ratio)
+4. Compare to similar players (e.g., other guards with similar profiles)
+5. Identify any edge cases or model limitations he reveals
 
 **Key Files**:
-- `2D_RISK_MATRIX_IMPLEMENTATION.md` - Complete implementation plan
-- `src/nba_data/scripts/predict_conditional_archetype.py` - Add `calculate_system_dependence()` method
-- `test_latent_star_cases.py` - Update test cases to validate both dimensions
+- `src/nba_data/scripts/predict_conditional_archetype.py` - Run predictions
+- `src/nba_data/scripts/calculate_dependence_score.py` - Calculate dependence components
+- `test_2d_risk_matrix.py` - Add D'Angelo Russell as test case
+
+**Expected Outcome**: Understanding of what D'Angelo Russell represents in the model's framework and whether any refinements are needed.
 
 ---
 
@@ -101,4 +123,4 @@
 
 ---
 
-**Status**: Trust Fall experiment complete. Ground Truth Trap identified. Ready for 2D Risk Matrix implementation to separate Performance (outcomes) from Dependence (portability). See `2D_RISK_MATRIX_IMPLEMENTATION.md` for next steps.
+**Status**: 2D Risk Matrix implementation complete. Data-driven thresholds calculated. Ready for D'Angelo Russell investigation to understand edge cases and model behavior.
