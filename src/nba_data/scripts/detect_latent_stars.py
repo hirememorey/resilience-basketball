@@ -44,7 +44,13 @@ logger = logging.getLogger(__name__)
 class LatentStarDetector:
     """Detect players with high stress profiles but low usage."""
     
-    def __init__(self):
+    def __init__(self, use_rfe_model: bool = True):
+        """
+        Initialize latent star detector.
+        
+        Args:
+            use_rfe_model: If True, use RFE-selected 10-feature model (default: True)
+        """
         self.results_dir = Path("results")
         self.data_dir = Path("data")
         self.models_dir = Path("models")
@@ -54,12 +60,23 @@ class LatentStarDetector:
         self.model = None
         self.label_encoder = None
         self.model_features = None
-        self._load_model()
+        self._load_model(use_rfe_model=use_rfe_model)
     
-    def _load_model(self):
+    def _load_model(self, use_rfe_model: bool = True):
         """Load the trained XGBoost model and label encoder."""
-        model_path = self.models_dir / "resilience_xgb.pkl"
-        encoder_path = self.models_dir / "archetype_encoder.pkl"
+        # Try RFE model first (default)
+        if use_rfe_model:
+            model_path = self.models_dir / "resilience_xgb_rfe_10.pkl"
+            encoder_path = self.models_dir / "archetype_encoder_rfe_10.pkl"
+            
+            if not model_path.exists() or not encoder_path.exists():
+                logger.warning(f"RFE model not found at {model_path}, falling back to full model")
+                model_path = self.models_dir / "resilience_xgb.pkl"
+                encoder_path = self.models_dir / "archetype_encoder.pkl"
+                use_rfe_model = False
+        else:
+            model_path = self.models_dir / "resilience_xgb.pkl"
+            encoder_path = self.models_dir / "archetype_encoder.pkl"
         
         if not model_path.exists() or not encoder_path.exists():
             logger.warning("Model files not found. Archetype prediction will be skipped.")
@@ -74,16 +91,35 @@ class LatentStarDetector:
             if hasattr(self.model, 'feature_names_in_'):
                 self.model_features = list(self.model.feature_names_in_)
             else:
-                # Fallback: try to get from predictive_features.json if it exists
-                import json
-                features_path = self.models_dir / "predictive_features.json"
-                if features_path.exists():
-                    with open(features_path, 'r') as f:
-                        self.model_features = json.load(f)
+                # If using RFE model, load RFE features from results
+                if use_rfe_model:
+                    import json
+                    rfe_results_path = self.results_dir / "rfe_model_results_10.json"
+                    if rfe_results_path.exists():
+                        with open(rfe_results_path, 'r') as f:
+                            rfe_data = json.load(f)
+                            self.model_features = rfe_data['features']
+                    else:
+                        # Fallback: hardcoded RFE features
+                        self.model_features = [
+                            'LEVERAGE_USG_DELTA', 'EFG_PCT_0_DRIBBLE', 'LATE_CLOCK_PRESSURE_APPETITE_DELTA',
+                            'USG_PCT', 'USG_PCT_X_CREATION_VOLUME_RATIO', 'USG_PCT_X_LEVERAGE_USG_DELTA',
+                            'USG_PCT_X_RS_PRESSURE_APPETITE', 'USG_PCT_X_EFG_ISO_WEIGHTED',
+                            'PREV_RS_PRESSURE_RESILIENCE', 'NEGATIVE_SIGNAL_COUNT'
+                        ]
                 else:
-                    logger.warning("Could not determine model feature names. Will use all available features.")
+                    # Fallback: try to get from predictive_features.json if it exists
+                    import json
+                    features_path = self.models_dir / "predictive_features.json"
+                    if features_path.exists():
+                        with open(features_path, 'r') as f:
+                            self.model_features = json.load(f)
+                    else:
+                        logger.warning("Could not determine model feature names. Will use all available features.")
+                        self.model_features = None
             
-            logger.info(f"Loaded model with {len(self.model_features) if self.model_features else 'unknown'} features")
+            model_type = "RFE (10 features)" if use_rfe_model else "Full"
+            logger.info(f"Loaded {model_type} model with {len(self.model_features) if self.model_features else 'unknown'} features")
         except Exception as e:
             logger.error(f"Error loading model: {e}")
             logger.warning("Archetype prediction will be skipped.")

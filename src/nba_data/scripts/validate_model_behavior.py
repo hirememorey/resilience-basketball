@@ -25,9 +25,18 @@ class ModelBehaviorValidator:
         self.results_dir = Path("results")
         self.models_dir = Path("models")
         
-        # Load model and encoder
-        self.model = joblib.load(self.models_dir / "resilience_xgb.pkl")
-        self.encoder = joblib.load(self.models_dir / "archetype_encoder.pkl")
+        # Load model and encoder (try RFE model first, fallback to full model)
+        rfe_model_path = self.models_dir / "resilience_xgb_rfe_10.pkl"
+        rfe_encoder_path = self.models_dir / "archetype_encoder_rfe_10.pkl"
+        
+        if rfe_model_path.exists() and rfe_encoder_path.exists():
+            logger.info("Using RFE model (10 features)")
+            self.model = joblib.load(rfe_model_path)
+            self.encoder = joblib.load(rfe_encoder_path)
+        else:
+            logger.info("RFE model not found, using full model")
+            self.model = joblib.load(self.models_dir / "resilience_xgb.pkl")
+            self.encoder = joblib.load(self.models_dir / "archetype_encoder.pkl")
         
         # Load and merge all feature files (same as training script)
         self.df_features = self.load_and_merge_features()

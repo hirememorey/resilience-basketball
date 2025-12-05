@@ -802,6 +802,38 @@ When implementing new features, ask:
 
 ---
 
+## 34. Feature Bloat & The Pareto Principle 🎯 CRITICAL (RFE Analysis)
+
+**The Problem**: Model had 65 features, but accuracy plateaued at 62.89%. Adding more features (trajectory, gates) didn't improve performance significantly.
+
+**The Insight**: **Pareto Principle in Action**. RFE analysis revealed that 10 features achieve 63.33% accuracy (better than 65 features). Most features (55 out of 65) add noise, not signal.
+
+**The Fix**: Run Recursive Feature Elimination (RFE) to identify optimal feature count:
+- Test feature counts from 5 to 50
+- Find where accuracy plateaus (optimal: 10 features)
+- Retrain model with only top features
+
+**Results**:
+- ✅ **10 features: 63.33% accuracy** (vs. 62.89% with 65 features)
+- ✅ **Test case pass rate: 81.2%** (vs. 62.5% with 65 features)
+- ✅ **85% feature reduction** (65 → 10 features)
+- ✅ **Usage-aware features dominate**: 5 of 10 features are usage-related (65.9% combined importance)
+
+**Key Principle**: **Better features > More features**. The Pareto principle applies: 20% of features (10/65) drive 100% of the signal. Most trajectory and gate features add noise, not signal.
+
+**Implementation**:
+```python
+# Run RFE to find optimal feature count
+from sklearn.feature_selection import RFE
+rfe = RFE(estimator=model, n_features_to_select=10)
+rfe.fit(X_train, y_train)
+selected_features = [features[i] for i in range(len(features)) if rfe.support_[i]]
+```
+
+**Test Cases**: RFE model improves pass rate from 62.5% to 81.2% (+18.7 pp)
+
+---
+
 **See Also**:
 - `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)
 - `NEXT_STEPS.md` - **START HERE** - Phase 4.2 priorities

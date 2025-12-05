@@ -1,0 +1,58 @@
+{
+  "n_features": 10,
+  "accuracy": 0.6333333333333333,
+  "features": [
+    "LEVERAGE_USG_DELTA",
+    "EFG_PCT_0_DRIBBLE",
+    "LATE_CLOCK_PRESSURE_APPETITE_DELTA",
+    "USG_PCT",
+    "USG_PCT_X_CREATION_VOLUME_RATIO",
+    "USG_PCT_X_LEVERAGE_USG_DELTA",
+    "USG_PCT_X_RS_PRESSURE_APPETITE",
+    "USG_PCT_X_EFG_ISO_WEIGHTED",
+    "PREV_RS_PRESSURE_RESILIENCE",
+    "NEGATIVE_SIGNAL_COUNT"
+  ],
+  "feature_importance": [
+    {
+      "Feature": "USG_PCT",
+      "Importance": 0.28854477405548096
+    },
+    {
+      "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
+      "Importance": 0.1870420128107071
+    },
+    {
+      "Feature": "NEGATIVE_SIGNAL_COUNT",
+      "Importance": 0.10457856953144073
+    },
+    {
+      "Feature": "EFG_PCT_0_DRIBBLE",
+      "Importance": 0.06791670620441437
+    },
+    {
+      "Feature": "LEVERAGE_USG_DELTA",
+      "Importance": 0.06141302362084389
+    },
+    {
+      "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
+      "Importance": 0.05907999351620674
+    },
+    {
+      "Feature": "PREV_RS_PRESSURE_RESILIENCE",
+      "Importance": 0.05886401981115341
+    },
+    {
+      "Feature": "LATE_CLOCK_PRESSURE_APPETITE_DELTA",
+      "Importance": 0.05852976441383362
+    },
+    {
+      "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
+      "Importance": 0.05715588107705116
+    },
+    {
+      "Feature": "USG_PCT_X_LEVERAGE_USG_DELTA",
+      "Importance": 0.05687520653009415
+    }
+  ]
+}

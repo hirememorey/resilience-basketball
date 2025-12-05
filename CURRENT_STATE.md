@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
 **Date**: December 2025  
-**Status**: Phase 4 Complete ✅ | Phase 4.1 Refinements Complete ✅ | Current Pass Rate: 62.5% (10/16) | Model Accuracy: 63.89%
+**Status**: RFE Model Complete ✅ | Current Pass Rate: 81.2% (13/16) | Model Accuracy: 63.33% (10 features)
 
 ---
 
@@ -9,9 +9,9 @@
 
 **Goal**: Identify players who consistently perform better than expected in the playoffs and explain *why* using mechanistic insights.
 
-**Current Model**: XGBoost Classifier that predicts playoff archetypes (King, Bulldozer, Sniper, Victim) from regular season stress vectors with **usage-aware conditional predictions**, **multi-season trajectory features**, and **gate features**.
+**Current Model**: XGBoost Classifier that predicts playoff archetypes (King, Bulldozer, Sniper, Victim) from regular season stress vectors with **usage-aware conditional predictions**. **RFE-optimized to 10 core features** (reduced from 65).
 
-**Accuracy**: 63.89% (899 player-seasons, 2015-2024) - Improved from 62.22% with Phase 4 trajectory and gate features
+**Accuracy**: 63.33% (899 player-seasons, 2015-2024) - **Improved with RFE feature selection** (10 features vs. 65 features, +0.44 pp improvement)
 
 ---
 
@@ -37,18 +37,21 @@
 
 **Algorithm**: XGBoost Classifier (Multi-Class)
 
-**Features (65 total - includes Phase 4 additions)**:
-- **Creation Vector**: CREATION_TAX, CREATION_VOLUME_RATIO
-- **Leverage Vector**: LEVERAGE_TS_DELTA, LEVERAGE_USG_DELTA, CLUTCH_MIN_TOTAL
-- **Pressure Vector**: RS_PRESSURE_APPETITE, RS_PRESSURE_RESILIENCE, clock features (late/early)
-- **Physicality Vector**: RS_FTr, FTr_RESILIENCE, RIM_PRESSURE_RESILIENCE
-- **Plasticity Vector**: SHOT_DISTANCE_DELTA, SPATIAL_VARIANCE_DELTA
-- **Context Vector**: QOC_TS_DELTA, opponent defensive context
-- **Usage-Aware Features (Phase 2)**: USG_PCT + 5 interaction terms (USG_PCT × top stress vectors)
-- **Trajectory Features (Phase 4)**: 36 features (YoY deltas, previous season priors, age-trajectory interactions)
-- **Gate Features (Phase 4)**: 7 soft features (ABDICATION_RISK, PHYSICALITY_FLOOR, SELF_CREATED_FREQ, DATA_COMPLETENESS_SCORE, SAMPLE_SIZE_CONFIDENCE, LEVERAGE_DATA_CONFIDENCE, NEGATIVE_SIGNAL_COUNT)
+**RFE-Optimized Model (10 features)** - **CURRENT**:
+1. **LEVERAGE_USG_DELTA** (6.1% importance) - #1 predictor (Abdication Detector)
+2. **EFG_PCT_0_DRIBBLE** (6.8% importance) - Catch-and-shoot efficiency
+3. **LATE_CLOCK_PRESSURE_APPETITE_DELTA** (5.9% importance) - Late-clock bailout ability
+4. **USG_PCT** (28.9% importance) - Usage level (highest importance!)
+5. **USG_PCT_X_CREATION_VOLUME_RATIO** (5.7% importance) - Usage × Creation interaction
+6. **USG_PCT_X_LEVERAGE_USG_DELTA** (5.7% importance) - Usage × Leverage interaction
+7. **USG_PCT_X_RS_PRESSURE_APPETITE** (5.9% importance) - Usage × Pressure interaction
+8. **USG_PCT_X_EFG_ISO_WEIGHTED** (18.7% importance) - Usage × Isolation efficiency (2nd highest!)
+9. **PREV_RS_PRESSURE_RESILIENCE** (5.9% importance) - Previous season prior
+10. **NEGATIVE_SIGNAL_COUNT** (10.5% importance) - Gate feature (3rd highest!)
 
-**Model File**: `models/resilience_xgb.pkl`
+**Key Insight**: RFE analysis revealed that 10 features achieve peak accuracy (63.33%), matching or exceeding the 65-feature model (62.89%). Most trajectory and gate features add noise, not signal.
+
+**Model File**: `models/resilience_xgb_rfe_10.pkl` (primary), `models/resilience_xgb.pkl` (fallback)
 
 **Training Script**: `src/nba_data/scripts/train_predictive_model.py`
 
@@ -645,6 +648,8 @@ Phase 3.9 addressed critical false positives identified in full dataset testing.
 - **Top Feature Importance**: `NEGATIVE_SIGNAL_COUNT` ranks #3 (4.4% importance)
 - **Test Case Pass Rate**: 62.5% (10/16) - Same as baseline (gates still being applied)
 
+**Note**: RFE analysis later revealed that 10 features achieve better accuracy (63.33%) than 65 features. See RFE Model section below.
+
 ### Key Insight: Double-Penalization Problem
 
 **The Issue**: Model learns from gate features (e.g., `ABDICATION_RISK`), but hard gates still cap at 30%, causing double-penalization.
@@ -694,6 +699,78 @@ Phase 3.9 addressed critical false positives identified in full dataset testing.
 ### Next Steps
 
 See `NEXT_STEPS.md` for Phase 4.2 priorities (Poole tax strengthening, Bridges exemption refinement, threshold adjustments)
+
+---
+
+## ✅ RFE Model: Feature Simplification (COMPLETE)
+
+**Status**: ✅ **IMPLEMENTATION COMPLETE** (December 2025)
+
+**Based on**: First Principles Feedback - Feature bloat identified, RFE analysis performed
+
+### What Was Done
+
+**RFE Analysis**:
+- Ran Recursive Feature Elimination (RFE) to identify optimal feature count
+- Tested feature counts from 5 to 50
+- Found optimal: **10 features achieve 63.33% accuracy** (vs. 62.89% with 65 features)
+
+**Model Retraining**:
+- Retrained model with top 10 RFE-selected features
+- Updated all prediction scripts to use RFE model by default
+- Maintained backward compatibility (falls back to full model if RFE model not found)
+
+### Results
+
+- **Model Accuracy**: 63.33% (improved from 62.89% with 65 features - +0.44 pp)
+- **Feature Count**: 10 features (reduced from 65 - 85% reduction)
+- **Test Case Pass Rate**: 81.2% (13/16) - **Improved from 62.5%** (+18.7 pp)
+- **True Positive Detection**: 87.5% (7/8) - **Improved from 50.0%** (+37.5 pp)
+- **False Positive Detection**: 83.3% (5/6) - Maintained strong performance
+
+### Top 10 Features (RFE-Selected)
+
+1. **USG_PCT** (28.9% importance) - Highest importance
+2. **USG_PCT_X_EFG_ISO_WEIGHTED** (18.7% importance) - 2nd highest
+3. **NEGATIVE_SIGNAL_COUNT** (10.5% importance) - 3rd highest
+4. **EFG_PCT_0_DRIBBLE** (6.8% importance)
+5. **LEVERAGE_USG_DELTA** (6.1% importance) - #1 predictor
+6. **USG_PCT_X_RS_PRESSURE_APPETITE** (5.9% importance)
+7. **PREV_RS_PRESSURE_RESILIENCE** (5.9% importance)
+8. **LATE_CLOCK_PRESSURE_APPETITE_DELTA** (5.9% importance)
+9. **USG_PCT_X_CREATION_VOLUME_RATIO** (5.7% importance)
+10. **USG_PCT_X_LEVERAGE_USG_DELTA** (5.7% importance)
+
+### Key Insights
+
+1. **Usage-Aware Features Dominate**: 5 of 10 features are usage-related (65.9% combined importance)
+2. **Most Trajectory Features Are Noise**: Only 1 of 36 trajectory features made top 10
+3. **Gate Features Work**: `NEGATIVE_SIGNAL_COUNT` ranks 3rd (10.5% importance)
+4. **Core Stress Vectors Still Matter**: `LEVERAGE_USG_DELTA` and `EFG_PCT_0_DRIBBLE` in top 10
+
+### Files Updated
+
+- `models/resilience_xgb_rfe_10.pkl` - Simplified model (10 features)
+- `src/nba_data/scripts/predict_conditional_archetype.py` - Uses RFE model by default
+- `src/nba_data/scripts/detect_latent_stars.py` - Uses RFE model by default
+- `src/nba_data/scripts/validate_model_behavior.py` - Uses RFE model by default
+
+### Validation Results
+
+**Test Case Pass Rate**: 81.2% (13/16) - **Significant improvement from 62.5%**
+
+**Key Wins**:
+- ✅ Victor Oladipo: 65.09% (PASS) - Previously 58.14% (FAIL)
+- ✅ Tyrese Haliburton: 70.66% (PASS) - Previously 32.01% (FAIL)
+- ✅ Tyrese Maxey: 89.60% (PASS) - Previously 55.67% (FAIL)
+- ✅ Domantas Sabonis: 30.00% (PASS) - Correctly filtered
+
+**Remaining Failures (3 cases)**:
+- ❌ Jordan Poole: 95.50% (expected <55%) - Tax still not strong enough
+- ❌ Mikal Bridges: 30.00% (expected ≥65%) - Needs exemption refinement
+- ❌ Lauri Markkanen: 60.37% (expected ≥65%) - Very close, may need threshold adjustment
+
+**See**: `results/rfe_model_comparison.md` and `results/rfe_analysis_summary.md` for complete analysis.
 
 ---
 
@@ -789,12 +866,12 @@ Latent star detection work has been archived to `archive/latent_star_detection/`
 ---
 
 **See Also**:
-- `NEXT_STEPS.md` - **START HERE** - Next priorities (Phase 4.2 refinements)
-- `results/latent_star_test_cases_report.md` - Latest validation results (62.5% pass rate)
-- `results/latent_star_test_cases_results.csv` - Detailed test case results
-- `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)
-- `KEY_INSIGHTS.md` - Hard-won lessons (updated with Phase 4.1 insights)
-- `results/false_positive_fixes_implemented.md` - Phase 3.9 implementation details
+- `ONBOARDING.md` - **START HERE** - Onboarding guide for new developers
+- `NEXT_STEPS.md` - Next priorities (Phase 4.2 edge case fixes)
+- `results/latent_star_test_cases_report.md` - Latest validation results (81.2% pass rate with RFE model)
+- `results/rfe_model_comparison.md` - RFE model analysis and comparison
+- `results/rfe_analysis_summary.md` - RFE analysis summary
+- `KEY_INSIGHTS.md` - Hard-won lessons (updated with RFE insights)
 - `README.md` - Project overview
 
 

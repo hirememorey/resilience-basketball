@@ -40,13 +40,41 @@ logger = logging.getLogger(__name__)
 class ConditionalArchetypePredictor:
     """Predict archetype at different usage levels using usage-aware model."""
     
-    def __init__(self):
+    def __init__(self, use_rfe_model: bool = True):
+        """
+        Initialize predictor with RFE-simplified model or full model.
+        
+        Args:
+            use_rfe_model: If True, use RFE-selected 10-feature model (default: True)
+        """
         self.results_dir = Path("results")
         self.models_dir = Path("models")
+        self.use_rfe_model = use_rfe_model
         
         # Load model and encoder
-        self.model = joblib.load(self.models_dir / "resilience_xgb.pkl")
-        self.encoder = joblib.load(self.models_dir / "archetype_encoder.pkl")
+        if use_rfe_model:
+            model_path = self.models_dir / "resilience_xgb_rfe_10.pkl"
+            encoder_path = self.models_dir / "archetype_encoder_rfe_10.pkl"
+            
+            if not model_path.exists():
+                logger.warning(f"RFE model not found at {model_path}, falling back to full model")
+                model_path = self.models_dir / "resilience_xgb.pkl"
+                encoder_path = self.models_dir / "archetype_encoder.pkl"
+                self.use_rfe_model = False
+        else:
+            model_path = self.models_dir / "resilience_xgb.pkl"
+            encoder_path = self.models_dir / "archetype_encoder.pkl"
+        
+        self.model = joblib.load(model_path)
+        self.encoder = joblib.load(encoder_path)
+        
+        # Load RFE features if using RFE model
+        if self.use_rfe_model:
+            self.rfe_features = self._load_rfe_features()
+            logger.info(f"Using RFE model with {len(self.rfe_features)} features")
+        else:
+            self.rfe_features = None
+            logger.info("Using full model")
         
         # Load feature data to get feature names and defaults
         self.df_features = self._load_features()
@@ -56,12 +84,46 @@ class ConditionalArchetypePredictor:
             self.feature_names = list(self.model.feature_names_in_)
         else:
             # Fallback: use expected features
-            self.feature_names = self._get_expected_features()
+            if self.use_rfe_model and self.rfe_features:
+                self.feature_names = self.rfe_features
+            else:
+                self.feature_names = self._get_expected_features()
         
         # Calculate feature distributions for Phase 3 fixes
         self._calculate_feature_distributions()
         
         logger.info(f"Model expects {len(self.feature_names)} features")
+    
+    def _load_rfe_features(self) -> list:
+        """Load RFE-selected features from results file."""
+        import json
+        rfe_results_path = self.results_dir / "rfe_model_results_10.json"
+        
+        if rfe_results_path.exists():
+            with open(rfe_results_path, 'r') as f:
+                rfe_data = json.load(f)
+                return rfe_data['features']
+        else:
+            # Fallback: load from CSV
+            rfe_csv_path = self.results_dir / "rfe_top_15_features.csv"
+            if rfe_csv_path.exists():
+                df_rfe = pd.read_csv(rfe_csv_path)
+                # Get top 10 features
+                return df_rfe['Feature'].head(10).tolist()
+            else:
+                # Hardcoded fallback (top 10 from RFE analysis)
+                return [
+                    'LEVERAGE_USG_DELTA',
+                    'EFG_PCT_0_DRIBBLE',
+                    'LATE_CLOCK_PRESSURE_APPETITE_DELTA',
+                    'USG_PCT',
+                    'USG_PCT_X_CREATION_VOLUME_RATIO',
+                    'USG_PCT_X_LEVERAGE_USG_DELTA',
+                    'USG_PCT_X_RS_PRESSURE_APPETITE',
+                    'USG_PCT_X_EFG_ISO_WEIGHTED',
+                    'PREV_RS_PRESSURE_RESILIENCE',
+                    'NEGATIVE_SIGNAL_COUNT'
+                ]
     
     def _load_features(self) -> pd.DataFrame:
         """Load feature dataset for reference."""
