@@ -1,58 +1,58 @@
 {
   "n_features": 10,
-  "accuracy": 0.6333333333333333,
+  "accuracy": 0.6055555555555555,
   "features": [
     "LEVERAGE_USG_DELTA",
     "EFG_PCT_0_DRIBBLE",
     "LATE_CLOCK_PRESSURE_APPETITE_DELTA",
+    "RIM_PRESSURE_RESILIENCE",
     "USG_PCT",
     "USG_PCT_X_CREATION_VOLUME_RATIO",
-    "USG_PCT_X_LEVERAGE_USG_DELTA",
     "USG_PCT_X_RS_PRESSURE_APPETITE",
     "USG_PCT_X_EFG_ISO_WEIGHTED",
-    "PREV_RS_PRESSURE_RESILIENCE",
+    "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
     "NEGATIVE_SIGNAL_COUNT"
   ],
   "feature_importance": [
     {
       "Feature": "USG_PCT",
-      "Importance": 0.28854477405548096
+      "Importance": 0.2777481973171234
     },
     {
       "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.1870420128107071
+      "Importance": 0.19499768316745758
     },
     {
       "Feature": "NEGATIVE_SIGNAL_COUNT",
-      "Importance": 0.10457856953144073
+      "Importance": 0.09963849186897278
     },
     {
       "Feature": "EFG_PCT_0_DRIBBLE",
-      "Importance": 0.06791670620441437
+      "Importance": 0.0686468780040741
+    },
+    {
+      "Feature": "RIM_PRESSURE_RESILIENCE",
+      "Importance": 0.06348009407520294
     },
     {
       "Feature": "LEVERAGE_USG_DELTA",
-      "Importance": 0.06141302362084389
+      "Importance": 0.06337979435920715
     },
     {
       "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
-      "Importance": 0.05907999351620674
-    },
-    {
-      "Feature": "PREV_RS_PRESSURE_RESILIENCE",
-      "Importance": 0.05886401981115341
-    },
-    {
-      "Feature": "LATE_CLOCK_PRESSURE_APPETITE_DELTA",
-      "Importance": 0.05852976441383362
+      "Importance": 0.06151915341615677
     },
     {
       "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
-      "Importance": 0.05715588107705116
+      "Importance": 0.05866080895066261
     },
     {
-      "Feature": "USG_PCT_X_LEVERAGE_USG_DELTA",
-      "Importance": 0.05687520653009415
+      "Feature": "LATE_CLOCK_PRESSURE_APPETITE_DELTA",
+      "Importance": 0.05689087510108948
+    },
+    {
+      "Feature": "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
+      "Importance": 0.055037934333086014
     }
   ]
 }

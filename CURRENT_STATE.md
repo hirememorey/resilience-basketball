@@ -11,7 +11,7 @@
 
 **Current Model**: XGBoost Classifier that predicts playoff archetypes (King, Bulldozer, Sniper, Victim) from regular season stress vectors with **usage-aware conditional predictions**. **RFE-optimized to 10 core features** (reduced from 65).
 
-**Accuracy**: 63.33% (899 player-seasons, 2015-2024)
+**Accuracy**: 60.56% (899 player-seasons, 2015-2024, retrained December 5, 2025)
 
 ---
 
@@ -32,6 +32,7 @@
 - Usage (USG_PCT): 100% coverage
 - Age: 100% coverage
 - Clock data: 100% coverage (all seasons)
+- **Rim pressure data**: 95.9% coverage (1,773/1,849 in expanded predictions) - **Fixed December 5, 2025** ✅
 
 ### Model Architecture
 
@@ -93,7 +94,7 @@ The model can predict at **any usage level**, enabling two use cases:
 
 ## Validation Results
 
-### Test Case Pass Rate: 87.5% (14/16)
+### Test Case Pass Rate: 81.2% (13/16)
 
 **True Positives**: 87.5% (7/8)
 - ✅ Victor Oladipo: 65.09% (PASS)
@@ -196,21 +197,47 @@ Converted hard gates to soft features that the model learns:
 
 ---
 
+## Rim Pressure Data Fix: Complete ✅ (December 5, 2025)
+
+**The Problem**: Only 34.9% (645/1,849) of players in expanded predictions had rim pressure data, preventing Fragility Gate from applying to 65% of players. Root cause: Shot chart collection only collected data for players in `regular_season_{season}.csv` (filtered to GP >= 50, MIN >= 20.0), excluding many young players and role players.
+
+**The Fix**: 
+1. Modified `collect_shot_charts.py` to use `predictive_dataset.csv` instead of `regular_season` files
+2. Added `--use-predictive-dataset` flag to collect shot charts for all players
+3. Re-collected shot charts for all 10 seasons (5,312 players vs. ~2,000 before)
+4. Re-calculated rim pressure features (4,842 players vs. 1,845 before)
+5. Re-trained model and re-ran predictions
+
+**Results**:
+- ✅ Rim pressure data coverage: 95.9% (1,773/1,849) vs. 34.9% before - **2.7x increase**
+- ✅ All test cases now have rim pressure data
+- ⚠️ Model misses (Willy Hernangomez, Dion Waiters, Kris Dunn) still overvalued - **Fragility Gate logic needs refinement**
+
+**Key Files**:
+- `src/nba_data/scripts/collect_shot_charts.py` - Updated with `--use-predictive-dataset` flag
+- `results/rim_pressure_features.csv` - Updated with 4,842 players
+- `results/shot_chart_collection_results.md` - Complete results
+- `results/retraining_results_summary.md` - Retraining analysis
+
+**See**: `results/shot_chart_collection_results.md` for complete analysis.
+
+---
+
 ## Expanded Dataset Analysis: Complete ✅
 
 **Status**: Expanded predictions run on 1,849 player-seasons (Age ≤ 25, Min 500 minutes)
 
 **Results**:
 - **Dataset**: 1,849 player-seasons from 2015-2024
-- **Top Latent Stars**: Shai Gilgeous-Alexander (97.69%), Deandre Ayton (96.88%), Derrick White (96.58%)
-- **Risk Categories**: 1,080 "Avoid" (58.4%), 98 "Franchise Cornerstone" (5.3%)
+- **Top Latent Stars**: Shai Gilgeous-Alexander (98.06%), Deandre Ayton (97.38%), Derrick White (97.21%)
+- **Risk Categories**: 1,072 "Avoid" (58.0%), 51 "Franchise Cornerstone" (2.8%)
 - **2D Risk Matrix**: Working correctly - Performance Score at current usage, potential at 25% usage
 
 **Key Findings from Model Misses Analysis**:
 - **7/10 "misses" are either correct or debatable** (Kawhi, Tatum, Schröder cases)
 - **3/10 are true misses**: "Empty Calories" creators (high volume + negative creation tax)
 - **Root Cause**: Volume Exemption too broad - doesn't distinguish efficient vs. inefficient creators
-- **Data Issue**: 80% of misses lack rim pressure data, preventing Fragility Gate from working
+- **Data Issue**: ✅ **FIXED** - Rim pressure data now available for 95.9% of players (was 34.9%)
 
 **See**: `results/expanded_predictions.csv` for full results and `results/model_misses_analysis.md` for detailed analysis.
 
@@ -220,8 +247,8 @@ Converted hard gates to soft features that the model learns:
 
 1. **Two test cases may be removed from test suite**: Mikal Bridges and Desmond Bane may be accurately rated (not actual failures)
 2. ~~**D'Angelo Russell Phenomenon**: Needs investigation - why does the model rate him differently than expected?~~ ✅ **FIXED** - Refined High-Usage Creator Exemption to distinguish between versatile creators (Luka) and limited creators (Russell). See `results/dangelo_russell_deep_dive.md`.
-3. **Volume Exemption Too Broad**: High creation volume (>0.60) exempts players from Multi-Signal Tax, even when creation is inefficient. Need to refine to require efficient creation OR rim pressure. See `results/model_misses_analysis.md`.
-4. **Missing Rim Pressure Data**: 80% of model misses lack `RS_RIM_APPETITE` data, preventing Fragility Gate from catching them. Need to fix data pipeline.
+3. **Volume Exemption Too Broad**: High creation volume (>0.60) exempts players from Multi-Signal Tax, even when creation is inefficient. Need to refine to require efficient creation OR rim pressure. See `results/model_misses_analysis.md` and `NEXT_STEPS.md` for implementation plan.
+4. ~~**Missing Rim Pressure Data**: 80% of model misses lack `RS_RIM_APPETITE` data, preventing Fragility Gate from catching them.~~ ✅ **FIXED** - Rim pressure data coverage improved from 34.9% to 95.9% (December 5, 2025). See `results/shot_chart_collection_results.md`.
 
 ---
 

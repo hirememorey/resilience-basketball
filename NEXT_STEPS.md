@@ -7,11 +7,11 @@
 
 ## Current Status Summary
 
-- **Model Accuracy**: 63.33% (RFE-optimized with 10 features)
-- **Test Case Pass Rate (with gates)**: 87.5% (14/16)
-- **Test Case Pass Rate (without gates)**: 56.2% (9/16) - **Trust Fall Experiment**
-- **False Positive Detection (with gates)**: 100% pass rate (6/6) - **Perfect** ✅
-- **True Positive Detection (with gates)**: 87.5% pass rate (7/8) - Strong performance
+- **Model Accuracy**: 60.56% (RFE-optimized with 10 features, retrained Dec 5, 2025)
+- **Test Case Pass Rate**: 81.2% (13/16)
+- **False Positive Detection**: 100% pass rate (6/6) - **Perfect** ✅
+- **True Positive Detection**: 75.0% pass rate (6/8)
+- **Rim Pressure Data Coverage**: 95.9% (1,773/1,849) - **Fixed December 5, 2025** ✅
 
 **Key Discovery**: Trust Fall experiment revealed **Ground Truth Trap** - model correctly predicts Performance (outcomes), but we need a separate dimension for Dependence (portability).
 
@@ -97,13 +97,14 @@
 
 **The Problem**: Volume Exemption (`CREATION_VOLUME_RATIO > 0.60`) is too broad. It exempts "Empty Calories" creators (high volume + negative creation tax) from Multi-Signal Tax, when it should only exempt "True Creators" (high volume + efficient creation OR rim pressure).
 
-**The Pattern**: "Empty Calories" creators like Devonte' Graham, Dion Waiters, Kris Dunn have:
+**The Pattern**: "Empty Calories" creators like Willy Hernangomez, Dion Waiters, Kris Dunn have:
 - High creation volume (>0.60) → Volume Exemption protects them
 - Negative creation tax (<-0.10) → But they're inefficient creators
-- Result: Model predicts "King" but they're actually "Volume Scorers"
+- Result: Model predicts "King" (93.27%, 77.55%, 84.96%) but they're actually "Volume Scorers"
+- **Note**: All now have rim pressure data (95.9% coverage), but Fragility Gate still not catching them
 
 **The Fix**: Refine Volume Exemption to require:
-```
+```python
 CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.1746)
 ```
 
@@ -113,22 +114,24 @@ CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.
 - This catches "Empty Calories" creators while preserving true creators (Schröder, Fultz)
 
 **Expected Impact**:
-- Would catch Devonte' Graham (CREATION_TAX = -0.199)
-- Would catch Dion Waiters (CREATION_TAX = -0.164)
-- Would catch Kris Dunn (CREATION_TAX = -0.062)
+- Would catch Willy Hernangomez (currently 93.27%, has rim pressure data but still overvalued)
+- Would catch Dion Waiters (currently 77.55%, CREATION_TAX = -0.164)
+- Would catch Kris Dunn (currently 84.96%, CREATION_TAX = -0.062)
 - Would preserve Dennis Schröder (CREATION_TAX = +0.058)
 - Would preserve Markelle Fultz (CREATION_TAX = -0.033, essentially neutral)
 
 **Implementation Location**: `src/nba_data/scripts/predict_conditional_archetype.py`
 - Find Multi-Signal Tax exemption logic (around line 570-590)
 - Update Volume Exemption condition to include efficiency/stabilizer check
+- **Context**: Rim pressure data is now available for 95.9% of players, so this check will work for almost all cases
 
 **Validation**:
 - Run `test_latent_star_cases.py` to ensure no regressions
-- Check that Devonte' Graham, Dion Waiters, Kris Dunn are now correctly filtered
+- Run `run_expanded_predictions.py` to check expanded dataset
+- Verify that Willy Hernangomez, Dion Waiters, Kris Dunn are now correctly filtered
 - Verify that Dennis Schröder, Markelle Fultz are still correctly exempted
 
-**See**: `results/model_misses_analysis.md` for complete analysis and recommendations.
+**See**: `results/model_misses_analysis.md` and `results/retraining_results_summary.md` for complete analysis.
 
 ---
 
@@ -144,18 +147,27 @@ CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.
 
 **Action**: Evaluate if these are legitimate model predictions or actual failures. If accurately rated, remove from test suite.
 
-### Missing Rim Pressure Data
+## ✅ Completed: Rim Pressure Data Fix
 
-**Status**: Data pipeline issue identified
+**Status**: ✅ **COMPLETE** - December 5, 2025
 
-**Problem**: 80% of model misses lack `RS_RIM_APPETITE` data, preventing Fragility Gate from catching them.
+**The Problem**: Only 34.9% (645/1,849) of players in expanded predictions had rim pressure data, preventing Fragility Gate from applying to 65% of players. Root cause: Shot chart collection only collected data for players in `regular_season_{season}.csv` (filtered to GP >= 50, MIN >= 20.0), excluding many young players and role players.
 
-**Action**: 
-- Investigate why rim pressure data is missing for some players
-- Ensure data pipeline collects rim pressure for all players
-- Or apply Fragility Gate more conservatively when data is missing
+**The Fix**: 
+1. Modified `collect_shot_charts.py` to use `predictive_dataset.csv` instead of `regular_season` files
+2. Added `--use-predictive-dataset` flag to collect shot charts for all players (5,312 vs. ~2,000 before)
+3. Re-collected shot charts for all 10 seasons
+4. Re-calculated rim pressure features (4,842 players vs. 1,845 before)
+5. Re-trained model and re-ran predictions
 
-**See**: `results/model_misses_analysis.md` for details.
+**Results**:
+- ✅ Rim pressure data coverage: 95.9% (1,773/1,849) vs. 34.9% before - **2.7x increase**
+- ✅ All test cases now have rim pressure data
+- ⚠️ Model misses (Willy Hernangomez, Dion Waiters, Kris Dunn) still overvalued - **Fragility Gate logic needs refinement**
+
+**Key Insight**: Having rim pressure data is necessary but not sufficient. The Fragility Gate still isn't catching "Empty Calories" creators because Volume Exemption is too broad.
+
+**See**: `results/shot_chart_collection_results.md` and `results/retraining_results_summary.md` for complete analysis.
 
 ---
 
@@ -193,4 +205,4 @@ CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.
 
 ---
 
-**Status**: 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. **Next Priority**: Refine Volume Exemption logic to catch "Empty Calories" creators.
+**Status**: 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. Rim pressure data fix complete (95.9% coverage). **Next Priority**: Refine Volume Exemption logic to catch "Empty Calories" creators (Willy Hernangomez, Dion Waiters, Kris Dunn).

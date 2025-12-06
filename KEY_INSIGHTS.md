@@ -1046,6 +1046,38 @@ if CREATION_VOLUME_RATIO > 0.60:
 
 ---
 
+## 41. Shot Chart Collection Data Completeness Fix 🎯 CRITICAL (December 2025)
+
+**The Problem**: Shot chart collection only collected data for players in `regular_season_{season}.csv`, which is filtered to players with `GP >= 50` and `MIN >= 20.0` per game. This excluded many young players and role players who don't meet these thresholds, even though the NBA Stats API has shot chart data for them.
+
+**The Impact**: Only 34.9% (645/1,849) of players in expanded predictions had rim pressure data, preventing Fragility Gate from applying to 65% of players. This was a critical data availability issue, not a code bug.
+
+**The Fix**: Modified `collect_shot_charts.py` to use `predictive_dataset.csv` instead of `regular_season` files:
+1. Added `load_all_players_from_predictive_dataset()` function
+2. Added `--use-predictive-dataset` flag
+3. Re-collected shot charts for all 10 seasons (5,312 players vs. ~2,000 before)
+4. Re-calculated rim pressure features (4,842 players vs. 1,845 before)
+
+**Results**:
+- ✅ Rim pressure data coverage: 95.9% (1,773/1,849) vs. 34.9% before - **2.7x increase**
+- ✅ All test cases now have rim pressure data
+- ⚠️ Model misses still overvalued - **Fragility Gate logic needs refinement** (see Insight #40)
+
+**Key Principle**: Data collection scripts should use the broadest possible dataset, not filtered subsets. Filters should be applied during analysis, not during data collection.
+
+**Implementation**:
+```python
+# WRONG: Only collect for "qualified" players
+player_ids = load_qualified_players(season)  # GP >= 50, MIN >= 20.0
+
+# RIGHT: Collect for all players in predictive dataset
+player_ids = load_all_players_from_predictive_dataset(season)  # All players
+```
+
+**See**: `results/shot_chart_collection_results.md` and `results/shot_chart_collection_fix.md` for complete analysis.
+
+---
+
 **See Also**:
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)

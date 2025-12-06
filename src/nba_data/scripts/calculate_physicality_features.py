@@ -43,8 +43,10 @@ def load_data(seasons):
 
 def calculate_features(rs_df, po_df):
     """Calculate Physicality (FTr) features."""
-    if rs_df.empty or po_df.empty:
-        logger.warning("Empty RS or PO dataframe")
+    # Phase 3.7 Fix: RS data is required, but PO data can be missing
+    # This allows RS_FTr to be calculated for players who didn't make playoffs
+    if rs_df.empty:
+        logger.warning("Empty RS dataframe")
         return pd.DataFrame()
 
     # --- Process Regular Season ---
@@ -84,22 +86,38 @@ def calculate_features(rs_df, po_df):
     
     po_agg = po_agg.rename(columns={'FTA': 'PO_FTA', 'FGA': 'PO_FGA', 'GAME_ID': 'PO_GP'})
     
+    # --- Process Playoffs ---
+    # Phase 3.7 Fix: Use LEFT JOIN to preserve RS data even when PO data is missing
+    # This allows RS_FTr to be calculated for players who didn't make playoffs
+    if po_df.empty:
+        logger.warning("No Playoff data found - returning RS features only")
+        # Return RS features with PO columns as NaN
+        rs_features['PO_FTA'] = np.nan
+        rs_features['PO_FGA'] = np.nan
+        rs_features['PO_GP'] = np.nan
+        rs_features['PO_FTr'] = np.nan
+        rs_features['FTr_RESILIENCE'] = np.nan
+        rs_features['FTr_DELTA'] = np.nan
+        return rs_features
+    
     po_agg['PO_FTr'] = po_agg['PO_FTA'] / po_agg['PO_FGA']
     po_agg['PO_FTr'] = po_agg['PO_FTr'].fillna(0)
     po_agg.loc[po_agg['PO_FGA'] == 0, 'PO_FTr'] = 0
     
     # --- Merge ---
+    # FIX: Use LEFT JOIN to preserve RS data even when PO data is missing
+    # This allows RS_FTr to be calculated for players who didn't make playoffs
     merged = pd.merge(
         rs_features,
         po_agg,
         on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'],
-        how='inner'
+        how='left'
     )
+    logger.info(f"Merged RS and PO data: {len(merged)} rows (RS: {len(rs_features)}, PO: {len(po_agg)})")
     
     # --- Calculate Resilience ---
     # FTr Resilience = PO FTr / RS FTr
-    # Or maybe Delta? IMPLEMENTATION_PLAN says "Playoff FTr / RS FTr"
-    
+    # Only calculate when both RS and PO data exist (PO features can be NaN)
     merged['FTr_RESILIENCE'] = merged['PO_FTr'] / merged['RS_FTr']
     
     # Handle cases where RS_FTr is 0
@@ -131,16 +149,14 @@ def main():
         return
 
     # Filter for sample size
-    # Minimum RS FGA (Total) and PO FGA (Total) to avoid noise
+    # Phase 3.7 Fix: Only filter by RS FGA minimum to preserve RS data for all players
+    # PO FGA filter removed - we want RS_FTr for players who didn't make playoffs
     min_rs_fga_total = 100
-    min_po_fga_total = 30
     
-    filtered_df = features_df[
-        (features_df['RS_FGA_TOTAL'] >= min_rs_fga_total) & 
-        (features_df['PO_FGA'] >= min_po_fga_total)
-    ].copy()
+    filtered_df = features_df[features_df['RS_FGA_TOTAL'] >= min_rs_fga_total].copy()
     
-    logger.info(f"Filtered dataset from {len(features_df)} to {len(filtered_df)} rows (Min RS Total FGA: {min_rs_fga_total}, Min PO Total FGA: {min_po_fga_total})")
+    logger.info(f"Filtered dataset from {len(features_df)} to {len(filtered_df)} rows (Min RS Total FGA: {min_rs_fga_total})")
+    logger.info(f"Players with PO data: {filtered_df['PO_FGA'].notna().sum()}/{len(filtered_df)}")
     
     output_path = Path("results/physicality_features.csv")
     output_path.parent.mkdir(exist_ok=True)
@@ -148,13 +164,14 @@ def main():
     filtered_df.to_csv(output_path, index=False)
     logger.info(f"✅ Saved physicality features to {output_path}")
     
-    # Top 5 Resilient
-    print("\nTop 5 FTr Resilience:")
-    print(filtered_df.sort_values('FTr_RESILIENCE', ascending=False)[['PLAYER_NAME', 'SEASON', 'FTr_RESILIENCE', 'RS_FTr', 'PO_FTr']].head())
-    
-    # Bottom 5
-    print("\nBottom 5 FTr Resilience:")
-    print(filtered_df.sort_values('FTr_RESILIENCE', ascending=True)[['PLAYER_NAME', 'SEASON', 'FTr_RESILIENCE', 'RS_FTr', 'PO_FTr']].head())
+    # Top 5 Resilient (only show players with PO data)
+    po_players = filtered_df[filtered_df['FTr_RESILIENCE'].notna()]
+    if len(po_players) > 0:
+        print("\nTop 5 FTr Resilience:")
+        print(po_players.sort_values('FTr_RESILIENCE', ascending=False)[['PLAYER_NAME', 'SEASON', 'FTr_RESILIENCE', 'RS_FTr', 'PO_FTr']].head())
+        
+        print("\nBottom 5 FTr Resilience:")
+        print(po_players.sort_values('FTr_RESILIENCE', ascending=True)[['PLAYER_NAME', 'SEASON', 'FTr_RESILIENCE', 'RS_FTr', 'PO_FTr']].head())
 
 if __name__ == "__main__":
     main()

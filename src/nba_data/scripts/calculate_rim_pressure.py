@@ -62,9 +62,17 @@ def calculate_features(df):
     rs_agg = rs_agg.fillna(0)
 
     # --- Process Playoffs ---
+    # Phase 3.7 Fix: Use LEFT JOIN to preserve RS data even when PO data is missing
+    # This allows RS_RIM_APPETITE to be calculated for players who didn't make playoffs
     if po_shots.empty:
-        logger.warning("No Playoff shots found")
-        # Return just RS features if no PO data (though unlikely for our target players)
+        logger.warning("No Playoff shots found - returning RS features only")
+        # Return RS features with PO columns as NaN
+        rs_agg['PO_FGA'] = np.nan
+        rs_agg['PO_RIM_FGA'] = np.nan
+        rs_agg['PO_RIM_FGM'] = np.nan
+        rs_agg['PO_RIM_APPETITE'] = np.nan
+        rs_agg['PO_RIM_PCT'] = np.nan
+        rs_agg['RIM_PRESSURE_RESILIENCE'] = np.nan
         return rs_agg
 
     po_agg = po_shots.groupby(['PLAYER_ID', 'PLAYER_NAME', 'SEASON']).apply(
@@ -80,15 +88,19 @@ def calculate_features(df):
     po_agg = po_agg.fillna(0)
     
     # --- Merge ---
+    # FIX: Use LEFT JOIN to preserve RS data even when PO data is missing
+    # This allows RS_RIM_APPETITE to be calculated for players who didn't make playoffs
     merged = pd.merge(
         rs_agg,
         po_agg,
         on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'],
-        how='inner'
+        how='left'
     )
+    logger.info(f"Merged RS and PO data: {len(merged)} rows (RS: {len(rs_agg)}, PO: {len(po_agg)})")
     
     # --- Calculate Resilience ---
     # Rim Pressure Resilience = PO Appetite / RS Appetite
+    # Only calculate when both RS and PO data exist (PO features can be NaN)
     merged['RIM_PRESSURE_RESILIENCE'] = merged['PO_RIM_APPETITE'] / merged['RS_RIM_APPETITE']
     
     # Handle division by zero (if RS appetite is 0)
@@ -117,16 +129,14 @@ def main():
         return
 
     # Filter for sample size
-    # Minimum RS FGA and PO FGA to avoid noise
+    # Phase 3.7 Fix: Only filter by RS FGA minimum to preserve RS data for all players
+    # PO FGA filter removed - we want RS_RIM_APPETITE for players who didn't make playoffs
     min_rs_fga = 100
-    min_po_fga = 30
     
-    filtered_df = features_df[
-        (features_df['RS_FGA'] >= min_rs_fga) & 
-        (features_df['PO_FGA'] >= min_po_fga)
-    ].copy()
+    filtered_df = features_df[features_df['RS_FGA'] >= min_rs_fga].copy()
     
-    logger.info(f"Filtered dataset from {len(features_df)} to {len(filtered_df)} rows (Min RS FGA: {min_rs_fga}, Min PO FGA: {min_po_fga})")
+    logger.info(f"Filtered dataset from {len(features_df)} to {len(filtered_df)} rows (Min RS FGA: {min_rs_fga})")
+    logger.info(f"Players with PO data: {filtered_df['PO_FGA'].notna().sum()}/{len(filtered_df)}")
     
     output_path = Path("results/rim_pressure_features.csv")
     output_path.parent.mkdir(exist_ok=True)
@@ -134,13 +144,14 @@ def main():
     filtered_df.to_csv(output_path, index=False)
     logger.info(f"✅ Saved rim pressure features to {output_path}")
     
-    # Top 5 Resilient
-    print("\nTop 5 Rim Pressure Resilience:")
-    print(filtered_df.sort_values('RIM_PRESSURE_RESILIENCE', ascending=False)[['PLAYER_NAME', 'SEASON', 'RIM_PRESSURE_RESILIENCE', 'RS_RIM_APPETITE', 'PO_RIM_APPETITE']].head(10))
-    
-    # Bottom 5
-    print("\nBottom 5 Rim Pressure Resilience:")
-    print(filtered_df.sort_values('RIM_PRESSURE_RESILIENCE', ascending=True)[['PLAYER_NAME', 'SEASON', 'RIM_PRESSURE_RESILIENCE', 'RS_RIM_APPETITE', 'PO_RIM_APPETITE']].head(10))
+    # Top 5 Resilient (only show players with PO data)
+    po_players = filtered_df[filtered_df['RIM_PRESSURE_RESILIENCE'].notna()]
+    if len(po_players) > 0:
+        print("\nTop 5 Rim Pressure Resilience:")
+        print(po_players.sort_values('RIM_PRESSURE_RESILIENCE', ascending=False)[['PLAYER_NAME', 'SEASON', 'RIM_PRESSURE_RESILIENCE', 'RS_RIM_APPETITE', 'PO_RIM_APPETITE']].head(10))
+        
+        print("\nBottom 5 Rim Pressure Resilience:")
+        print(po_players.sort_values('RIM_PRESSURE_RESILIENCE', ascending=True)[['PLAYER_NAME', 'SEASON', 'RIM_PRESSURE_RESILIENCE', 'RS_RIM_APPETITE', 'PO_RIM_APPETITE']].head(10))
 
 if __name__ == "__main__":
     main()
