@@ -1,0 +1,83 @@
+{
+  "n_features": 15,
+  "accuracy": 0.6055555555555555,
+  "features": [
+    "CREATION_VOLUME_RATIO",
+    "LEVERAGE_USG_DELTA",
+    "EFG_PCT_0_DRIBBLE",
+    "PRESSURE_RESILIENCE_DELTA",
+    "LATE_CLOCK_PRESSURE_APPETITE_DELTA",
+    "RIM_PRESSURE_RESILIENCE",
+    "USG_PCT",
+    "USG_PCT_X_CREATION_VOLUME_RATIO",
+    "USG_PCT_X_LEVERAGE_USG_DELTA",
+    "USG_PCT_X_RS_PRESSURE_APPETITE",
+    "USG_PCT_X_EFG_ISO_WEIGHTED",
+    "PREV_RS_PRESSURE_RESILIENCE",
+    "AGE_X_CREATION_VOLUME_RATIO_YOY_DELTA",
+    "CREATION_VOLUME_RATIO_X_CREATION_TAX",
+    "CREATION_VOLUME_RATIO_X_RS_RIM_APPETITE"
+  ],
+  "feature_importance": [
+    {
+      "Feature": "USG_PCT",
+      "Importance": 0.25707316398620605
+    },
+    {
+      "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
+      "Importance": 0.1796339452266693
+    },
+    {
+      "Feature": "EFG_PCT_0_DRIBBLE",
+      "Importance": 0.05441819503903389
+    },
+    {
+      "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
+      "Importance": 0.04956522956490517
+    },
+    {
+      "Feature": "USG_PCT_X_LEVERAGE_USG_DELTA",
+      "Importance": 0.04336855933070183
+    },
+    {
+      "Feature": "LATE_CLOCK_PRESSURE_APPETITE_DELTA",
+      "Importance": 0.043225109577178955
+    },
+    {
+      "Feature": "PREV_RS_PRESSURE_RESILIENCE",
+      "Importance": 0.042906757444143295
+    },
+    {
+      "Feature": "AGE_X_CREATION_VOLUME_RATIO_YOY_DELTA",
+      "Importance": 0.0425565205514431
+    },
+    {
+      "Feature": "CREATION_VOLUME_RATIO_X_CREATION_TAX",
+      "Importance": 0.04181002452969551
+    },
+    {
+      "Feature": "PRESSURE_RESILIENCE_DELTA",
+      "Importance": 0.04177141934633255
+    },
+    {
+      "Feature": "RIM_PRESSURE_RESILIENCE",
+      "Importance": 0.041079048067331314
+    },
+    {
+      "Feature": "LEVERAGE_USG_DELTA",
+      "Importance": 0.04098298400640488
+    },
+    {
+      "Feature": "CREATION_VOLUME_RATIO_X_RS_RIM_APPETITE",
+      "Importance": 0.04095631465315819
+    },
+    {
+      "Feature": "CREATION_VOLUME_RATIO",
+      "Importance": 0.04083484038710594
+    },
+    {
+      "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
+      "Importance": 0.03981785476207733
+    }
+  ]
+}

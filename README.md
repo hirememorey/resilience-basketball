@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** 2D Risk Matrix implementation complete ✅ | Data-driven thresholds calculated | RFE-optimized model with **63.33% accuracy** and **87.5% test case pass rate** (14/16 with gates). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles). **Expanded dataset analysis complete** (1,849 player-seasons, Age ≤ 25). **D'Angelo Russell fix** (Dec 2025) refined High-Usage Creator Exemption. **Next Priority**: Refine Volume Exemption logic to catch "Empty Calories" creators.
+**Current Status:** Data leakage fixes complete ✅ | Previous playoff features integrated ✅ | Temporal train/test split implemented ✅ | RFE-optimized model with **53.54% accuracy** (true predictive power, RS-only features) and **68.8% test case pass rate** (11/16). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles). **Expanded dataset analysis complete** (1,849 player-seasons, Age ≤ 25). **D'Angelo Russell fix** (Dec 2025) refined High-Usage Creator Exemption. **Next Priority**: Refine Volume Exemption logic to catch "Empty Calories" creators.
 
 ---
 
@@ -45,7 +45,7 @@ python src/nba_data/scripts/train_rfe_model.py
 - `results/resilience_archetypes.csv`: Playoff archetypes (labels)
 - `results/predictive_dataset.csv`: Stress vectors (features)
 - `results/pressure_features.csv`: Pressure vector features
-- `models/resilience_xgb_rfe_10.pkl`: **CURRENT MODEL** (10 features, 63.33% accuracy)
+- `models/resilience_xgb_rfe_10.pkl`: **CURRENT MODEL** (10 features, 53.54% accuracy, RS-only, temporal split)
 
 ### 4. Run Validation Tests
 ```bash
@@ -61,21 +61,21 @@ python run_expanded_predictions.py --min-minutes 500 --max-age 25
 ## Current Model
 
 **Algorithm:** XGBoost Classifier (Multi-Class)  
-**Features:** 10 core features (RFE-optimized from 65)  
-**Accuracy:** 63.33% (899 player-seasons, 2015-2024)  
-**Test Case Pass Rate:** 87.5% (14/16)
+**Features:** 10 core features (RFE-optimized from 60, RS-only)  
+**Accuracy:** **53.54%** (RFE model) / **51.69%** (Full model) - **True predictive power** with temporal train/test split (899 player-seasons, 2015-2024)  
+**Test Case Pass Rate:** 68.8% (11/16)
 
-### Top 10 Features
-1. `USG_PCT` (28.9% importance) - Usage level
-2. `USG_PCT_X_EFG_ISO_WEIGHTED` (18.7% importance) - Usage × Isolation efficiency
-3. `NEGATIVE_SIGNAL_COUNT` (10.5% importance) - Gate feature
-4. `EFG_PCT_0_DRIBBLE` (6.8% importance) - Catch-and-shoot efficiency
-5. `LEVERAGE_USG_DELTA` (6.1% importance) - #1 predictor (Abdication Detector)
-6. `USG_PCT_X_RS_PRESSURE_APPETITE` (5.9% importance)
-7. `PREV_RS_PRESSURE_RESILIENCE` (5.9% importance)
-8. `LATE_CLOCK_PRESSURE_APPETITE_DELTA` (5.9% importance)
-9. `USG_PCT_X_CREATION_VOLUME_RATIO` (5.7% importance)
-10. `USG_PCT_X_LEVERAGE_USG_DELTA` (5.7% importance)
+### Top 10 Features (RS-Only, No Data Leakage)
+1. `USG_PCT` (40.2% importance) - Usage level
+2. `USG_PCT_X_EFG_ISO_WEIGHTED` (11.7% importance) - Usage × Isolation efficiency
+3. `EFG_PCT_0_DRIBBLE` (7.6% importance) - Catch-and-shoot efficiency
+4. `EFG_ISO_WEIGHTED_YOY_DELTA` (6.4% importance) - Year-over-year change in isolation efficiency
+5. `CREATION_TAX` (6.3% importance) - Creation efficiency drop-off
+6. `PREV_RS_RIM_APPETITE` (6.0% importance) - Previous season rim pressure
+7. `CREATION_TAX_YOY_DELTA` (5.7% importance) - Year-over-year change in creation tax
+8. `USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE` (5.6% importance) - Usage × Late clock resilience
+9. `USG_PCT_X_LEVERAGE_USG_DELTA` (5.4% importance) - Usage × Clutch usage scaling
+10. `PREV_LEVERAGE_TS_DELTA` (5.2% importance) - Previous season leverage efficiency
 
 **Key Insight:** Usage-aware features dominate (5 of 10 features, 65.9% combined importance).
 

@@ -1,17 +1,19 @@
 # Next Steps
 
-**Date**: December 5, 2025  
-**Status**: 2D Risk Matrix Implementation Complete ✅ | Data-Driven Thresholds Calculated | D'Angelo Russell Fix Complete ✅
+**Date**: December 6, 2025  
+**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅
 
 ---
 
 ## Current Status Summary
 
-- **Model Accuracy**: 60.56% (RFE-optimized with 10 features, retrained Dec 5, 2025)
-- **Test Case Pass Rate**: 81.2% (13/16)
-- **False Positive Detection**: 100% pass rate (6/6) - **Perfect** ✅
-- **True Positive Detection**: 75.0% pass rate (6/8)
+- **Model Accuracy**: **53.54%** (RFE model, 10 features) / **51.69%** (Full model, 60 features) - **True predictive power** with RS-only features and temporal split (retrained Dec 6, 2025)
+- **Test Case Pass Rate**: 68.8% (11/16)
+- **False Positive Detection**: 83.3% pass rate (5/6) - **Strong** ✅
+- **True Positive Detection**: 62.5% pass rate (5/8)
 - **Rim Pressure Data Coverage**: 95.9% (1,773/1,849) - **Fixed December 5, 2025** ✅
+- **Data Leakage**: ✅ **FIXED** - All playoff features removed, temporal split implemented (December 6, 2025)
+- **Previous Playoff Features**: ✅ **INTEGRATED** - Added legitimate past → future features (December 6, 2025)
 
 **Key Discovery**: Trust Fall experiment revealed **Ground Truth Trap** - model correctly predicts Performance (outcomes), but we need a separate dimension for Dependence (portability).
 
@@ -29,6 +31,51 @@
 **Key Finding**: Jordan Poole returns to "King" status (97% star-level) when gates disabled - **he actually succeeded** (17 PPG, 62.7% TS in championship run). This confirms the **Ground Truth Trap**: Training labels are based on outcomes, but we want to predict portability.
 
 **See**: `results/latent_star_test_cases_report_trust_fall.md` for complete results.
+
+---
+
+## ✅ Completed: Data Leakage Fixes
+
+**Status**: ✅ **COMPLETE** - December 6, 2025
+
+**The Problem**: Model was using playoff data in features to predict playoff outcomes, creating a circular dependency. Additionally, random train/test split allowed future data to inform past predictions.
+
+**The Fix**:
+1. **Removed Playoff-Based Features**: Removed all features that use playoff data (e.g., `PRESSURE_APPETITE_DELTA`, `RIM_PRESSURE_RESILIENCE`, `PO_EFG_BEYOND_RS_MEDIAN`)
+2. **Implemented Temporal Train/Test Split**: Train on 2015-2020 seasons, test on 2021-2024 seasons
+3. **Re-ran RFE Feature Selection**: Identified optimal 10 features from RS-only feature set
+4. **Retrained Models**: Both full and RFE models retrained with RS-only features
+
+**Results**:
+- ✅ **True Accuracy**: 53.54% (RFE model) / 51.69% (Full model) - down from 63.33% with leakage
+- ✅ **All Features RS-Only**: No playoff features in top 10 RFE-selected features
+- ✅ **Temporal Split Working**: Train on past (574 samples), test on future (325 samples)
+- ✅ **Production-Ready**: Model can now predict 2024-25 playoffs from 2024-25 RS data
+
+**Key Insight**: The accuracy drop (~11-15 percentage points) represents the **true predictive power** of the model. Previous 63.33% accuracy was inflated by data leakage.
+
+**See**: `DATA_LEAKAGE_FIXES_IMPLEMENTED.md` for implementation details and `results/data_leakage_fix_results.md` for results.
+
+---
+
+## ✅ Completed: Previous Playoff Features Integration
+
+**Status**: ✅ **COMPLETE** - December 6, 2025
+
+**The Addition**: Added previous playoff performance features (legitimate past → future, not data leakage).
+
+**Features Added**:
+- PREV_PO_RIM_APPETITE, PREV_PO_PRESSURE_RESILIENCE, PREV_PO_PRESSURE_APPETITE, PREV_PO_FTr, PREV_PO_LATE_CLOCK_PRESSURE_RESILIENCE, PREV_PO_EARLY_CLOCK_PRESSURE_RESILIENCE, PREV_PO_ARCHETYPE, HAS_PLAYOFF_EXPERIENCE
+
+**Results**:
+- ✅ **RFE Model Improved**: 48.31% → 53.54% (+5.23 percentage points)
+- ✅ **Full Model Stable**: 52.62% → 51.69% (-0.93 percentage points)
+- ✅ **Feature Rankings**: Previous playoff features ranked 21-46 out of 60 (not in top 15)
+- ✅ **Data Coverage**: 50% of player-seasons have previous playoff data (2,625/5,256)
+
+**Key Insight**: Previous playoff features provide signal for players with playoff experience, but most test cases are young players without playoff history. Features are most valuable for veteran players.
+
+**See**: `results/previous_playoff_features_results.md` for complete analysis.
 
 ---
 
@@ -205,4 +252,4 @@ CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.
 
 ---
 
-**Status**: 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. Rim pressure data fix complete (95.9% coverage). **Next Priority**: Refine Volume Exemption logic to catch "Empty Calories" creators (Willy Hernangomez, Dion Waiters, Kris Dunn).
+**Status**: Data leakage fixes complete (RS-only features, temporal split). Previous playoff features integrated. 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. Rim pressure data fix complete (95.9% coverage). **Next Priority**: Refine Volume Exemption logic to catch "Empty Calories" creators (Willy Hernangomez, Dion Waiters, Kris Dunn).

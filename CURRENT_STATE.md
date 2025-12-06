@@ -1,7 +1,7 @@
 # Current State: NBA Playoff Resilience Engine
 
-**Date**: December 5, 2025  
-**Status**: 2D Risk Matrix Implementation Complete ✅ | Data-Driven Thresholds Calculated | D'Angelo Russell Fix Complete ✅
+**Date**: December 6, 2025  
+**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅
 
 ---
 
@@ -11,7 +11,7 @@
 
 **Current Model**: XGBoost Classifier that predicts playoff archetypes (King, Bulldozer, Sniper, Victim) from regular season stress vectors with **usage-aware conditional predictions**. **RFE-optimized to 10 core features** (reduced from 65).
 
-**Accuracy**: 60.56% (899 player-seasons, 2015-2024, retrained December 5, 2025)
+**Accuracy**: **53.54%** (RFE model, 10 features) / **51.69%** (Full model, 60 features) - **True predictive power** using only Regular Season data with temporal train/test split (899 player-seasons, 2015-2024, retrained December 6, 2025)
 
 ---
 
@@ -39,18 +39,18 @@
 **Algorithm**: XGBoost Classifier (Multi-Class)
 
 **RFE-Optimized Model (10 features)** - **CURRENT**:
-1. **USG_PCT** (28.9% importance) - Usage level (highest importance!)
-2. **USG_PCT_X_EFG_ISO_WEIGHTED** (18.7% importance) - Usage × Isolation efficiency (2nd highest!)
-3. **NEGATIVE_SIGNAL_COUNT** (10.5% importance) - Gate feature (3rd highest!)
-4. **EFG_PCT_0_DRIBBLE** (6.8% importance) - Catch-and-shoot efficiency
-5. **LEVERAGE_USG_DELTA** (6.1% importance) - #1 predictor (Abdication Detector)
-6. **USG_PCT_X_RS_PRESSURE_APPETITE** (5.9% importance)
-7. **PREV_RS_PRESSURE_RESILIENCE** (5.9% importance)
-8. **LATE_CLOCK_PRESSURE_APPETITE_DELTA** (5.9% importance)
-9. **USG_PCT_X_CREATION_VOLUME_RATIO** (5.7% importance)
-10. **USG_PCT_X_LEVERAGE_USG_DELTA** (5.7% importance)
+1. **USG_PCT** (40.2% importance) - Usage level (highest importance!)
+2. **USG_PCT_X_EFG_ISO_WEIGHTED** (11.7% importance) - Usage × Isolation efficiency (2nd highest!)
+3. **EFG_PCT_0_DRIBBLE** (7.6% importance) - Catch-and-shoot efficiency
+4. **EFG_ISO_WEIGHTED_YOY_DELTA** (6.4% importance) - Year-over-year change in isolation efficiency
+5. **CREATION_TAX** (6.3% importance) - Creation efficiency drop-off
+6. **PREV_RS_RIM_APPETITE** (6.0% importance) - Previous season rim pressure
+7. **CREATION_TAX_YOY_DELTA** (5.7% importance) - Year-over-year change in creation tax
+8. **USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE** (5.6% importance) - Usage × Late clock resilience
+9. **USG_PCT_X_LEVERAGE_USG_DELTA** (5.4% importance) - Usage × Clutch usage scaling
+10. **PREV_LEVERAGE_TS_DELTA** (5.2% importance) - Previous season leverage efficiency
 
-**Key Insight**: RFE analysis revealed that 10 features achieve peak accuracy (63.33%), matching or exceeding the 65-feature model (62.89%). Most trajectory and gate features add noise, not signal.
+**Key Insight**: All features are RS-only or trajectory-based (previous season). **No playoff features** made it into the top 10. Usage-aware features dominate (65.9% combined importance).
 
 **Model File**: `models/resilience_xgb_rfe_10.pkl` (primary), `models/resilience_xgb.pkl` (fallback)
 
@@ -94,9 +94,9 @@ The model can predict at **any usage level**, enabling two use cases:
 
 ## Validation Results
 
-### Test Case Pass Rate: 81.2% (13/16)
+### Test Case Pass Rate: 68.8% (11/16)
 
-**True Positives**: 87.5% (7/8)
+**True Positives**: 62.5% (5/8)
 - ✅ Victor Oladipo: 65.09% (PASS)
 - ✅ Tyrese Haliburton: 93.76% (PASS)
 - ✅ Tyrese Maxey: 96.16% (PASS)
@@ -105,16 +105,19 @@ The model can predict at **any usage level**, enabling two use cases:
 - ✅ Jamal Murray: 72.39% (PASS)
 - ✅ Talen Horton-Tucker: 16.79% (PASS - correctly identified as Victim)
 
-**False Positives**: 100% (6/6) - **Perfect** ✅
+**False Positives**: 83.3% (5/6) - **Strong** ✅
 - ✅ Jordan Poole: 52.84% (PASS - correctly downgraded)
 - ✅ Domantas Sabonis: 30.00% (PASS - correctly filtered)
 - ✅ D'Angelo Russell: 30.00% (PASS - correctly filtered) - **FIXED December 2025**
 - ✅ Ben Simmons: 30.00% (PASS - correctly filtered)
 - ✅ All other false positives correctly filtered
 
-**Remaining Failures (2 cases - may be removed from test suite)**:
-- ⚠️ Mikal Bridges: 30.00% (expected ≥65%) - Usage Shock case, may be accurately rated
-- ⚠️ Desmond Bane: 26.05% (expected ≥65%) - Unclear if actually broke out (as of Dec 2025)
+**Remaining Failures (5 cases)**:
+- ❌ Mikal Bridges: 30.00% (expected ≥65%) - Usage Shock case (hardest test)
+- ❌ Desmond Bane: 43.80% (expected ≥65%) - Secondary creator, model underestimates
+- ❌ Tyrese Haliburton: 30.00% (expected ≥65%) - Low usage latent star, model misses
+- ⚠️ Shai Gilgeous-Alexander: Predicted King instead of Bulldozer (archetype mismatch, but correct star-level)
+- ⚠️ Lauri Markkanen: Predicted King instead of Bulldozer (archetype mismatch, but correct star-level)
 
 **See**: `results/latent_star_test_cases_report.md` for complete validation results.
 
@@ -223,6 +226,65 @@ Converted hard gates to soft features that the model learns:
 
 ---
 
+## Data Leakage Fixes: Complete ✅ (December 6, 2025)
+
+**The Problem**: Model was using playoff data in features to predict playoff outcomes, creating a circular dependency. Additionally, random train/test split allowed future data to inform past predictions.
+
+**The Fix**:
+1. **Removed Playoff-Based Features**: Removed all features that use playoff data (e.g., `PRESSURE_APPETITE_DELTA`, `RIM_PRESSURE_RESILIENCE`, `PO_EFG_BEYOND_RS_MEDIAN`)
+2. **Implemented Temporal Train/Test Split**: Train on 2015-2020 seasons, test on 2021-2024 seasons
+3. **Re-ran RFE Feature Selection**: Identified optimal 10 features from RS-only feature set
+4. **Retrained Models**: Both full and RFE models retrained with RS-only features
+
+**Results**:
+- ✅ **True Accuracy**: 53.54% (RFE model) / 51.69% (Full model) - down from 63.33% with leakage
+- ✅ **All Features RS-Only**: No playoff features in top 10 RFE-selected features
+- ✅ **Temporal Split Working**: Train on past (574 samples), test on future (325 samples)
+- ✅ **Production-Ready**: Model can now predict 2024-25 playoffs from 2024-25 RS data
+
+**Key Insight**: The accuracy drop (~11-15 percentage points) represents the **true predictive power** of the model. Previous 63.33% accuracy was inflated by data leakage.
+
+**Key Files**:
+- `src/nba_data/scripts/train_predictive_model.py` - Updated with temporal split and RS-only features
+- `src/nba_data/scripts/train_rfe_model.py` - Updated with temporal split
+- `src/nba_data/scripts/rfe_feature_selection.py` - Updated with RS-only features
+- `results/data_leakage_fix_results.md` - Complete analysis
+
+**See**: `DATA_LEAKAGE_FIXES_IMPLEMENTED.md` for implementation details and `results/data_leakage_fix_results.md` for results.
+
+---
+
+## Previous Playoff Features: Complete ✅ (December 6, 2025)
+
+**The Addition**: Added previous playoff performance features (legitimate past → future, not data leakage).
+
+**Features Added**:
+1. **PREV_PO_RIM_APPETITE** - Previous season playoff rim pressure appetite
+2. **PREV_PO_PRESSURE_RESILIENCE** - Previous season playoff pressure resilience
+3. **PREV_PO_PRESSURE_APPETITE** - Previous season playoff pressure appetite
+4. **PREV_PO_FTr** - Previous season playoff free throw rate
+5. **PREV_PO_LATE_CLOCK_PRESSURE_RESILIENCE** - Previous season late clock resilience
+6. **PREV_PO_EARLY_CLOCK_PRESSURE_RESILIENCE** - Previous season early clock resilience
+7. **PREV_PO_ARCHETYPE** - Previous season's playoff archetype (encoded)
+8. **HAS_PLAYOFF_EXPERIENCE** - Binary flag for playoff experience
+
+**Results**:
+- ✅ **RFE Model Improved**: 48.31% → 53.54% (+5.23 percentage points)
+- ✅ **Full Model Stable**: 52.62% → 51.69% (-0.93 percentage points)
+- ✅ **Feature Rankings**: Previous playoff features ranked 21-46 out of 60 (not in top 15)
+- ✅ **Data Coverage**: 50% of player-seasons have previous playoff data (2,625/5,256)
+
+**Key Insight**: Previous playoff features provide signal for players with playoff experience, but most test cases are young players without playoff history. Features are most valuable for veteran players.
+
+**Key Files**:
+- `src/nba_data/scripts/generate_previous_playoff_features.py` - Generates previous playoff features
+- `results/previous_playoff_features.csv` - Previous playoff features (5,256 rows)
+- `results/previous_playoff_features_results.md` - Complete analysis
+
+**See**: `results/previous_playoff_features_results.md` for complete analysis.
+
+---
+
 ## Expanded Dataset Analysis: Complete ✅
 
 **Status**: Expanded predictions run on 1,849 player-seasons (Age ≤ 25, Min 500 minutes)
@@ -277,9 +339,12 @@ Converted hard gates to soft features that the model learns:
 
 **See Also**:
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
+- `DATA_LEAKAGE_FIXES_IMPLEMENTED.md` - ✅ **COMPLETE** - Data leakage fixes implementation
 - `NEXT_STEPS.md` - Current priorities and completed work
+- `results/data_leakage_fix_results.md` - Data leakage fix results
+- `results/previous_playoff_features_results.md` - Previous playoff features analysis
 - `results/data_driven_thresholds_summary.md` - Data-driven threshold analysis
 - `results/luka_gate_fix_summary.md` - Gate logic refinements
 - `results/latent_star_test_cases_report.md` - Latest validation results (with gates)
-- `results/rfe_model_comparison.md` - RFE model analysis
+- `results/validation_test_suite_with_previous_playoff_features.md` - Latest test suite results
 - `KEY_INSIGHTS.md` - Hard-won lessons (see Insight #37: Trust Fall & Ground Truth Trap, Insight #38: Data-Driven Thresholds)

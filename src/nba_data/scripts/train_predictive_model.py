@@ -137,6 +137,25 @@ class ResiliencePredictor:
         else:
             logger.warning("No physicality features file found.")
 
+        # Previous Playoff Features (New - Legitimate past → future)
+        prev_po_path = self.results_dir / "previous_playoff_features.csv"
+        if prev_po_path.exists():
+            df_prev_po = pd.read_csv(prev_po_path)
+            logger.info(f"Loaded Previous Playoff Features: {len(df_prev_po)} rows.")
+            
+            df_merged = pd.merge(
+                df_merged,
+                df_prev_po,
+                on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'],
+                how='left',
+                suffixes=('', '_prev_po')
+            )
+            # Drop duplicate columns
+            cols_to_drop = [c for c in df_merged.columns if '_prev_po' in c]
+            df_merged = df_merged.drop(columns=cols_to_drop)
+        else:
+            logger.warning("No previous playoff features file found.")
+        
         # Rim Pressure Features (New V4.1)
         rim_path = self.results_dir / "rim_pressure_features.csv"
         if rim_path.exists():
@@ -243,40 +262,36 @@ class ResiliencePredictor:
             logger.warning("USG_PCT not found in dataset. Usage-aware features will not be added.")
         
         # Define Features and Target
+        # DATA LEAKAGE FIX: Removed all playoff-based features (DELTA, RESILIENCE ratios, PO_*)
+        # Only using Regular Season (RS_*) features that are available at prediction time
         features = [
             'CREATION_TAX', 'CREATION_VOLUME_RATIO',
-            'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA',
+            'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA',  # Clutch data is RS-only
             'CLUTCH_MIN_TOTAL', 
             'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED',
-            # Context Features (Quality of Competition)
+            # Context Features (Quality of Competition) - RS-only
             'QOC_TS_DELTA', 'QOC_USG_DELTA',
-            # NEW: Opponent Defensive Context Features
+            # NEW: Opponent Defensive Context Features - RS-only
             'AVG_OPPONENT_DCS', 'MEAN_OPPONENT_DCS',
             'ELITE_WEAK_TS_DELTA', 'ELITE_WEAK_USG_DELTA',
-            # New Plasticity Features
-            'SHOT_DISTANCE_DELTA',
-            'SPATIAL_VARIANCE_DELTA',
-            'PO_EFG_BEYOND_RS_MEDIAN',
-            # New Shot Difficulty Features (V2)
+            # New Plasticity Features - REMOVED: SHOT_DISTANCE_DELTA, SPATIAL_VARIANCE_DELTA (use PO data)
+            # REMOVED: 'PO_EFG_BEYOND_RS_MEDIAN' (playoff feature)
+            # New Shot Difficulty Features (V2) - RS-only
             'RS_PRESSURE_APPETITE',
             'RS_PRESSURE_RESILIENCE',
-            'PRESSURE_APPETITE_DELTA',
-            'PRESSURE_RESILIENCE_DELTA',
-            # NEW: Late vs Early Clock Pressure Features (V4.2)
+            # REMOVED: 'PRESSURE_APPETITE_DELTA', 'PRESSURE_RESILIENCE_DELTA' (playoff features)
+            # NEW: Late vs Early Clock Pressure Features (V4.2) - RS-only
             'RS_LATE_CLOCK_PRESSURE_APPETITE',
             'RS_EARLY_CLOCK_PRESSURE_APPETITE',
             'RS_LATE_CLOCK_PRESSURE_RESILIENCE',
             'RS_EARLY_CLOCK_PRESSURE_RESILIENCE',
-            'LATE_CLOCK_PRESSURE_APPETITE_DELTA',
-            'EARLY_CLOCK_PRESSURE_APPETITE_DELTA',
-            'LATE_CLOCK_PRESSURE_RESILIENCE_DELTA',
-            'EARLY_CLOCK_PRESSURE_RESILIENCE_DELTA',
-            # New Physicality Features
-            'FTr_RESILIENCE',
+            # REMOVED: All *_DELTA clock features (playoff features)
+            # New Physicality Features - RS-only
             'RS_FTr',
-            # New Rim Pressure Features
+            # REMOVED: 'FTr_RESILIENCE' (playoff feature)
+            # New Rim Pressure Features - RS-only
             'RS_RIM_APPETITE',
-            'RIM_PRESSURE_RESILIENCE'
+            # REMOVED: 'RIM_PRESSURE_RESILIENCE' (playoff feature)
         ]
         
         # PHASE 2: Conditionally add Usage-Aware Features
@@ -345,6 +360,24 @@ class ResiliencePredictor:
             if feat in df.columns:
                 features.append(feat)
         
+        # NEW: Add Previous Playoff Features (Legitimate past → future)
+        prev_po_features = [
+            'PREV_PO_RIM_APPETITE',
+            'PREV_PO_PRESSURE_RESILIENCE',
+            'PREV_PO_PRESSURE_APPETITE',
+            'PREV_PO_FTr',
+            'PREV_PO_LATE_CLOCK_PRESSURE_RESILIENCE',
+            'PREV_PO_EARLY_CLOCK_PRESSURE_RESILIENCE',
+            'PREV_PO_ARCHETYPE',
+            'HAS_PLAYOFF_EXPERIENCE',
+        ]
+        
+        # Add previous playoff features that exist in dataframe
+        for feat in prev_po_features:
+            if feat in df.columns:
+                features.append(feat)
+                logger.info(f"Added previous playoff feature: {feat}")
+        
         target = 'ARCHETYPE'
         
         # Filter out features that don't exist in the dataframe
@@ -354,6 +387,19 @@ class ResiliencePredictor:
             logger.warning(f"Missing expected features, they will be ignored: {missing_features}")
         
         logger.info(f"Total features: {len(existing_features)} (including {len([f for f in existing_features if 'USG_PCT' in f])} usage-aware features)")
+        
+        # Store season information for temporal split (before feature preparation may drop rows)
+        # Create a season year for sorting (e.g., "2020-21" -> 2020)
+        def parse_season_year(season_str):
+            try:
+                if isinstance(season_str, str):
+                    year_part = season_str.split('-')[0]
+                    return int(year_part)
+                return 0
+            except:
+                return 0
+        
+        df['_SEASON_YEAR'] = df['SEASON'].apply(parse_season_year)
         
         X = df[existing_features].copy()
         y = df[target]
@@ -370,8 +416,15 @@ class ResiliencePredictor:
                     X[col] = X[col].fillna(0)
                 elif col.startswith('PREV_'):
                     # Prior features: fill NaN with median (no prior = use population average)
-                    median_val = X[col].median()
-                    X[col] = X[col].fillna(median_val)
+                    # Exception: PREV_PO_ARCHETYPE should be -1 (no previous archetype)
+                    if col == 'PREV_PO_ARCHETYPE':
+                        X[col] = X[col].fillna(-1)
+                    else:
+                        median_val = X[col].median()
+                        X[col] = X[col].fillna(median_val)
+                elif col == 'HAS_PLAYOFF_EXPERIENCE':
+                    # Binary flag: fill NaN with False (no experience)
+                    X[col] = X[col].fillna(False).astype(int)
                 elif 'AGE_X_' in col and '_YOY_DELTA' in col:
                     # Age-trajectory interactions: fill NaN with 0 (calculated after filling trajectory)
                     X[col] = X[col].fillna(0)
@@ -390,10 +443,30 @@ class ResiliencePredictor:
         le = LabelEncoder()
         y_encoded = le.fit_transform(y)
         
-        # Train/Test Split
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
-        )
+        # DATA LEAKAGE FIX: Temporal Train/Test Split (not random)
+        # Train on earlier seasons (2015-2020), test on later seasons (2021-2024)
+        # This prevents future data from informing past predictions
+        logger.info("Performing temporal train/test split...")
+        
+        # Split at 2020-21 season (train on 2015-2020, test on 2021-2024)
+        split_year = 2020
+        train_mask = df['_SEASON_YEAR'] <= split_year
+        test_mask = df['_SEASON_YEAR'] > split_year
+        
+        # Get indices for train/test split (X is a DataFrame, use loc)
+        train_indices = df[train_mask].index
+        test_indices = df[test_mask].index
+        
+        # Split X and y using indices
+        X_train = X.loc[train_indices]
+        X_test = X.loc[test_indices]
+        y_train = y_encoded[train_indices]
+        y_test = y_encoded[test_indices]
+        
+        train_seasons = df.loc[train_mask, 'SEASON'].unique()
+        test_seasons = df.loc[test_mask, 'SEASON'].unique()
+        logger.info(f"Training seasons: {sorted(train_seasons)} ({len(X_train)} samples)")
+        logger.info(f"Testing seasons: {sorted(test_seasons)} ({len(X_test)} samples)")
         
         logger.info(f"Training on {len(X_train)} samples, Testing on {len(X_test)} samples.")
         

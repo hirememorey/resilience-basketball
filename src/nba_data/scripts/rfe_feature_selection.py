@@ -171,6 +171,24 @@ class RFEFeatureSelector:
             cols_to_drop = [c for c in df_merged.columns if '_gate' in c]
             df_merged = df_merged.drop(columns=cols_to_drop)
         
+        # Merge with previous playoff features (after df_merged is created)
+        prev_po_path = self.results_dir / "previous_playoff_features.csv"
+        if prev_po_path.exists():
+            df_prev_po = pd.read_csv(prev_po_path)
+            logger.info(f"Loaded Previous Playoff Features: {len(df_prev_po)} rows.")
+            
+            df_merged = pd.merge(
+                df_merged,
+                df_prev_po,
+                on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'],
+                how='left',
+                suffixes=('', '_prev_po')
+            )
+            cols_to_drop = [c for c in df_merged.columns if '_prev_po' in c]
+            df_merged = df_merged.drop(columns=cols_to_drop)
+        else:
+            logger.warning("No previous playoff features file found.")
+        
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
         
         return df_merged
@@ -198,33 +216,30 @@ class RFEFeatureSelector:
                     df[interaction_name] = (df[feat1].fillna(0) * df[feat2].fillna(0))
         
         # Define all possible features (same as train_predictive_model.py)
+        # DATA LEAKAGE FIX: Removed all playoff-based features (DELTA, RESILIENCE ratios, PO_*)
+        # Only using Regular Season (RS_*) features that are available at prediction time
         features = [
             'CREATION_TAX', 'CREATION_VOLUME_RATIO',
-            'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA',
+            'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA',  # Clutch data is RS-only
             'CLUTCH_MIN_TOTAL', 
             'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED',
-            'QOC_TS_DELTA', 'QOC_USG_DELTA',
+            'QOC_TS_DELTA', 'QOC_USG_DELTA',  # RS-only
             'AVG_OPPONENT_DCS', 'MEAN_OPPONENT_DCS',
-            'ELITE_WEAK_TS_DELTA', 'ELITE_WEAK_USG_DELTA',
-            'SHOT_DISTANCE_DELTA',
-            'SPATIAL_VARIANCE_DELTA',
-            'PO_EFG_BEYOND_RS_MEDIAN',
+            'ELITE_WEAK_TS_DELTA', 'ELITE_WEAK_USG_DELTA',  # RS-only
+            # REMOVED: 'SHOT_DISTANCE_DELTA', 'SPATIAL_VARIANCE_DELTA' (use PO data)
+            # REMOVED: 'PO_EFG_BEYOND_RS_MEDIAN' (playoff feature)
             'RS_PRESSURE_APPETITE',
             'RS_PRESSURE_RESILIENCE',
-            'PRESSURE_APPETITE_DELTA',
-            'PRESSURE_RESILIENCE_DELTA',
+            # REMOVED: 'PRESSURE_APPETITE_DELTA', 'PRESSURE_RESILIENCE_DELTA' (playoff features)
             'RS_LATE_CLOCK_PRESSURE_APPETITE',
             'RS_EARLY_CLOCK_PRESSURE_APPETITE',
             'RS_LATE_CLOCK_PRESSURE_RESILIENCE',
             'RS_EARLY_CLOCK_PRESSURE_RESILIENCE',
-            'LATE_CLOCK_PRESSURE_APPETITE_DELTA',
-            'EARLY_CLOCK_PRESSURE_APPETITE_DELTA',
-            'LATE_CLOCK_PRESSURE_RESILIENCE_DELTA',
-            'EARLY_CLOCK_PRESSURE_RESILIENCE_DELTA',
-            'FTr_RESILIENCE',
+            # REMOVED: All *_DELTA clock features (playoff features)
             'RS_FTr',
+            # REMOVED: 'FTr_RESILIENCE' (playoff feature)
             'RS_RIM_APPETITE',
-            'RIM_PRESSURE_RESILIENCE'
+            # REMOVED: 'RIM_PRESSURE_RESILIENCE' (playoff feature)
         ]
         
         # Add Usage-Aware Features
@@ -290,6 +305,22 @@ class RFEFeatureSelector:
             if feat in df.columns:
                 features.append(feat)
         
+        # Add Previous Playoff Features (Legitimate past → future)
+        prev_po_features = [
+            'PREV_PO_RIM_APPETITE',
+            'PREV_PO_PRESSURE_RESILIENCE',
+            'PREV_PO_PRESSURE_APPETITE',
+            'PREV_PO_FTr',
+            'PREV_PO_LATE_CLOCK_PRESSURE_RESILIENCE',
+            'PREV_PO_EARLY_CLOCK_PRESSURE_RESILIENCE',
+            'PREV_PO_ARCHETYPE',
+            'HAS_PLAYOFF_EXPERIENCE',
+        ]
+        
+        for feat in prev_po_features:
+            if feat in df.columns:
+                features.append(feat)
+        
         # Filter to existing features
         existing_features = [f for f in features if f in df.columns]
         missing_features = [f for f in features if f not in df.columns]
@@ -308,8 +339,15 @@ class RFEFeatureSelector:
                 elif '_YOY_DELTA' in col:
                     X[col] = X[col].fillna(0)
                 elif col.startswith('PREV_'):
-                    median_val = X[col].median()
-                    X[col] = X[col].fillna(median_val)
+                    # Exception: PREV_PO_ARCHETYPE should be -1 (no previous archetype)
+                    if col == 'PREV_PO_ARCHETYPE':
+                        X[col] = X[col].fillna(-1)
+                    else:
+                        median_val = X[col].median()
+                        X[col] = X[col].fillna(median_val)
+                elif col == 'HAS_PLAYOFF_EXPERIENCE':
+                    # Binary flag: fill NaN with False (no experience)
+                    X[col] = X[col].fillna(False).astype(int)
                 elif 'AGE_X_' in col and '_YOY_DELTA' in col:
                     X[col] = X[col].fillna(0)
                 elif col in ['DATA_COMPLETENESS_SCORE', 'SAMPLE_SIZE_CONFIDENCE', 'LEVERAGE_DATA_CONFIDENCE']:
@@ -337,12 +375,41 @@ class RFEFeatureSelector:
         le = LabelEncoder()
         y_encoded = le.fit_transform(y)
         
-        # Train/Test Split
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
-        )
+        # DATA LEAKAGE FIX: Temporal Train/Test Split (not random)
+        # Train on earlier seasons (2015-2020), test on later seasons (2021-2024)
+        logger.info("Performing temporal train/test split...")
         
-        logger.info(f"Training on {len(X_train)} samples, Testing on {len(X_test)} samples.")
+        # Create season year for sorting
+        def parse_season_year(season_str):
+            try:
+                if isinstance(season_str, str):
+                    year_part = season_str.split('-')[0]
+                    return int(year_part)
+                return 0
+            except:
+                return 0
+        
+        df['_SEASON_YEAR'] = df['SEASON'].apply(parse_season_year)
+        
+        # Split at 2020-21 season (train on 2015-2020, test on 2021-2024)
+        split_year = 2020
+        train_mask = df['_SEASON_YEAR'] <= split_year
+        test_mask = df['_SEASON_YEAR'] > split_year
+        
+        # Get indices for train/test split
+        train_indices = df[train_mask].index
+        test_indices = df[test_mask].index
+        
+        # Split X and y using indices
+        X_train = X.loc[train_indices]
+        X_test = X.loc[test_indices]
+        y_train = y_encoded[train_indices]
+        y_test = y_encoded[test_indices]
+        
+        train_seasons = df.loc[train_mask, 'SEASON'].unique()
+        test_seasons = df.loc[test_mask, 'SEASON'].unique()
+        logger.info(f"Training seasons: {sorted(train_seasons)} ({len(X_train)} samples)")
+        logger.info(f"Testing seasons: {sorted(test_seasons)} ({len(X_test)} samples)")
         
         # Initialize base estimator
         base_estimator = xgb.XGBClassifier(

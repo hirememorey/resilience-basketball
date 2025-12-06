@@ -1,0 +1,68 @@
+{
+  "base_model": {
+    "model_name": "Base (No Interactions)",
+    "coefficients": {
+      "ASSISTED_FGM_PCT": -0.17566477359090163,
+      "OPEN_SHOT_FREQUENCY": 0.001352595081588462,
+      "LOW_SELF_CREATION": 0.5003854464175173
+    },
+    "intercept": -0.31882269972096616,
+    "r_squared": 0.020880170297689404,
+    "p_values": {
+      "ASSISTED_FGM_PCT": 0.07720622853993864,
+      "OPEN_SHOT_FREQUENCY": 0.9458685237352764,
+      "LOW_SELF_CREATION": 0.08200694541261822
+    },
+    "standard_errors": {
+      "ASSISTED_FGM_PCT": 0.09880406671907295,
+      "OPEN_SHOT_FREQUENCY": 0.019892199608944318,
+      "LOW_SELF_CREATION": 0.28601417186302214
+    },
+    "n_samples": 174,
+    "mean_production_drop": 0.006163267599227627,
+    "std_production_drop": 0.014143271996687119,
+    "mean_efficiency_drop": 0.02027253397697496,
+    "std_efficiency_drop": 0.04832019185372088
+  },
+  "interaction_model": {
+    "model_name": "With Interactions",
+    "coefficients": {
+      "ASSISTED_FGM_PCT": -0.18170674972294248,
+      "OPEN_SHOT_FREQUENCY": 0.06789187856779341,
+      "LOW_SELF_CREATION": 0.41030028993543927,
+      "USG_X_ASSISTED": 0.10036345072321055,
+      "USG_X_OPEN_SHOT": -0.1904751786454636,
+      "USG_X_LOW_SELF_CREATION": 0.12323434024326389
+    },
+    "intercept": -0.2869761664352823,
+    "r_squared": 0.06625450710303937,
+    "p_values": {
+      "ASSISTED_FGM_PCT": 0.08546877300990241,
+      "OPEN_SHOT_FREQUENCY": 0.7329333638569226,
+      "LOW_SELF_CREATION": 0.1610039031965571,
+      "USG_X_ASSISTED": 0.619222688419792,
+      "USG_X_OPEN_SHOT": 0.7832177465199652,
+      "USG_X_LOW_SELF_CREATION": 0.41518467006763515
+    },
+    "standard_errors": {
+      "ASSISTED_FGM_PCT": 0.10502975637181244,
+      "OPEN_SHOT_FREQUENCY": 0.19863214483925554,
+      "LOW_SELF_CREATION": 0.291416277106688,
+      "USG_X_ASSISTED": 0.2015810769191395,
+      "USG_X_OPEN_SHOT": 0.6912001234187577,
+      "USG_X_LOW_SELF_CREATION": 0.15086751931626913
+    },
+    "n_samples": 174,
+    "mean_production_drop": 0.006163267599227627,
+    "std_production_drop": 0.014143271996687119,
+    "mean_efficiency_drop": 0.02027253397697496,
+    "std_efficiency_drop": 0.04832019185372088
+  },
+  "comparison": {
+    "r2_base": 0.020880170297689404,
+    "r2_interactions": 0.06625450710303937,
+    "r2_improvement": 0.04537433680534997,
+    "base_significant": 0,
+    "interaction_significant": 0
+  }
+}

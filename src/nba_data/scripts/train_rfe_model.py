@@ -193,6 +193,24 @@ class RFEModelTrainer:
             cols_to_drop = [c for c in df_merged.columns if '_gate' in c]
             df_merged = df_merged.drop(columns=cols_to_drop)
         
+        # Merge with previous playoff features
+        prev_po_path = self.results_dir / "previous_playoff_features.csv"
+        if prev_po_path.exists():
+            df_prev_po = pd.read_csv(prev_po_path)
+            logger.info(f"Loaded Previous Playoff Features: {len(df_prev_po)} rows.")
+            
+            df_merged = pd.merge(
+                df_merged,
+                df_prev_po,
+                on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'],
+                how='left',
+                suffixes=('', '_prev_po')
+            )
+            cols_to_drop = [c for c in df_merged.columns if '_prev_po' in c]
+            df_merged = df_merged.drop(columns=cols_to_drop)
+        else:
+            logger.warning("No previous playoff features file found.")
+        
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
         
         return df_merged
@@ -273,12 +291,41 @@ class RFEModelTrainer:
         le = LabelEncoder()
         y_encoded = le.fit_transform(y)
         
-        # Train/Test Split
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
-        )
+        # DATA LEAKAGE FIX: Temporal Train/Test Split (not random)
+        # Train on earlier seasons (2015-2020), test on later seasons (2021-2024)
+        logger.info("Performing temporal train/test split...")
         
-        logger.info(f"Training on {len(X_train)} samples, Testing on {len(X_test)} samples.")
+        # Create season year for sorting
+        def parse_season_year(season_str):
+            try:
+                if isinstance(season_str, str):
+                    year_part = season_str.split('-')[0]
+                    return int(year_part)
+                return 0
+            except:
+                return 0
+        
+        df['_SEASON_YEAR'] = df['SEASON'].apply(parse_season_year)
+        
+        # Split at 2020-21 season (train on 2015-2020, test on 2021-2024)
+        split_year = 2020
+        train_mask = df['_SEASON_YEAR'] <= split_year
+        test_mask = df['_SEASON_YEAR'] > split_year
+        
+        # Get indices for train/test split
+        train_indices = df[train_mask].index
+        test_indices = df[test_mask].index
+        
+        # Split X and y using indices
+        X_train = X.loc[train_indices]
+        X_test = X.loc[test_indices]
+        y_train = y_encoded[train_indices]
+        y_test = y_encoded[test_indices]
+        
+        train_seasons = df.loc[train_mask, 'SEASON'].unique()
+        test_seasons = df.loc[test_mask, 'SEASON'].unique()
+        logger.info(f"Training seasons: {sorted(train_seasons)} ({len(X_train)} samples)")
+        logger.info(f"Testing seasons: {sorted(test_seasons)} ({len(X_test)} samples)")
         logger.info(f"Feature count: {len(feature_names)} (reduced from 65)")
         
         # Initialize XGBoost

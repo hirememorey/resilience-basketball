@@ -1,58 +1,58 @@
 {
   "n_features": 10,
-  "accuracy": 0.6055555555555555,
+  "accuracy": 0.5353846153846153,
   "features": [
+    "CREATION_TAX",
     "LEVERAGE_USG_DELTA",
     "EFG_PCT_0_DRIBBLE",
-    "LATE_CLOCK_PRESSURE_APPETITE_DELTA",
-    "RIM_PRESSURE_RESILIENCE",
+    "RS_LATE_CLOCK_PRESSURE_APPETITE",
     "USG_PCT",
     "USG_PCT_X_CREATION_VOLUME_RATIO",
-    "USG_PCT_X_RS_PRESSURE_APPETITE",
     "USG_PCT_X_EFG_ISO_WEIGHTED",
-    "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
-    "NEGATIVE_SIGNAL_COUNT"
+    "EFG_ISO_WEIGHTED_YOY_DELTA",
+    "PREV_LEVERAGE_TS_DELTA",
+    "PREV_RS_RIM_APPETITE"
   ],
   "feature_importance": [
     {
       "Feature": "USG_PCT",
-      "Importance": 0.2777481973171234
+      "Importance": 0.4029616713523865
     },
     {
       "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.19499768316745758
-    },
-    {
-      "Feature": "NEGATIVE_SIGNAL_COUNT",
-      "Importance": 0.09963849186897278
+      "Importance": 0.1147325336933136
     },
     {
       "Feature": "EFG_PCT_0_DRIBBLE",
-      "Importance": 0.0686468780040741
+      "Importance": 0.08302915841341019
     },
     {
-      "Feature": "RIM_PRESSURE_RESILIENCE",
-      "Importance": 0.06348009407520294
+      "Feature": "EFG_ISO_WEIGHTED_YOY_DELTA",
+      "Importance": 0.06418370455503464
+    },
+    {
+      "Feature": "CREATION_TAX",
+      "Importance": 0.05887877941131592
     },
     {
       "Feature": "LEVERAGE_USG_DELTA",
-      "Importance": 0.06337979435920715
-    },
-    {
-      "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
-      "Importance": 0.06151915341615677
+      "Importance": 0.05751620978116989
     },
     {
       "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
-      "Importance": 0.05866080895066261
+      "Importance": 0.05701131001114845
     },
     {
-      "Feature": "LATE_CLOCK_PRESSURE_APPETITE_DELTA",
-      "Importance": 0.05689087510108948
+      "Feature": "PREV_RS_RIM_APPETITE",
+      "Importance": 0.0556873120367527
     },
     {
-      "Feature": "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
-      "Importance": 0.055037934333086014
+      "Feature": "RS_LATE_CLOCK_PRESSURE_APPETITE",
+      "Importance": 0.05423680692911148
+    },
+    {
+      "Feature": "PREV_LEVERAGE_TS_DELTA",
+      "Importance": 0.05176253616809845
     }
   ]
 }
