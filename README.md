@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** Data leakage fixes complete ✅ | Previous playoff features integrated ✅ | Temporal train/test split implemented ✅ | RFE-optimized model with **53.54% accuracy** (true predictive power, RS-only features) and **81.2% test case pass rate** (13/16). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles). **Universal Projection** implemented (Dec 2025) - features scale together using empirical distributions. **Expanded dataset analysis complete** (1,849 player-seasons, Age ≤ 25). **Next Priority**: Investigate remaining test failures (Bridges, Haliburton, Bane).
+**Current Status:** Data leakage fixes complete ✅ | Previous playoff features integrated ✅ | Temporal train/test split implemented ✅ | RFE-optimized model with **53.54% accuracy** (true predictive power, RS-only features) and **81.2% test case pass rate** (26/32). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles). **Universal Projection** implemented (Dec 2025) - features scale together using empirical distributions. **Expanded test suite** (32 cases: True Positives, False Positives, True Negatives including KAT and Fultz). **Next Priority**: Investigate remaining test failures (Poole, Randle, Haliburton, Fultz).
 
 ---
 
@@ -63,7 +63,7 @@ python run_expanded_predictions.py --min-minutes 500 --max-age 25
 **Algorithm:** XGBoost Classifier (Multi-Class)  
 **Features:** 10 core features (RFE-optimized from 60, RS-only)  
 **Accuracy:** **53.54%** (RFE model) / **51.69%** (Full model) - **True predictive power** with temporal train/test split (899 player-seasons, 2015-2024)  
-**Test Case Pass Rate:** **81.2%** (13/16) - Improved from 68.8% with Universal Projection ✅
+**Test Case Pass Rate:** **81.2%** (26/32) - Expanded test suite with KAT, Fultz, Bridges, Bane cases ✅
 
 ### Top 10 Features (RS-Only, No Data Leakage)
 1. `USG_PCT` (40.2% importance) - Usage level
