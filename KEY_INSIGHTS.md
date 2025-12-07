@@ -1078,37 +1078,54 @@ player_ids = load_all_players_from_predictive_dataset(season)  # All players
 
 ---
 
-## 42. The Alpha Engine Transformation: From Accuracy to Market Edge 🎯 CRITICAL (December 2025)
+## 42. The "Static Avatar" Fallacy - Universal Feature Projection 🎯 CRITICAL (December 2025)
 
-**The Problem**: Model correctly identifies that Luka is good (Accuracy Engine), but doesn't identify why the market is wrong about players like Jalen Brunson (undervalued before breakout) or Jordan Poole (overvalued before collapse).
+**The Problem**: When predicting at different usage levels (e.g., "How would Brunson perform at 30% usage?"), only `USG_PCT` was updated while `CREATION_VOLUME_RATIO` stayed at role-player level (0.20), creating impossible profiles (high usage + low creation = "off-ball chucker").
 
-**The Insight**: **Alpha = Value - Price**. In a salary-capped league, "Star" is a financial designation as much as a skill one. A "Bulldozer" on a rookie contract is High Alpha. A "Bulldozer" on a Supermax contract is Negative Alpha.
+**The Insight**: **Features must scale together, not independently**. Usage, creation volume, leverage, and pressure appetite are causally linked. When a player gets more usage, they don't just take more shots - they take different shots. A player at 30% usage with 20% creation volume is a profile that doesn't exist in nature for successful stars.
 
-**The Implementation**:
-1. **Volume Exemption Fix**: Distinguish "Engines" (Good Volume) from "Black Holes" (Bad Volume)
-   - Requires: `CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.1746)`
-   - Catches "Empty Calories" creators while preserving true creators
+**The Fix**: Universal Projection with Empirical Distributions:
+1. **Always project** when usage differs (not just when `usage_level > current_usage`)
+2. **Use empirical bucket medians** for upward projections (respects non-linear relationships)
+3. **Project multiple features together** (CREATION_VOLUME_RATIO, LEVERAGE_USG_DELTA, RS_PRESSURE_APPETITE)
 
-2. **DEPENDENCE_SCORE Integration**: Context dependency as a feature
-   - Added as mandatory feature (5.92% importance)
-   - Model learns to penalize high-dependence players (system merchants)
+**Example**:
+- ❌ **Wrong**: Brunson at 30% usage: USG_PCT = 0.30, CREATION_VOLUME_RATIO = 0.20 (unchanged) → Model sees "off-ball chucker" → Predicts "Victim" (27.94%)
+- ✅ **Right**: Brunson at 30% usage: USG_PCT = 0.30, CREATION_VOLUME_RATIO = 0.6977 (empirical bucket median) → Model sees realistic profile → Predicts "Bulldozer" (99.75%)
 
-3. **Alpha Calculation**: Map predictions to salary data
-   - Identifies undervalued stars (Brunson Zone: < $20M, high star-level)
-   - Identifies overvalued players (Tobias Harris Zone: > $30M, low star-level)
+**Key Principle**: The relationship between usage and creation volume is **non-linear** (20-25% bucket: 0.4178 → 25-30% bucket: 0.6145 = +47% jump). Linear scaling misses this. Use empirical distributions.
 
-**Key Principle**: Stop modeling "Who scores points?" and start modeling "Who wins playoff series relative to their cost?"—which is the definition of Alpha.
+**Results**:
+- ✅ Test Suite Pass Rate: 68.8% → 81.2% (+12.4 percentage points)
+- ✅ False Positive Detection: 83.3% → 100.0% (6/6) - Perfect
+- ✅ True Positive Detection: 62.5% → 75.0% (6/8)
 
-**See**: `ALPHA_ENGINE_IMPLEMENTATION.md` and `ALPHA_ENGINE_VALIDATION_RESULTS.md` for complete details.
+**Implementation**:
+```python
+# Calculate empirical usage buckets (median CREATION_VOLUME_RATIO for each bucket)
+usage_buckets = {
+    '20-25%': {'median_creation_vol': 0.4178},
+    '25-30%': {'median_creation_vol': 0.6145},
+    '30-35%': {'median_creation_vol': 0.6977}
+}
+
+# Project using empirical bucket median (not linear scaling)
+if target_usage > current_usage:
+    target_bucket = get_usage_bucket(target_usage)
+    projected_creation_vol = usage_buckets[target_bucket]['median_creation_vol']
+```
+
+**Test Cases**: Brunson (2020-21), Maxey (2021-22) - Both show high star-level at 30% usage with universal projection
+
+**Key Principle**: Project first, tax second. Features must scale together to create realistic profiles.
+
+**See**: `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` and `results/universal_projection_validation.md` for complete details.
 
 ---
 
 **See Also**:
-- `ALPHA_ENGINE_IMPLEMENTATION.md` - ✅ **COMPLETE** - Alpha Engine implementation
-- `ALPHA_ENGINE_VALIDATION_RESULTS.md` - ✅ **COMPLETE** - Validation results
-- `docs/SALARY_DATA_STRATEGY.md` - Salary data collection strategy
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
-- `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)
+- `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation
 - `NEXT_STEPS.md` - **START HERE** - Current priorities and completed work
 - `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
 - `extended_resilience_framework.md` - Stress vectors explained

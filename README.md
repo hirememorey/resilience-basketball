@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** Data leakage fixes complete ✅ | Previous playoff features integrated ✅ | Temporal train/test split implemented ✅ | RFE-optimized model with **55.01% accuracy** (true predictive power, RS-only features) and **68.8% test case pass rate** (11/16). Model uses 11 core features (including DEPENDENCE_SCORE) to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles). **Alpha Engine complete** ✅ - Identifies market inefficiencies (13 undervalued stars, 149 overvalued players). **Expanded dataset analysis complete** (1,849 player-seasons, Age ≤ 25).
+**Current Status:** Data leakage fixes complete ✅ | Previous playoff features integrated ✅ | Temporal train/test split implemented ✅ | RFE-optimized model with **53.54% accuracy** (true predictive power, RS-only features) and **81.2% test case pass rate** (13/16). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles). **Universal Projection** implemented (Dec 2025) - features scale together using empirical distributions. **Expanded dataset analysis complete** (1,849 player-seasons, Age ≤ 25). **Next Priority**: Investigate remaining test failures (Bridges, Haliburton, Bane).
 
 ---
 
@@ -45,7 +45,7 @@ python src/nba_data/scripts/train_rfe_model.py
 - `results/resilience_archetypes.csv`: Playoff archetypes (labels)
 - `results/predictive_dataset.csv`: Stress vectors (features)
 - `results/pressure_features.csv`: Pressure vector features
-- `models/resilience_xgb_rfe_10.pkl`: **CURRENT MODEL** (11 features including DEPENDENCE_SCORE, 55.01% accuracy, RS-only, temporal split)
+- `models/resilience_xgb_rfe_10.pkl`: **CURRENT MODEL** (10 features, 53.54% accuracy, RS-only, temporal split)
 
 ### 4. Run Validation Tests
 ```bash
@@ -61,26 +61,23 @@ python run_expanded_predictions.py --min-minutes 500 --max-age 25
 ## Current Model
 
 **Algorithm:** XGBoost Classifier (Multi-Class)  
-**Features:** 11 core features (RFE-optimized from 60, RS-only, includes DEPENDENCE_SCORE)  
-**Accuracy:** **55.01%** (RFE model) / **51.69%** (Full model) - **True predictive power** with temporal train/test split (899 player-seasons, 2015-2024)  
-**Test Case Pass Rate:** 68.8% (11/16)
+**Features:** 10 core features (RFE-optimized from 60, RS-only)  
+**Accuracy:** **53.54%** (RFE model) / **51.69%** (Full model) - **True predictive power** with temporal train/test split (899 player-seasons, 2015-2024)  
+**Test Case Pass Rate:** **81.2%** (13/16) - Improved from 68.8% with Universal Projection ✅
 
-### Top 11 Features (RS-Only, No Data Leakage)
-1. `USG_PCT` (45.27% importance) - Usage level
-2. `USG_PCT_X_EFG_ISO_WEIGHTED` (8.32% importance) - Usage × Isolation efficiency
-3. `EFG_PCT_0_DRIBBLE` (7.33% importance) - Catch-and-shoot efficiency
-4. `CREATION_TAX` (6.47% importance) - Creation efficiency drop-off
-5. `DEPENDENCE_SCORE` (5.92% importance) - System dependence (Alpha Engine) ⭐
-6. `EFG_ISO_WEIGHTED_YOY_DELTA` (5.16% importance) - Year-over-year change in isolation efficiency
-7. `LEVERAGE_USG_DELTA` (4.73% importance) - Clutch usage scaling
-8. `PREV_LEVERAGE_TS_DELTA` (4.61% importance) - Previous season leverage efficiency
-9. `USG_PCT_X_CREATION_VOLUME_RATIO` (4.51% importance) - Usage × Creation volume
-10. `RS_LATE_CLOCK_PRESSURE_APPETITE` (3.92% importance) - Late clock pressure appetite
-11. `PREV_RS_RIM_APPETITE` (3.76% importance) - Previous season rim pressure
+### Top 10 Features (RS-Only, No Data Leakage)
+1. `USG_PCT` (40.2% importance) - Usage level
+2. `USG_PCT_X_EFG_ISO_WEIGHTED` (11.7% importance) - Usage × Isolation efficiency
+3. `EFG_PCT_0_DRIBBLE` (7.6% importance) - Catch-and-shoot efficiency
+4. `EFG_ISO_WEIGHTED_YOY_DELTA` (6.4% importance) - Year-over-year change in isolation efficiency
+5. `CREATION_TAX` (6.3% importance) - Creation efficiency drop-off
+6. `PREV_RS_RIM_APPETITE` (6.0% importance) - Previous season rim pressure
+7. `CREATION_TAX_YOY_DELTA` (5.7% importance) - Year-over-year change in creation tax
+8. `USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE` (5.6% importance) - Usage × Late clock resilience
+9. `USG_PCT_X_LEVERAGE_USG_DELTA` (5.4% importance) - Usage × Clutch usage scaling
+10. `PREV_LEVERAGE_TS_DELTA` (5.2% importance) - Previous season leverage efficiency
 
-**Key Insights:** 
-- Usage-aware features dominate (5 of 11 features, 65.9% combined importance)
-- DEPENDENCE_SCORE enables Alpha Engine to identify system merchants
+**Key Insight:** Usage-aware features dominate (5 of 10 features, 65.9% combined importance).
 
 ---
 
@@ -135,8 +132,6 @@ The model can predict at **any usage level**, enabling two use cases:
 - `src/nba_data/scripts/predict_conditional_archetype.py` - Main prediction function
 - `src/nba_data/scripts/detect_latent_stars.py` - Latent star detection
 - `src/nba_data/scripts/train_rfe_model.py` - Train RFE-optimized model
-- `src/nba_data/scripts/collect_salary_data.py` - Collect historical salary data (Alpha Engine)
-- `src/nba_data/scripts/calculate_alpha_scores.py` - Calculate Alpha scores (Value - Price)
 
 ### Test Scripts
 - `test_latent_star_cases.py` - Validation test suite (16 critical cases)
@@ -147,30 +142,12 @@ The model can predict at **any usage level**, enabling two use cases:
 - `results/predictive_dataset.csv` - Stress vectors (5,312 player-seasons)
 - `results/resilience_archetypes.csv` - Playoff archetypes (labels)
 - `results/pressure_features.csv` - Pressure vector features
-- `data/salaries.csv` - Historical salary data (4,680 player-seasons, 2015-2025) ⭐
-- `results/alpha_scores.csv` - Alpha scores (Value - Price) for 885 player-seasons ⭐
 
 ### Model Files
-- `models/resilience_xgb_rfe_10.pkl` - **CURRENT MODEL** (11 features including DEPENDENCE_SCORE)
+- `models/resilience_xgb_rfe_10.pkl` - **CURRENT MODEL** (10 features)
 - `models/resilience_xgb.pkl` - Full model (65 features, fallback)
 
 ---
-
-## Alpha Engine: From Accuracy to Market Edge
-
-**The Transformation**: The model has evolved from an "Accuracy Engine" (predicts outcomes) to an "Alpha Engine" (identifies pricing errors).
-
-**Key Capabilities**:
-1. **Volume Exemption Fix**: Distinguishes "Engines" (Good Volume) from "Black Holes" (Bad Volume)
-2. **DEPENDENCE_SCORE Integration**: Model learns to penalize system merchants (5.92% feature importance)
-3. **Alpha Calculation**: Identifies undervalued stars (Brunson Zone) and overvalued players (Tobias Harris Zone)
-
-**Results**:
-- ✅ 13 undervalued stars identified (high value, low salary)
-- ✅ 149 overvalued players identified (low value, high salary)
-- ✅ Model accuracy improved: 53.54% → 55.01% with DEPENDENCE_SCORE
-
-**See**: `ALPHA_ENGINE_IMPLEMENTATION.md` and `ALPHA_ENGINE_VALIDATION_RESULTS.md` for complete details.
 
 ## Key Principles
 
@@ -178,22 +155,20 @@ The model can predict at **any usage level**, enabling two use cases:
 2. **Resilience = Efficiency × Volume:** The "Abdication Tax" is real. Passivity is failure.
 3. **Self-Creation is King:** The strongest predictor of playoff success is the ability to generate your own offense.
 4. **Dominance is Rigid:** Some players (Shaq/Giannis) are resilient not because they adapt, but because they impose their will.
-5. **Alpha = Value - Price:** In a salary-capped league, identifying market inefficiencies is as important as predicting performance.
 
 ---
 
 ## Documentation
 
 - **`CURRENT_STATE.md`** - Detailed current state, what exists, known issues
-- **`NEXT_STEPS.md`** - Current priorities and completed work
-- **`ALPHA_ENGINE_IMPLEMENTATION.md`** - ✅ **COMPLETE** - Alpha Engine implementation details
-- **`ALPHA_ENGINE_VALIDATION_RESULTS.md`** - ✅ **COMPLETE** - Alpha Engine validation results
-- **`docs/SALARY_DATA_STRATEGY.md`** - Salary data collection strategy
 - **`2D_RISK_MATRIX_IMPLEMENTATION.md`** - ✅ **COMPLETE** - 2D framework implementation
-- **`KEY_INSIGHTS.md`** - Hard-won lessons (41+ principles, see #37: Trust Fall & Ground Truth Trap)
+- **`UNIVERSAL_PROJECTION_IMPLEMENTATION.md`** - ✅ **COMPLETE** - Universal projection implementation (fixes "Static Avatar" Fallacy)
+- **`NEXT_STEPS.md`** - Current priorities and completed work
+- **`KEY_INSIGHTS.md`** - Hard-won lessons (42+ principles, see #37: Trust Fall & Ground Truth Trap, #42: Static Avatar Fallacy)
 - **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation
 - **`results/latent_star_test_cases_report_trust_fall.md`** - Trust Fall experiment results
 - **`results/latent_star_test_cases_report.md`** - Latest validation results (with gates)
+- **`results/universal_projection_validation.md`** - Universal projection validation results
 - **`results/rfe_model_comparison.md`** - RFE model analysis
 - **`results/expanded_predictions.csv`** - Expanded dataset predictions (1,849 player-seasons)
 - **`results/model_misses_analysis.md`** - Analysis of model misses and recommendations

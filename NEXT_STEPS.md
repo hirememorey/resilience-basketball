@@ -1,20 +1,20 @@
 # Next Steps
 
-**Date**: December 6, 2025  
-**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Alpha Engine Implementation Complete ✅
+**Date**: December 7, 2025  
+**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅
 
 ---
 
 ## Current Status Summary
 
-- **Model Accuracy**: **55.01%** (RFE model, 11 features with DEPENDENCE_SCORE) / **51.69%** (Full model, 60 features) - **True predictive power** with RS-only features and temporal split (retrained Dec 6, 2025)
-- **Test Case Pass Rate**: 68.8% (11/16) - Maintained after Alpha Engine changes
-- **False Positive Detection**: 83.3% pass rate (5/6) - **Strong** ✅
-- **True Positive Detection**: 62.5% pass rate (5/8)
+- **Model Accuracy**: **53.54%** (RFE model, 10 features) / **51.69%** (Full model, 60 features) - **True predictive power** with RS-only features and temporal split (retrained Dec 6, 2025)
+- **Test Case Pass Rate**: **81.2%** (13/16) - Improved from 68.8% with Universal Projection ✅
+- **False Positive Detection**: **100.0%** pass rate (6/6) - **Perfect** ✅
+- **True Positive Detection**: **75.0%** pass rate (6/8) - Improved from 62.5% ✅
 - **Rim Pressure Data Coverage**: 95.9% (1,773/1,849) - **Fixed December 5, 2025** ✅
 - **Data Leakage**: ✅ **FIXED** - All playoff features removed, temporal split implemented (December 6, 2025)
 - **Previous Playoff Features**: ✅ **INTEGRATED** - Added legitimate past → future features (December 6, 2025)
-- **Alpha Engine**: ✅ **COMPLETE** - Volume Exemption fix, DEPENDENCE_SCORE integration, Alpha calculation framework (December 6, 2025)
+- **Universal Projection**: ✅ **IMPLEMENTED** - Features now scale together using empirical distributions (December 7, 2025)
 
 **Key Discovery**: Trust Fall experiment revealed **Ground Truth Trap** - model correctly predicts Performance (outcomes), but we need a separate dimension for Dependence (portability).
 
@@ -139,37 +139,48 @@
 
 ---
 
-## ✅ Completed: Alpha Engine Implementation
+## ✅ Completed: Universal Projection Implementation
 
-**Status**: ✅ **COMPLETE** - December 6, 2025
+**Status**: ✅ **COMPLETE** - December 7, 2025
 
-**What Was Implemented**:
+**The Problem**: "Static Avatar" Fallacy - When predicting at different usage levels (e.g., "How would Brunson perform at 30% usage?"), only `USG_PCT` was updated while `CREATION_VOLUME_RATIO` stayed at role-player level (0.20), creating impossible profiles (high usage + low creation = "off-ball chucker").
 
-### Principle 1: Volume Exemption Fix ✅
-- **Problem**: Volume Exemption was too broad, exempting "Empty Calories" creators
-- **Fix**: Refined to require `CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.1746)`
-- **Results**: 
-  - ✅ D'Angelo Russell correctly filtered (30% star-level)
-  - ✅ Test case pass rate maintained (68.8%)
-  - ✅ "Empty Calories" creators now caught by gate logic
+**The Solution**: Universal Projection with Empirical Distributions:
+1. **Always project** when usage differs (not just when `usage_level > current_usage`)
+2. **Use empirical bucket medians** for upward projections (respects non-linear relationships)
+3. **Project multiple features together** (CREATION_VOLUME_RATIO, LEVERAGE_USG_DELTA, RS_PRESSURE_APPETITE)
 
-### Principle 3: DEPENDENCE_SCORE Integration ✅
-- **Problem**: Context dependency not incorporated into model predictions
-- **Fix**: Added DEPENDENCE_SCORE as mandatory feature in XGBoost model
-- **Results**:
-  - ✅ DEPENDENCE_SCORE: 5.92% importance (5th most important feature)
-  - ✅ Model accuracy improved: 53.54% → 55.01% (+1.47 pp)
-  - ✅ 100% coverage (899/899 player-seasons)
+**Results**:
+- ✅ **Test Suite Pass Rate**: 68.8% → **81.2%** (+12.4 percentage points)
+- ✅ **False Positive Detection**: 83.3% → **100.0%** (6/6) - Perfect
+- ✅ **True Positive Detection**: 62.5% → **75.0%** (6/8)
+- ✅ **Brunson (2020-21) at 30% usage**: 99.75% star-level ✅
+- ✅ **Maxey (2021-22) at 30% usage**: 98.97% star-level ✅
+- ✅ **Lauri Markkanen**: 63.19% → 73.04% (now passes) ✅
 
-### Principle 4: Alpha Calculation Framework ✅
-- **Problem**: No way to identify market inefficiencies (undervalued/overvalued players)
-- **Fix**: Created salary data collection and Alpha score calculation
-- **Results**:
-  - ✅ Salary data: 4,680 player-seasons (2015-2025)
-  - ✅ Alpha scores: 885/1,871 player-seasons (47.3% coverage)
-  - ✅ Identified: 13 undervalued stars, 149 overvalued players
+**Key Insight**: Features must scale together, not independently. Empirical distributions capture non-linear relationships (20-25% bucket: 0.4178 → 25-30% bucket: 0.6145 = +47% jump).
 
-**See**: `ALPHA_ENGINE_IMPLEMENTATION.md` and `ALPHA_ENGINE_VALIDATION_RESULTS.md` for complete details.
+**See**: `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` and `results/universal_projection_validation.md` for complete details.
+
+## Current Priority: Investigate Remaining Test Failures
+
+**Status**: 🔴 **HIGH PRIORITY**
+
+**Remaining Failures (3 cases):**
+
+1. **Mikal Bridges (2021-22)**: 30.00% (expected ≥65%)
+   - **Root Cause**: Bag Check Gate capping due to low self-created frequency (0.0697 < 0.10)
+   - **Note**: Model predicts 93.43% before gates apply
+   - **Potential Fix**: Improve proxy calculation for players with high CREATION_VOLUME_RATIO but missing ISO/PNR data, or exempt if Flash Multiplier conditions met
+
+2. **Tyrese Haliburton (2021-22)**: 30.00% (expected ≥65%)
+   - **Root Cause**: Needs investigation - may be missing data or gate application
+   - **Next Steps**: Check data completeness and gate logic
+
+3. **Desmond Bane (2021-22)**: 34.94% (expected ≥65%)
+   - **Root Cause**: Model underestimates secondary creators
+   - **Note**: Improved from 43.80% but still failing
+   - **Potential Fix**: May need specialized handling for secondary creators who scale up
 
 ---
 
@@ -243,10 +254,4 @@
 
 ---
 
-**Status**: Data leakage fixes complete (RS-only features, temporal split). Previous playoff features integrated. 2D Risk Matrix implementation complete. Alpha Engine implementation complete (Volume Exemption fix, DEPENDENCE_SCORE integration, Alpha calculation). Model accuracy: 55.01% (11 features). Alpha opportunities identified: 13 undervalued stars, 149 overvalued players.
-
-**Next Priorities**:
-1. Improve salary data name matching (currently 40.7% match rate)
-2. Expand Alpha score coverage (currently 47.3%)
-3. Refine Alpha opportunity thresholds based on validation
-4. Consider adding defensive metrics for "Defensive Gate" (Principle 2)
+**Status**: Data leakage fixes complete (RS-only features, temporal split). Previous playoff features integrated. 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. Rim pressure data fix complete (95.9% coverage). Universal Projection implemented (81.2% test pass rate). **Next Priority**: Investigate remaining test failures (Bridges, Haliburton, Bane).
