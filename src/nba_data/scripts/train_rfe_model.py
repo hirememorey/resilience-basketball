@@ -211,60 +211,192 @@ class RFEModelTrainer:
         else:
             logger.warning("No previous playoff features file found.")
         
-        # PRINCIPLE 3: Add DEPENDENCE_SCORE as a feature
-        # Context is a Variable, Not a Constant - integrate Dependence Score into model
-        logger.info("Calculating Dependence Scores for all player-seasons...")
-        from calculate_dependence_score import calculate_dependence_scores_batch
-        df_merged = calculate_dependence_scores_batch(df_merged)
-        logger.info(f"Dependence Score coverage: {df_merged['DEPENDENCE_SCORE'].notna().sum()}/{len(df_merged)} ({df_merged['DEPENDENCE_SCORE'].notna().sum()/len(df_merged)*100:.1f}%)")
-        
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
         
         return df_merged
 
     def prepare_features(self, df, rfe_features):
-        """Prepare feature set using only RFE-selected features."""
-        # Add Usage-Aware Features (if USG_PCT is in RFE features, create interactions)
+        """
+        Prepare feature set using only RFE-selected features.
+        
+        CRITICAL: Apply transformations in the correct order to match prediction pipeline:
+        1. Flash Multiplier (transforms CREATION_VOLUME_RATIO)
+        2. Multi-Signal Tax System (transforms CREATION_VOLUME_RATIO, EFG_ISO_WEIGHTED, etc.)
+        3. Create interaction terms from TRANSFORMED values
+        4. Filter to RFE features
+        5. Handle NaN values
+        """
+        df = df.copy()  # Work on copy to avoid modifying original
+        
+        # ========== STEP 1: Flash Multiplier (Phase 3.6 Fix #1) ==========
+        # Apply Flash Multiplier FIRST - transforms CREATION_VOLUME_RATIO
+        if 'CREATION_VOLUME_RATIO' in df.columns and 'CREATION_TAX' in df.columns and 'EFG_ISO_WEIGHTED' in df.columns:
+            # Phase 3.8 Fix: Use qualified players (rotation players) for percentile calculations
+            # Filter by volume to avoid small sample noise
+            qualified_mask = (
+                (df.get('RS_TOTAL_VOLUME', 0) >= 50) | 
+                (df.get('TOTAL_FGA', 0) >= 200)
+            ) & (df.get('USG_PCT', 0) >= 0.10)
+            qualified_df = df[qualified_mask] if qualified_mask.any() else df
+            
+            # Calculate percentiles on qualified players
+            vol_25th = qualified_df['CREATION_VOLUME_RATIO'].quantile(0.25) if len(qualified_df) > 0 else df['CREATION_VOLUME_RATIO'].quantile(0.25)
+            tax_80th = qualified_df['CREATION_TAX'].quantile(0.80) if len(qualified_df) > 0 else df['CREATION_TAX'].quantile(0.80)
+            efg_80th = qualified_df['EFG_ISO_WEIGHTED'].quantile(0.80) if len(qualified_df) > 0 else df['EFG_ISO_WEIGHTED'].quantile(0.80)
+            
+            # Phase 3.7 Fix #2: Include RS_PRESSURE_RESILIENCE as alternative flash signal
+            pressure_80th = None
+            if 'RS_PRESSURE_RESILIENCE' in qualified_df.columns:
+                pressure_80th = qualified_df['RS_PRESSURE_RESILIENCE'].quantile(0.80) if len(qualified_df) > 0 else None
+            
+            # Calculate star median volume from Kings/Bulldozers
+            star_mask = df['ARCHETYPE'].isin(['King (Resilient Star)', 'Bulldozer (Fragile Star)'])
+            if star_mask.any():
+                star_median_vol = df.loc[star_mask, 'CREATION_VOLUME_RATIO'].median()
+            else:
+                star_median_vol = 0.65  # Fallback
+                
+            logger.info(f"Applying Flash Multiplier (Star Median Vol: {star_median_vol:.4f})...")
+            
+            # Vectorized Flash Multiplier
+            is_low_vol = df['CREATION_VOLUME_RATIO'] < vol_25th
+            is_elite = (df['CREATION_TAX'] > tax_80th) | (df['EFG_ISO_WEIGHTED'] > efg_80th)
+            if pressure_80th is not None:
+                is_elite |= (df['RS_PRESSURE_RESILIENCE'] > pressure_80th)
+                
+            flash_mask = is_low_vol & is_elite
+            if flash_mask.any():
+                df.loc[flash_mask, 'CREATION_VOLUME_RATIO'] = star_median_vol
+                logger.info(f"  Applied Flash Multiplier to {flash_mask.sum()} player-seasons")
+        
+        # ========== STEP 2: Multi-Signal Tax System (Phase 4.2) ==========
+        # Apply Multi-Signal Tax System SECOND - transforms base features before interaction terms
+        # This matches the prediction pipeline logic exactly
+        
+        # Step 2.1: Check exemption (true stars have positive signals OR high creation volume)
+        leverage_usg_delta = df.get('LEVERAGE_USG_DELTA', pd.Series([0] * len(df)))
+        leverage_ts_delta = df.get('LEVERAGE_TS_DELTA', pd.Series([0] * len(df)))
+        creation_tax = df.get('CREATION_TAX', pd.Series([0] * len(df)))
+        creation_vol_ratio = df.get('CREATION_VOLUME_RATIO', pd.Series([0] * len(df)))
+        
+        # Exemption #1: Positive leverage signals
+        has_positive_leverage = (
+            (leverage_usg_delta > 0) | (leverage_ts_delta > 0)
+        )
+        
+        # Exemption #2: Positive creation efficiency
+        has_positive_creation = creation_tax > 0
+        
+        # Exemption #3: High creation volume (>0.60)
+        has_high_creation_volume = creation_vol_ratio > 0.60
+        
+        is_exempt = has_positive_leverage | has_positive_creation | has_high_creation_volume
+        
+        # Step 2.2: Calculate tax penalties (if not exempt)
+        # Initialize penalties (1.0 = no penalty)
+        volume_penalty = pd.Series([1.0] * len(df))
+        efficiency_penalty = pd.Series([1.0] * len(df))
+        
+        # Tax #1: Open Shot Dependency (50% reduction)
+        if 'RS_OPEN_SHOT_FREQUENCY' in df.columns:
+            # Phase 3.8 Fix #2: Use STAR average (USG > 20%) for threshold, not league average
+            star_players = df[df.get('USG_PCT', 0) > 0.20] if 'USG_PCT' in df.columns else df
+            if len(star_players) > 0:
+                open_freq_75th = star_players['RS_OPEN_SHOT_FREQUENCY'].quantile(0.75)
+            else:
+                open_freq_75th = df['RS_OPEN_SHOT_FREQUENCY'].quantile(0.75)
+            
+            mask_open_tax = (~is_exempt) & (df['RS_OPEN_SHOT_FREQUENCY'] > open_freq_75th)
+            volume_penalty.loc[mask_open_tax] *= 0.50
+            efficiency_penalty.loc[mask_open_tax] *= 0.50
+            logger.info(f"  Applied Open Shot Tax to {mask_open_tax.sum()} player-seasons")
+        
+        # Tax #2: Creation Efficiency Collapse (20% additional reduction)
+        mask_creation_tax = (~is_exempt) & (creation_tax < 0)
+        volume_penalty.loc[mask_creation_tax] *= 0.80
+        efficiency_penalty.loc[mask_creation_tax] *= 0.80
+        
+        # Tax #3: Leverage Abdication (20% additional reduction)
+        mask_leverage_tax = (~is_exempt) & (leverage_usg_delta < 0) & (leverage_ts_delta < 0)
+        volume_penalty.loc[mask_leverage_tax] *= 0.80
+        efficiency_penalty.loc[mask_leverage_tax] *= 0.80
+        
+        # Tax #4: Pressure Avoidance (20% additional reduction)
+        if 'RS_PRESSURE_APPETITE' in df.columns:
+            # Use qualified players for 40th percentile
+            qualified_mask = (
+                (df.get('RS_TOTAL_VOLUME', 0) >= 50) | 
+                (df.get('TOTAL_FGA', 0) >= 200)
+            ) & (df.get('USG_PCT', 0) >= 0.10)
+            qualified_df = df[qualified_mask] if qualified_mask.any() else df
+            pressure_app_40th = qualified_df['RS_PRESSURE_APPETITE'].quantile(0.40) if len(qualified_df) > 0 else df['RS_PRESSURE_APPETITE'].quantile(0.40)
+            
+            mask_pressure_tax = (~is_exempt) & (df['RS_PRESSURE_APPETITE'] < pressure_app_40th)
+            volume_penalty.loc[mask_pressure_tax] *= 0.80
+            efficiency_penalty.loc[mask_pressure_tax] *= 0.80
+        
+        # Step 2.3: Apply taxes to base features
+        # Tax CREATION_VOLUME_RATIO (volume feature)
+        if 'CREATION_VOLUME_RATIO' in df.columns:
+            df['CREATION_VOLUME_RATIO'] = df['CREATION_VOLUME_RATIO'] * volume_penalty
+        
+        # Tax EFG_ISO_WEIGHTED (efficiency feature)
+        if 'EFG_ISO_WEIGHTED' in df.columns:
+            df['EFG_ISO_WEIGHTED'] = df['EFG_ISO_WEIGHTED'] * efficiency_penalty
+        
+        # Tax EFG_PCT_0_DRIBBLE (efficiency feature)
+        if 'EFG_PCT_0_DRIBBLE' in df.columns:
+            df['EFG_PCT_0_DRIBBLE'] = df['EFG_PCT_0_DRIBBLE'] * efficiency_penalty
+        
+        # Tax RS_PRESSURE_APPETITE (volume feature)
+        if 'RS_PRESSURE_APPETITE' in df.columns:
+            df['RS_PRESSURE_APPETITE'] = df['RS_PRESSURE_APPETITE'] * volume_penalty
+        
+        # Tax LEVERAGE_USG_DELTA (volume feature)
+        if 'LEVERAGE_USG_DELTA' in df.columns:
+            df['LEVERAGE_USG_DELTA'] = df['LEVERAGE_USG_DELTA'] * volume_penalty
+        
+        logger.info(f"Applied Multi-Signal Tax System to base features")
+        
+        # ========== STEP 3: Create Interaction Terms from TRANSFORMED Values ==========
+        # CRITICAL: Interaction terms must use transformed values, not raw values
         if 'USG_PCT' in df.columns and 'USG_PCT' in rfe_features:
             df['USG_PCT'] = pd.to_numeric(df['USG_PCT'], errors='coerce')
+            
+            # CRITICAL FIX: Normalize USG_PCT from percentage (26.0) to decimal (0.26)
+            # The dataset stores USG_PCT as a percentage, but we need decimal format for consistency
+            if df['USG_PCT'].max() > 1.0:
+                df['USG_PCT'] = df['USG_PCT'] / 100.0
+                logger.info(f"Normalized USG_PCT from percentage to decimal format")
+            
             usg_median = df['USG_PCT'].median()
             df['USG_PCT'] = df['USG_PCT'].fillna(usg_median)
             
-            # Create interaction terms if they're in RFE features
+            # Create interaction terms from TRANSFORMED base features
             interaction_terms = [
-                ('USG_PCT', 'CREATION_VOLUME_RATIO'),
-                ('USG_PCT', 'LEVERAGE_USG_DELTA'),
-                ('USG_PCT', 'RS_PRESSURE_APPETITE'),
+                ('USG_PCT', 'CREATION_VOLUME_RATIO'),  # Uses transformed CREATION_VOLUME_RATIO
+                ('USG_PCT', 'LEVERAGE_USG_DELTA'),     # Uses transformed LEVERAGE_USG_DELTA
+                ('USG_PCT', 'RS_PRESSURE_APPETITE'),   # Uses transformed RS_PRESSURE_APPETITE
                 ('USG_PCT', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE'),
-                ('USG_PCT', 'EFG_ISO_WEIGHTED')
+                ('USG_PCT', 'EFG_ISO_WEIGHTED')        # Uses transformed EFG_ISO_WEIGHTED
             ]
             
             for feat1, feat2 in interaction_terms:
                 interaction_name = f'{feat1}_X_{feat2}'
                 if interaction_name in rfe_features:
                     if feat1 in df.columns and feat2 in df.columns:
+                        # Use transformed values (already in df)
                         df[interaction_name] = (df[feat1].fillna(0) * df[feat2].fillna(0))
+                        logger.debug(f"Created interaction term {interaction_name} from transformed values")
         
-        # PRINCIPLE 3: Always include DEPENDENCE_SCORE as a feature
-        # Context is a Variable, Not a Constant - high dependence should penalize latent star predictions
-        mandatory_features = []
-        if 'DEPENDENCE_SCORE' in df.columns:
-            mandatory_features.append('DEPENDENCE_SCORE')
-            logger.info("Including DEPENDENCE_SCORE as mandatory feature (Principle 3: Context is a Variable)")
-        
-        # Filter to only RFE-selected features + mandatory features
+        # Filter to only RFE-selected features
         existing_features = [f for f in rfe_features if f in df.columns]
         missing_features = [f for f in rfe_features if f not in df.columns]
-        
-        # Add mandatory features that aren't already in RFE list
-        for feat in mandatory_features:
-            if feat not in existing_features:
-                existing_features.append(feat)
         
         if missing_features:
             logger.warning(f"Missing RFE features (will be ignored): {missing_features}")
         
-        logger.info(f"Using {len(existing_features)} features ({len(rfe_features)} RFE-selected + {len(mandatory_features)} mandatory)")
+        logger.info(f"Using {len(existing_features)} RFE-selected features (out of {len(rfe_features)} requested)")
         
         X = df[existing_features].copy()
         
@@ -284,10 +416,6 @@ class RFEModelTrainer:
                     X[col] = X[col].fillna(0)
                 elif col in ['ABDICATION_RISK', 'PHYSICALITY_FLOOR', 'SELF_CREATED_FREQ', 'NEGATIVE_SIGNAL_COUNT']:
                     X[col] = X[col].fillna(0)
-                elif col == 'DEPENDENCE_SCORE':
-                    # Fill missing dependence scores with median (moderate dependence)
-                    median_val = X[col].median()
-                    X[col] = X[col].fillna(median_val)
                 else:
                     median_val = X[col].median()
                     X[col] = X[col].fillna(median_val)

@@ -199,6 +199,28 @@ class ConditionalArchetypePredictor:
             df_features = df_features.drop(columns=cols_to_drop)
             logger.info(f"Loaded gate features: {len(df_gate)} rows")
         
+        # Merge with previous playoff features (required for RFE model features like PREV_LEVERAGE_TS_DELTA, PREV_RS_RIM_APPETITE)
+        prev_po_path = self.results_dir / "previous_playoff_features.csv"
+        if prev_po_path.exists():
+            df_prev_po = pd.read_csv(prev_po_path)
+            df_features = pd.merge(
+                df_features,
+                df_prev_po,
+                on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'],
+                how='left',
+                suffixes=('', '_prev_po')
+            )
+            cols_to_drop = [c for c in df_features.columns if '_prev_po' in c]
+            df_features = df_features.drop(columns=cols_to_drop)
+            logger.info(f"Loaded previous playoff features: {len(df_prev_po)} rows")
+        
+        # CRITICAL FIX: Normalize USG_PCT from percentage (26.0) to decimal (0.26)
+        # The dataset stores USG_PCT as a percentage, but we need decimal format for consistency
+        if 'USG_PCT' in df_features.columns:
+            if df_features['USG_PCT'].max() > 1.0:
+                df_features['USG_PCT'] = df_features['USG_PCT'] / 100.0
+                logger.info(f"Normalized USG_PCT from percentage to decimal format in feature dataset")
+        
         return df_features
     
     def _get_qualified_players(self, min_fga: int = 200, min_pressure_shots: int = 50) -> pd.DataFrame:
@@ -419,7 +441,16 @@ class ConditionalArchetypePredictor:
             logger.warning(f"No data found for {player_name} {season}")
             return None
         
-        return player_data.iloc[0]
+        player_data = player_data.iloc[0].copy()
+        
+        # CRITICAL FIX: Normalize USG_PCT from percentage (26.0) to decimal (0.26)
+        # The dataset stores USG_PCT as a percentage, but the model expects decimal format
+        if 'USG_PCT' in player_data.index and pd.notna(player_data['USG_PCT']):
+            # If USG_PCT > 1.0, it's in percentage format, convert to decimal
+            if player_data['USG_PCT'] > 1.0:
+                player_data['USG_PCT'] = player_data['USG_PCT'] / 100.0
+        
+        return player_data
     
     def prepare_features(
         self, 
@@ -453,8 +484,14 @@ class ConditionalArchetypePredictor:
         missing_features = []
         
         # Get current usage for projection calculation
+        # CRITICAL: USG_PCT should already be normalized to decimal format in get_player_data()
+        # But double-check here in case it wasn't normalized
         current_usage = player_data.get('USG_PCT', usage_level)
-        if pd.isna(current_usage):
+        if pd.notna(current_usage):
+            # If USG_PCT > 1.0, it's in percentage format, convert to decimal
+            if current_usage > 1.0:
+                current_usage = current_usage / 100.0
+        else:
             current_usage = usage_level
         
         # Phase 3.5 Fix #2: Calculate projection factor for volume features

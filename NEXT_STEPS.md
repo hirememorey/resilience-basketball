@@ -1,16 +1,16 @@
 # Next Steps
 
 **Date**: December 7, 2025  
-**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅
+**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅
 
 ---
 
 ## Current Status Summary
 
-- **Model Accuracy**: **53.54%** (RFE model, 10 features) / **51.69%** (Full model, 60 features) - **True predictive power** with RS-only features and temporal split (retrained Dec 6, 2025)
-- **Test Case Pass Rate**: **81.2%** (13/16) - Improved from 68.8% with Universal Projection ✅
-- **False Positive Detection**: **100.0%** pass rate (6/6) - **Perfect** ✅
-- **True Positive Detection**: **75.0%** pass rate (6/8) - Improved from 62.5% ✅
+- **Model Accuracy**: **53.85%** (RFE model, 10 features) - **True predictive power** with RS-only features and temporal split (retrained Dec 7, 2025)
+- **Test Case Pass Rate**: **81.2%** (13/16) - Stable after feature distribution fixes ✅
+- **False Positive Detection**: **83.3%** pass rate (5/6) ✅
+- **True Positive Detection**: **75.0%** pass rate (6/8) ✅
 - **Rim Pressure Data Coverage**: 95.9% (1,773/1,849) - **Fixed December 5, 2025** ✅
 - **Data Leakage**: ✅ **FIXED** - All playoff features removed, temporal split implemented (December 6, 2025)
 - **Previous Playoff Features**: ✅ **INTEGRATED** - Added legitimate past → future features (December 6, 2025)
@@ -162,25 +162,54 @@
 
 **See**: `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` and `results/universal_projection_validation.md` for complete details.
 
+---
+
+## ✅ Completed: Feature Distribution Alignment & USG_PCT Normalization
+
+**Status**: ✅ **COMPLETE** - December 7, 2025
+
+**The Problem**: Two critical bugs causing test suite failures:
+1. **Feature Distribution Mismatch**: Model trained on raw features, but prediction applied transformations (Flash Multiplier, Playoff Volume Tax) before creating interaction terms.
+2. **USG_PCT Format Mismatch**: USG_PCT stored as percentage (26.0) but model expected decimal (0.26).
+
+**The Fix**:
+1. **Applied Transformations During Training**: Updated `train_rfe_model.py` and `rfe_feature_selection.py` to apply Flash Multiplier and Playoff Volume Tax to base features *before* creating interaction terms, matching prediction pipeline.
+2. **Normalized USG_PCT**: Added normalization from percentage to decimal in:
+   - `predict_conditional_archetype.py` (get_player_data, prepare_features, _load_features)
+   - `train_rfe_model.py` (feature preparation)
+   - `rfe_feature_selection.py` (feature preparation)
+
+**Results**:
+- ✅ **Test Suite Pass Rate**: 43.8% → **81.2%** (+37.4 percentage points)
+- ✅ **True Positive Detection**: 0/8 → **6/8** (75.0%)
+- ✅ **Model Retrained**: RFE model retrained with aligned feature distributions
+- ✅ **Feature Consistency**: Training and prediction now use identical transformations
+
+**Key Insight**: Order of operations is critical. Transformations must be applied to base features before interaction terms, and all features must use consistent units.
+
+**See**: `docs/RFE_MODEL_INVESTIGATION.md` for original problem analysis.
+
+---
+
 ## Current Priority: Investigate Remaining Test Failures
 
 **Status**: 🔴 **HIGH PRIORITY**
 
 **Remaining Failures (3 cases):**
 
-1. **Mikal Bridges (2021-22)**: 30.00% (expected ≥65%)
-   - **Root Cause**: Bag Check Gate capping due to low self-created frequency (0.0697 < 0.10)
-   - **Note**: Model predicts 93.43% before gates apply
-   - **Potential Fix**: Improve proxy calculation for players with high CREATION_VOLUME_RATIO but missing ISO/PNR data, or exempt if Flash Multiplier conditions met
+1. **Jordan Poole (2021-22)**: 87.62% (expected <55%)
+   - **Root Cause**: False positive case - model overvaluing after feature alignment fixes
+   - **Note**: Previously passing at 38.85%, now failing
+   - **Next Steps**: Investigate why feature alignment caused regression for this case
 
-2. **Tyrese Haliburton (2021-22)**: 30.00% (expected ≥65%)
-   - **Root Cause**: Needs investigation - may be missing data or gate application
-   - **Next Steps**: Check data completeness and gate logic
+2. **Lauri Markkanen (2021-22)**: 64.16% (expected ≥65%)
+   - **Root Cause**: Close to threshold, may be acceptable prediction
+   - **Note**: Improved from previous failures
+   - **Next Steps**: Evaluate if this is legitimate or needs adjustment
 
-3. **Desmond Bane (2021-22)**: 34.94% (expected ≥65%)
-   - **Root Cause**: Model underestimates secondary creators
-   - **Note**: Improved from 43.80% but still failing
-   - **Potential Fix**: May need specialized handling for secondary creators who scale up
+3. **Tyrese Haliburton (2021-22)**: 30.00% (expected ≥65%)
+   - **Root Cause**: Needs investigation - may be gate application or missing data
+   - **Next Steps**: Check data completeness and gate logic for Haliburton case
 
 ---
 
@@ -254,4 +283,4 @@
 
 ---
 
-**Status**: Data leakage fixes complete (RS-only features, temporal split). Previous playoff features integrated. 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. Rim pressure data fix complete (95.9% coverage). Universal Projection implemented (81.2% test pass rate). **Next Priority**: Investigate remaining test failures (Bridges, Haliburton, Bane).
+**Status**: Data leakage fixes complete (RS-only features, temporal split). Previous playoff features integrated. 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. Rim pressure data fix complete (95.9% coverage). Universal Projection implemented. Feature distribution alignment complete (81.2% test pass rate). USG_PCT normalization complete. **Next Priority**: Investigate remaining test failures (Poole, Markkanen, Haliburton).

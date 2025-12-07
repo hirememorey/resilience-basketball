@@ -2,7 +2,7 @@
 
 Date: December 7, 2025
 
-Status: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Cleanup & Reorganization In Progress 🏗️
+Status: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅
 
 ## 🏗️ Project Structure & Cleanup
 
@@ -45,7 +45,7 @@ These are the core files driving the current 53.54% accuracy model:
 
 **Current Model:** XGBoost Classifier that predicts playoff archetypes (King, Bulldozer, Sniper, Victim) from regular season stress vectors with usage-aware conditional predictions. RFE-optimized to 10 core features (reduced from 65).
 
-**Accuracy:** 53.54% (RFE model, 10 features) / 51.69% (Full model, 60 features) - True predictive power using only Regular Season data with temporal train/test split (899 player-seasons, 2015-2024, retrained December 6, 2025)
+**Accuracy:** 53.85% (RFE model, 10 features) - True predictive power using only Regular Season data with temporal train/test split (899 player-seasons, 2015-2024, retrained December 7, 2025)
 
 ## What Exists (Current State)
 
@@ -71,46 +71,49 @@ These are the core files driving the current 53.54% accuracy model:
 **Algorithm:** XGBoost Classifier (Multi-Class)
 
 **RFE-Optimized Model (10 features) - CURRENT:**
-1. USG_PCT (40.2% importance) - Usage level (highest importance!)
-2. USG_PCT_X_EFG_ISO_WEIGHTED (11.7% importance) - Usage × Isolation efficiency (2nd highest!)
-3. EFG_PCT_0_DRIBBLE (7.6% importance) - Catch-and-shoot efficiency
-4. EFG_ISO_WEIGHTED_YOY_DELTA (6.4% importance) - Year-over-year change in isolation efficiency
-5. CREATION_TAX (6.3% importance) - Creation efficiency drop-off
-6. PREV_RS_RIM_APPETITE (6.0% importance) - Previous season rim pressure
-7. CREATION_TAX_YOY_DELTA (5.7% importance) - Year-over-year change in creation tax
-8. USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE (5.6% importance) - Usage × Late clock resilience
-9. USG_PCT_X_LEVERAGE_USG_DELTA (5.4% importance) - Usage × Clutch usage scaling
-10. PREV_LEVERAGE_TS_DELTA (5.2% importance) - Previous season leverage efficiency
+1. USG_PCT (41.26% importance) - Usage level (highest importance!)
+2. USG_PCT_X_EFG_ISO_WEIGHTED (8.85% importance) - Usage × Isolation efficiency
+3. CREATION_TAX (8.54% importance) - Creation efficiency drop-off
+4. USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE (7.16% importance) - Usage × Late clock resilience
+5. ABDICATION_RISK (6.71% importance) - Gate feature (negative leverage signal)
+6. RS_LATE_CLOCK_PRESSURE_APPETITE (6.33% importance) - Late clock pressure willingness
+7. CLUTCH_MIN_TOTAL (5.39% importance) - Clutch minutes
+8. QOC_USG_DELTA (5.28% importance) - Quality of competition usage delta
+9. CREATION_TAX_YOY_DELTA (5.26% importance) - Year-over-year change in creation tax
+10. AGE_X_RS_PRESSURE_RESILIENCE_YOY_DELTA (5.21% importance) - Age × Pressure resilience trajectory
 
-**Key Insight:** All features are RS-only or trajectory-based (previous season). No playoff features made it into the top 10. Usage-aware features dominate (65.9% combined importance).
+**Key Insight:** All features are RS-only or trajectory-based. Usage-aware features dominate (57.27% combined importance). Model retrained December 7, 2025 with feature distribution alignment fixes.
 
 **Model File:** `models/resilience_xgb_rfe_10.pkl` (primary), `models/resilience_xgb.pkl` (fallback)
 
 ### Validation Results
 
-**Test Case Pass Rate:** **81.2%** (13/16) - Improved from 68.8% with Universal Projection ✅
+**Test Case Pass Rate:** **81.2%** (13/16) - Stable after feature distribution fixes ✅
 
-**True Positives:** **75.0%** (6/8) - Improved from 62.5% ✅
-- ✅ Victor Oladipo: 86.96% (PASS)
-- ✅ Tyrese Maxey: 98.97% (PASS)
-- ✅ Shai Gilgeous-Alexander: 98.76% (PASS)
-- ✅ Jalen Brunson: 99.75% (PASS)
-- ✅ Jamal Murray: 97.41% (PASS)
-- ✅ Lauri Markkanen: 73.04% (PASS - improved from 63.19%)
-- ✅ Talen Horton-Tucker: 30.00% (PASS - correctly identified as Victim)
+**True Positives:** **75.0%** (6/8) ✅
+- ✅ Shai Gilgeous-Alexander (2018-19): 99.16% (PASS)
+- ✅ Victor Oladipo (2016-17): 94.71% (PASS)
+- ✅ Jalen Brunson (2020-21): 99.50% (PASS)
+- ✅ Jamal Murray (2018-19): 82.31% (PASS)
+- ✅ Desmond Bane (2021-22): 72.02% (PASS)
+- ✅ Tyrese Maxey (2021-22): 84.12% (PASS)
 
-**False Positives:** **100.0%** (6/6) - Perfect ✅
-- ✅ Jordan Poole: 38.85% (PASS - correctly downgraded)
-- ✅ Domantas Sabonis: 30.00% (PASS - correctly filtered)
-- ✅ D'Angelo Russell: 30.00% (PASS - correctly filtered)
-- ✅ Ben Simmons: 30.00% (PASS - correctly filtered)
-- ✅ Christian Wood: 30.00% (PASS - correctly filtered)
-- ✅ Tobias Harris: 30.00% (PASS - correctly filtered)
+**False Positives:** **83.3%** (5/6) ✅
+- ✅ Talen Horton-Tucker: 30.00% (PASS)
+- ✅ Christian Wood: 30.00% (PASS)
+- ✅ D'Angelo Russell: 30.00% (PASS)
+- ✅ Tobias Harris: 30.00% (PASS)
+- ✅ Domantas Sabonis: 30.00% (PASS)
+- ❌ Jordan Poole: 87.62% (FAIL - expected <55%, got 87.62%)
+
+**System Player & Usage Shock:** **100.0%** (2/2) ✅
+- ✅ Tyus Jones: 30.00% (PASS)
+- ✅ Mikal Bridges: 92.85% (PASS)
 
 **Remaining Failures (3 cases):**
-- ❌ Mikal Bridges: 30.00% (expected ≥65%) - Usage Shock case, Bag Check Gate capping (model predicts 93.43% before gates)
-- ❌ Desmond Bane: 34.94% (expected ≥65%) - Secondary creator, improved from 43.80% but still failing
-- ❌ Tyrese Haliburton: 30.00% (expected ≥65%) - Needs investigation (may be missing data or gate issue)
+- ❌ Jordan Poole (2021-22): 87.62% (expected <55%) - False positive case, needs investigation
+- ❌ Lauri Markkanen (2021-22): 64.16% (expected ≥65%) - Close to threshold, may be acceptable
+- ❌ Tyrese Haliburton (2021-22): 30.00% (expected ≥65%) - Needs investigation (may be gate issue)
 
 ## 2D Risk Matrix Implementation (December 2025) ✅ COMPLETE
 
@@ -146,22 +149,45 @@ These are the core files driving the current 53.54% accuracy model:
 
 **See**: `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` and `results/universal_projection_validation.md` for complete details.
 
+## ✅ Completed: Feature Distribution Alignment & USG_PCT Normalization (December 7, 2025)
+
+**Status:** ✅ **COMPLETE**
+
+**The Problem**: Two critical bugs were identified:
+1. **Feature Distribution Mismatch**: Model was trained on raw features, but prediction pipeline applied transformations (Flash Multiplier, Playoff Volume Tax) before creating interaction terms, causing structural differences.
+2. **USG_PCT Format Mismatch**: USG_PCT was stored as percentage (26.0) but model expected decimal (0.26), causing incorrect projections and interaction terms.
+
+**The Fix**:
+1. **Feature Transformations During Training**: Applied Flash Multiplier and Playoff Volume Tax transformations to base features *before* creating interaction terms in both `train_rfe_model.py` and `rfe_feature_selection.py`.
+2. **USG_PCT Normalization**: Normalized USG_PCT from percentage to decimal format in:
+   - `predict_conditional_archetype.py` (get_player_data, prepare_features, _load_features)
+   - `train_rfe_model.py` (during feature preparation)
+   - `rfe_feature_selection.py` (during feature preparation)
+
+**Results**:
+- ✅ **Test Suite Pass Rate**: 43.8% → **81.2%** (+37.4 percentage points)
+- ✅ **True Positive Detection**: 0/8 → **6/8** (75.0%)
+- ✅ **Model Accuracy**: Stable at 53.85% (RFE model, 10 features)
+- ✅ **Feature Consistency**: Training and prediction now use identical feature distributions
+
+**Key Insight**: Order of operations matters critically. Transformations must be applied to base features before interaction terms are calculated, and all features must use consistent units (decimal vs percentage).
+
 ## Next Priority: Investigate Remaining Test Failures
 
 **Status:** 🔴 HIGH PRIORITY
 
 **Remaining Failures (3 cases):**
 
-1. **Mikal Bridges (2021-22)**: 30.00% (expected ≥65%)
-   - **Root Cause**: Bag Check Gate capping due to low self-created frequency (0.0697 < 0.10)
-   - **Note**: Model predicts 93.43% before gates apply
-   - **Potential Fix**: Improve proxy calculation for players with high CREATION_VOLUME_RATIO but missing ISO/PNR data, or exempt if Flash Multiplier conditions met
+1. **Jordan Poole (2021-22)**: 87.62% (expected <55%)
+   - **Root Cause**: False positive case incorrectly predicting high star-level
+   - **Note**: Previously passing at 38.85%, now failing after fixes
+   - **Next Steps**: Investigate why model is overvaluing Poole after feature alignment
 
-2. **Tyrese Haliburton (2021-22)**: 30.00% (expected ≥65%)
-   - **Root Cause**: Needs investigation - may be missing data or gate application
-   - **Next Steps**: Check data completeness and gate logic
+2. **Lauri Markkanen (2021-22)**: 64.16% (expected ≥65%)
+   - **Root Cause**: Close to threshold, may be acceptable
+   - **Note**: Improved from previous failures
+   - **Next Steps**: Evaluate if this is a legitimate prediction or needs adjustment
 
-3. **Desmond Bane (2021-22)**: 34.94% (expected ≥65%)
-   - **Root Cause**: Model underestimates secondary creators
-   - **Note**: Improved from 43.80% but still failing
-   - **Potential Fix**: May need specialized handling for secondary creators who scale up
+3. **Tyrese Haliburton (2021-22)**: 30.00% (expected ≥65%)
+   - **Root Cause**: Needs investigation - may be gate application or missing data
+   - **Next Steps**: Check data completeness and gate logic for Haliburton case
