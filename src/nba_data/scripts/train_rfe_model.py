@@ -211,6 +211,13 @@ class RFEModelTrainer:
         else:
             logger.warning("No previous playoff features file found.")
         
+        # PRINCIPLE 3: Add DEPENDENCE_SCORE as a feature
+        # Context is a Variable, Not a Constant - integrate Dependence Score into model
+        logger.info("Calculating Dependence Scores for all player-seasons...")
+        from calculate_dependence_score import calculate_dependence_scores_batch
+        df_merged = calculate_dependence_scores_batch(df_merged)
+        logger.info(f"Dependence Score coverage: {df_merged['DEPENDENCE_SCORE'].notna().sum()}/{len(df_merged)} ({df_merged['DEPENDENCE_SCORE'].notna().sum()/len(df_merged)*100:.1f}%)")
+        
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
         
         return df_merged
@@ -238,14 +245,26 @@ class RFEModelTrainer:
                     if feat1 in df.columns and feat2 in df.columns:
                         df[interaction_name] = (df[feat1].fillna(0) * df[feat2].fillna(0))
         
-        # Filter to only RFE-selected features
+        # PRINCIPLE 3: Always include DEPENDENCE_SCORE as a feature
+        # Context is a Variable, Not a Constant - high dependence should penalize latent star predictions
+        mandatory_features = []
+        if 'DEPENDENCE_SCORE' in df.columns:
+            mandatory_features.append('DEPENDENCE_SCORE')
+            logger.info("Including DEPENDENCE_SCORE as mandatory feature (Principle 3: Context is a Variable)")
+        
+        # Filter to only RFE-selected features + mandatory features
         existing_features = [f for f in rfe_features if f in df.columns]
         missing_features = [f for f in rfe_features if f not in df.columns]
+        
+        # Add mandatory features that aren't already in RFE list
+        for feat in mandatory_features:
+            if feat not in existing_features:
+                existing_features.append(feat)
         
         if missing_features:
             logger.warning(f"Missing RFE features (will be ignored): {missing_features}")
         
-        logger.info(f"Using {len(existing_features)} RFE-selected features (out of {len(rfe_features)} requested)")
+        logger.info(f"Using {len(existing_features)} features ({len(rfe_features)} RFE-selected + {len(mandatory_features)} mandatory)")
         
         X = df[existing_features].copy()
         
@@ -265,6 +284,10 @@ class RFEModelTrainer:
                     X[col] = X[col].fillna(0)
                 elif col in ['ABDICATION_RISK', 'PHYSICALITY_FLOOR', 'SELF_CREATED_FREQ', 'NEGATIVE_SIGNAL_COUNT']:
                     X[col] = X[col].fillna(0)
+                elif col == 'DEPENDENCE_SCORE':
+                    # Fill missing dependence scores with median (moderate dependence)
+                    median_val = X[col].median()
+                    X[col] = X[col].fillna(median_val)
                 else:
                     median_val = X[col].median()
                     X[col] = X[col].fillna(median_val)

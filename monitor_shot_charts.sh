@@ -26,3 +26,7 @@ echo ""
 echo "To check completed files:"
 echo "  python check_shot_chart_progress.py"
 
+
+
+
+

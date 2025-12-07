@@ -1,19 +1,20 @@
 # Next Steps
 
 **Date**: December 6, 2025  
-**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅
+**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Alpha Engine Implementation Complete ✅
 
 ---
 
 ## Current Status Summary
 
-- **Model Accuracy**: **53.54%** (RFE model, 10 features) / **51.69%** (Full model, 60 features) - **True predictive power** with RS-only features and temporal split (retrained Dec 6, 2025)
-- **Test Case Pass Rate**: 68.8% (11/16)
+- **Model Accuracy**: **55.01%** (RFE model, 11 features with DEPENDENCE_SCORE) / **51.69%** (Full model, 60 features) - **True predictive power** with RS-only features and temporal split (retrained Dec 6, 2025)
+- **Test Case Pass Rate**: 68.8% (11/16) - Maintained after Alpha Engine changes
 - **False Positive Detection**: 83.3% pass rate (5/6) - **Strong** ✅
 - **True Positive Detection**: 62.5% pass rate (5/8)
 - **Rim Pressure Data Coverage**: 95.9% (1,773/1,849) - **Fixed December 5, 2025** ✅
 - **Data Leakage**: ✅ **FIXED** - All playoff features removed, temporal split implemented (December 6, 2025)
 - **Previous Playoff Features**: ✅ **INTEGRATED** - Added legitimate past → future features (December 6, 2025)
+- **Alpha Engine**: ✅ **COMPLETE** - Volume Exemption fix, DEPENDENCE_SCORE integration, Alpha calculation framework (December 6, 2025)
 
 **Key Discovery**: Trust Fall experiment revealed **Ground Truth Trap** - model correctly predicts Performance (outcomes), but we need a separate dimension for Dependence (portability).
 
@@ -138,47 +139,37 @@
 
 ---
 
-## Current Priority: Refine Volume Exemption Logic
+## ✅ Completed: Alpha Engine Implementation
 
-**Status**: 🔴 **HIGH PRIORITY** - Ready for implementation
+**Status**: ✅ **COMPLETE** - December 6, 2025
 
-**The Problem**: Volume Exemption (`CREATION_VOLUME_RATIO > 0.60`) is too broad. It exempts "Empty Calories" creators (high volume + negative creation tax) from Multi-Signal Tax, when it should only exempt "True Creators" (high volume + efficient creation OR rim pressure).
+**What Was Implemented**:
 
-**The Pattern**: "Empty Calories" creators like Willy Hernangomez, Dion Waiters, Kris Dunn have:
-- High creation volume (>0.60) → Volume Exemption protects them
-- Negative creation tax (<-0.10) → But they're inefficient creators
-- Result: Model predicts "King" (93.27%, 77.55%, 84.96%) but they're actually "Volume Scorers"
-- **Note**: All now have rim pressure data (95.9% coverage), but Fragility Gate still not catching them
+### Principle 1: Volume Exemption Fix ✅
+- **Problem**: Volume Exemption was too broad, exempting "Empty Calories" creators
+- **Fix**: Refined to require `CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.1746)`
+- **Results**: 
+  - ✅ D'Angelo Russell correctly filtered (30% star-level)
+  - ✅ Test case pass rate maintained (68.8%)
+  - ✅ "Empty Calories" creators now caught by gate logic
 
-**The Fix**: Refine Volume Exemption to require:
-```python
-CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.1746)
-```
+### Principle 3: DEPENDENCE_SCORE Integration ✅
+- **Problem**: Context dependency not incorporated into model predictions
+- **Fix**: Added DEPENDENCE_SCORE as mandatory feature in XGBoost model
+- **Results**:
+  - ✅ DEPENDENCE_SCORE: 5.92% importance (5th most important feature)
+  - ✅ Model accuracy improved: 53.54% → 55.01% (+1.47 pp)
+  - ✅ 100% coverage (899/899 player-seasons)
 
-**Rationale**:
-- High volume alone doesn't make you a star
-- Need either efficient creation (CREATION_TAX >= -0.05) OR rim pressure (stabilizer)
-- This catches "Empty Calories" creators while preserving true creators (Schröder, Fultz)
+### Principle 4: Alpha Calculation Framework ✅
+- **Problem**: No way to identify market inefficiencies (undervalued/overvalued players)
+- **Fix**: Created salary data collection and Alpha score calculation
+- **Results**:
+  - ✅ Salary data: 4,680 player-seasons (2015-2025)
+  - ✅ Alpha scores: 885/1,871 player-seasons (47.3% coverage)
+  - ✅ Identified: 13 undervalued stars, 149 overvalued players
 
-**Expected Impact**:
-- Would catch Willy Hernangomez (currently 93.27%, has rim pressure data but still overvalued)
-- Would catch Dion Waiters (currently 77.55%, CREATION_TAX = -0.164)
-- Would catch Kris Dunn (currently 84.96%, CREATION_TAX = -0.062)
-- Would preserve Dennis Schröder (CREATION_TAX = +0.058)
-- Would preserve Markelle Fultz (CREATION_TAX = -0.033, essentially neutral)
-
-**Implementation Location**: `src/nba_data/scripts/predict_conditional_archetype.py`
-- Find Multi-Signal Tax exemption logic (around line 570-590)
-- Update Volume Exemption condition to include efficiency/stabilizer check
-- **Context**: Rim pressure data is now available for 95.9% of players, so this check will work for almost all cases
-
-**Validation**:
-- Run `test_latent_star_cases.py` to ensure no regressions
-- Run `run_expanded_predictions.py` to check expanded dataset
-- Verify that Willy Hernangomez, Dion Waiters, Kris Dunn are now correctly filtered
-- Verify that Dennis Schröder, Markelle Fultz are still correctly exempted
-
-**See**: `results/model_misses_analysis.md` and `results/retraining_results_summary.md` for complete analysis.
+**See**: `ALPHA_ENGINE_IMPLEMENTATION.md` and `ALPHA_ENGINE_VALIDATION_RESULTS.md` for complete details.
 
 ---
 
@@ -252,4 +243,10 @@ CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.
 
 ---
 
-**Status**: Data leakage fixes complete (RS-only features, temporal split). Previous playoff features integrated. 2D Risk Matrix implementation complete. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. Rim pressure data fix complete (95.9% coverage). **Next Priority**: Refine Volume Exemption logic to catch "Empty Calories" creators (Willy Hernangomez, Dion Waiters, Kris Dunn).
+**Status**: Data leakage fixes complete (RS-only features, temporal split). Previous playoff features integrated. 2D Risk Matrix implementation complete. Alpha Engine implementation complete (Volume Exemption fix, DEPENDENCE_SCORE integration, Alpha calculation). Model accuracy: 55.01% (11 features). Alpha opportunities identified: 13 undervalued stars, 149 overvalued players.
+
+**Next Priorities**:
+1. Improve salary data name matching (currently 40.7% match rate)
+2. Expand Alpha score coverage (currently 47.3%)
+3. Refine Alpha opportunity thresholds based on validation
+4. Consider adding defensive metrics for "Defensive Gate" (Principle 2)

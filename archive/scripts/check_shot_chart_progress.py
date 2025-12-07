@@ -66,3 +66,4 @@ print("="*80)
 print("To check live progress, run: tail -f logs/shot_chart_collection.log")
 print("="*80)
 
+

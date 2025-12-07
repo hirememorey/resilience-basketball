@@ -1,6 +1,6 @@
 {
   "n_features": 10,
-  "accuracy": 0.5353846153846153,
+  "accuracy": 0.5500725689404935,
   "features": [
     "CREATION_TAX",
     "LEVERAGE_USG_DELTA",
@@ -11,48 +11,53 @@
     "USG_PCT_X_EFG_ISO_WEIGHTED",
     "EFG_ISO_WEIGHTED_YOY_DELTA",
     "PREV_LEVERAGE_TS_DELTA",
-    "PREV_RS_RIM_APPETITE"
+    "PREV_RS_RIM_APPETITE",
+    "DEPENDENCE_SCORE"
   ],
   "feature_importance": [
     {
       "Feature": "USG_PCT",
-      "Importance": 0.4029616713523865
+      "Importance": 0.4526701867580414
     },
     {
       "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.1147325336933136
+      "Importance": 0.08317053318023682
     },
     {
       "Feature": "EFG_PCT_0_DRIBBLE",
-      "Importance": 0.08302915841341019
-    },
-    {
-      "Feature": "EFG_ISO_WEIGHTED_YOY_DELTA",
-      "Importance": 0.06418370455503464
+      "Importance": 0.07328339666128159
     },
     {
       "Feature": "CREATION_TAX",
-      "Importance": 0.05887877941131592
+      "Importance": 0.06473064422607422
+    },
+    {
+      "Feature": "DEPENDENCE_SCORE",
+      "Importance": 0.059213027358055115
+    },
+    {
+      "Feature": "EFG_ISO_WEIGHTED_YOY_DELTA",
+      "Importance": 0.05156734213232994
     },
     {
       "Feature": "LEVERAGE_USG_DELTA",
-      "Importance": 0.05751620978116989
-    },
-    {
-      "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
-      "Importance": 0.05701131001114845
-    },
-    {
-      "Feature": "PREV_RS_RIM_APPETITE",
-      "Importance": 0.0556873120367527
-    },
-    {
-      "Feature": "RS_LATE_CLOCK_PRESSURE_APPETITE",
-      "Importance": 0.05423680692911148
+      "Importance": 0.04729937016963959
     },
     {
       "Feature": "PREV_LEVERAGE_TS_DELTA",
-      "Importance": 0.05176253616809845
+      "Importance": 0.04612698033452034
+    },
+    {
+      "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
+      "Importance": 0.045137759298086166
+    },
+    {
+      "Feature": "RS_LATE_CLOCK_PRESSURE_APPETITE",
+      "Importance": 0.03919501230120659
+    },
+    {
+      "Feature": "PREV_RS_RIM_APPETITE",
+      "Importance": 0.03760575130581856
     }
   ]
 }

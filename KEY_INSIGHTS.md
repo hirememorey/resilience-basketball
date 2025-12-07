@@ -1078,7 +1078,35 @@ player_ids = load_all_players_from_predictive_dataset(season)  # All players
 
 ---
 
+## 42. The Alpha Engine Transformation: From Accuracy to Market Edge 🎯 CRITICAL (December 2025)
+
+**The Problem**: Model correctly identifies that Luka is good (Accuracy Engine), but doesn't identify why the market is wrong about players like Jalen Brunson (undervalued before breakout) or Jordan Poole (overvalued before collapse).
+
+**The Insight**: **Alpha = Value - Price**. In a salary-capped league, "Star" is a financial designation as much as a skill one. A "Bulldozer" on a rookie contract is High Alpha. A "Bulldozer" on a Supermax contract is Negative Alpha.
+
+**The Implementation**:
+1. **Volume Exemption Fix**: Distinguish "Engines" (Good Volume) from "Black Holes" (Bad Volume)
+   - Requires: `CREATION_VOLUME_RATIO > 0.60 AND (CREATION_TAX >= -0.05 OR RS_RIM_APPETITE >= 0.1746)`
+   - Catches "Empty Calories" creators while preserving true creators
+
+2. **DEPENDENCE_SCORE Integration**: Context dependency as a feature
+   - Added as mandatory feature (5.92% importance)
+   - Model learns to penalize high-dependence players (system merchants)
+
+3. **Alpha Calculation**: Map predictions to salary data
+   - Identifies undervalued stars (Brunson Zone: < $20M, high star-level)
+   - Identifies overvalued players (Tobias Harris Zone: > $30M, low star-level)
+
+**Key Principle**: Stop modeling "Who scores points?" and start modeling "Who wins playoff series relative to their cost?"—which is the definition of Alpha.
+
+**See**: `ALPHA_ENGINE_IMPLEMENTATION.md` and `ALPHA_ENGINE_VALIDATION_RESULTS.md` for complete details.
+
+---
+
 **See Also**:
+- `ALPHA_ENGINE_IMPLEMENTATION.md` - ✅ **COMPLETE** - Alpha Engine implementation
+- `ALPHA_ENGINE_VALIDATION_RESULTS.md` - ✅ **COMPLETE** - Validation results
+- `docs/SALARY_DATA_STRATEGY.md` - Salary data collection strategy
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `PHASE4_IMPLEMENTATION_PLAN.md` - Phase 4 implementation plan (completed)
 - `NEXT_STEPS.md` - **START HERE** - Current priorities and completed work
