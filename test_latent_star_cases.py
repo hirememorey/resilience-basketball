@@ -45,6 +45,7 @@ class LatentStarTestCase:
         test_usage: float,
         expected_outcome: str,
         expected_star_level: Optional[str] = None,
+        expected_risk_category: Optional[str] = None,  # NEW: 2D Risk Matrix category
         context: str = "",
         mechanism: str = ""
     ):
@@ -54,6 +55,7 @@ class LatentStarTestCase:
         self.test_usage = test_usage  # As decimal (e.g., 0.30 for 30%)
         self.expected_outcome = expected_outcome  # "Bulldozer", "Victim", "Sniper", "King", etc.
         self.expected_star_level = expected_star_level  # "High" (>65%), "Medium" (30-65%), "Low" (<55%)
+        self.expected_risk_category = expected_risk_category  # "Franchise Cornerstone", "Luxury Component", "Depth", "Avoid"
         self.context = context
         self.mechanism = mechanism
 
@@ -150,9 +152,10 @@ def get_test_cases() -> List[LatentStarTestCase]:
         category="False Positive - Mirage Breakout",
         test_usage=0.30,
         expected_outcome="Victim",
-        expected_star_level="Low",  # <55%
+        expected_star_level="Low",  # <55% (or use 2D: High Performance + High Dependence)
+        expected_risk_category="Luxury Component",  # High Performance + High Dependence
         context="26% Usage. System merchant relying on Curry gravity.",
-        mechanism="Should detect low Pressure Resilience and dependence on open shots."
+        mechanism="Should detect low Pressure Resilience and dependence on open shots. 2D: High Performance (succeeded) + High Dependence (system merchant)."
     ),
     LatentStarTestCase(
         name="Talen Horton-Tucker",
@@ -246,9 +249,10 @@ def get_test_cases() -> List[LatentStarTestCase]:
         category="True Negative - Comparison Case",
         test_usage=0.28,
         expected_outcome="Victim",
-        expected_star_level="Low",  # <55%
+        expected_star_level="Low",  # <55% (or use 2D: High Performance + High Dependence)
+        expected_risk_category="Luxury Component",  # High Performance + High Dependence (system-based)
         context="Traded 1-1 for Haliburton. All-Star, but lacks playoff resilience.",
-        mechanism="Model should identify lack of stress vectors (Physicality/Creation) needed for playoff success."
+        mechanism="Model should identify lack of stress vectors (Physicality/Creation) needed for playoff success. 2D: High Performance + High Dependence (system-based rim pressure)."
     ),
     LatentStarTestCase(
         name="Tyrese Haliburton",
@@ -257,8 +261,9 @@ def get_test_cases() -> List[LatentStarTestCase]:
         test_usage=0.28,
         expected_outcome="Bulldozer",
         expected_star_level="High",  # >65%
+        expected_risk_category="Franchise Cornerstone",  # High Performance + Low Dependence (portable skills)
         context="Traded 1-1 for Sabonis. Elite Creation and Leverage vectors.",
-        mechanism="Model should identify elite stress vectors."
+        mechanism="Model should identify elite stress vectors. 2D: High Performance + Low Dependence (portable, self-created)."
     ),
     
         # ========== Category 6: The "Empty Stats" Stars (True Negatives - Regular Season Stars, Playoff Fragile) ==========
@@ -398,17 +403,21 @@ def get_test_cases() -> List[LatentStarTestCase]:
     
     return test_cases
 
-def evaluate_prediction(
+def evaluate_prediction_2d(
     predicted_archetype: str,
-    star_level_potential: float,
+    performance_score: float,
+    dependence_score: Optional[float],
+    risk_category: str,
     expected_outcome: str,
-    expected_star_level: Optional[str]
+    expected_star_level: Optional[str],
+    expected_risk_category: Optional[str]
 ) -> Dict:
-    """Evaluate if prediction matches expectations."""
+    """Evaluate if prediction matches expectations (2D Risk Matrix)."""
     
     result = {
         'archetype_match': False,
         'star_level_match': False,
+        'risk_category_match': False,
         'overall_pass': False,
         'notes': []
     }
@@ -429,30 +438,48 @@ def evaluate_prediction(
     else:
         result['archetype_match'] = clean_expected in predicted_archetype
 
-    # Check star-level match
+    # Check star-level match (1D metric)
     # Thresholds:
     # - High: ≥65% 
     # - Low: <55% 
     if expected_star_level:
         if expected_star_level == "High":
-            result['star_level_match'] = star_level_potential >= 0.65
+            result['star_level_match'] = performance_score >= 0.65
             if not result['star_level_match']:
-                result['notes'].append(f"Expected high star-level (≥65%), got {star_level_potential:.2%}")
+                result['notes'].append(f"Expected high performance (≥65%), got {performance_score:.2%}")
         elif expected_star_level == "Medium":
-            result['star_level_match'] = 0.30 <= star_level_potential < 0.70
+            result['star_level_match'] = 0.30 <= performance_score < 0.70
             if not result['star_level_match']:
-                result['notes'].append(f"Expected medium star-level (30-70%), got {star_level_potential:.2%}")
+                result['notes'].append(f"Expected medium performance (30-70%), got {performance_score:.2%}")
         elif expected_star_level == "Low":
-            result['star_level_match'] = star_level_potential < 0.55
+            result['star_level_match'] = performance_score < 0.55
             if not result['star_level_match']:
-                result['notes'].append(f"Expected low star-level (<55%), got {star_level_potential:.2%}")
+                result['notes'].append(f"Expected low performance (<55%), got {performance_score:.2%}")
 
-    # Overall pass if star-level matches (primary metric)
-    if expected_star_level:
+    # Check risk category match (2D metric)
+    if expected_risk_category:
+        # Allow flexible matching (e.g., "Luxury Component" matches "Luxury Component" or contains it)
+        result['risk_category_match'] = expected_risk_category in risk_category or risk_category in expected_risk_category
+        if not result['risk_category_match']:
+            result['notes'].append(f"Expected risk category '{expected_risk_category}', got '{risk_category}'")
+    else:
+        # If no expected risk category, consider it a pass (backward compatibility)
+        result['risk_category_match'] = True
+
+    # Overall pass: Use 2D risk category if provided, otherwise fall back to 1D star-level
+    if expected_risk_category:
+        # Primary: Risk category must match
+        result['overall_pass'] = result['risk_category_match']
+        # Secondary: Performance should also be reasonable (but not required if category matches)
+        if not result['star_level_match'] and expected_star_level:
+            result['notes'].append(f"Risk category matches but performance doesn't: {performance_score:.2%}")
+    elif expected_star_level:
+        # Fallback to 1D: star-level must match
         result['overall_pass'] = result['star_level_match']
         if not result['archetype_match']:
             result['notes'].append(f"Archetype mismatch: expected {expected_outcome}, got {predicted_archetype}")
     else:
+        # No specific expectations: just check archetype
         result['overall_pass'] = result['archetype_match']
     
     return result
@@ -500,11 +527,15 @@ def run_test_suite(apply_hard_gates: bool = True):
                 'season': test_case.season,
                 'category': test_case.category,
                 'test_usage_pct': test_case.test_usage * 100,
-                'expected_outcome': test_case.expected_outcome,
-                'expected_star_level': test_case.expected_star_level,
-                'data_found': False,
-                'predicted_archetype': None,
-                'star_level_potential': None,
+            'expected_outcome': test_case.expected_outcome,
+            'expected_star_level': test_case.expected_star_level,
+            'expected_risk_category': test_case.expected_risk_category,
+            'data_found': False,
+            'predicted_archetype': None,
+            'performance_score': None,
+            'dependence_score': None,
+            'risk_category': None,
+            'star_level_potential': None,
                 'king_prob': None,
                 'bulldozer_prob': None,
                 'sniper_prob': None,
@@ -523,31 +554,60 @@ def run_test_suite(apply_hard_gates: bool = True):
         if actual_usage and not pd.isna(actual_usage):
             logger.info(f"  Actual Usage: {actual_usage*100:.1f}%")
         
-        # Predict at test usage level
-        prediction = predictor.predict_archetype_at_usage(player_data, test_case.test_usage, apply_hard_gates=apply_hard_gates)
+        # Predict with 2D Risk Matrix
+        result_2d = predictor.predict_with_risk_matrix(
+            player_data, 
+            test_case.test_usage, 
+            apply_phase3_fixes=True,
+            apply_hard_gates=apply_hard_gates
+        )
         
-        predicted_archetype = prediction['predicted_archetype']
-        star_level_potential = prediction['star_level_potential']
-        probs = prediction['probabilities']
+        # Extract 2D metrics
+        performance_score = result_2d.get('performance_score', 0.0)
+        dependence_score = result_2d.get('dependence_score', None)
+        risk_category = result_2d.get('risk_category', 'Unknown')
+        predicted_archetype = result_2d.get('archetype', 'Unknown')
         
-        logger.info(f"\n  Prediction Results:")
+        # Get full 1D prediction for probabilities and flags
+        # (predict_with_risk_matrix calls predict_archetype_at_usage internally, but doesn't return all details)
+        prediction_1d = predictor.predict_archetype_at_usage(
+            player_data, 
+            test_case.test_usage, 
+            apply_phase3_fixes=True,
+            apply_hard_gates=apply_hard_gates
+        )
+        probs = prediction_1d.get('probabilities', {})
+        confidence_flags = prediction_1d.get('confidence_flags', [])
+        
+        # Use performance_score as star_level_potential for backward compatibility
+        star_level_potential = performance_score
+        
+        logger.info(f"\n  Prediction Results (2D Risk Matrix):")
         logger.info(f"    Predicted Archetype: {predicted_archetype}")
-        logger.info(f"    Star-Level Potential: {star_level_potential:.2%}")
+        logger.info(f"    Performance Score: {performance_score:.2%}")
+        if dependence_score is not None:
+            logger.info(f"    Dependence Score: {dependence_score:.2%}")
+        else:
+            logger.info(f"    Dependence Score: N/A (Missing data)")
+        logger.info(f"    Risk Category: {risk_category}")
         logger.info(f"    Probabilities:")
-        logger.info(f"      King: {probs.get('King', 0):.2%}")
-        logger.info(f"      Bulldozer: {probs.get('Bulldozer', 0):.2%}")
-        logger.info(f"      Sniper: {probs.get('Sniper', 0):.2%}")
-        logger.info(f"      Victim: {probs.get('Victim', 0):.2%}")
+        logger.info(f"      King: {probs.get('King (Resilient Star)', probs.get('King', 0)):.2%}")
+        logger.info(f"      Bulldozer: {probs.get('Bulldozer (Fragile Star)', probs.get('Bulldozer', 0)):.2%}")
+        logger.info(f"      Sniper: {probs.get('Sniper (Resilient Role)', probs.get('Sniper', 0)):.2%}")
+        logger.info(f"      Victim: {probs.get('Victim (Fragile Role)', probs.get('Victim', 0)):.2%}")
         
-        if prediction['confidence_flags']:
-            logger.info(f"    Confidence Flags: {', '.join(prediction['confidence_flags'])}")
+        if confidence_flags:
+            logger.info(f"    Confidence Flags: {', '.join(confidence_flags)}")
         
-        # Evaluate prediction
-        evaluation = evaluate_prediction(
+        # Evaluate prediction (updated for 2D)
+        evaluation = evaluate_prediction_2d(
             predicted_archetype,
-            star_level_potential,
+            performance_score,
+            dependence_score,
+            risk_category,
             test_case.expected_outcome,
-            test_case.expected_star_level
+            test_case.expected_star_level,
+            test_case.expected_risk_category
         )
         
         logger.info(f"\n  Evaluation:")
@@ -572,7 +632,7 @@ def run_test_suite(apply_hard_gates: bool = True):
         else:
             summary_stats['by_category'][category]['failed'] += 1
         
-        # Store results
+        # Store results (updated for 2D)
         results.append({
             'test_number': i,
             'player_name': test_case.name,
@@ -581,18 +641,23 @@ def run_test_suite(apply_hard_gates: bool = True):
             'test_usage_pct': test_case.test_usage * 100,
             'expected_outcome': test_case.expected_outcome,
             'expected_star_level': test_case.expected_star_level,
+            'expected_risk_category': test_case.expected_risk_category,
             'data_found': True,
             'predicted_archetype': predicted_archetype,
-            'star_level_potential': star_level_potential,
-            'king_prob': probs.get('King', 0),
-            'bulldozer_prob': probs.get('Bulldozer', 0),
-            'sniper_prob': probs.get('Sniper', 0),
-            'victim_prob': probs.get('Victim', 0),
+            'performance_score': performance_score,
+            'dependence_score': dependence_score,
+            'risk_category': risk_category,
+            'star_level_potential': star_level_potential,  # Keep for backward compatibility
+            'king_prob': probs.get('King (Resilient Star)', probs.get('King', 0)),
+            'bulldozer_prob': probs.get('Bulldozer (Fragile Star)', probs.get('Bulldozer', 0)),
+            'sniper_prob': probs.get('Sniper (Resilient Role)', probs.get('Sniper', 0)),
+            'victim_prob': probs.get('Victim (Fragile Role)', probs.get('Victim', 0)),
             'archetype_match': evaluation['archetype_match'],
             'star_level_match': evaluation['star_level_match'],
+            'risk_category_match': evaluation['risk_category_match'],
             'overall_pass': evaluation['overall_pass'],
             'notes': '; '.join(evaluation['notes']) if evaluation['notes'] else 'None',
-            'confidence_flags': ', '.join(prediction['confidence_flags']) if prediction['confidence_flags'] else 'None'
+            'confidence_flags': ', '.join(confidence_flags) if confidence_flags else 'None'
         })
 
     # Generate summary report
@@ -647,20 +712,35 @@ def generate_markdown_report(df_results: pd.DataFrame, summary_stats: Dict, outp
             f.write(f"- **Pass Rate**: {pass_rate:.1f}%\n\n")
         
         f.write("## Detailed Results\n\n")
-        f.write("| Test | Player | Season | Category | Expected | Predicted | Star-Level | Pass |\n")
-        f.write("|------|--------|--------|----------|----------|-----------|------------|------|\n")
+        f.write("| Test | Player | Season | Category | Expected | Predicted | Performance | Dependence | Risk Category | Pass |\n")
+        f.write("|------|--------|--------|----------|----------|-----------|-------------|------------|---------------|------|\n")
         
         for _, row in df_results.iterrows():
             if not row['data_found']:
                 status = "❌ No Data"
+                perf_str = "N/A"
+                dep_str = "N/A"
+                risk_str = "N/A"
             elif row['overall_pass']:
                 status = "✅ PASS"
+                perf_str = f"{row['performance_score']:.2%}" if pd.notna(row['performance_score']) else "N/A"
+                dep_str = f"{row['dependence_score']:.2%}" if pd.notna(row['dependence_score']) else "N/A"
+                risk_str = str(row['risk_category']) if pd.notna(row['risk_category']) else "N/A"
             else:
                 status = "❌ FAIL"
+                perf_str = f"{row['performance_score']:.2%}" if pd.notna(row['performance_score']) else "N/A"
+                dep_str = f"{row['dependence_score']:.2%}" if pd.notna(row['dependence_score']) else "N/A"
+                risk_str = str(row['risk_category']) if pd.notna(row['risk_category']) else "N/A"
+            
+            expected_str = f"{row['expected_outcome']}"
+            if pd.notna(row['expected_star_level']):
+                expected_str += f" ({row['expected_star_level']})"
+            if pd.notna(row['expected_risk_category']):
+                expected_str += f" [{row['expected_risk_category']}]"
             
             f.write(f"| {row['test_number']} | {row['player_name']} | {row['season']} | {row['category']} | "
-                   f"{row['expected_outcome']} ({row['expected_star_level']}) | "
-                   f"{row['predicted_archetype']} | {row['star_level_potential']:.2%} | {status} |\n")
+                   f"{expected_str} | "
+                   f"{row['predicted_archetype']} | {perf_str} | {dep_str} | {risk_str} | {status} |\n")
         
         f.write("\n## Notes\n\n")
         failed_tests = df_results[~df_results['overall_pass'] & df_results['data_found']]

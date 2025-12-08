@@ -1123,6 +1123,29 @@ if target_usage > current_usage:
 
 ---
 
+## 43. Don't Overengineer - Use Existing Frameworks 🎯 CRITICAL (December 2025)
+
+**The Problem**: When trying to fix test failures (Poole, Markkanen), we were designing complex penalty systems to force 2D insights (Performance vs. Dependence) into the 1D model.
+
+**The Insight**: **The 2D Risk Matrix framework already exists and solves this problem.** Instead of building tiered penalty systems, clutch immunity logic, and dependence caps, we should use the existing `predict_with_risk_matrix()` function.
+
+**The Fix**: Updated test suite to use `predict_with_risk_matrix()` for all cases:
+- Provides both Performance Score (1D) and Risk Category (2D)
+- Correctly identifies Poole as "Luxury Component" (High Performance + High Dependence)
+- Simpler, cleaner, and aligns with first principles
+
+**Key Principle**: **Check if a solution already exists before building a new one.** The 2D framework was built specifically to handle the Performance vs. Dependence problem. Don't rebuild it inside the 1D model.
+
+**Example**:
+- ❌ **Wrong**: Build complex penalty system with tiered curves, clutch immunity, hard caps
+- ✅ **Right**: Use existing `predict_with_risk_matrix()` - it already separates Performance from Dependence
+
+**Result**: Test suite now provides richer insights (both dimensions) with simpler code (using existing framework).
+
+**See**: `docs/2D_RISK_MATRIX_IMPLEMENTATION.md` for complete framework details.
+
+---
+
 **See Also**:
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation

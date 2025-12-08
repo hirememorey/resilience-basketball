@@ -35,7 +35,7 @@ These are the core files driving the current 53.54% accuracy model:
 - `run_expanded_predictions.py` (Batch Inference)
 
 **Validation:**
-- `test_latent_star_cases.py` (Critical Case Suite)
+- `test_latent_star_cases.py` (Critical Case Suite - **Now uses 2D Risk Matrix for all cases**)
 - `test_2d_risk_matrix.py` (Risk Matrix Suite)
 - `analyze_model_misses.py` (Miss Analysis)
 
@@ -88,7 +88,13 @@ These are the core files driving the current 53.54% accuracy model:
 
 ### Validation Results
 
-**Test Case Pass Rate:** **81.2%** (26/32) - Updated December 7, 2025 with expanded test suite ✅
+**Test Case Pass Rate:** **81.2%** (26/32) - Updated December 7, 2025 with 2D Risk Matrix integration ✅
+
+**Test Suite Enhancement (December 7, 2025):**
+- Test suite now uses `predict_with_risk_matrix()` for all test cases
+- Provides both Performance Score (1D) and Risk Category (2D) for richer evaluation
+- Key insight: Using existing 2D framework is simpler than forcing 2D insights into 1D model
+- Jordan Poole correctly identified as "Luxury Component" (High Performance + High Dependence) ✅
 
 **Test Suite Expansion:** Expanded from 16 to 32 test cases, adding:
 - Mikal Bridges (2021-22) - True Positive ✅

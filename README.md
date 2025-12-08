@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** Data leakage fixes complete ✅ | Previous playoff features integrated ✅ | Temporal train/test split implemented ✅ | RFE-optimized model with **53.54% accuracy** (true predictive power, RS-only features) and **81.2% test case pass rate** (26/32). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D framework** separates Performance (outcomes) from Dependence (portability) using data-driven thresholds (33rd/66th percentiles). **Universal Projection** implemented (Dec 2025) - features scale together using empirical distributions. **Expanded test suite** (32 cases: True Positives, False Positives, True Negatives including KAT and Fultz). **Next Priority**: Investigate remaining test failures (Poole, Randle, Haliburton, Fultz).
+**Current Status:** Data leakage fixes complete ✅ | Previous playoff features integrated ✅ | Temporal train/test split implemented ✅ | RFE-optimized model with **53.54% accuracy** (true predictive power, RS-only features) and **81.2% test case pass rate** (26/32). Model uses 10 core features to predict playoff archetypes with usage-aware conditional predictions. **2D Risk Matrix integrated into test suite** (Dec 2025) - test cases now use `predict_with_risk_matrix()` to evaluate both Performance (outcomes) and Dependence (portability) dimensions. **Universal Projection** implemented (Dec 2025) - features scale together using empirical distributions. **Expanded test suite** (32 cases: True Positives, False Positives, True Negatives including KAT and Fultz). **Next Priority**: Investigate remaining test failures (Randle, Sabonis, Haliburton, Fultz).
 
 ---
 
@@ -134,7 +134,8 @@ The model can predict at **any usage level**, enabling two use cases:
 - `src/nba_data/scripts/train_rfe_model.py` - Train RFE-optimized model
 
 ### Test Scripts
-- `test_latent_star_cases.py` - Validation test suite (16 critical cases)
+- `test_latent_star_cases.py` - Validation test suite (32 critical cases, **now uses 2D Risk Matrix**)
+- `test_2d_risk_matrix.py` - 2D Risk Matrix validation suite
 - `run_expanded_predictions.py` - Run model on expanded dataset (Age ≤ 25, Min minutes)
 - `analyze_model_misses.py` - Diagnostic script to analyze specific model misses
 
