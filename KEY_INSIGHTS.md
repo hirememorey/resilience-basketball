@@ -4,6 +4,69 @@
 
 ---
 
+## Table of Contents
+
+### Core Principles (1-10)
+1. **The Reference Class Principle** - Filter first, then normalize and rank
+2. **The Proxy Fallacy** - Don't use proxies; flag missing data with confidence scores
+3. **Missing Data = Selection Bias** - Fix the pipeline, not the symptom
+4. **Normalize Within Cohort, Not Entire League** - Z-scores are relative to reference class
+5. **Filter-First Architecture** - Filter → Normalize → Rank (correct order)
+6. **Skills vs. Performance** ✅ RESOLVED - Model is now usage-aware
+7. **Don't Average Away the Strongest Signal** - Use model feature importance weights
+8. **Validation-First Approach** - Test formulas on known cases before building pipeline
+9. **Understand Data Distribution Before Normalizing** - Use actual percentiles, not theoretical ranges
+10. **The Abdication Detector** - LEVERAGE_USG_DELTA < -0.05 indicates passivity
+
+### Critical Implementation Patterns (11-27)
+11. **Opportunity vs. Ability (The Tree Model Trap)** 🎯 CRITICAL - Project volume features, don't just scale
+12. **Context Dependency (System Merchant Penalty)** 🎯 NEW - Penalize context-dependent efficiency
+13. **Physicality Floor (Fragility Gate) - The Ratio Trap** 🎯 CRITICAL - Use absolute frequency, not ratios
+14. **The "Flash Multiplier"** 🎯 NEW - Elite efficiency on low volume → star-level projection
+15. **The "Playoff Translation Tax"** 🎯 NEW - Simulate playoff defense by penalizing open shots
+16. **The "Bag Check" Gate** 🎯 NEW - Self-created volume required for primary initiators
+17. **Threshold Adjustment** 🎯 NEW - Fit thresholds to data, not arbitrary cutoffs
+18. **The "Linear Tax Fallacy"** 🎯 NEW - Tax volume, not efficiency for system merchants
+19. **The "Narrow Flash" Problem** 🎯 NEW - Include Pressure Resilience in flash detection
+20. **Data Completeness: INNER JOIN vs LEFT JOIN** 🎯 CRITICAL - RS features only need RS data
+21. **The Reference Class Calibration Problem** 🎯 CRITICAL - Calculate percentiles on qualified players only
+22. **The STAR Average Principle** 🎯 CRITICAL - Compare stars to stars, not bench players
+23. **The Bag Check Gate - Structural Triumph** 🎯 CRITICAL - Dependency = Fragility
+24. **Missing Leverage Data Penalty** 🎯 CRITICAL - Don't predict without #1 predictor
+25. **Negative Signal Gate (Abdication Tax)** 🎯 CRITICAL - LEVERAGE_USG_DELTA < -0.05 = red flag
+26. **Data Completeness Gate** 🎯 CRITICAL - Require 67% of critical features
+27. **Minimum Sample Size Gate** 🎯 CRITICAL - Small sample size = noise, not signal
+
+### Advanced Features & Model Evolution (28-38)
+28. **Multi-Season Trajectory Features** 🎯 NEW - Trajectory > Snapshot
+29. **Convert Gates to Features** 🎯 NEW - Learn, don't patch
+30. **The Double-Penalization Problem** 🎯 CRITICAL - Model vs. heuristic conflict
+31. **Smart Deference vs. Panic Abdication** 🎯 CRITICAL - Conditional abdication tax
+32. **Capacity vs. Role (Flash Multiplier Exemption)** 🎯 CRITICAL - Elite efficiency exempts from Bag Check
+33. **The Trust Fall Experiment** 🎯 NEW - Test if model can learn without hard rules
+34. **Feature Bloat & The Pareto Principle** 🎯 CRITICAL - 10 features achieve same accuracy as 65
+35. **Multi-Signal Tax System (The Poole Problem)** 🎯 CRITICAL - Multiple negative signals compound
+36. **Volume Exemption (System Merchant vs. Primary Engine)** 🎯 CRITICAL - 60%+ creation volume = system, not merchant
+37. **The Trust Fall Experiment & Ground Truth Trap** 🎯 CRITICAL - Performance vs. Portability are orthogonal
+38. **Data-Driven Thresholds** 🎯 CRITICAL - Fit model to data, not data to model
+
+### Recent Critical Fixes (39-48)
+39. **The Creator's Dilemma: Volume vs. Stabilizers** 🎯 CRITICAL - High-usage creators need stabilizers
+40. **The "Empty Calories" Creator Pattern** 🎯 CRITICAL - High volume + negative tax = volume scorer
+41. **Shot Chart Collection Data Completeness Fix** 🎯 CRITICAL - Collect for all players, not just qualified
+42. **The "Static Avatar" Fallacy - Universal Feature Projection** 🎯 CRITICAL - Features must scale together
+43. **Don't Overengineer - Use Existing Frameworks** 🎯 CRITICAL - 2D Risk Matrix already solves the problem
+44. **The "Low-Floor Illusion" - Absolute Efficiency Floor** 🎯 CRITICAL - Uniformly inefficient ≠ resilient
+45. **Continuous Gradients vs. Hard Gates** 🎯 CRITICAL - Magnitude matters, not just presence
+46. **Volume × Flaw Interaction Terms** 🎯 CRITICAL - High usage amplifies flaws
+47. **Asymmetric Loss (Sample Weighting)** 🎯 CRITICAL - False positives cost more than false negatives
+48. **Trust Fall 2.0: Model Can Learn, But Needs Stronger Signals** 🎯 CRITICAL - Model identifies stars but struggles with false positives
+
+### Quick Reference
+- **Quick Reference Checklist** - Implementation checklist for new features
+
+---
+
 ## 1. The Reference Class Principle
 
 **The Problem**: Ranking players against the entire league creates false comparisons.
