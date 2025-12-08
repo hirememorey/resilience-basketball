@@ -479,6 +479,41 @@ class RFEModelTrainer:
         logger.info(f"Testing seasons: {sorted(test_seasons)} ({len(X_test)} samples)")
         logger.info(f"Feature count: {len(feature_names)} (reduced from 65)")
         
+        # Calculate sample weights for asymmetric loss
+        # False positives (predicting "Victim" as "King") are much worse than false negatives
+        # PHASE 4: Increased penalty from 3x to 5x (4.0 penalty) to better penalize false positives
+        # Weight function: weight = 1.0 + (is_victim_actual * is_high_usage * 4.0)
+        # This gives 5x total weight (1.0 base + 4.0 penalty = 5.0) for high-usage victims
+        logger.info("Calculating sample weights for asymmetric loss (5x penalty for high-usage victims)...")
+        
+        # Get actual archetypes for training set
+        y_train_archetypes = df.loc[train_indices, 'ARCHETYPE']
+        is_victim = (y_train_archetypes == 'Victim (Fragile Role)').astype(int)
+        
+        # Get usage for training set
+        if 'USG_PCT' in df.columns:
+            usg_pct = df.loc[train_indices, 'USG_PCT'].fillna(0.0)
+            # Normalize USG_PCT if it's in percentage format
+            if usg_pct.max() > 1.0:
+                usg_pct = usg_pct / 100.0
+            is_high_usage = (usg_pct > 0.25).astype(int)  # High usage threshold (25%)
+        else:
+            is_high_usage = pd.Series([0] * len(y_train_archetypes))
+            logger.warning("USG_PCT not found - sample weighting will not account for usage")
+        
+        # Calculate weights: 1.0 base + 4.0 penalty for high-usage victims (5x total)
+        # This strongly penalizes false positives (predicting high-usage victims as stars)
+        penalty_multiplier = 4.0  # PHASE 4: Increased from 2.0 to 4.0 (was 3x, now 5x)
+        sample_weights = 1.0 + (is_victim * is_high_usage * penalty_multiplier)
+        
+        logger.info(f"  Base weight: 1.0")
+        logger.info(f"  Penalty multiplier: {penalty_multiplier}x (total weight = {1.0 + penalty_multiplier}x for high-usage victims)")
+        logger.info(f"  High-usage victims (penalty): {is_victim.sum()} victims, {is_high_usage.sum()} high-usage")
+        logger.info(f"  High-usage victims receiving penalty: {(is_victim * is_high_usage).sum()}")
+        logger.info(f"  Weighted samples: {(sample_weights > 1.0).sum()} (weight > 1.0)")
+        logger.info(f"  Max weight: {sample_weights.max():.2f}")
+        logger.info(f"  Mean weight: {sample_weights.mean():.2f}")
+        
         # Initialize XGBoost
         model = xgb.XGBClassifier(
             objective='multi:softprob',
@@ -490,9 +525,9 @@ class RFEModelTrainer:
             random_state=42
         )
         
-        # Train
-        logger.info("Training model...")
-        model.fit(X_train, y_train)
+        # Train with sample weights
+        logger.info("Training model with asymmetric loss (sample weighting)...")
+        model.fit(X_train, y_train, sample_weight=sample_weights.values)
         
         # Save Model
         model_path = self.models_dir / f"resilience_xgb_rfe_{n_features}.pkl"

@@ -19,9 +19,15 @@ import time
 # Add project root to path
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
+# Add script directory to path for local imports
+script_dir = Path(__file__).parent
+if str(script_dir) not in sys.path:
+    sys.path.insert(0, str(script_dir))
+
 from src.nba_data.api.nba_stats_client import create_nba_stats_client
 from src.nba_data.api.synergy_playtypes_client import SynergyPlaytypesClient
 from src.nba_data.constants import ID_TO_ABBREV, get_team_abbrev, ABBREV_TO_ID
+from calculate_dependence_score import calculate_dependence_scores_batch
 
 # Setup Logging
 logging.basicConfig(
@@ -655,6 +661,20 @@ class StressVectorEngine:
             
         final_df = pd.concat(all_seasons_data, ignore_index=True)
         
+        # PHASE 1: Calculate Dependence Scores for all historical data
+        logger.info("Calculating Dependence Scores for all player-seasons...")
+        try:
+            final_df = calculate_dependence_scores_batch(final_df)
+            logger.info(f"Successfully calculated Dependence Scores for {final_df['DEPENDENCE_SCORE'].notna().sum()}/{len(final_df)} player-seasons")
+        except Exception as e:
+            logger.error(f"Error calculating Dependence Scores: {e}", exc_info=True)
+            logger.warning("Continuing without Dependence Scores - will be calculated during inference")
+            # Add empty columns to maintain structure
+            final_df['DEPENDENCE_SCORE'] = np.nan
+            final_df['ASSISTED_FGM_PCT'] = np.nan
+            final_df['OPEN_SHOT_FREQUENCY'] = np.nan
+            final_df['SELF_CREATED_USAGE_RATIO'] = np.nan
+        
         # Clean up columns
         cols_to_keep = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON', 
                         'CREATION_TAX', 'CREATION_VOLUME_RATIO', 'CREATION_BOOST',
@@ -664,7 +684,8 @@ class StressVectorEngine:
                         'ELITE_WEAK_TS_DELTA', 'ELITE_WEAK_USG_DELTA',
                         'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED',
                         'USG_PCT', 'AGE',
-                        'ISO_FREQUENCY', 'PNR_HANDLER_FREQUENCY', 'POST_TOUCH_FREQUENCY']  # DATA COMPLETENESS FIX: Added playtype frequencies
+                        'ISO_FREQUENCY', 'PNR_HANDLER_FREQUENCY', 'POST_TOUCH_FREQUENCY',  # DATA COMPLETENESS FIX: Added playtype frequencies
+                        'DEPENDENCE_SCORE', 'ASSISTED_FGM_PCT', 'OPEN_SHOT_FREQUENCY', 'SELF_CREATED_USAGE_RATIO']  # PHASE 1: Added dependence score columns
         
         # Only keep columns that actually exist
         existing_cols = [c for c in cols_to_keep if c in final_df.columns]
