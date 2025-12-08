@@ -1,8 +1,8 @@
 # Current State: NBA Playoff Resilience Engine
 
-Date: December 7, 2025
+Date: December 8, 2025
 
-Status: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅
+Status: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅ | Playtype Data Merge Complete ✅ | USG_PCT/AGE Population Issue Identified ⚠️
 
 ## 🏗️ Project Structure & Cleanup
 
@@ -20,7 +20,7 @@ These are the core files driving the current 53.54% accuracy model:
 
 **Feature Engineering (Stress Vectors):**
 - `src/nba_data/scripts/calculate_simple_resilience.py` (Target Generation)
-- `src/nba_data/scripts/evaluate_plasticity_potential.py` (Creation, Leverage, Context)
+- `src/nba_data/scripts/evaluate_plasticity_potential.py` (Creation, Leverage, Context, **Playtype**) - Updated Dec 8, 2025 ✅
 - `src/nba_data/scripts/calculate_rim_pressure.py` (Physicality)
 - `src/nba_data/scripts/calculate_shot_difficulty_features.py` (Pressure)
 - `src/nba_data/scripts/calculate_dependence_score.py` (2D Risk Y-Axis)
@@ -61,8 +61,9 @@ These are the core files driving the current 53.54% accuracy model:
 
 **Data Coverage:**
 - Stress vectors: 100% coverage
-- Usage (USG_PCT): 100% coverage
-- Age: 100% coverage
+- Usage (USG_PCT): ⚠️ **0% coverage (ALL NaN)** - Bug in `fetch_player_metadata()` - see NEXT_STEPS.md
+- Age: ⚠️ **0% coverage (ALL NaN)** - Same bug as USG_PCT
+- Playtype data (ISO_FREQUENCY, PNR_HANDLER_FREQUENCY): **79.3% coverage** (4,210/5,312) - Fixed December 8, 2025 ✅
 - Clock data: 100% coverage (all seasons)
 - Rim pressure data: 95.9% coverage (1,773/1,849 in expanded predictions) - Fixed December 5, 2025 ✅
 

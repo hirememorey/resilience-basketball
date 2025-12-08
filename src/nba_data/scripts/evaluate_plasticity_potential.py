@@ -20,6 +20,7 @@ import time
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 from src.nba_data.api.nba_stats_client import create_nba_stats_client
+from src.nba_data.api.synergy_playtypes_client import SynergyPlaytypesClient
 from src.nba_data.constants import ID_TO_ABBREV, get_team_abbrev, ABBREV_TO_ID
 
 # Setup Logging
@@ -36,6 +37,7 @@ logger = logging.getLogger(__name__)
 class StressVectorEngine:
     def __init__(self):
         self.client = create_nba_stats_client()
+        self.playtype_client = SynergyPlaytypesClient()
         self.data_dir = Path("data")
         self.results_dir = Path("results")
         self.data_dir.mkdir(parents=True, exist_ok=True)
@@ -438,6 +440,130 @@ class StressVectorEngine:
             logger.error(f"❌ Error fetching player metadata for {season}: {e}", exc_info=True)
             return pd.DataFrame()
 
+    def fetch_playtype_metrics(self, season):
+        """
+        Fetch playtype data (ISO_FREQUENCY, PNR_HANDLER_FREQUENCY) from NBA Synergy API.
+        
+        Returns:
+            DataFrame with columns: PLAYER_ID, ISO_FREQUENCY, PNR_HANDLER_FREQUENCY, POST_TOUCH_FREQUENCY
+        """
+        logger.info(f"Fetching Playtype Metrics for {season}...")
+        
+        try:
+            # Fetch all playtype data for the season
+            all_playtype_data = self.playtype_client.get_all_playtype_stats_for_season(
+                season_year=season,
+                season_type="Regular Season"
+            )
+            
+            if not all_playtype_data:
+                logger.warning(f"No playtype data returned for {season}")
+                return pd.DataFrame()
+            
+            # Parse all playtype responses
+            all_records = []
+            for play_type, response_data in all_playtype_data.items():
+                if 'error' in response_data:
+                    logger.warning(f"Error fetching {play_type} for {season}: {response_data['error']}")
+                    continue
+                
+                try:
+                    records = self.playtype_client.parse_playtype_response(response_data)
+                    all_records.extend(records)
+                except Exception as e:
+                    logger.warning(f"Error parsing {play_type} for {season}: {e}")
+                    continue
+            
+            if not all_records:
+                logger.warning(f"No playtype records parsed for {season}")
+                return pd.DataFrame()
+            
+            # Convert to DataFrame
+            df_playtype = pd.DataFrame(all_records)
+            
+            # Group by player_id to handle multi-team players (sum FGA across teams)
+            df_playtype_grouped = df_playtype.groupby(['player_id', 'play_type'])['field_goals_attempted'].sum().reset_index()
+            
+            # Calculate total FGA across all play types for each player
+            df_total = df_playtype_grouped.groupby('player_id')['field_goals_attempted'].sum().reset_index()
+            df_total.columns = ['PLAYER_ID', 'TOTAL_FGA_PLAYTYPE']
+            
+            # Get Isolation FGA
+            df_iso = df_playtype_grouped[df_playtype_grouped['play_type'] == 'Isolation'].copy()
+            if not df_iso.empty:
+                df_iso = df_iso[['player_id', 'field_goals_attempted']].copy()
+                df_iso.columns = ['PLAYER_ID', 'ISO_FGA']
+            else:
+                df_iso = pd.DataFrame(columns=['PLAYER_ID', 'ISO_FGA'])
+            
+            # Get PnR Handler FGA
+            df_pnr = df_playtype_grouped[df_playtype_grouped['play_type'] == 'PRBallHandler'].copy()
+            if not df_pnr.empty:
+                df_pnr = df_pnr[['player_id', 'field_goals_attempted']].copy()
+                df_pnr.columns = ['PLAYER_ID', 'PNR_HANDLER_FGA']
+            else:
+                df_pnr = pd.DataFrame(columns=['PLAYER_ID', 'PNR_HANDLER_FGA'])
+            
+            # Get PostUp FGA (bonus)
+            df_post = df_playtype_grouped[df_playtype_grouped['play_type'] == 'PostUp'].copy()
+            if not df_post.empty:
+                df_post = df_post[['player_id', 'field_goals_attempted']].copy()
+                df_post.columns = ['PLAYER_ID', 'POST_FGA']
+            else:
+                df_post = pd.DataFrame(columns=['PLAYER_ID', 'POST_FGA'])
+            
+            # Merge all
+            df_result = df_total.copy()
+            
+            if not df_iso.empty:
+                df_result = pd.merge(df_result, df_iso, on='PLAYER_ID', how='left')
+            else:
+                df_result['ISO_FGA'] = 0.0
+            
+            if not df_pnr.empty:
+                df_result = pd.merge(df_result, df_pnr, on='PLAYER_ID', how='left')
+            else:
+                df_result['PNR_HANDLER_FGA'] = 0.0
+            
+            if not df_post.empty:
+                df_result = pd.merge(df_result, df_post, on='PLAYER_ID', how='left')
+            else:
+                df_result['POST_FGA'] = 0.0
+            
+            # Fill NaN with 0.0
+            df_result['ISO_FGA'] = df_result['ISO_FGA'].fillna(0.0)
+            df_result['PNR_HANDLER_FGA'] = df_result['PNR_HANDLER_FGA'].fillna(0.0)
+            df_result['POST_FGA'] = df_result['POST_FGA'].fillna(0.0)
+            
+            # Calculate frequencies
+            df_result['ISO_FREQUENCY'] = np.where(
+                df_result['TOTAL_FGA_PLAYTYPE'] > 0,
+                df_result['ISO_FGA'] / df_result['TOTAL_FGA_PLAYTYPE'],
+                0.0
+            )
+            
+            df_result['PNR_HANDLER_FREQUENCY'] = np.where(
+                df_result['TOTAL_FGA_PLAYTYPE'] > 0,
+                df_result['PNR_HANDLER_FGA'] / df_result['TOTAL_FGA_PLAYTYPE'],
+                0.0
+            )
+            
+            df_result['POST_TOUCH_FREQUENCY'] = np.where(
+                df_result['TOTAL_FGA_PLAYTYPE'] > 0,
+                df_result['POST_FGA'] / df_result['TOTAL_FGA_PLAYTYPE'],
+                0.0
+            )
+            
+            # Return only needed columns
+            df_result = df_result[['PLAYER_ID', 'ISO_FREQUENCY', 'PNR_HANDLER_FREQUENCY', 'POST_TOUCH_FREQUENCY']].copy()
+            
+            logger.info(f"  ✅ Processed Playtype Metrics for {len(df_result)} players")
+            return df_result
+            
+        except Exception as e:
+            logger.error(f"❌ Error fetching playtype metrics for {season}: {e}", exc_info=True)
+            return pd.DataFrame()
+
     def run(self, seasons=['2021-22', '2022-23', '2023-24']):
         
         all_seasons_data = []
@@ -460,6 +586,9 @@ class StressVectorEngine:
                 
                 # 4. Player Metadata (USG_PCT, AGE) - PHASE 1 FIX
                 df_metadata = self.fetch_player_metadata(season)
+                
+                # 5. Playtype Metrics (ISO_FREQUENCY, PNR_HANDLER_FREQUENCY) - DATA COMPLETENESS FIX
+                df_playtype = self.fetch_playtype_metrics(season)
                 
                 # Merge Vectors
                 df_season = df_creation
@@ -503,6 +632,20 @@ class StressVectorEngine:
                     df_season['USG_PCT'] = np.nan
                     df_season['AGE'] = np.nan
                 
+                # Merge playtype data
+                if not df_playtype.empty:
+                    df_season = pd.merge(
+                        df_season,
+                        df_playtype[['PLAYER_ID', 'ISO_FREQUENCY', 'PNR_HANDLER_FREQUENCY', 'POST_TOUCH_FREQUENCY']],
+                        on='PLAYER_ID',
+                        how='left'
+                    )
+                else:
+                    logger.warning(f"No playtype data for {season}, filling with NaNs")
+                    df_season['ISO_FREQUENCY'] = np.nan
+                    df_season['PNR_HANDLER_FREQUENCY'] = np.nan
+                    df_season['POST_TOUCH_FREQUENCY'] = np.nan
+                
                 df_season['SEASON'] = season
                 all_seasons_data.append(df_season)
                 
@@ -527,7 +670,8 @@ class StressVectorEngine:
                         'AVG_OPPONENT_DCS', 'MEAN_OPPONENT_DCS',
                         'ELITE_WEAK_TS_DELTA', 'ELITE_WEAK_USG_DELTA',
                         'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED',
-                        'USG_PCT', 'AGE']  # PHASE 1: Added USG_PCT, AGE, and CREATION_BOOST
+                        'USG_PCT', 'AGE',
+                        'ISO_FREQUENCY', 'PNR_HANDLER_FREQUENCY', 'POST_TOUCH_FREQUENCY']  # DATA COMPLETENESS FIX: Added playtype frequencies
         
         # Only keep columns that actually exist
         existing_cols = [c for c in cols_to_keep if c in final_df.columns]

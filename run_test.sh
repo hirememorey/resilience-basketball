@@ -1,0 +1,1 @@
+python test_latent_star_cases.py

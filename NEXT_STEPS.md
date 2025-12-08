@@ -1,7 +1,7 @@
 # Next Steps
 
-**Date**: December 7, 2025  
-**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅
+**Date**: December 8, 2025  
+**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅ | Playtype Data Merge Complete ✅ | USG_PCT/AGE Population Issue Identified ⚠️
 
 ---
 
@@ -212,6 +212,58 @@
 - ✅ **No Regressions**: Pass rate maintained, no new failures introduced
 
 **See**: `results/latent_star_test_cases_report.md` for complete results.
+
+---
+
+## 🔴 CRITICAL PRIORITY: Fix USG_PCT and AGE Population Bug
+
+**Status**: ⚠️ **BLOCKING** - Model cannot make predictions without USG_PCT (40.2% feature importance)
+
+**The Problem**: 
+- `USG_PCT` and `AGE` have **0% coverage** (all NaN) in `predictive_dataset.csv`
+- Root cause: Bug in `fetch_player_metadata()` method in `evaluate_plasticity_potential.py`
+- The code tries to get `USG_PCT` from `base_stats` endpoint, but it's actually in `advanced_stats` endpoint
+
+**Location**: `src/nba_data/scripts/evaluate_plasticity_potential.py`, line ~397-398
+
+**The Fix**:
+1. Change `fetch_player_metadata()` to get `USG_PCT` from `advanced_stats` endpoint instead of `base_stats`
+2. Verify `AGE` is available in the correct endpoint (likely `base_stats` or `advanced_stats`)
+3. Re-run `evaluate_plasticity_potential.py` for all seasons (2015-2024)
+4. Verify coverage: `USG_PCT` and `AGE` should be 100% (or near 100% for players with sufficient minutes)
+
+**Impact**: 
+- USG_PCT is the #1 feature (40.2% importance) - model predictions are currently invalid
+- Bag Check Gate relies on playtype data (now fixed at 79.3% coverage) but also needs USG_PCT for usage-aware features
+
+**See**: `docs/DATA_COMPLETENESS_ANALYSIS.md` and `docs/DATA_COMPLETENESS_FIX_SUMMARY.md` for full analysis
+
+---
+
+## ✅ Completed: Playtype Data Merge (ISO_FREQUENCY, PNR_HANDLER_FREQUENCY)
+
+**Status**: ✅ **COMPLETE** - December 8, 2025
+
+**The Problem**: 
+- `ISO_FREQUENCY` and `PNR_HANDLER_FREQUENCY` had only 8.6% coverage in `predictive_dataset.csv`
+- Bag Check Gate couldn't apply to 91.4% of players
+- Root cause: `evaluate_plasticity_potential.py` was not loading playtype data from API
+
+**The Fix**:
+1. Added `fetch_playtype_metrics()` method to `StressVectorEngine` class
+2. Integrated `SynergyPlaytypesClient` (API-based, with caching) directly into feature generation
+3. Added logic to handle multi-team players (sum FGA across teams)
+4. Calculated frequencies: `ISO_FREQUENCY`, `PNR_HANDLER_FREQUENCY`, `POST_TOUCH_FREQUENCY`
+5. Merged playtype data into `predictive_dataset.csv` during feature generation
+
+**Results**:
+- ✅ Coverage improved: **8.6% → 79.3%** (4,210/5,312 player-seasons)
+- ✅ Bag Check Gate can now apply to 4,210 players (vs. 456 before)
+- ⚠️ Remaining 1,102 missing rows are likely deep bench players not in API playtype data (expected limitation)
+
+**Architecture Note**: Uses `SynergyPlaytypesClient` (API client with caching), not SQLite database. Database is for archival only.
+
+**See**: `docs/DATA_COMPLETENESS_ANALYSIS.md` and `docs/DATA_COMPLETENESS_FIX_SUMMARY.md` for full details
 
 ---
 
