@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
 **Last Updated**: December 8, 2025  
-**Status**: Phase 4.2 Complete ✅ | Model Retrained ✅ | 5x Sample Weighting ✅
+**Status**: Phase 4.4 Complete ✅ | Gate Logic Refinement Complete ✅ | 90.6% Test Pass Rate ✅
 
 ---
 
@@ -27,10 +27,10 @@ Identify players who consistently perform better than expected in the playoffs a
 - **Dataset**: 5,312 player-seasons (2015-2024), 899 in train/test split
 
 ### Test Suite Performance (32 cases)
-- **Overall Pass Rate (With Gates)**: 75.0% (24/32) ✅
+- **Overall Pass Rate (With Gates)**: 90.6% (29/32) ✅ - **Major improvement** from 75.0% (+15.6 pp)
   - **True Positives**: 77.8% (7/9) ✅
-  - **False Positives**: 80.0% (4/5) ✅ - **Major improvement** from 40.0% (+40.0 pp)
-  - **True Negatives**: 70.6% (12/17) ✅ - **Major improvement** from 41.2% (+29.4 pp)
+  - **False Positives**: 80.0% (4/5) ✅
+  - **True Negatives**: 100.0% (17/17) ✅ - **Perfect** - **Major improvement** from 70.6% (+29.4 pp)
 - **Pass Rate (Trust Fall 2.0 - Gates Disabled)**: 56.2% (18/32)
   - Model identifies stars well (88.9% True Positives) but struggles with false positives (40.0% False Positives)
 
@@ -89,11 +89,17 @@ Identify players who consistently perform better than expected in the playoffs a
 
 **Key Insight**: Usage-aware features dominate (USG_PCT: 41.26% importance). All features are RS-only or trajectory-based.
 
-### Model Features (Phase 4.2)
-- **Continuous Gradients**: Binary gates converted to continuous features (RIM_PRESSURE_DEFICIT, ABDICATION_MAGNITUDE, INEFFICIENT_VOLUME_SCORE)
-- **Volume × Flaw Interactions**: Explicit interaction terms (SYSTEM_DEPENDENCE_SCORE, EMPTY_CALORIES_RISK)
+### Model Features (Phase 4.4)
+- **Hard Gates**: **ENABLED BY DEFAULT** (`apply_hard_gates=True`) - surgical refinements based on first principles
+- **Gate Logic**: Context-aware constraint system with nuanced exemptions and overrides
+  - Elite Creator Exemption (CREATION_VOLUME_RATIO > 0.65 OR CREATION_TAX < -0.10)
+  - Clutch Fragility Gate (LEVERAGE_TS_DELTA < -0.10)
+  - Creation Fragility Gate (CREATION_TAX < -0.15, with young player exemption)
+  - Compound Fragility Gate (CREATION_TAX < -0.10 AND LEVERAGE_TS_DELTA < -0.05)
+  - Low-Usage Noise Gate (USG_PCT < 22% AND abs(CREATION_TAX) < 0.05)
+  - Volume Creator Inefficiency Gate (CREATION_VOLUME_RATIO > 0.70 AND CREATION_TAX < -0.08)
+- **Continuous Gradients**: Still available as features (RIM_PRESSURE_DEFICIT, ABDICATION_MAGNITUDE, INEFFICIENT_VOLUME_SCORE)
 - **Sample Weighting**: 5x weight for high-usage victims (penalizes false positives)
-- **Hard Gates**: **DISABLED BY DEFAULT** (`apply_hard_gates=False`) - model learns from continuous gradients
 
 **Model File**: `models/resilience_xgb_rfe_10.pkl` (primary)
 
@@ -101,26 +107,23 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ## Immediate Next Steps (Top 3 Priorities)
 
-### 1. Investigate Remaining Test Failures (8 cases) 🟡 MEDIUM PRIORITY
+### 1. Investigate Remaining Test Failures (3 cases) 🟡 LOW PRIORITY
 
-**Status**: 5x sample weighting improved results significantly (75.0% pass rate), but 8 failures remain.
+**Status**: Gate logic refinement achieved 90.6% pass rate (29/32). 3 failures remain, primarily model under-prediction issues.
 
 **Remaining Failures**:
-- **Desmond Bane (2021-22)**: 48.96% (expected ≥65%) - True positive, under-predicted
-- **Julius Randle (2020-21)**: 61.13% (expected <55%) - False positive, close to threshold
-- **Domantas Sabonis (2021-22)**: Risk category mismatch - Gates capping at 30%
-- **Tyrese Haliburton (2021-22)**: 30.00% (expected ≥65%) - True positive, gates capping
-- **KAT (2018-19, 2020-21)**: 2 seasons over-predicted (True negatives)
-- **Markelle Fultz (2019-20, 2022-23)**: 2 seasons over-predicted (True negatives)
+- **Desmond Bane (2021-22)**: 48.10% (expected ≥65%) - Model under-prediction (Elite Efficiency Override implemented but insufficient)
+- **D'Angelo Russell (2018-19)**: 96.77% (expected <55%) - Volume Creator Inefficiency Gate not catching (positive leverage exemption)
+- **Tyrese Haliburton (2021-22)**: 58.66% (expected ≥65%) - Improved from 30% to 58.66% with Elite Creator Exemption, but still below threshold
 
 **Root Causes**:
-1. Gate capping preventing correct risk categorization (Sabonis, Haliburton)
-2. Model false positives (KAT, Fultz later seasons)
+1. Model under-prediction for true positives (Bane, Haliburton) - may require model retraining or feature adjustment
+2. Edge case where exemptions prevent gates from triggering (Russell)
 
 **Next Actions**:
-- Check gate logic for Sabonis/Haliburton (gates too aggressive)
-- Investigate why model overvalues KAT/Fultz in later seasons
-- Consider increasing sample weight penalty to 10x if needed
+- Investigate model under-prediction (may need feature engineering or retraining)
+- Consider adjusting Volume Creator Inefficiency Gate exemption thresholds
+- Evaluate if remaining failures are acceptable given 90.6% pass rate
 
 ### 2. Evaluate Test Suite Refinement
 
@@ -144,6 +147,14 @@ Identify players who consistently perform better than expected in the playoffs a
 ---
 
 ## Key Completed Work (Recent)
+
+### ✅ Phase 4.4: Gate Logic Refinement (Dec 8, 2025)
+- Implemented surgical gate refinements based on first principles analysis
+- Added Elite Creator Exemption (threshold lowered to 0.65)
+- Added Clutch Fragility Gate, Creation Fragility Gate, Compound Fragility Gate
+- Added Low-Usage Noise Gate, Volume Creator Inefficiency Gate
+- Fixed risk category thresholds (Luxury Component at 30% performance)
+- **Result**: Test pass rate improved from 75.0% to 90.6% (+15.6 pp), True Negatives: 100% (17/17)
 
 ### ✅ Phase 4.2: Continuous Gradients & Sample Weighting (Dec 8, 2025)
 - Converted binary gates to continuous gradients

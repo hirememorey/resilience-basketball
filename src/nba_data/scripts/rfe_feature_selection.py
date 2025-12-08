@@ -426,8 +426,15 @@ class RFEFeatureSelector:
             if feat in df.columns:
                 features.append(feat)
         
-        # Add Gate Features
+        # Add Gate Features (Continuous Gradients + Legacy)
         gate_features = [
+            # New continuous gradient features (Phase 4.2)
+            'RIM_PRESSURE_DEFICIT',
+            'ABDICATION_MAGNITUDE',
+            'INEFFICIENT_VOLUME_SCORE',
+            'SYSTEM_DEPENDENCE_SCORE',
+            'EMPTY_CALORIES_RISK',
+            # Legacy features (for backward compatibility)
             'ABDICATION_RISK',
             'PHYSICALITY_FLOOR',
             'SELF_CREATED_FREQ',
@@ -488,7 +495,9 @@ class RFEFeatureSelector:
                     X[col] = X[col].fillna(0)
                 elif col in ['DATA_COMPLETENESS_SCORE', 'SAMPLE_SIZE_CONFIDENCE', 'LEVERAGE_DATA_CONFIDENCE']:
                     X[col] = X[col].fillna(0)
-                elif col in ['ABDICATION_RISK', 'PHYSICALITY_FLOOR', 'SELF_CREATED_FREQ', 'NEGATIVE_SIGNAL_COUNT']:
+                elif col in ['ABDICATION_RISK', 'ABDICATION_MAGNITUDE', 'PHYSICALITY_FLOOR', 'SELF_CREATED_FREQ', 
+                             'NEGATIVE_SIGNAL_COUNT', 'RIM_PRESSURE_DEFICIT', 'INEFFICIENT_VOLUME_SCORE',
+                             'SYSTEM_DEPENDENCE_SCORE', 'EMPTY_CALORIES_RISK']:
                     X[col] = X[col].fillna(0)
                 else:
                     median_val = X[col].median()
