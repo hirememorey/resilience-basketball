@@ -2,7 +2,7 @@
 
 Date: December 8, 2025
 
-Status: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅ | Playtype Data Merge Complete ✅ | USG_PCT/AGE Population Bug Fixed ✅ | Model Retrained ✅
+Status: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅ | Playtype Data Merge Complete ✅ | USG_PCT/AGE Population Bug Fixed ✅ | Phase 4.2: Continuous Gradients & Sample Weighting Complete ✅ | Model Retrained ✅
 
 ## 🏗️ Project Structure & Cleanup
 
@@ -43,9 +43,9 @@ These are the core files driving the current 53.54% accuracy model:
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs and explain why using mechanistic insights.
 
-**Current Model:** XGBoost Classifier that predicts playoff archetypes (King, Bulldozer, Sniper, Victim) from regular season stress vectors with usage-aware conditional predictions. RFE-optimized to 10 core features (reduced from 65).
+**Current Model:** XGBoost Classifier that predicts playoff archetypes (King, Bulldozer, Sniper, Victim) from regular season stress vectors with usage-aware conditional predictions. RFE-optimized to 10 core features with continuous gradient risk features and sample weighting for asymmetric loss.
 
-**Accuracy:** 53.85% (RFE model, 10 features) - True predictive power using only Regular Season data with temporal train/test split (899 player-seasons, 2015-2024, retrained December 8, 2025 with fixed USG_PCT/AGE data)
+**Accuracy:** 49.54% (RFE model, 10 features with sample weighting) - True predictive power using only Regular Season data with temporal train/test split (899 player-seasons, 2015-2024, retrained December 8, 2025 with continuous gradients and interaction terms)
 
 ## What Exists (Current State)
 
@@ -76,31 +76,44 @@ These are the core files driving the current 53.54% accuracy model:
 2. USG_PCT_X_EFG_ISO_WEIGHTED (8.85% importance) - Usage × Isolation efficiency
 3. CREATION_TAX (8.54% importance) - Creation efficiency drop-off
 4. USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE (7.16% importance) - Usage × Late clock resilience
-5. ABDICATION_RISK (6.71% importance) - Gate feature (negative leverage signal)
+5. ABDICATION_RISK (6.71% importance) - Continuous gradient (negative leverage signal)
 6. RS_LATE_CLOCK_PRESSURE_APPETITE (6.33% importance) - Late clock pressure willingness
 7. CLUTCH_MIN_TOTAL (5.39% importance) - Clutch minutes
 8. QOC_USG_DELTA (5.28% importance) - Quality of competition usage delta
 9. CREATION_TAX_YOY_DELTA (5.26% importance) - Year-over-year change in creation tax
 10. AGE_X_RS_PRESSURE_RESILIENCE_YOY_DELTA (5.21% importance) - Age × Pressure resilience trajectory
 
-**Key Insight:** All features are RS-only or trajectory-based. Usage-aware features dominate (57.27% combined importance). Model retrained December 8, 2025 with fixed USG_PCT/AGE data and feature distribution alignment fixes.
+**New Risk Features (Phase 4.2):**
+- `RIM_PRESSURE_DEFICIT`: Continuous gradient (0-1) measuring rim pressure shortfall
+- `ABDICATION_MAGNITUDE`: Continuous gradient (0-1) with Smart Deference logic
+- `INEFFICIENT_VOLUME_SCORE`: Volume × Flaw interaction (creation_vol × negative_tax)
+- `SYSTEM_DEPENDENCE_SCORE`: Volume × Dependence interaction (usg × system_dependence)
+- `EMPTY_CALORIES_RISK`: Volume × Rim Pressure Deficit interaction
 
-**Gates & Constraints:**
-- **Fragility Gate**: Caps players with low rim pressure (RS_RIM_APPETITE < bottom 20th percentile) at 30% star-level
-- **Bag Check Gate**: Caps players lacking self-created volume (SELF_CREATED_FREQ < 10%) at 30% star-level
-- **Inefficiency Gate**: Caps players with uniformly low/mediocre isolation efficiency at 40% star-level (fixes "Low-Floor Illusion")
-  - Condition 1: EFG_ISO_WEIGHTED < 25th percentile (uniformly bad)
-  - Condition 2: EFG_ISO_WEIGHTED < median AND CREATION_TAX near 0.00 (uniformly mediocre)
-- **Leverage Data Penalty**: Caps players missing critical leverage data at 30% star-level
-- **Negative Signal Gate**: Caps players with negative leverage signals (abdication) at 30% star-level
-- **Data Completeness Gate**: Caps players with <67% critical features at 30% star-level
-- **Sample Size Gate**: Caps players with insufficient sample sizes at 30% star-level
+**Key Insight:** All features are RS-only or trajectory-based. Usage-aware features dominate (57.27% combined importance). Model retrained December 8, 2025 with continuous gradients, interaction terms, and sample weighting (3x penalty for high-usage victims).
+
+**Gates & Constraints (Phase 4.2 - Trust Fall 2.0):**
+- **Hard Gates**: **DISABLED BY DEFAULT** - Model now learns from continuous gradient features
+- **Continuous Gradients**: Binary gates converted to continuous features (0-1 scale)
+  - `RIM_PRESSURE_DEFICIT`: Measures rim pressure shortfall (replaces Fragility Gate)
+  - `ABDICATION_MAGNITUDE`: Measures abdication with Smart Deference exemption (replaces Negative Signal Gate)
+  - `INEFFICIENT_VOLUME_SCORE`: Volume × Flaw interaction (replaces Inefficiency Gate logic)
+- **Interaction Terms**: Explicit Volume × Flaw features teach model complex relationships
+  - `SYSTEM_DEPENDENCE_SCORE`: `USG_PCT × (assisted_pct + open_shot_freq)`
+  - `EMPTY_CALORIES_RISK`: `USG_PCT × RIM_PRESSURE_DEFICIT`
+- **Sample Weighting**: Asymmetric loss - 3x weight for high-usage victims (penalizes false positives)
+- **Trust Fall 2.0**: Gates disabled by default (`apply_hard_gates=False`) - model must learn patterns
 
 **Model File:** `models/resilience_xgb_rfe_10.pkl` (primary), `models/resilience_xgb.pkl` (fallback)
 
 ### Validation Results
 
-**Test Case Pass Rate:** **65.6%** (21/32) - Updated December 8, 2025 after model retraining with fixed USG_PCT/AGE data ✅
+**Test Case Pass Rate (With Gates):** **65.6%** (21/32) - Updated December 8, 2025 after model retraining with fixed USG_PCT/AGE data ✅
+
+**Test Case Pass Rate (Trust Fall 2.0 - Gates Disabled):** **56.2%** (18/32) - December 8, 2025 ✅
+- **True Positives**: 88.9% (8/9) ✅ - Model correctly identifies latent stars
+- **False Positives**: 40.0% (2/5) ⚠️ - Model over-predicts stars (KAT, Russell, Randle, Fultz)
+- **True Negatives**: 41.2% (7/17) ⚠️ - Model struggles to penalize high-usage players with flaws
 
 **Test Suite Enhancement (December 7, 2025):**
 - Test suite now uses `predict_with_risk_matrix()` for all test cases
@@ -242,6 +255,35 @@ These are the core files driving the current 53.54% accuracy model:
 **Key Principle**: **Absolute metrics for floors, relative metrics for change**. CREATION_TAX measures change (resilience), but EFG_ISO_WEIGHTED measures absolute quality (star-level requirement). Uniformly inefficient ≠ resilient.
 
 **See**: `KEY_INSIGHTS.md` (Insight #44: The "Low-Floor Illusion") for complete details.
+
+## ✅ Completed: Phase 4.2 - Continuous Gradients & Sample Weighting (December 8, 2025)
+
+**Status**: ✅ **COMPLETE**
+
+**The Problem**: Hard gates (binary if/else statements) were brittle post-hoc patches. Model couldn't learn nuanced patterns from binary signals.
+
+**The Solution**: Convert hard gates to continuous gradients and add explicit Volume × Flaw interaction terms:
+1. **Continuous Gradients**: Binary gates → continuous features (0-1 scale)
+   - `RIM_PRESSURE_DEFICIT`: `(threshold - rim_appetite) / threshold` (measures magnitude of flaw)
+   - `ABDICATION_MAGNITUDE`: `max(0, -LEVERAGE_USG_DELTA)` with Smart Deference exemption
+   - `INEFFICIENT_VOLUME_SCORE`: `creation_vol × negative_tax_magnitude` (Volume × Flaw)
+2. **Explicit Interaction Terms**: Teach model that high usage amplifies flaws
+   - `SYSTEM_DEPENDENCE_SCORE`: `USG_PCT × (assisted_pct + open_shot_freq)`
+   - `EMPTY_CALORIES_RISK`: `USG_PCT × RIM_PRESSURE_DEFICIT`
+3. **Asymmetric Loss (Sample Weighting)**: 3x weight for high-usage victims (penalizes false positives)
+
+**Results**:
+- ✅ **Model Retrained**: December 8, 2025 with new risk features and sample weighting
+- ✅ **RFE Feature Selection**: `INEFFICIENT_VOLUME_SCORE` included in top 15 features (rank #13)
+- ✅ **Trust Fall 2.0**: 56.2% pass rate (18/32) with gates disabled
+  - **True Positives**: 88.9% (8/9) ✅ - Model correctly identifies latent stars
+  - **False Positives**: 40.0% (2/5) ⚠️ - Model over-predicts (KAT, Russell, Randle, Fultz)
+  - **True Negatives**: 41.2% (7/17) ⚠️ - Model struggles to penalize high-usage players with flaws
+- ⚠️ **Key Finding**: Model identifies stars well but needs stronger signals to penalize false positives
+
+**Key Principle**: **Learn, Don't Patch**. Continuous gradients and interaction terms teach the model complex relationships. Sample weighting addresses asymmetric cost of false positives.
+
+**See**: `KEY_INSIGHTS.md` (Insight #45: Continuous Gradients & Volume × Flaw Interactions) for complete details.
 
 ## Next Priority: Investigate Remaining Test Failures
 

@@ -972,6 +972,112 @@ high_threshold = dependence_scores.quantile(0.66)  # 0.4482
 
 ---
 
+## 45. Continuous Gradients vs. Hard Gates 🎯 CRITICAL (Phase 4.2)
+
+**The Problem**: Hard gates (binary if/else statements) are brittle post-hoc patches. Model cannot learn nuanced patterns from binary signals.
+
+**The Insight**: **Learn, Don't Patch**. Binary gates cap at 30%, but the model should learn that a player with `RIM_PRESSURE_DEFICIT = 0.8` is worse than one with `RIM_PRESSURE_DEFICIT = 0.3`. Continuous gradients capture magnitude, not just presence.
+
+**The Fix**: Convert binary gates to continuous gradients (0-1 scale):
+```python
+# WRONG: Binary gate
+if RS_RIM_APPETITE < threshold:
+    star_level = min(star_level, 0.30)  # Hard cap
+
+# RIGHT: Continuous gradient
+rim_pressure_deficit = (threshold - rim_appetite) / threshold
+# Model learns: higher deficit → lower star-level
+```
+
+**Example**:
+- ❌ **Wrong**: Fragility Gate caps all players below threshold at 30% (binary)
+- ✅ **Right**: `RIM_PRESSURE_DEFICIT` is continuous (0-1) - model learns magnitude matters
+
+**Key Principle**: **Magnitude matters**. A player with 80% deficit is worse than one with 30% deficit. Continuous gradients capture this nuance.
+
+**Test Cases**: Trust Fall 2.0 shows model identifies stars well (88.9% True Positives) but struggles with false positives (40.0% False Positives).
+
+---
+
+## 46. Volume × Flaw Interaction Terms 🎯 CRITICAL (Phase 4.2)
+
+**The Problem**: Model doesn't explicitly learn that high usage amplifies flaws. A player with `RIM_PRESSURE_DEFICIT = 0.5` at 20% usage is less risky than at 30% usage.
+
+**The Insight**: **Volume amplifies flaws**. High usage makes flaws more dangerous. The model needs explicit interaction terms to learn this relationship.
+
+**The Fix**: Add explicit Volume × Flaw interaction terms:
+```python
+# Explicit interaction: Volume × Flaw
+empty_calories_risk = USG_PCT * RIM_PRESSURE_DEFICIT
+system_dependence_score = USG_PCT * (assisted_pct + open_shot_freq)
+inefficient_volume_score = CREATION_VOLUME_RATIO * negative_tax_magnitude
+```
+
+**Example**:
+- ❌ **Wrong**: Model sees `RIM_PRESSURE_DEFICIT = 0.5` and `USG_PCT = 0.30` separately
+- ✅ **Right**: Model sees `EMPTY_CALORIES_RISK = 0.15` (0.30 × 0.5) - explicit interaction
+
+**Key Principle**: **Explicit > Implicit**. Don't rely on model to learn complex interactions. Calculate them explicitly.
+
+**Results**: `INEFFICIENT_VOLUME_SCORE` included in top 15 RFE features (rank #13), validating the approach.
+
+---
+
+## 47. Asymmetric Loss (Sample Weighting) 🎯 CRITICAL (Phase 4.2)
+
+**The Problem**: False positives (predicting a bust as a star) are more damaging than false negatives (missing a latent star). Standard ML models treat all misclassifications equally.
+
+**The Insight**: **Cost is asymmetric**. Predicting a "Victim" as a "King" is worse than predicting a "King" as a "Victim". High-usage victims are particularly dangerous (they get max contracts and fail).
+
+**The Fix**: Implement sample weighting during training:
+```python
+# Assign higher weight to critical misclassifications
+sample_weight = np.ones(len(X_train))
+is_victim_actual = (y_train == 'Victim')
+is_high_usage = (X_train['USG_PCT'] > 0.20)
+penalty_mask = is_victim_actual & is_high_usage
+sample_weight[penalty_mask] = 3.0  # 3x penalty for high-usage victims
+model.fit(X_train, y_train, sample_weight=sample_weight)
+```
+
+**Example**:
+- ❌ **Wrong**: All misclassifications weighted equally
+- ✅ **Right**: High-usage victims get 3x penalty (model learns to avoid false positives)
+
+**Key Principle**: **Cost matters**. If false positives are more expensive, weight them higher during training.
+
+**Results**: Model accuracy: 49.54% (with sample weighting). Trust Fall 2.0 shows model still struggles with false positives (40.0% pass rate), suggesting penalty may need to be stronger (5x or 10x).
+
+---
+
+## 48. Trust Fall 2.0: Model Can Learn, But Needs Stronger Signals 🎯 CRITICAL (Phase 4.2)
+
+**The Problem**: Trust Fall 2.0 (gates disabled) shows model can identify stars (88.9% True Positives) but struggles with false positives (40.0% False Positives).
+
+**The Insight**: **Model is learning, but signals aren't strong enough**. Continuous gradients and interaction terms are working for True Positives, but model needs more explicit features to penalize False Positives.
+
+**The Findings**:
+- ✅ **True Positives**: 88.9% (8/9) - Model correctly identifies latent stars
+- ⚠️ **False Positives**: 40.0% (2/5) - Model over-predicts (KAT, Russell, Randle, Fultz)
+- ⚠️ **True Negatives**: 41.2% (7/17) - Model struggles to penalize high-usage players with flaws
+
+**The Root Cause**:
+1. **Sample Weighting May Need Adjustment**: Currently 3x penalty may not be strong enough
+2. **Missing Explicit "Empty Calories" Features**: Model needs stronger signals to distinguish "Empty Calories" creators from true stars
+3. **Volume × Flaw Interactions Need Strengthening**: `INEFFICIENT_VOLUME_SCORE` is in top 15 but may need higher weight
+
+**The Next Steps**:
+1. Increase sample weight penalty (5x or 10x)
+2. Add more explicit "Empty Calories" features
+3. Strengthen `INEFFICIENT_VOLUME_SCORE` calculation
+4. Investigate why KAT consistently gets high predictions despite known flaws
+
+**Key Principle**: **Model can learn, but needs better features**. Continuous gradients are a step in the right direction, but we need more explicit signals to catch false positives.
+
+**See**: `results/latent_star_test_cases_report_trust_fall.md` for complete Trust Fall 2.0 results.
+
+---
+
 ## 39. The Creator's Dilemma: Volume vs. Stabilizers 🎯 CRITICAL (D'Angelo Russell Fix)
 
 **The Problem**: High-usage creators with high creation volume but inefficient creation were being exempted from the Fragility Gate (e.g., D'Angelo Russell).

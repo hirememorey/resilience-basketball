@@ -1,7 +1,7 @@
 # Phase 4 Implementation Plan: Multi-Season Trajectory & Gates-to-Features
 
 **Date**: December 2025  
-**Status**: ✅ **IMPLEMENTATION COMPLETE** | Phase 4.1 Refinements Complete ✅  
+**Status**: ✅ **IMPLEMENTATION COMPLETE** | Phase 4.1 Refinements Complete ✅ | Phase 4.2: Continuous Gradients & Sample Weighting Complete ✅  
 **Priority**: High - Addresses Core Model Limitations
 
 ## ✅ Implementation Status
@@ -17,7 +17,14 @@
 - ✅ Conditional Abdication Tax (Smart Deference exemption)
 - ✅ Flash Multiplier exemption for Bag Check Gate
 
-**Remaining Work**: See `NEXT_STEPS.md` for Phase 4.2 priorities (Poole tax, Bridges exemption, threshold adjustments)
+**Phase 4.2: Continuous Gradients & Sample Weighting**: ✅ **COMPLETE**
+- ✅ Converted binary gates to continuous gradients (RIM_PRESSURE_DEFICIT, ABDICATION_MAGNITUDE, INEFFICIENT_VOLUME_SCORE)
+- ✅ Added explicit Volume × Flaw interaction terms (SYSTEM_DEPENDENCE_SCORE, EMPTY_CALORIES_RISK)
+- ✅ Implemented asymmetric loss with sample weighting (3x penalty for high-usage victims)
+- ✅ Regenerated dataset and retrained model with new features
+- ✅ Trust Fall 2.0 experiment completed (56.2% pass rate with gates disabled)
+
+**Remaining Work**: See `NEXT_STEPS.md` for next priorities (improve false positive detection)
 
 ## Executive Summary
 
@@ -622,5 +629,5 @@ def predict_archetype_at_usage(
 ---
 
 **Status**: ✅ **IMPLEMENTATION COMPLETE**  
-**Next Step**: See `NEXT_STEPS.md` for Phase 4.2 priorities (Poole tax, Bridges exemption, threshold adjustments)
+**Next Step**: See `NEXT_STEPS.md` for next priorities (improve false positive detection based on Trust Fall 2.0 findings)
 

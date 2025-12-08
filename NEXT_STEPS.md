@@ -1,17 +1,18 @@
 # Next Steps
 
 **Date**: December 8, 2025  
-**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅ | Playtype Data Merge Complete ✅ | USG_PCT/AGE Population Bug Fixed ✅ | Model Retrained ✅
+**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅ | Playtype Data Merge Complete ✅ | USG_PCT/AGE Population Bug Fixed ✅ | Phase 4.2: Continuous Gradients & Sample Weighting Complete ✅ | Model Retrained ✅
 
 ---
 
 ## Current Status Summary
 
-- **Model Accuracy**: **53.85%** (RFE model, 10 features) - **True predictive power** with RS-only features and temporal split (retrained Dec 8, 2025 with fixed USG_PCT/AGE data)
-- **Test Case Pass Rate**: **65.6%** (21/32) - **2D Risk Matrix integrated into test suite** ✅
-- **False Positive Detection**: **60.0%** pass rate (3/5) ⚠️
-- **True Positive Detection**: **88.9%** pass rate (8/9) ✅
-- **True Negative Detection**: **52.9%** pass rate (9/17) ⚠️
+- **Model Accuracy**: **49.54%** (RFE model, 10 features with sample weighting) - **True predictive power** with RS-only features and temporal split (retrained Dec 8, 2025 with continuous gradients)
+- **Test Case Pass Rate (With Gates)**: **65.6%** (21/32) - **2D Risk Matrix integrated into test suite** ✅
+- **Test Case Pass Rate (Trust Fall 2.0)**: **56.2%** (18/32) - **Gates disabled, model learns from features** ✅
+- **False Positive Detection (Trust Fall)**: **40.0%** pass rate (2/5) ⚠️ - Model over-predicts stars
+- **True Positive Detection (Trust Fall)**: **88.9%** pass rate (8/9) ✅ - Model correctly identifies latent stars
+- **True Negative Detection (Trust Fall)**: **41.2%** pass rate (7/17) ⚠️ - Model struggles to penalize high-usage players with flaws
 - **Rim Pressure Data Coverage**: 95.9% (1,773/1,849) - **Fixed December 5, 2025** ✅
 - **Data Leakage**: ✅ **FIXED** - All playoff features removed, temporal split implemented (December 6, 2025)
 - **Previous Playoff Features**: ✅ **INTEGRATED** - Added legitimate past → future features (December 6, 2025)
@@ -23,14 +24,51 @@
 
 ---
 
-## Trust Fall Experiment: Complete ✅
+## ✅ Completed: Phase 4.2 - Continuous Gradients & Sample Weighting
 
-**Status**: Experiment completed December 5, 2025
+**Status**: ✅ **COMPLETE** - December 8, 2025
+
+**What Was Done**:
+1. **Converted Binary Gates to Continuous Gradients**:
+   - `RIM_PRESSURE_DEFICIT`: Continuous gradient (0-1) measuring rim pressure shortfall
+   - `ABDICATION_MAGNITUDE`: Continuous gradient with Smart Deference logic
+   - `INEFFICIENT_VOLUME_SCORE`: Volume × Flaw interaction term
+2. **Added Explicit Volume × Flaw Interaction Terms**:
+   - `SYSTEM_DEPENDENCE_SCORE`: `USG_PCT × (assisted_pct + open_shot_freq)`
+   - `EMPTY_CALORIES_RISK`: `USG_PCT × RIM_PRESSURE_DEFICIT`
+3. **Implemented Asymmetric Loss (Sample Weighting)**:
+   - 3x weight for high-usage victims (penalizes false positives)
+4. **Regenerated Dataset and Retrained Model**:
+   - RFE feature selection with new risk features
+   - Model retrained with sample weighting
 
 **Results**:
+- ✅ **Model Retrained**: December 8, 2025 with new features
+- ✅ **RFE Feature Selection**: `INEFFICIENT_VOLUME_SCORE` included in top 15 features
+- ✅ **Trust Fall 2.0**: 56.2% pass rate (18/32) with gates disabled
+  - **True Positives**: 88.9% (8/9) ✅ - Model correctly identifies latent stars
+  - **False Positives**: 40.0% (2/5) ⚠️ - Model over-predicts (KAT, Russell, Randle, Fultz)
+  - **True Negatives**: 41.2% (7/17) ⚠️ - Model struggles to penalize high-usage players with flaws
+
+**Key Finding**: Model identifies stars well but needs stronger signals to penalize false positives. Sample weighting may need adjustment (currently 3x) or model needs more explicit "empty calories" features.
+
+**See**: `results/latent_star_test_cases_report_trust_fall.md` for complete Trust Fall 2.0 results.
+
+---
+
+## Trust Fall Experiment: Complete ✅
+
+**Status**: Experiment completed December 5, 2025 (Original) and December 8, 2025 (Trust Fall 2.0)
+
+**Original Results**:
 - **With gates**: 87.5% pass rate (14/16)
 - **Without gates**: 56.2% pass rate (9/16)
 - **Diagnosis**: Model cannot learn system merchant patterns from current features
+
+**Trust Fall 2.0 Results** (with continuous gradients):
+- **With gates**: 65.6% pass rate (21/32)
+- **Without gates**: 56.2% pass rate (18/32)
+- **Diagnosis**: Model identifies stars well but struggles with false positives
 
 **Key Finding**: Jordan Poole returns to "King" status (97% star-level) when gates disabled - **he actually succeeded** (17 PPG, 62.7% TS in championship run). This confirms the **Ground Truth Trap**: Training labels are based on outcomes, but we want to predict portability.
 
@@ -273,9 +311,38 @@
 
 ---
 
-## Current Priority: Investigate Remaining Test Failures
+## Current Priority: Improve False Positive Detection (Trust Fall 2.0 Findings)
 
-**Status**: 🔴 **MEDIUM PRIORITY** (11 failures)
+**Status**: 🔴 **HIGH PRIORITY** (14 failures in Trust Fall 2.0)
+
+**Key Findings from Trust Fall 2.0**:
+- ✅ **True Positives**: 88.9% (8/9) - Model correctly identifies latent stars
+- ⚠️ **False Positives**: 40.0% (2/5) - Model over-predicts stars for:
+  - Talen Horton-Tucker (2020-21): Predicted King (95.26%)
+  - D'Angelo Russell (2018-19): Predicted King (97.02%)
+  - Julius Randle (2020-21): Predicted King (73.66%)
+- ⚠️ **True Negatives**: 41.2% (7/17) - Model struggles to penalize high-usage players with flaws:
+  - Karl-Anthony Towns (6 seasons): Consistently over-predicted as King/Bulldozer
+  - Markelle Fultz (multiple seasons): Over-predicted despite shooting flaws
+
+**Root Cause Analysis**:
+1. **Sample Weighting May Need Adjustment**: Currently 3x penalty for high-usage victims may not be strong enough
+2. **Missing Explicit "Empty Calories" Features**: Model needs stronger signals to distinguish "Empty Calories" creators (high volume + negative tax) from true stars
+3. **Volume × Flaw Interactions Need Strengthening**: `INEFFICIENT_VOLUME_SCORE` is in top 15 but may need higher weight or additional features
+
+**Next Steps**:
+1. **Increase Sample Weight Penalty**: Test 5x or 10x penalty for high-usage victims
+2. **Add More Explicit "Empty Calories" Features**: 
+   - `HIGH_VOLUME_NEGATIVE_TAX`: Binary flag for high volume + negative creation tax
+   - `EMPTY_CALORIES_MAGNITUDE`: Continuous score combining volume, tax, and rim pressure
+3. **Strengthen `INEFFICIENT_VOLUME_SCORE`**: Ensure it captures the full magnitude of inefficient volume
+4. **Investigate KAT Pattern**: Why does model consistently over-predict KAT despite known flaws?
+
+---
+
+## Previous Priority: Investigate Remaining Test Failures (With Gates)
+
+**Status**: 🔴 **MEDIUM PRIORITY** (11 failures with gates enabled)
 
 **Remaining Failures (11 cases):**
 
