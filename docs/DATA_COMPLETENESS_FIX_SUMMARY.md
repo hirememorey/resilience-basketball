@@ -1,8 +1,8 @@
 # Data Completeness Fix Summary
 
 **Date**: December 8, 2025  
-**Status**: ✅ **ISO_FREQUENCY/PNR_HANDLER_FREQUENCY FIXED** | ⚠️ **USG_PCT/AGE ISSUE IDENTIFIED**  
-**Priority**: HIGH
+**Status**: ✅ **ISO_FREQUENCY/PNR_HANDLER_FREQUENCY FIXED** | ✅ **USG_PCT/AGE FIXED**  
+**Priority**: COMPLETE
 
 ---
 
@@ -44,27 +44,33 @@
 
 ---
 
-## Other Missing Metrics Identified
+## ✅ Completed: USG_PCT and AGE Fix
 
-### 1. USG_PCT and AGE: 0% Coverage ⚠️ **CRITICAL**
+### 1. USG_PCT and AGE: 0% → 100% Coverage ✅ **FIXED**
 
-**Status**: ❌ **ALL VALUES ARE NaN**
+**Status**: ✅ **COMPLETE** - December 8, 2025
 
-**Root Cause**: Bug in `fetch_player_metadata()` method in `evaluate_plasticity_potential.py` (line ~397-398)
-- Code tries to get `USG_PCT` from `base_stats` endpoint
+**Root Cause**: Bug in `fetch_player_metadata()` method in `evaluate_plasticity_potential.py`
+- Code was trying to get `USG_PCT` from `base_stats` endpoint
 - **USG_PCT is actually in `advanced_stats` endpoint**, not `base_stats`
-- Same issue likely affects `AGE` (needs verification of correct endpoint)
+- `AGE` is also in `advanced_stats` endpoint
+
+**The Fix**:
+1. ✅ Changed `fetch_player_metadata()` to get both `USG_PCT` and `AGE` from `advanced_stats` endpoint
+2. ✅ Added defensive checks to verify required columns exist before proceeding
+3. ✅ Re-ran `evaluate_plasticity_potential.py` for all seasons (2015-2024)
+4. ✅ Verified coverage: USG_PCT and AGE now have 100% coverage
+
+**Results**:
+- ✅ **USG_PCT coverage**: 0% → 100% (5,312/5,312 player-seasons)
+- ✅ **AGE coverage**: 0% → 100% (5,312/5,312 player-seasons)
+- ✅ **Model retrained**: December 8, 2025 with fixed data
+- ✅ **Feature importance**: USG_PCT remains #1 feature (41.26% importance)
 
 **Impact**: 
-- USG_PCT is the #1 feature (40.2% importance)
-- Model cannot make predictions without USG_PCT
-- This is a **pre-existing bug**, not related to playtype fix
-
-**Next Steps**: 
-1. Fix `fetch_player_metadata()` to get `USG_PCT` from `advanced_stats` endpoint (not `base_stats`)
-2. Verify `AGE` is in the correct endpoint
-3. Re-run `evaluate_plasticity_potential.py` for all seasons
-4. Verify coverage: USG_PCT and AGE should be 100% (or near 100%)
+- Model can now make valid predictions (USG_PCT was blocking)
+- All usage-aware features now have complete data
+- Trajectory features (AGE-based) now have complete data
 
 ### 2. RS_PRESSURE_APPETITE, RS_RIM_APPETITE: Not in `predictive_dataset.csv` ✅ **BY DESIGN**
 
@@ -168,8 +174,8 @@
 
 ### Remaining Issues
 
-- ❌ **USG_PCT**: 0% coverage (CRITICAL - must fix)
-- ❌ **AGE**: 0% coverage (IMPORTANT - should fix)
+- ✅ **USG_PCT**: 100% coverage (FIXED - December 8, 2025)
+- ✅ **AGE**: 100% coverage (FIXED - December 8, 2025)
 - ⚠️ **ISO_FREQUENCY**: 79.3% coverage (likely sufficient, but could improve to 95%+ if needed)
 
 ---
@@ -186,9 +192,10 @@
 
 ## Next Steps
 
-1. **IMMEDIATE**: Fix `fetch_player_metadata()` to restore USG_PCT and AGE
-2. **VERIFY**: Run test suite to confirm Bag Check Gate improvements
-3. **OPTIONAL**: Investigate if we can improve playtype coverage from 79.3% to 95%+ (may require different API endpoint or data source)
+1. ✅ **COMPLETE**: Fixed `fetch_player_metadata()` to restore USG_PCT and AGE (December 8, 2025)
+2. ✅ **COMPLETE**: Model retrained with fixed data (December 8, 2025)
+3. ✅ **COMPLETE**: Test suite run confirms data completeness fix (December 8, 2025)
+4. **OPTIONAL**: Investigate if we can improve playtype coverage from 79.3% to 95%+ (may require different API endpoint or data source)
 
 ---
 

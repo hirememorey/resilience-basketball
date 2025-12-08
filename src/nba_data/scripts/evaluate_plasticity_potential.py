@@ -394,31 +394,24 @@ class StressVectorEngine:
         logger.info(f"Fetching player metadata (USG_PCT, AGE) for {season}...")
         
         try:
-            # Fetch Base stats for USG_PCT
-            base_stats = self.client.get_league_player_base_stats(season=season, season_type="Regular Season")
-            df_base = pd.DataFrame(
-                base_stats['resultSets'][0]['rowSet'],
-                columns=base_stats['resultSets'][0]['headers']
-            )
-            
-            # Fetch Advanced stats for AGE
+            # Fetch Advanced stats for both USG_PCT and AGE
+            # USG_PCT is in Advanced stats, not Base stats (fix for bug where it was fetched from base_stats)
             advanced_stats = self.client.get_league_player_advanced_stats(season=season, season_type="Regular Season")
             df_advanced = pd.DataFrame(
                 advanced_stats['resultSets'][0]['rowSet'],
                 columns=advanced_stats['resultSets'][0]['headers']
             )
             
-            # Select only needed columns
-            df_base_subset = df_base[['PLAYER_ID', 'PLAYER_NAME', 'USG_PCT']].copy()
-            df_advanced_subset = df_advanced[['PLAYER_ID', 'AGE']].copy()
+            # Verify required columns exist
+            required_cols = ['PLAYER_ID', 'PLAYER_NAME', 'USG_PCT', 'AGE']
+            missing_cols = [col for col in required_cols if col not in df_advanced.columns]
+            if missing_cols:
+                logger.error(f"❌ Missing required columns in advanced_stats response: {missing_cols}")
+                logger.error(f"Available columns: {list(df_advanced.columns)}")
+                return pd.DataFrame()
             
-            # Merge on PLAYER_ID
-            df_metadata = pd.merge(
-                df_base_subset,
-                df_advanced_subset,
-                on='PLAYER_ID',
-                how='outer'  # Use outer to include all players from both sources
-            )
+            # Select only needed columns - both USG_PCT and AGE are in advanced_stats
+            df_metadata = df_advanced[required_cols].copy()
             
             # Handle USG_PCT: API might return as decimal (0.20) or percentage (20.0)
             # Check if values are typically < 1 (decimal) or > 1 (percentage)

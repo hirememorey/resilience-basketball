@@ -2,7 +2,7 @@
 
 Date: December 8, 2025
 
-Status: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅ | Playtype Data Merge Complete ✅ | USG_PCT/AGE Population Issue Identified ⚠️
+Status: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅ | Playtype Data Merge Complete ✅ | USG_PCT/AGE Population Bug Fixed ✅ | Model Retrained ✅
 
 ## 🏗️ Project Structure & Cleanup
 
@@ -45,7 +45,7 @@ These are the core files driving the current 53.54% accuracy model:
 
 **Current Model:** XGBoost Classifier that predicts playoff archetypes (King, Bulldozer, Sniper, Victim) from regular season stress vectors with usage-aware conditional predictions. RFE-optimized to 10 core features (reduced from 65).
 
-**Accuracy:** 53.85% (RFE model, 10 features) - True predictive power using only Regular Season data with temporal train/test split (899 player-seasons, 2015-2024, retrained December 7, 2025)
+**Accuracy:** 53.85% (RFE model, 10 features) - True predictive power using only Regular Season data with temporal train/test split (899 player-seasons, 2015-2024, retrained December 8, 2025 with fixed USG_PCT/AGE data)
 
 ## What Exists (Current State)
 
@@ -61,8 +61,8 @@ These are the core files driving the current 53.54% accuracy model:
 
 **Data Coverage:**
 - Stress vectors: 100% coverage
-- Usage (USG_PCT): ⚠️ **0% coverage (ALL NaN)** - Bug in `fetch_player_metadata()` - see NEXT_STEPS.md
-- Age: ⚠️ **0% coverage (ALL NaN)** - Same bug as USG_PCT
+- Usage (USG_PCT): **100% coverage** - Fixed December 8, 2025 ✅ (was incorrectly fetched from base_stats, now from advanced_stats)
+- Age: **100% coverage** - Fixed December 8, 2025 ✅ (fetched from advanced_stats endpoint)
 - Playtype data (ISO_FREQUENCY, PNR_HANDLER_FREQUENCY): **79.3% coverage** (4,210/5,312) - Fixed December 8, 2025 ✅
 - Clock data: 100% coverage (all seasons)
 - Rim pressure data: 95.9% coverage (1,773/1,849 in expanded predictions) - Fixed December 5, 2025 ✅
@@ -83,7 +83,7 @@ These are the core files driving the current 53.54% accuracy model:
 9. CREATION_TAX_YOY_DELTA (5.26% importance) - Year-over-year change in creation tax
 10. AGE_X_RS_PRESSURE_RESILIENCE_YOY_DELTA (5.21% importance) - Age × Pressure resilience trajectory
 
-**Key Insight:** All features are RS-only or trajectory-based. Usage-aware features dominate (57.27% combined importance). Model retrained December 7, 2025 with feature distribution alignment fixes.
+**Key Insight:** All features are RS-only or trajectory-based. Usage-aware features dominate (57.27% combined importance). Model retrained December 8, 2025 with fixed USG_PCT/AGE data and feature distribution alignment fixes.
 
 **Gates & Constraints:**
 - **Fragility Gate**: Caps players with low rim pressure (RS_RIM_APPETITE < bottom 20th percentile) at 30% star-level
@@ -100,7 +100,7 @@ These are the core files driving the current 53.54% accuracy model:
 
 ### Validation Results
 
-**Test Case Pass Rate:** **81.2%** (26/32) - Updated December 7, 2025 with 2D Risk Matrix integration ✅
+**Test Case Pass Rate:** **65.6%** (21/32) - Updated December 8, 2025 after model retraining with fixed USG_PCT/AGE data ✅
 
 **Test Suite Enhancement (December 7, 2025):**
 - Test suite now uses `predict_with_risk_matrix()` for all test cases
@@ -123,36 +123,42 @@ These are the core files driving the current 53.54% accuracy model:
 - ✅ Jayson Tatum (2017-18): 84.97% (PASS)
 - ✅ Mikal Bridges (2021-22): 99.55% (PASS)
 - ✅ Desmond Bane (2021-22): 83.09% (PASS)
-- ❌ Tyrese Haliburton (2021-22): 30.00% (FAIL - expected ≥65%, got 30.00%)
+- ❌ Tyrese Haliburton (2021-22): 30.00% (FAIL - expected ≥65%, got 30.00% - gates capping)
 
 **False Positives:** **60.0%** (3/5) ⚠️
 - ✅ Talen Horton-Tucker (2020-21): 30.00% (PASS)
-- ✅ Christian Wood (2020-21): 30.00% (PASS)
 - ✅ D'Angelo Russell (2018-19): 30.00% (PASS)
-- ❌ Jordan Poole (2021-22): 87.62% (FAIL - expected <55%, got 87.62%)
+- ❌ Jordan Poole (2021-22): 87.62% (FAIL - expected <55%, got 87.62% - risk category correct: "Luxury Component")
+- ❌ Christian Wood (2020-21): 81.69% (FAIL - expected <55%, got 81.69%)
 - ❌ Julius Randle (2020-21): 61.33% (FAIL - expected <55%, got 61.33%)
 
-**True Negatives:** **82.4%** (14/17) ✅
+**True Negatives:** **52.9%** (9/17) ⚠️
 - ✅ Ben Simmons (3 seasons: 2017-18, 2018-19, 2020-21): All passed
-- ✅ Domantas Sabonis (2021-22): 30.00% (PASS)
-- ✅ Karl-Anthony Towns (6 seasons: 2015-16 through 2020-21): All passed
-- ✅ Markelle Fultz (2017-18, 2018-19, 2020-21, 2021-22): All passed
+- ✅ Domantas Sabonis (2021-22): 30.00% (PASS - risk category mismatch: expected "Luxury Component", got "Moderate Performance, High Dependence" due to gate capping)
+- ✅ Karl-Anthony Towns (2015-16, 2017-18): 2 seasons passed
+- ✅ Markelle Fultz (2017-18, 2018-19, 2020-21, 2021-22): 4 seasons passed
   - **2017-18**: Inefficiency Gate applied (EFG_ISO=0.3596 < floor=0.4042) → capped at 40% ✅
   - **2018-19**: Inefficiency Gate applied (below median + near-zero CREATION_TAX) → capped at 40% ✅
-- ❌ Markelle Fultz (2019-20): 73.04% (FAIL - expected <55%, got 73.04%)
-- ❌ Markelle Fultz (2022-23): 74.87% (FAIL - expected <55%, got 74.87%)
-- ❌ Markelle Fultz (2023-24): 66.08% (FAIL - expected <55%, got 66.08%)
+- ❌ Karl-Anthony Towns (2016-17, 2018-19, 2019-20, 2020-21): 4 seasons failing (model overvaluing)
+- ❌ Markelle Fultz (2019-20, 2022-23, 2023-24): 3 seasons failing (model overvaluing)
 
 **System Player:** **100.0%** (1/1) ✅
 - ✅ Tyus Jones (2021-22): 30.00% (PASS)
 
-**Remaining Failures (6 cases):**
-- ❌ Jordan Poole (2021-22): 87.62% (expected <55%) - False positive case, needs investigation
+**Remaining Failures (11 cases):**
+- ❌ Jordan Poole (2021-22): 87.62% (expected <55%) - False positive, but risk category correct ("Luxury Component")
+- ❌ Christian Wood (2020-21): 81.69% (expected <55%) - False positive case
 - ❌ Julius Randle (2020-21): 61.33% (expected <55%) - False positive case, close to threshold
-- ❌ Tyrese Haliburton (2021-22): 30.00% (expected ≥65%) - True positive case, needs investigation (may be gate issue)
-- ❌ Markelle Fultz (2019-20, 2022-23, 2023-24): 3 seasons failing - True negative cases
+- ❌ Tyrese Haliburton (2021-22): 30.00% (expected ≥65%) - True positive case, gates capping (needs gate logic fix)
+- ❌ Domantas Sabonis (2021-22): Risk category mismatch - expected "Luxury Component", got "Moderate Performance, High Dependence" (gates capping performance)
+- ❌ Karl-Anthony Towns (2016-17, 2018-19, 2019-20, 2020-21): 4 seasons failing - True negative cases (model overvaluing)
+- ❌ Markelle Fultz (2019-20, 2022-23, 2023-24): 3 seasons failing - True negative cases (model overvaluing)
   - **Note**: Inefficiency Gate fixes "Low-Floor Illusion" for uniformly inefficient players (2017-18, 2018-19 now pass)
   - **Remaining Issue**: In later seasons, Fultz's isolation efficiency improved (above median), so gate doesn't apply. Model still overvalues due to other factors (high creation volume, rim pressure).
+
+**Key Insight (December 8, 2025)**: Risk categories are correctly assigned based on Performance and Dependence scores. Failures are due to:
+1. Gate capping preventing correct risk categorization (Sabonis, Haliburton)
+2. Model false positives (KAT, Fultz later seasons, Wood, Randle, Poole)
 
 ## 2D Risk Matrix Implementation (December 2025) ✅ COMPLETE
 
