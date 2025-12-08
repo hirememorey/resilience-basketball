@@ -1,58 +1,58 @@
 {
   "n_features": 10,
-  "accuracy": 0.4676923076923077,
+  "accuracy": 0.5446153846153846,
   "features": [
-    "CREATION_TAX",
-    "CLUTCH_MIN_TOTAL",
-    "QOC_USG_DELTA",
+    "EFG_PCT_0_DRIBBLE",
+    "RS_EARLY_CLOCK_PRESSURE_RESILIENCE",
     "USG_PCT",
     "USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE",
     "USG_PCT_X_EFG_ISO_WEIGHTED",
-    "PREV_LEVERAGE_TS_DELTA",
+    "EFG_ISO_WEIGHTED_YOY_DELTA",
     "PREV_RS_RIM_APPETITE",
-    "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
-    "ABDICATION_RISK"
+    "INEFFICIENT_VOLUME_SCORE",
+    "ABDICATION_RISK",
+    "SHOT_QUALITY_GENERATION_DELTA"
   ],
   "feature_importance": [
     {
       "Feature": "USG_PCT",
-      "Importance": 0.3047744631767273
+      "Importance": 0.30937647819519043
     },
     {
       "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.12611472606658936
+      "Importance": 0.13118323683738708
+    },
+    {
+      "Feature": "SHOT_QUALITY_GENERATION_DELTA",
+      "Importance": 0.08963377773761749
+    },
+    {
+      "Feature": "INEFFICIENT_VOLUME_SCORE",
+      "Importance": 0.07553005963563919
     },
     {
       "Feature": "USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE",
-      "Importance": 0.08105044066905975
+      "Importance": 0.0728473886847496
     },
     {
       "Feature": "ABDICATION_RISK",
-      "Importance": 0.07899721711874008
+      "Importance": 0.07016699016094208
     },
     {
-      "Feature": "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
-      "Importance": 0.07406178116798401
-    },
-    {
-      "Feature": "CREATION_TAX",
-      "Importance": 0.07325039803981781
-    },
-    {
-      "Feature": "CLUTCH_MIN_TOTAL",
-      "Importance": 0.07263386994600296
-    },
-    {
-      "Feature": "PREV_LEVERAGE_TS_DELTA",
-      "Importance": 0.07190302014350891
-    },
-    {
-      "Feature": "QOC_USG_DELTA",
-      "Importance": 0.0696570947766304
+      "Feature": "EFG_ISO_WEIGHTED_YOY_DELTA",
+      "Importance": 0.06805800646543503
     },
     {
       "Feature": "PREV_RS_RIM_APPETITE",
-      "Importance": 0.04755701497197151
+      "Importance": 0.06769292801618576
+    },
+    {
+      "Feature": "RS_EARLY_CLOCK_PRESSURE_RESILIENCE",
+      "Importance": 0.06195357069373131
+    },
+    {
+      "Feature": "EFG_PCT_0_DRIBBLE",
+      "Importance": 0.053557489067316055
     }
   ]
 }

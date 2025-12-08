@@ -56,7 +56,17 @@ class RFEModelTrainer:
         features_str = row.iloc[0]['features']
         features = ast.literal_eval(features_str)
         
-        logger.info(f"Loaded {len(features)} RFE-selected features:")
+        # Force include SHOT_QUALITY_GENERATION_DELTA if available (Dec 8, 2025)
+        # This feature reduces reliance on sample weighting and should always be included
+        if 'SHOT_QUALITY_GENERATION_DELTA' not in features:
+            # Remove lowest importance feature if we're at the limit
+            if len(features) >= n_features:
+                # Keep top n_features-1, add SHOT_QUALITY_GENERATION_DELTA
+                features = features[:n_features-1]
+            features.append('SHOT_QUALITY_GENERATION_DELTA')
+            logger.info(f"Added SHOT_QUALITY_GENERATION_DELTA to feature set (reduces reliance on sample weighting)")
+        
+        logger.info(f"Loaded {len(features)} RFE-selected features (including SHOT_QUALITY_GENERATION_DELTA):")
         for i, feat in enumerate(features, 1):
             logger.info(f"  {i}. {feat}")
         
@@ -481,10 +491,10 @@ class RFEModelTrainer:
         
         # Calculate sample weights for asymmetric loss
         # False positives (predicting "Victim" as "King") are much worse than false negatives
-        # PHASE 4: Increased penalty from 3x to 5x (4.0 penalty) to better penalize false positives
-        # Weight function: weight = 1.0 + (is_victim_actual * is_high_usage * 4.0)
-        # This gives 5x total weight (1.0 base + 4.0 penalty = 5.0) for high-usage victims
-        logger.info("Calculating sample weights for asymmetric loss (5x penalty for high-usage victims)...")
+        # REDUCED from 5x to 3x (Dec 8, 2025) - SHOT_QUALITY_GENERATION_DELTA feature reduces reliance on sample weighting
+        # Weight function: weight = 1.0 + (is_victim_actual * is_high_usage * 2.0)
+        # This gives 3x total weight (1.0 base + 2.0 penalty = 3.0) for high-usage victims
+        logger.info("Calculating sample weights for asymmetric loss (3x penalty for high-usage victims)...")
         
         # Get actual archetypes for training set
         y_train_archetypes = df.loc[train_indices, 'ARCHETYPE']
@@ -501,13 +511,15 @@ class RFEModelTrainer:
             is_high_usage = pd.Series([0] * len(y_train_archetypes))
             logger.warning("USG_PCT not found - sample weighting will not account for usage")
         
-        # Calculate weights: 1.0 base + 4.0 penalty for high-usage victims (5x total)
-        # This strongly penalizes false positives (predicting high-usage victims as stars)
-        penalty_multiplier = 4.0  # PHASE 4: Increased from 2.0 to 4.0 (was 3x, now 5x)
+        # Calculate weights: 1.0 base + penalty for high-usage victims
+        # REDUCED from 5x to 3x (Dec 8, 2025) - SHOT_QUALITY_GENERATION_DELTA feature reduces reliance on sample weighting
+        # Weight function: weight = 1.0 + (is_victim_actual * is_high_usage * penalty_multiplier)
+        # 3x total weight (1.0 base + 2.0 penalty = 3.0) for high-usage victims
+        penalty_multiplier = 2.0  # REDUCED from 4.0 (5x) to 2.0 (3x) - Dec 8, 2025
         sample_weights = 1.0 + (is_victim * is_high_usage * penalty_multiplier)
         
         logger.info(f"  Base weight: 1.0")
-        logger.info(f"  Penalty multiplier: {penalty_multiplier}x (total weight = {1.0 + penalty_multiplier}x for high-usage victims)")
+        logger.info(f"  Penalty multiplier: {penalty_multiplier} (total weight = {1.0 + penalty_multiplier}x for high-usage victims)")
         logger.info(f"  High-usage victims (penalty): {is_victim.sum()} victims, {is_high_usage.sum()} high-usage")
         logger.info(f"  High-usage victims receiving penalty: {(is_victim * is_high_usage).sum()}")
         logger.info(f"  Weighted samples: {(sample_weights > 1.0).sum()} (weight > 1.0)")

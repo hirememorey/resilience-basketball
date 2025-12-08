@@ -50,7 +50,7 @@
 37. **The Trust Fall Experiment & Ground Truth Trap** 🎯 CRITICAL - Performance vs. Portability are orthogonal
 38. **Data-Driven Thresholds** 🎯 CRITICAL - Fit model to data, not data to model
 
-### Recent Critical Fixes (39-48)
+### Recent Critical Fixes (39-49)
 39. **The Creator's Dilemma: Volume vs. Stabilizers** 🎯 CRITICAL - High-usage creators need stabilizers
 40. **The "Empty Calories" Creator Pattern** 🎯 CRITICAL - High volume + negative tax = volume scorer
 41. **Shot Chart Collection Data Completeness Fix** 🎯 CRITICAL - Collect for all players, not just qualified
@@ -61,6 +61,7 @@
 46. **Volume × Flaw Interaction Terms** 🎯 CRITICAL - High usage amplifies flaws
 47. **Asymmetric Loss (Sample Weighting)** 🎯 CRITICAL - False positives cost more than false negatives
 48. **Trust Fall 2.0: Model Can Learn, But Needs Stronger Signals** 🎯 CRITICAL - Model identifies stars but struggles with false positives
+49. **Shot Quality Generation Delta - Replacing Sample Weighting with Organic Features** 🎯 CRITICAL - Measure shot quality, not just volume
 
 ### Quick Reference
 - **Quick Reference Checklist** - Implementation checklist for new features
@@ -1138,6 +1139,36 @@ model.fit(X_train, y_train, sample_weight=sample_weight)
 **Key Principle**: **Model can learn, but needs better features**. Continuous gradients are a step in the right direction, but we need more explicit signals to catch false positives.
 
 **See**: `results/latent_star_test_cases_report_trust_fall.md` for complete Trust Fall 2.0 results.
+
+---
+
+## 49. Shot Quality Generation Delta - Replacing Sample Weighting with Organic Features 🎯 CRITICAL (December 2025)
+
+**The Problem**: Reliance on 5x sample weighting and hard gates suggests incomplete features. When you have to force the model to pay attention to a class by penalizing it 5x, it means the underlying features do not provide enough mathematical separation between a "True Star" and an "Empty Calories Creator" in the vector space.
+
+**The Insight**: **Measure Creation Difficulty, Not Just Creation Volume**. "Empty Calories" players create shots, but they create predictable shots that are easily schemed against in a 7-game series. True Kings create high-value shots (rim pressure, open corner 3s for others).
+
+**The Feature**: `SHOT_QUALITY_GENERATION_DELTA`
+- **Formula**: Actual Shot Quality Generated - Expected Shot Quality (Replacement Player)
+- **Self-Created Quality**: Player's isolation efficiency (EFG_ISO_WEIGHTED) vs. league average
+- **Assisted Quality**: Quality of shots player creates for teammates (EFG_PCT_0_DRIBBLE) vs. league average
+- **Weighted Delta**: Weighted by creation volume ratio (high creators' self-created quality matters more)
+
+**Why It Works**:
+- **D'Angelo Russell (2018-19)**: Delta = -0.0718 (negative) ✅ - Creates low-quality shots
+- **Jalen Brunson (2020-21)**: Delta = +0.0584 (positive) ✅ - Creates high-quality shots
+- **Jerami Grant (2020-21)**: Delta = -0.0614 (negative) ✅ - "Good Stats, Bad Team" pattern
+
+**Key Principle**: **Replace "bullying the gradient descent" with features that explain WHY players fail, not just that they fail**. This feature naturally filters out "Empty Calories" creators without artificial weights.
+
+**Implementation**: `src/nba_data/scripts/calculate_shot_quality_generation.py`
+- Coverage: 100% (5,312/5,312 player-seasons)
+- Mean delta: -0.0301 (slightly negative, as expected - most players are replacement level)
+- Std delta: 0.1334 (good separation)
+
+**Future Enhancement**: Include playtype context (ISO vs. PNR vs. Transition) to measure shot quality by possession type, not just overall.
+
+**See**: `results/shot_quality_generation_delta.csv` for complete results.
 
 ---
 

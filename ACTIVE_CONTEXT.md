@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
 **Last Updated**: December 8, 2025  
-**Status**: Phase 4.4 Complete ✅ | Gate Logic Refinement Complete ✅ | 90.6% Test Pass Rate ✅
+**Status**: Phase 4.4 Complete ✅ | Gate Logic Refinement Complete ✅ | 90.6% Test Pass Rate ✅ | Shot Quality Generation Delta Implemented ✅ | Sample Weighting Reduced 5x→3x ✅
 
 ---
 
@@ -13,18 +13,19 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ## Current Phase: Production-Ready Model
 
-**Model Status**: RFE-optimized XGBoost Classifier with 10 core features, continuous gradients, and 5x sample weighting for asymmetric loss. All data leakage removed, temporal train/test split implemented, 2D Risk Matrix integrated.
+**Model Status**: RFE-optimized XGBoost Classifier with 10 core features (including SHOT_QUALITY_GENERATION_DELTA), continuous gradients, and 3x sample weighting for asymmetric loss. All data leakage removed, temporal train/test split implemented, 2D Risk Matrix integrated.
 
-**Key Achievement**: Model achieves **46.77% accuracy** with **true predictive power** (RS-only features, temporal split). This represents genuine predictive capability, not inflated accuracy from data leakage.
+**Key Achievement**: Model achieves **54.46% accuracy** with **true predictive power** (RS-only features, temporal split). Sample weighting reduced from 5x to 3x with SHOT_QUALITY_GENERATION_DELTA feature (+7.69 pp improvement).
 
 ---
 
 ## Scoreboard (Current Metrics)
 
 ### Model Performance
-- **Accuracy**: 46.77% (RFE model, 10 features, 5x sample weighting)
+- **Accuracy**: 54.46% (RFE model, 10 features including SHOT_QUALITY_GENERATION_DELTA, 3x sample weighting) ✅ **+7.69 pp improvement**
 - **True Predictive Power**: RS-only features, temporal split (2015-2020 train, 2021-2024 test)
 - **Dataset**: 5,312 player-seasons (2015-2024), 899 in train/test split
+- **Sample Weighting**: Reduced from 5x to 3x (Dec 8, 2025) - SHOT_QUALITY_GENERATION_DELTA reduces reliance on weighting
 
 ### Test Suite Performance (32 cases)
 - **Overall Pass Rate (With Gates)**: 90.6% (29/32) ✅ - **Major improvement** from 75.0% (+15.6 pp)
@@ -39,6 +40,7 @@ Identify players who consistently perform better than expected in the playoffs a
 - **AGE**: 100% ✅ (Fixed Dec 8, 2025)
 - **Playtype Data**: 79.3% (4,210/5,312) ✅ (Fixed Dec 8, 2025)
 - **Rim Pressure**: 95.9% (1,773/1,849) ✅ (Fixed Dec 5, 2025)
+- **Shot Quality Generation Delta**: 100% (5,312/5,312) ✅ (Added Dec 8, 2025)
 
 ---
 
@@ -56,6 +58,7 @@ Identify players who consistently perform better than expected in the playoffs a
 - `src/nba_data/scripts/calculate_rim_pressure.py` (Physicality)
 - `src/nba_data/scripts/calculate_shot_difficulty_features.py` (Pressure)
 - `src/nba_data/scripts/calculate_dependence_score.py` (2D Risk Y-Axis)
+- `src/nba_data/scripts/calculate_shot_quality_generation.py` (Shot Quality Generation Delta) ✅ NEW
 - `src/nba_data/scripts/generate_trajectory_features.py` (Priors/Trajectory)
 - `src/nba_data/scripts/generate_gate_features.py` (Soft Gates)
 - `src/nba_data/scripts/generate_previous_playoff_features.py` (Past PO Performance)
@@ -75,19 +78,19 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ## Current Model Architecture
 
-### Top 10 Features (RFE-Optimized)
-1. **USG_PCT** (41.26%) - Usage level
-2. **USG_PCT_X_EFG_ISO_WEIGHTED** (8.85%) - Usage × Isolation efficiency
-3. **CREATION_TAX** (8.54%) - Creation efficiency drop-off
-4. **USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE** (7.16%) - Usage × Late clock resilience
-5. **ABDICATION_RISK** (6.71%) - Continuous gradient (negative leverage signal)
-6. **RS_LATE_CLOCK_PRESSURE_APPETITE** (6.33%) - Late clock pressure willingness
-7. **CLUTCH_MIN_TOTAL** (5.39%) - Clutch minutes
-8. **QOC_USG_DELTA** (5.28%) - Quality of competition usage delta
-9. **CREATION_TAX_YOY_DELTA** (5.26%) - Year-over-year change in creation tax
-10. **AGE_X_RS_PRESSURE_RESILIENCE_YOY_DELTA** (5.21%) - Age × Pressure resilience trajectory
+### Top 10 Features (RFE-Optimized, Updated Dec 8, 2025)
+1. **USG_PCT** (30.94%) - Usage level
+2. **USG_PCT_X_EFG_ISO_WEIGHTED** (13.12%) - Usage × Isolation efficiency
+3. **SHOT_QUALITY_GENERATION_DELTA** (8.96%) - Shot quality generation (NEW) ✅
+4. **INEFFICIENT_VOLUME_SCORE** (7.55%) - Volume × Flaw interaction
+5. **USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE** (7.28%) - Usage × Late clock resilience
+6. **ABDICATION_RISK** (7.02%) - Continuous gradient (negative leverage signal)
+7. **EFG_ISO_WEIGHTED_YOY_DELTA** (6.81%) - Year-over-year change in isolation efficiency
+8. **PREV_RS_RIM_APPETITE** (6.77%) - Previous season rim pressure
+9. **RS_EARLY_CLOCK_PRESSURE_RESILIENCE** (6.20%) - Early clock pressure resilience
+10. **EFG_PCT_0_DRIBBLE** (5.36%) - Catch-and-shoot efficiency
 
-**Key Insight**: Usage-aware features dominate (USG_PCT: 41.26% importance). All features are RS-only or trajectory-based.
+**Key Insight**: SHOT_QUALITY_GENERATION_DELTA is rank #3 (8.96% importance), reducing reliance on sample weighting from 5x to 3x. Usage-aware features still dominate (USG_PCT: 30.94% importance). All features are RS-only or trajectory-based.
 
 ### Model Features (Phase 4.4)
 - **Hard Gates**: **ENABLED BY DEFAULT** (`apply_hard_gates=True`) - surgical refinements based on first principles
@@ -99,7 +102,7 @@ Identify players who consistently perform better than expected in the playoffs a
   - Low-Usage Noise Gate (USG_PCT < 22% AND abs(CREATION_TAX) < 0.05)
   - Volume Creator Inefficiency Gate (CREATION_VOLUME_RATIO > 0.70 AND CREATION_TAX < -0.08)
 - **Continuous Gradients**: Still available as features (RIM_PRESSURE_DEFICIT, ABDICATION_MAGNITUDE, INEFFICIENT_VOLUME_SCORE)
-- **Sample Weighting**: 5x weight for high-usage victims (penalizes false positives)
+- **Sample Weighting**: 3x weight for high-usage victims (reduced from 5x, Dec 8, 2025) - SHOT_QUALITY_GENERATION_DELTA reduces reliance on weighting
 
 **Model File**: `models/resilience_xgb_rfe_10.pkl` (primary)
 

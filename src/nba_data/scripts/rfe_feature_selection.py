@@ -376,6 +376,7 @@ class RFEFeatureSelector:
             # REMOVED: 'FTr_RESILIENCE' (playoff feature)
             'RS_RIM_APPETITE',
             # REMOVED: 'RIM_PRESSURE_RESILIENCE' (playoff feature)
+            'SHOT_QUALITY_GENERATION_DELTA',  # NEW: Shot quality generation (RS-only, measures Empty Calories)
         ]
         
         # Add Usage-Aware Features
