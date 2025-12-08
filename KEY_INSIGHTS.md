@@ -1123,6 +1123,33 @@ if target_usage > current_usage:
 
 ---
 
+## 44. The "Low-Floor Illusion" - Absolute Efficiency Floor 🎯 CRITICAL (December 2025)
+
+**The Problem**: Model falsely identifies players like Markelle Fultz as "King" (Resilient Star) despite uniformly low efficiency. The "Creation Tax Loophole" - when a player is equally bad at catch-and-shoot (45% eFG) and self-creation (45% eFG), `CREATION_TAX = 0.00` looks like "resilience" (no drop) but is actually uniform mediocrity.
+
+**The Insight**: **Uniformly inefficient ≠ resilient**. Relative metrics (ratios/deltas) can be neutral when both components are equally low. A player with `CREATION_TAX = 0.00` could mean:
+- ✅ **Resilient**: Elite catch-and-shoot (60% eFG) → Elite self-creation (60% eFG) = No drop
+- ❌ **Uniformly Bad**: Poor catch-and-shoot (45% eFG) → Poor self-creation (45% eFG) = No drop
+
+**The Fix**: Add absolute efficiency floor gate:
+```python
+# Calculate 25th percentile of EFG_ISO_WEIGHTED from qualified players
+efg_iso_floor = qualified_players['EFG_ISO_WEIGHTED'].quantile(0.25)
+
+# Inefficiency Gate: If absolute isolation efficiency is below floor, cap star-level
+if EFG_ISO_WEIGHTED < efg_iso_floor:
+    star_level_potential = min(star_level_potential, 0.40)  # Cap at Bulldozer/Victim
+    # Force downgrade: Can't be "King" if uniformly inefficient
+```
+
+**Key Principle**: **Absolute metrics for floors, relative metrics for change**. CREATION_TAX measures change (resilience), but EFG_ISO_WEIGHTED measures absolute quality (star-level requirement).
+
+**Test Cases**: Markelle Fultz (2019-20, 2022-23, 2023-24) - All should be capped at <55% star-level, not predicted as "King" (73-75%)
+
+**Implementation**: Inefficiency Gate applies BEFORE other gates (absolute constraint) and uses data-driven threshold (25th percentile from qualified players).
+
+---
+
 ## 43. Don't Overengineer - Use Existing Frameworks 🎯 CRITICAL (December 2025)
 
 **The Problem**: When trying to fix test failures (Poole, Markkanen), we were designing complex penalty systems to force 2D insights (Performance vs. Dependence) into the 1D model.

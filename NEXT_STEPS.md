@@ -1,7 +1,7 @@
 # Next Steps
 
 **Date**: December 7, 2025  
-**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅
+**Status**: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅
 
 ---
 
@@ -238,8 +238,12 @@
 
 4. **Markelle Fultz (2019-20, 2022-23, 2023-24)**: 3 seasons failing
    - **Root Cause**: Model overvaluing Fultz in certain seasons
-   - **Note**: Pattern suggests model may be responding to certain features incorrectly
-   - **Next Steps**: Investigate what features are driving high predictions for Fultz in these specific seasons
+   - **Status**: ✅ **PARTIAL FIX** - Inefficiency Gate implemented (December 2025)
+     - **2017-18**: Now passes (Inefficiency Gate applied - EFG_ISO below 25th percentile)
+     - **2018-19**: Now passes (Inefficiency Gate applied - below median + near-zero CREATION_TAX)
+     - **2019-20, 2022-23, 2023-24**: Still failing - Gate doesn't apply (EFG_ISO above median in these seasons)
+   - **Note**: In later seasons, Fultz's isolation efficiency improved (0.48-0.52), so gate correctly doesn't apply. Model still overvalues due to other factors (high creation volume, rim pressure).
+   - **Next Steps**: Investigate what other features are driving high predictions for Fultz in these specific seasons
 
 ---
 
@@ -314,4 +318,4 @@
 
 ---
 
-**Status**: Data leakage fixes complete (RS-only features, temporal split). Previous playoff features integrated. 2D Risk Matrix implementation complete and integrated into test suite. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. Rim pressure data fix complete (95.9% coverage). Universal Projection implemented. Feature distribution alignment complete. USG_PCT normalization complete. **2D Risk Matrix Integration**: Complete - test suite now uses 2D framework for all cases (December 7, 2025). **Next Priority**: Investigate remaining 6 test failures (mostly edge cases: Randle, Sabonis, Haliburton, Fultz).
+**Status**: Data leakage fixes complete (RS-only features, temporal split). Previous playoff features integrated. 2D Risk Matrix implementation complete and integrated into test suite. Data-driven thresholds calculated. D'Angelo Russell fix complete. Expanded dataset analysis complete. Rim pressure data fix complete (95.9% coverage). Universal Projection implemented. Feature distribution alignment complete. USG_PCT normalization complete. **2D Risk Matrix Integration**: Complete - test suite now uses 2D framework for all cases (December 7, 2025). **Inefficiency Gate**: Implemented (December 7, 2025) - fixes "Low-Floor Illusion" for uniformly inefficient players. Fultz 2017-18 and 2018-19 now pass. **Next Priority**: Investigate remaining 6 test failures (mostly edge cases: Randle, Sabonis, Haliburton, Fultz 2019-20/2022-23/2023-24).

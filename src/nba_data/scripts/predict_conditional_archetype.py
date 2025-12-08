@@ -298,10 +298,22 @@ class ConditionalArchetypePredictor:
             if len(efg_iso) > 0:
                 self.efg_iso_80th = efg_iso.quantile(0.80)
                 logger.info(f"EFG_ISO_WEIGHTED 80th percentile (qualified): {self.efg_iso_80th:.4f}")
+                # Inefficiency Gate: Calculate 25th percentile as absolute efficiency floor
+                # Fixes "Low-Floor Illusion" - players with uniformly low efficiency (e.g., Fultz)
+                # who have CREATION_TAX = 0.00 (no drop) but are actually just bad at everything
+                self.efg_iso_floor = efg_iso.quantile(0.25)
+                # Also calculate median for "uniform mediocrity" detection (near-zero CREATION_TAX + below-median efficiency)
+                self.efg_iso_median = efg_iso.quantile(0.50)
+                logger.info(f"EFG_ISO_WEIGHTED 25th percentile (inefficiency floor): {self.efg_iso_floor:.4f}")
+                logger.info(f"EFG_ISO_WEIGHTED 50th percentile (median): {self.efg_iso_median:.4f}")
             else:
                 self.efg_iso_80th = None
+                self.efg_iso_floor = None
+                self.efg_iso_median = None
         else:
             self.efg_iso_80th = None
+            self.efg_iso_floor = None
+            self.efg_iso_median = None
         
         # Phase 3.7 Fix #2: Flash Multiplier - Add RS_PRESSURE_RESILIENCE as alternative flash signal
         # Phase 3.8 Fix: Filter by pressure shot volume for pressure resilience percentile
@@ -1011,6 +1023,57 @@ class ConditionalArchetypePredictor:
         
         # Calculate star-level potential (King + Bulldozer)
         star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
+        
+        # Inefficiency Gate: Absolute Efficiency Floor (Fixes "Low-Floor Illusion")
+        # Principle: Uniformly inefficient ≠ resilient. CREATION_TAX = 0.00 can mean "no drop" 
+        # (resilient) OR "equally bad at everything" (Fultz pattern). Need absolute floor.
+        # Two conditions:
+        # 1. EFG_ISO_WEIGHTED < 25th percentile (uniformly bad)
+        # 2. EFG_ISO_WEIGHTED < median AND CREATION_TAX near 0.00 (uniformly mediocre)
+        # Applies BEFORE other gates since it's a hard physics constraint.
+        inefficiency_gate_applied = False
+        if apply_phase3_fixes and apply_hard_gates and 'EFG_ISO_WEIGHTED' in player_data.index:
+            efg_iso = player_data.get('EFG_ISO_WEIGHTED', None)
+            creation_tax = player_data.get('CREATION_TAX', None)
+            
+            if pd.notna(efg_iso) and self.efg_iso_floor is not None:
+                # Condition 1: Below 25th percentile (uniformly bad)
+                below_floor = efg_iso < self.efg_iso_floor
+                
+                # Condition 2: Below median AND near-zero CREATION_TAX (uniformly mediocre)
+                # CREATION_TAX near 0.00 (-0.05 to +0.05) means no efficiency drop, which could be
+                # resilient (elite at both) OR uniformly mediocre (bad at both)
+                uniformly_mediocre = False
+                if pd.notna(creation_tax) and self.efg_iso_median is not None:
+                    near_zero_tax = abs(creation_tax) <= 0.05  # Within ±0.05 of zero
+                    below_median = efg_iso < self.efg_iso_median
+                    uniformly_mediocre = near_zero_tax and below_median
+                
+                if below_floor or uniformly_mediocre:
+                    original_star_level = star_level_potential
+                    # Cap at 40% (allows for "Bulldozer" - inefficient volume scorer)
+                    star_level_potential = min(star_level_potential, 0.40)
+                    inefficiency_gate_applied = True
+                    
+                    # Force downgrade: Can't be "King" (resilient star) if uniformly inefficient
+                    if star_level_potential <= 0.30:
+                        # Below 30% = "Victim" (fragile role)
+                        prob_dict['Victim'] = max(prob_dict.get('Victim', 0), 1.0 - prob_dict.get('Sniper', 0))
+                        prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                        prob_dict['King'] = 0.0
+                        prob_dict['Bulldozer'] = 0.0
+                        if pred_archetype in ['King (Resilient Star)', 'Bulldozer (Fragile Star)']:
+                            pred_archetype = 'Victim (Fragile Role)' if prob_dict['Victim'] > prob_dict['Sniper'] else 'Sniper (Resilient Role)'
+                    else:
+                        # 30-40% = "Bulldozer" (inefficient volume scorer, not resilient star)
+                        prob_dict['Bulldozer'] = star_level_potential
+                        prob_dict['King'] = 0.0
+                        prob_dict['Victim'] = max(0.0, 1.0 - star_level_potential - prob_dict.get('Sniper', 0))
+                        if pred_archetype == 'King (Resilient Star)':
+                            pred_archetype = 'Bulldozer (Fragile Star)'
+                    
+                    reason = "below 25th percentile" if below_floor else "below median with near-zero CREATION_TAX (uniformly mediocre)"
+                    logger.info(f"Inefficiency Gate applied: EFG_ISO_WEIGHTED={efg_iso:.4f} ({reason}) → star-level capped from {original_star_level:.2%} to {star_level_potential:.2%} (uniformly inefficient, not resilient)")
         
         # Phase 3.5 Fix #1: Fragility Gate - Use RS_RIM_APPETITE (absolute volume) instead of ratio
         # Cap star-level if RS_RIM_APPETITE is bottom 20th percentile
