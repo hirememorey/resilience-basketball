@@ -30,6 +30,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import logging
+import sqlite3
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
@@ -49,6 +50,8 @@ class ConditionalArchetypePredictor:
         """
         self.results_dir = Path("results")
         self.models_dir = Path("models")
+        self.data_dir = Path("data")
+        self.db_path = self.data_dir / "nba_stats.db"
         self.use_rfe_model = use_rfe_model
         
         # Load model and encoder
@@ -461,6 +464,31 @@ class ConditionalArchetypePredictor:
             # If USG_PCT > 1.0, it's in percentage format, convert to decimal
             if player_data['USG_PCT'] > 1.0:
                 player_data['USG_PCT'] = player_data['USG_PCT'] / 100.0
+        
+        # FRANCHISE CORNERSTONE FIX: Load AST_PCT from database if not in dataset
+        if 'AST_PCT' not in player_data.index or pd.isna(player_data.get('AST_PCT', None)):
+            player_id = player_data.get('PLAYER_ID', None)
+            if pd.notna(player_id) and self.db_path.exists():
+                try:
+                    conn = sqlite3.connect(self.db_path)
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT assist_percentage 
+                        FROM player_advanced_stats 
+                        WHERE player_id = ? AND season = ? AND season_type = 'Regular Season'
+                        LIMIT 1
+                    """, (int(player_id), season))
+                    result = cursor.fetchone()
+                    conn.close()
+                    
+                    if result and result[0] is not None:
+                        ast_pct = result[0]
+                        # Normalize from percentage (30.0) to decimal (0.30) if needed
+                        if ast_pct > 1.0:
+                            ast_pct = ast_pct / 100.0
+                        player_data['AST_PCT'] = ast_pct
+                except Exception as e:
+                    logger.warning(f"Failed to load AST_PCT from database for {player_name} {season}: {e}")
         
         return player_data
     
@@ -1147,7 +1175,13 @@ class ConditionalArchetypePredictor:
                     below_median = efg_iso < self.efg_iso_median
                     uniformly_mediocre = near_zero_tax and below_median
                 
-                if below_floor or uniformly_mediocre:
+                # FRANCHISE CORNERSTONE FIX: Rim Pressure Exemption
+                # Bigs with high rim pressure have a floor (fouls, rebounds) that offsets low ISO efficiency
+                # ISO efficiency is not the primary signal for bigs - rim pressure is
+                rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+                has_elite_rim_force = pd.notna(rim_appetite) and rim_appetite > 0.20
+                
+                if (below_floor or uniformly_mediocre) and not has_elite_rim_force:
                     original_star_level = star_level_potential
                     # Cap at 40% (allows for "Bulldozer" - inefficient volume scorer)
                     star_level_potential = min(star_level_potential, 0.40)
@@ -1172,6 +1206,8 @@ class ConditionalArchetypePredictor:
                     
                     reason = "below 25th percentile" if below_floor else "below median with near-zero CREATION_TAX (uniformly mediocre)"
                     logger.info(f"Inefficiency Gate applied: EFG_ISO_WEIGHTED={efg_iso:.4f} ({reason}) → star-level capped from {original_star_level:.2%} to {star_level_potential:.2%} (uniformly inefficient, not resilient)")
+                elif has_elite_rim_force:
+                    logger.info(f"Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED={efg_iso:.4f} below threshold BUT Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency")
         
         # Phase 3.5 Fix #1: Fragility Gate - Use RS_RIM_APPETITE (absolute volume) instead of ratio
         # Cap star-level if RS_RIM_APPETITE is bottom 20th percentile
@@ -1361,9 +1397,34 @@ class ConditionalArchetypePredictor:
             flash_multiplier_conditions_met = is_low_volume and is_elite_efficiency
             
             if pd.notna(self_created_freq) and self_created_freq < 0.10:
+                # FRANCHISE CORNERSTONE FIX: Elite Playmaker OR Elite Rim Force Exemption
+                # Players who create offense through passing (assists) OR rim pressure shouldn't be penalized for low ISO/PNR frequency
+                # Elite Playmaker: AST_PCT > 0.30 OR CREATION_VOLUME_RATIO > 0.50
+                # Elite Rim Force: RS_RIM_APPETITE > 0.20 (for bigs, rim pressure = self-created offense)
+                ast_pct = player_data.get('AST_PCT', None)
+                creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', None)
+                rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+                is_elite_playmaker = False
+                is_elite_rim_force = False
+                
+                if pd.notna(ast_pct) and ast_pct > 0.30:
+                    is_elite_playmaker = True
+                elif pd.notna(creation_vol_ratio) and creation_vol_ratio > 0.50:
+                    is_elite_playmaker = True
+                
+                if pd.notna(rim_appetite) and rim_appetite > 0.20:
+                    is_elite_rim_force = True
+                
+                has_elite_trait = is_elite_playmaker or is_elite_rim_force
+                
                 # PHASE 4.1: Exempt if Flash Multiplier conditions are met (showing elite skills despite low volume)
+                # OR if Elite Playmaker (passing substitutes for isolation) OR Elite Rim Force (rim pressure = self-created for bigs)
                 if flash_multiplier_conditions_met:
                     logger.info(f"Bag Check Gate EXEMPTED: Self-created freq {self_created_freq:.4f} < 0.10 BUT Flash Multiplier conditions met (low volume={creation_vol:.4f} + elite efficiency) = role constraint, not skill deficit")
+                elif is_elite_playmaker:
+                    logger.info(f"Bag Check Gate EXEMPTED: Self-created freq {self_created_freq:.4f} < 0.10 BUT Elite Playmaker (AST_PCT={ast_pct:.3f if pd.notna(ast_pct) else 'N/A'} OR CREATION_VOLUME_RATIO={creation_vol_ratio:.3f if pd.notna(creation_vol_ratio) else 'N/A'}) = passing substitutes for isolation")
+                elif is_elite_rim_force:
+                    logger.info(f"Bag Check Gate EXEMPTED: Self-created freq {self_created_freq:.4f} < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20) = rim pressure is self-created offense for bigs")
                 else:
                     bag_check_gate_applied = True
                     # Cap star-level at 30% (Sniper ceiling) - cannot be a true star without self-creation
@@ -1638,7 +1699,13 @@ class ConditionalArchetypePredictor:
                 if has_elite_creation_volume:
                     has_elite_creator_exemption = True
             
-            if pd.notna(creation_tax) and creation_tax < -0.15 and not has_elite_creator_exemption:
+            # FRANCHISE CORNERSTONE FIX: Rim Pressure Exemption
+            # Bigs with high rim pressure have a floor (fouls, rebounds) that offsets negative creation tax
+            # Being inefficient at creation is fatal unless you live at the rim (AD/Embiid)
+            rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+            has_elite_rim_force = pd.notna(rim_appetite) and rim_appetite > 0.20
+            
+            if pd.notna(creation_tax) and creation_tax < -0.15 and not has_elite_creator_exemption and not has_elite_rim_force:
                 # PHASE 4.4 REFINEMENT: Rookie/Young Player Exemption
                 # Rookies often have negative creation tax due to learning curve, not true inefficiency
                 # Exempt players under age 22 (rookie/2nd year) if they have positive leverage signals
@@ -1670,7 +1737,9 @@ class ConditionalArchetypePredictor:
                     
                     logger.info(f"Creation Fragility Gate applied: CREATION_TAX={creation_tax:.3f} < -0.15 (severe efficiency drop in creation), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
                 else:
-                    if young_player_exempt:
+                    if has_elite_rim_force:
+                        logger.info(f"Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax")
+                    elif young_player_exempt:
                         logger.info(f"Creation Fragility Gate EXEMPTED: Young player (AGE={age:.0f} < 22) with positive leverage signals - learning curve, not true inefficiency")
         
         # PHASE 4.4 FIX: Compound Fragility Gate (Priority: High)
@@ -1690,12 +1759,23 @@ class ConditionalArchetypePredictor:
             # Lowered threshold from 0.70 to 0.65 to catch players like Maxey (0.698) who are elite creators
             has_elite_creation_volume = pd.notna(creation_vol_ratio) and creation_vol_ratio > 0.65
             
-            # For compound fragility, check both signals, but exempt CREATION_TAX if elite creator
+            # FRANCHISE CORNERSTONE FIX: Rim Pressure Exemption (CREATION_TAX part only)
+            # Rim pressure stabilizes creation efficiency, but doesn't stabilize clutch efficiency
+            # If Elite Rim Force (RS_RIM_APPETITE > 0.20), ignore the CREATION_TAX condition
+            rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+            has_elite_rim_force = pd.notna(rim_appetite) and rim_appetite > 0.20
+            
+            # For compound fragility, check both signals, but exempt CREATION_TAX if elite creator OR elite rim force
             has_negative_creation_tax = pd.notna(creation_tax) and creation_tax < -0.10
             has_negative_leverage_ts = pd.notna(leverage_ts_delta) and leverage_ts_delta < -0.05
             
+            # If Elite Rim Force, ignore CREATION_TAX part (set to False)
+            # Gate becomes: (False AND LEVERAGE_TS < -0.05) = False → Gate effectively disabled for Creation component
+            if has_elite_rim_force:
+                has_negative_creation_tax = False
+            
             # Trigger if: (negative creation tax AND not elite creator) OR (negative leverage TS)
-            # This means: elite creators are exempt from CREATION_TAX part, but LEVERAGE_TS_DELTA still matters
+            # This means: elite creators/rim force are exempt from CREATION_TAX part, but LEVERAGE_TS_DELTA still matters
             if has_negative_leverage_ts and (has_negative_creation_tax and not has_elite_creation_volume):
                 original_star_level = star_level_potential
                 # Cap at 30% (Sniper ceiling) - compound fragility = not resilient
@@ -1714,17 +1794,26 @@ class ConditionalArchetypePredictor:
                     if original_star_level > 0.30:
                         pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
                 
-                logger.info(f"Compound Fragility Gate applied: CREATION_TAX={creation_tax:.3f} < -0.10 AND LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} < -0.05 (compound fragility), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                if has_elite_rim_force:
+                    logger.info(f"Compound Fragility Gate applied: CREATION_TAX part EXEMPTED (Elite Rim Force: RS_RIM_APPETITE={rim_appetite:.3f} > 0.20), but LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} < -0.05 still triggers gate, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                else:
+                    logger.info(f"Compound Fragility Gate applied: CREATION_TAX={creation_tax:.3f} < -0.10 AND LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} < -0.05 (compound fragility), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
         
         # PHASE 4.4 FIX: Low-Usage Noise Gate (Priority: Medium)
         # Principle: Efficiency on low volume (<22% usage) with no clear signal (abs(CREATION_TAX) < 0.05) is noise, not signal.
         # Small sample size creates random fluctuations. This is a sample size constraint.
+        # FRANCHISE CORNERSTONE FIX: Elite Rim Force Exemption
+        # Bigs with high rim pressure have a clear signal (physicality), even at low usage
         low_usage_noise_gate_applied = False
         if apply_phase3_fixes and apply_hard_gates:
             usage = player_data.get('USG_PCT', None)
             creation_tax = player_data.get('CREATION_TAX', None)
+            rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+            has_elite_rim_force = pd.notna(rim_appetite) and rim_appetite > 0.20
+            
             if (pd.notna(usage) and usage < 0.22 and
-                pd.notna(creation_tax) and abs(creation_tax) < 0.05):
+                pd.notna(creation_tax) and abs(creation_tax) < 0.05 and
+                not has_elite_rim_force):
                 original_star_level = star_level_potential
                 # Cap at 30% (Sniper ceiling) - low usage + ambiguous signal = noise, not skill
                 star_level_potential = min(star_level_potential, 0.30)
@@ -1743,6 +1832,9 @@ class ConditionalArchetypePredictor:
                         pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
                 
                 logger.info(f"Low-Usage Noise Gate applied: USG_PCT={usage:.1%} < 22% AND abs(CREATION_TAX)={abs(creation_tax):.3f} < 0.05 (ambiguous signal = noise), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+            elif has_elite_rim_force and pd.notna(usage) and usage < 0.22:
+                creation_tax_str = f"{abs(creation_tax):.3f}" if pd.notna(creation_tax) else "N/A"
+                logger.info(f"Low-Usage Noise Gate EXEMPTED: USG_PCT={usage:.1%} < 22% AND abs(CREATION_TAX)={creation_tax_str} < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20) - rim pressure provides clear signal even at low usage")
         
         # PHASE 4.4 FIX: Volume Creator Inefficiency Gate (Priority: Medium)
         # Principle: High creation volume (>70%) with negative creation tax (< -0.10) indicates inefficient volume creator.
@@ -1807,7 +1899,36 @@ class ConditionalArchetypePredictor:
             has_high_usage = pd.notna(usage) and usage > 0.25
             has_negative_sq_delta = pd.notna(sq_gen_delta) and sq_gen_delta < -0.05
             
-            if has_high_usage and has_negative_sq_delta:
+            # FRANCHISE CORNERSTONE FIX: Elite Trait Exemptions
+            # Negative SQ_Delta can mean different things:
+            # - "Bad Bad" (Russell): Actually inefficient
+            # - "Good Bad" (Jokic/Davis/Embiid): Negative delta due to playstyle/position, not actual inefficiency
+            # Exempt if player has Elite Creator, Elite Rim Force, or Elite Playmaker trait
+            is_elite_creator = False
+            is_elite_rim_force = False
+            is_elite_playmaker = False
+            
+            creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', None)
+            rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+            ast_pct = player_data.get('AST_PCT', None)
+            
+            # Elite Creator: CREATION_VOLUME_RATIO > 0.65 (Primary Option)
+            if pd.notna(creation_vol_ratio) and creation_vol_ratio > 0.65:
+                is_elite_creator = True
+            
+            # Elite Rim Force: RS_RIM_APPETITE > 0.20 (Top 20% physicality)
+            if pd.notna(rim_appetite) and rim_appetite > 0.20:
+                is_elite_rim_force = True
+            
+            # Elite Playmaker: AST_PCT > 0.30 OR CREATION_VOLUME_RATIO > 0.50 (Offensive Engine)
+            if pd.notna(ast_pct) and ast_pct > 0.30:
+                is_elite_playmaker = True
+            elif pd.notna(creation_vol_ratio) and creation_vol_ratio > 0.50:
+                is_elite_playmaker = True
+            
+            has_elite_trait = is_elite_creator or is_elite_rim_force or is_elite_playmaker
+            
+            if has_high_usage and has_negative_sq_delta and not has_elite_trait:
                 original_star_level = star_level_potential
                 # Cap total star-level potential at 30% (cannot be a star if generating below-average shots at high usage)
                 # This is more aggressive than just capping King - replacement level creators shouldn't be stars at all
@@ -1857,7 +1978,21 @@ class ConditionalArchetypePredictor:
                         else:
                             pred_archetype = 'Victim (Fragile Role)'
                 
-                logger.info(f"Replacement Level Creator Gate applied: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < -0.05 (high usage + negative delta = replacement level), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                exemption_reason = []
+                if is_elite_creator:
+                    exemption_reason.append(f"Elite Creator (CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} > 0.65)")
+                if is_elite_rim_force:
+                    exemption_reason.append(f"Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20)")
+                if is_elite_playmaker:
+                    if pd.notna(ast_pct) and ast_pct > 0.30:
+                        exemption_reason.append(f"Elite Playmaker (AST_PCT={ast_pct:.3f} > 0.30)")
+                    elif pd.notna(creation_vol_ratio) and creation_vol_ratio > 0.50:
+                        exemption_reason.append(f"Elite Playmaker (CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} > 0.50)")
+                
+                if has_elite_trait:
+                    logger.info(f"Replacement Level Creator Gate EXEMPTED: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < -0.05 BUT Elite Trait present: {', '.join(exemption_reason)}")
+                else:
+                    logger.info(f"Replacement Level Creator Gate applied: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < -0.05 (high usage + negative delta = replacement level), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
         
         # Check for missing data (confidence flags)
         confidence_flags = []

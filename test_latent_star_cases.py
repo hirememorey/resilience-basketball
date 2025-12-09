@@ -145,6 +145,97 @@ def get_test_cases() -> List[LatentStarTestCase]:
         mechanism="Tests model's ability to identify secondary creators who can scale up. Elite Creation Vector and shooting."
     ),
     
+        # ========== Category 1.5: The "Franchise Cornerstone" Misses (Critical False Negatives) ==========
+        # These are elite players who should be identified as Franchise Cornerstones but the model is missing
+        LatentStarTestCase(
+            name="Nikola Jokić",
+            season="2015-16",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="King",  # Or Bulldozer
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",  # High Performance + Low Dependence
+            context="Rookie year (19.4% Usage). Age 21. Future MVP and champion. Elite passing and efficiency.",
+            mechanism="Tests model's ability to identify elite bigs with unique skill sets. Should see high creation volume, elite efficiency, and low dependence."
+        ),
+        LatentStarTestCase(
+            name="Nikola Jokić",
+            season="2016-17",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 22 (23.1% Usage). Emerging as elite playmaker and scorer. Future MVP trajectory.",
+            mechanism="Elite creation volume and efficiency. Low dependence on system. Should be identified as franchise cornerstone."
+        ),
+        LatentStarTestCase(
+            name="Nikola Jokić",
+            season="2017-18",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 23 (23.8% Usage). All-Star season. Elite passing and scoring efficiency.",
+            mechanism="Should identify elite creation and efficiency. Low dependence - self-created offense."
+        ),
+        LatentStarTestCase(
+            name="Nikola Jokić",
+            season="2018-19",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 24 (27.1% Usage). First-team All-NBA. Elite playmaker and scorer.",
+            mechanism="Franchise cornerstone with elite creation volume and efficiency. Low dependence on system."
+        ),
+        LatentStarTestCase(
+            name="Anthony Davis",
+            season="2015-16",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="Bulldozer",  # Or King
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 23 (29.0% Usage). All-Star, All-NBA. Elite rim pressure and defensive anchor.",
+            mechanism="Elite physicality vector (rim pressure) and creation. Should be identified as franchise cornerstone."
+        ),
+        LatentStarTestCase(
+            name="Anthony Davis",
+            season="2016-17",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="Bulldozer",  # Or King
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 24 (32.1% Usage). All-Star, All-NBA. Elite two-way player.",
+            mechanism="Elite rim pressure, creation volume, and efficiency. Low dependence - self-created offense."
+        ),
+        LatentStarTestCase(
+            name="Joel Embiid",
+            season="2016-17",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Rookie year (35.6% Usage). Age 23. Elite rim pressure and scoring. Future MVP.",
+            mechanism="Elite physicality vector and creation volume. Should be identified as franchise cornerstone despite high usage."
+        ),
+        LatentStarTestCase(
+            name="Joel Embiid",
+            season="2017-18",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="Bulldozer",  # Or King
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 24 (33.0% Usage). All-Star. Elite rim pressure and scoring efficiency.",
+            mechanism="Elite creation volume and physicality. Low dependence - self-created offense."
+        ),
+    
         # ========== Category 2: The "Mirage" Breakouts & Fragile Stars (False Positives) ==========
         LatentStarTestCase(
             name="Jordan Poole",

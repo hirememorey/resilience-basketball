@@ -155,6 +155,18 @@ def calculate_dependence_score(player_data: pd.Series) -> dict:
         dependence_score = components['assisted'] + components['open_shot'] + components['low_self_creation']
         # Cap at 1.0
         dependence_score = min(dependence_score, 1.0)
+    
+    # FRANCHISE CORNERSTONE FIX: Rim Pressure Override
+    # Players with high rim appetite generate their own offense via positioning and physicality,
+    # even if the box score says "Assisted". Rim pressure = self-created offense.
+    rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+    if pd.notna(rim_appetite) and rim_appetite > 0.20 and dependence_score is not None:
+        # Cap dependence score at 0.40 (rim pressure reduces dependence but doesn't eliminate it)
+        # This allows "Franchise Cornerstone" classification (High Performance + Low Dependence)
+        original_score = dependence_score
+        dependence_score = min(dependence_score, 0.40)
+        if original_score != dependence_score:
+            logger.debug(f"Rim Pressure Override: Dependence score capped from {original_score:.3f} to {dependence_score:.3f} (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20)")
     elif assisted_fgm_pct is not None and open_shot_frequency is not None:
         # Missing self-creation - use 2 components with adjusted weights
         components['assisted'] = assisted_fgm_pct * 0.50  # Adjusted weight
