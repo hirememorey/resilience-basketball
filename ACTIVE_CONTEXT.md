@@ -116,17 +116,43 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ## Immediate Next Steps (Top 3 Priorities)
 
-### 1. Address False Positive Regressions 🟡 MEDIUM PRIORITY
+### 1. Implement Hierarchy of Constraints (Fatal Flaws First) 🟡 HIGH PRIORITY
 
-**Status**: Franchise cornerstone fixes achieved 100% True Positive pass rate (17/17), but introduced some regressions in False Positives and True Negatives.
+**Status**: Attempted implementation on Dec 9, 2025, but reverted due to bugs. The principle is sound but needs careful implementation.
 
-**Regressions**:
-- **False Positives**: 20.0% (1/5) - Down from 100%
-- **True Negatives**: 70.6% (12/17) - Down from 94.1%
-- **Root Cause**: Elite Rim Force exemption may be too broad, catching some non-cornerstone players
+**What We Learned** (See `docs/HIERARCHY_OF_CONSTRAINTS_ATTEMPT.md`):
+- **Principle is Correct**: Fatal Flaws > Elite Traits is theoretically sound
+- **Implementation Had Bugs**: Exemption logic for elite creators broke Haliburton case
+- **Net Result**: Fixed 1 False Positive (Randle) but broke 1 True Positive (Haliburton)
+
+**Required Fixes Before Re-Implementation**:
+1. **Fix Elite Creator Exemption Logic** (Critical)
+   - Handle edge cases: `CREATION_TAX` between -0.15 and -0.10
+   - Implement two-path exemption: (high volume + efficient) OR (elite efficiency)
+   - Test specifically on Haliburton case
+2. **Refine Thresholds**
+   - Analyze `CREATION_TAX` distribution for True Positives vs. False Positives
+   - Consider data-driven thresholds (percentile-based) vs. fixed values
+   - Calibrate rim pressure exemption (`RS_RIM_PCT > 60%`)
+3. **Implement Incrementally**
+   - Fix exemption logic first, test, then proceed
+   - Move fatal flaw gates to execute first (after exemptions fixed)
+   - Implement Dependence Law (was working correctly)
+
+**Target**: Maintain 100% True Positive pass rate while improving False Positive detection.
+
+### 2. Address False Positive Regressions 🟡 MEDIUM PRIORITY
+
+**Status**: Current False Positive pass rate is 20.0% (1/5). Several cases still failing:
+- D'Angelo Russell (2018-19)
+- Jordan Poole (2021-22)
+- Christian Wood (2020-21)
+- KAT (various seasons)
+
+**Root Cause**: Elite Rim Force exemption may be too broad, or model is over-predicting performance for these cases.
 
 **Next Actions**:
-- Investigate which cases are failing (likely Markelle Fultz, some KAT seasons)
+- Investigate which gates/exemptions are allowing these cases through
 - Evaluate if rim pressure exemption threshold (0.20) needs adjustment
 - Consider additional constraints to prevent false positives while maintaining True Positive pass rate
 
@@ -149,6 +175,16 @@ Identify players who consistently perform better than expected in the playoffs a
 ---
 
 ## Key Completed Work (Recent)
+
+### ⚠️ Hierarchy of Constraints Attempt (Dec 9, 2025) - REVERTED
+- Attempted to implement "Fatal Flaws > Elite Traits" hierarchy
+- Moved Clutch, Creation, and Compound Fragility gates to execute first
+- Refined Elite Rim Force exemption to require `RS_RIM_PCT > 60%`
+- Tightened Elite Creator Exemption to require `CREATION_TAX > -0.10`
+- Implemented Dependence Law in 2D Risk Matrix
+- **Result**: Fixed 1 False Positive (Randle) but broke 1 True Positive (Haliburton)
+- **Action**: Reverted to maintain 100% True Positive pass rate
+- **Documentation**: See `docs/HIERARCHY_OF_CONSTRAINTS_ATTEMPT.md` for full analysis and lessons learned
 
 ### ✅ Phase 4.6: Franchise Cornerstone Fixes (Dec 9, 2025)
 - Implemented position-aware gate logic with elite trait exemptions
@@ -201,6 +237,7 @@ Identify players who consistently perform better than expected in the playoffs a
 - **`.cursorrules`** - System instructions (always loaded)
 - **`KEY_INSIGHTS.md`** - 48 hard-won lessons (reference on demand)
 - **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation (reference for gate logic)
+- **`docs/HIERARCHY_OF_CONSTRAINTS_ATTEMPT.md`** - Lessons learned from hierarchy-of-constraints implementation attempt (Dec 9, 2025)
 
 ### Model Files
 - **`models/resilience_xgb_rfe_10.pkl`** - Current model (10 features)
