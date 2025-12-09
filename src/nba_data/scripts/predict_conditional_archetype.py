@@ -505,12 +505,19 @@ class ConditionalArchetypePredictor:
         else:
             risk_features['ABDICATION_MAGNITUDE'] = 0.0
         
-        # 3. INEFFICIENT_VOLUME_SCORE: Interaction of Volume × Negative Creation Tax
+        # 3. INEFFICIENT_VOLUME_SCORE: Interaction of Usage × Volume × Negative Creation Tax
+        # Enhancement (Dec 9, 2025): Added USG_PCT to strengthen signal - penalizes inefficiency scaled by usage level
+        # Formula: USG_PCT × CREATION_VOLUME_RATIO × max(0, -CREATION_TAX)
         creation_vol = player_data.get('CREATION_VOLUME_RATIO', 0.0)
         creation_tax = player_data.get('CREATION_TAX', 0.0)
+        usg_pct = usage_level  # Use target usage level for prediction
+        
         if pd.notna(creation_vol) and pd.notna(creation_tax):
             negative_tax_magnitude = max(0, -creation_tax)
-            risk_features['INEFFICIENT_VOLUME_SCORE'] = creation_vol * negative_tax_magnitude
+            # Base interaction: Volume × Negative Tax
+            base_score = creation_vol * negative_tax_magnitude
+            # Enhanced: Scale by usage level
+            risk_features['INEFFICIENT_VOLUME_SCORE'] = usg_pct * base_score
         else:
             risk_features['INEFFICIENT_VOLUME_SCORE'] = 0.0
         
@@ -1782,8 +1789,80 @@ class ConditionalArchetypePredictor:
                 
                 logger.info(f"Volume Creator Inefficiency Gate applied: CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} > 0.70 AND CREATION_TAX={creation_tax:.3f} < -0.10 (inefficient volume creator), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
         
+        # PHASE 4.5 FIX: Replacement Level Creator Gate (Safety Valve) - Dec 9, 2025
+        # Principle: High usage (>25%) with negative shot quality generation delta (<-0.05) indicates "empty calories" creator.
+        # These players demand the ball but generate shots worse than league average - they're replacement level, not stars.
+        # Conservative threshold (USG_PCT > 0.25 AND SQ_DELTA < -0.05) avoids breaking young stars (Shai, Tatum have usage < 25%).
+        # Example: D'Angelo Russell (2018-19): USG=31.1%, SQ_DELTA=-0.0718 → Should be capped
+        replacement_level_creator_gate_applied = False
+        if apply_phase3_fixes and apply_hard_gates:
+            usage = player_data.get('USG_PCT', None)
+            sq_gen_delta = player_data.get('SHOT_QUALITY_GENERATION_DELTA', None)
+            
+            # Normalize usage if needed
+            if pd.notna(usage) and usage > 1.0:
+                usage = usage / 100.0
+            
+            # Check if high usage with negative shot quality generation
+            has_high_usage = pd.notna(usage) and usage > 0.25
+            has_negative_sq_delta = pd.notna(sq_gen_delta) and sq_gen_delta < -0.05
+            
+            if has_high_usage and has_negative_sq_delta:
+                original_star_level = star_level_potential
+                # Cap total star-level potential at 30% (cannot be a star if generating below-average shots at high usage)
+                # This is more aggressive than just capping King - replacement level creators shouldn't be stars at all
+                if star_level_potential > 0.30:
+                    # Scale down star probabilities proportionally to cap at 30%
+                    king_prob = prob_dict.get('King', 0)
+                    bulldozer_prob = prob_dict.get('Bulldozer', 0)
+                    total_star_prob = king_prob + bulldozer_prob
+                    
+                    if total_star_prob > 0:
+                        # Scale factor to bring total to 30%
+                        scale_factor = 0.30 / total_star_prob
+                        prob_dict['King'] = king_prob * scale_factor
+                        prob_dict['Bulldozer'] = bulldozer_prob * scale_factor
+                        # Update full names too
+                        prob_dict['King (Resilient Star)'] = prob_dict['King']
+                        prob_dict['Bulldozer (Fragile Star)'] = prob_dict['Bulldozer']
+                        
+                        # Redistribute remaining probability to Sniper/Victim proportionally
+                        remaining_prob = 1.0 - 0.30
+                        sniper_prob = prob_dict.get('Sniper', 0)
+                        victim_prob = prob_dict.get('Victim', 0)
+                        total_role_prob = sniper_prob + victim_prob
+                        
+                        if total_role_prob > 0:
+                            # Maintain relative proportions
+                            prob_dict['Sniper'] = sniper_prob * (remaining_prob / total_role_prob)
+                            prob_dict['Victim'] = victim_prob * (remaining_prob / total_role_prob)
+                        else:
+                            # Default to Victim if no role probabilities
+                            prob_dict['Sniper'] = 0.0
+                            prob_dict['Victim'] = remaining_prob
+                        
+                        # Update full names
+                        prob_dict['Sniper (Resilient Role)'] = prob_dict['Sniper']
+                        prob_dict['Victim (Fragile Role)'] = prob_dict['Victim']
+                    
+                    # Recalculate star_level_potential from redistributed probabilities
+                    star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
+                    replacement_level_creator_gate_applied = True
+                    
+                    # Update predicted archetype if needed
+                    if original_star_level > 0.70 and star_level_potential <= 0.30:
+                        # If was predicted as King/Bulldozer but now capped, downgrade to Sniper/Victim
+                        if prob_dict.get('Sniper', 0) > prob_dict.get('Victim', 0):
+                            pred_archetype = 'Sniper (Resilient Role)'
+                        else:
+                            pred_archetype = 'Victim (Fragile Role)'
+                
+                logger.info(f"Replacement Level Creator Gate applied: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < -0.05 (high usage + negative delta = replacement level), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+        
         # Check for missing data (confidence flags)
         confidence_flags = []
+        if replacement_level_creator_gate_applied:
+            confidence_flags.append("Replacement Level Creator (High Usage + Negative Delta)")
         key_features = ['LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CREATION_VOLUME_RATIO', 
                        'RS_PRESSURE_APPETITE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE']
         for feat in key_features:

@@ -13,7 +13,7 @@ Key Innovation: "Risk Amplification"
 New Features:
 1. RIM_PRESSURE_DEFICIT: Normalized distance below rim pressure threshold (0.0 = safe, 1.0 = zero rim pressure)
 2. ABDICATION_MAGNITUDE: Normalized magnitude of negative leverage delta (with Smart Deference exemption)
-3. INEFFICIENT_VOLUME_SCORE: Interaction of Volume × Negative Creation Tax
+3. INEFFICIENT_VOLUME_SCORE: Interaction of Usage × Volume × Negative Creation Tax (enhanced Dec 9, 2025)
 4. SYSTEM_DEPENDENCE_SCORE: Interaction of Usage × (Assisted% + Open Shot%)
 5. EMPTY_CALORIES_RISK: USG_PCT × RIM_PRESSURE_DEFICIT (high usage + no rim pressure = disaster)
 
@@ -251,9 +251,10 @@ class GateFeatureGenerator:
         else:
             df['ABDICATION_RISK'] = 0.0
         
-        # 3. INEFFICIENT_VOLUME_SCORE: Interaction of Volume × Negative Creation Tax
-        # Formula: CREATION_VOLUME_RATIO × max(0, -CREATION_TAX)
-        # Result: High volume with negative tax generates huge penalty
+        # 3. INEFFICIENT_VOLUME_SCORE: Interaction of Usage × Volume × Negative Creation Tax
+        # Formula: USG_PCT × CREATION_VOLUME_RATIO × max(0, -CREATION_TAX)
+        # Result: High usage + high volume + negative tax generates huge penalty
+        # Enhancement (Dec 9, 2025): Added USG_PCT to strengthen signal - penalizes inefficiency scaled by usage level
         if 'CREATION_VOLUME_RATIO' in df.columns and 'CREATION_TAX' in df.columns:
             creation_vol = df['CREATION_VOLUME_RATIO'].fillna(0.0)
             creation_tax = df['CREATION_TAX'].fillna(0.0)
@@ -261,10 +262,25 @@ class GateFeatureGenerator:
             # Negative tax magnitude (how bad is the efficiency drop)
             negative_tax_magnitude = np.maximum(0, -creation_tax)
             
-            # Interaction: Volume × Negative Tax
-            df['INEFFICIENT_VOLUME_SCORE'] = creation_vol * negative_tax_magnitude
+            # Base interaction: Volume × Negative Tax
+            base_score = creation_vol * negative_tax_magnitude
             
-            logger.info(f"INEFFICIENT_VOLUME_SCORE: {df['INEFFICIENT_VOLUME_SCORE'].notna().sum()}/{len(df)} values")
+            # Enhancement: Scale by usage level (USG_PCT) if available
+            if 'USG_PCT' in df.columns:
+                usg_pct = df['USG_PCT'].fillna(0.0)
+                # Normalize USG_PCT from percentage (26.0) to decimal (0.26) if needed
+                if usg_pct.max() > 1.0:
+                    usg_pct = usg_pct / 100.0
+                    logger.info(f"Normalized USG_PCT for INEFFICIENT_VOLUME_SCORE calculation")
+                
+                # Triple interaction: Usage × Volume × Negative Tax
+                df['INEFFICIENT_VOLUME_SCORE'] = usg_pct * base_score
+            else:
+                # Fallback to original formula if USG_PCT not available
+                df['INEFFICIENT_VOLUME_SCORE'] = base_score
+                logger.warning("USG_PCT not found - using CREATION_VOLUME_RATIO × max(0, -CREATION_TAX) only")
+            
+            logger.info(f"INEFFICIENT_VOLUME_SCORE (enhanced with USG_PCT): {df['INEFFICIENT_VOLUME_SCORE'].notna().sum()}/{len(df)} values")
             logger.info(f"  Mean score: {df['INEFFICIENT_VOLUME_SCORE'].mean():.3f}")
             logger.info(f"  Players with score > 0.1: {(df['INEFFICIENT_VOLUME_SCORE'] > 0.1).sum()}")
         else:
