@@ -251,19 +251,41 @@ class GateFeatureGenerator:
         else:
             df['ABDICATION_RISK'] = 0.0
         
-        # 3. INEFFICIENT_VOLUME_SCORE: Interaction of Usage × Volume × Negative Creation Tax
-        # Formula: USG_PCT × CREATION_VOLUME_RATIO × max(0, -CREATION_TAX)
-        # Result: High usage + high volume + negative tax generates huge penalty
+        # 3. INEFFICIENT_VOLUME_SCORE: Multi-Signal Inefficiency Penalty
+        # Formula: USG_PCT × CREATION_VOLUME_RATIO × (max(0, -CREATION_TAX) + max(0, -SHOT_QUALITY_GENERATION_DELTA) + max(0, -LEVERAGE_TS_DELTA))
+        # Result: High usage + high volume + multiple inefficiency signals generates huge penalty
         # Enhancement (Dec 9, 2025): Added USG_PCT to strengthen signal - penalizes inefficiency scaled by usage level
+        # Enhancement (Current): Multi-signal approach - combines self-relative (CREATION_TAX), league-relative (SQ_DELTA), and clutch (LEVERAGE_TS_DELTA) inefficiency
         if 'CREATION_VOLUME_RATIO' in df.columns and 'CREATION_TAX' in df.columns:
             creation_vol = df['CREATION_VOLUME_RATIO'].fillna(0.0)
             creation_tax = df['CREATION_TAX'].fillna(0.0)
             
-            # Negative tax magnitude (how bad is the efficiency drop)
+            # Multi-signal inefficiency: Combine multiple inefficiency signals
+            # 1. CREATION_TAX: Self-relative inefficiency (how much efficiency drops when creating)
             negative_tax_magnitude = np.maximum(0, -creation_tax)
             
-            # Base interaction: Volume × Negative Tax
-            base_score = creation_vol * negative_tax_magnitude
+            # 2. SHOT_QUALITY_GENERATION_DELTA: League-relative inefficiency (how much worse than replacement)
+            sq_delta = df.get('SHOT_QUALITY_GENERATION_DELTA', pd.Series([0.0] * len(df)))
+            if isinstance(sq_delta, pd.Series):
+                sq_delta = sq_delta.fillna(0.0)
+            else:
+                sq_delta = pd.Series([0.0] * len(df))
+            negative_sq_magnitude = np.maximum(0, -sq_delta)
+            
+            # 3. LEVERAGE_TS_DELTA: Clutch inefficiency (how much efficiency drops under pressure)
+            leverage_ts = df.get('LEVERAGE_TS_DELTA', pd.Series([0.0] * len(df)))
+            if isinstance(leverage_ts, pd.Series):
+                leverage_ts = leverage_ts.fillna(0.0)
+            else:
+                leverage_ts = pd.Series([0.0] * len(df))
+            negative_leverage_magnitude = np.maximum(0, -leverage_ts)
+            
+            # Combined inefficiency signal: Sum of all negative inefficiency magnitudes
+            # This captures inefficiency across multiple dimensions (self-relative, league-relative, clutch)
+            combined_inefficiency = negative_tax_magnitude + negative_sq_magnitude + negative_leverage_magnitude
+            
+            # Base interaction: Volume × Combined Inefficiency
+            base_score = creation_vol * combined_inefficiency
             
             # Enhancement: Scale by usage level (USG_PCT) if available
             if 'USG_PCT' in df.columns:
@@ -273,16 +295,17 @@ class GateFeatureGenerator:
                     usg_pct = usg_pct / 100.0
                     logger.info(f"Normalized USG_PCT for INEFFICIENT_VOLUME_SCORE calculation")
                 
-                # Triple interaction: Usage × Volume × Negative Tax
+                # Triple interaction: Usage × Volume × Combined Inefficiency
                 df['INEFFICIENT_VOLUME_SCORE'] = usg_pct * base_score
             else:
                 # Fallback to original formula if USG_PCT not available
                 df['INEFFICIENT_VOLUME_SCORE'] = base_score
-                logger.warning("USG_PCT not found - using CREATION_VOLUME_RATIO × max(0, -CREATION_TAX) only")
+                logger.warning("USG_PCT not found - using CREATION_VOLUME_RATIO × combined inefficiency only")
             
-            logger.info(f"INEFFICIENT_VOLUME_SCORE (enhanced with USG_PCT): {df['INEFFICIENT_VOLUME_SCORE'].notna().sum()}/{len(df)} values")
+            logger.info(f"INEFFICIENT_VOLUME_SCORE (multi-signal enhanced): {df['INEFFICIENT_VOLUME_SCORE'].notna().sum()}/{len(df)} values")
             logger.info(f"  Mean score: {df['INEFFICIENT_VOLUME_SCORE'].mean():.3f}")
             logger.info(f"  Players with score > 0.1: {(df['INEFFICIENT_VOLUME_SCORE'] > 0.1).sum()}")
+            logger.info(f"  Using multi-signal approach: CREATION_TAX + SHOT_QUALITY_GENERATION_DELTA + LEVERAGE_TS_DELTA")
         else:
             df['INEFFICIENT_VOLUME_SCORE'] = 0.0
             logger.warning("CREATION_VOLUME_RATIO or CREATION_TAX not found - INEFFICIENT_VOLUME_SCORE set to 0.0")

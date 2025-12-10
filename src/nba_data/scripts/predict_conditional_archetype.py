@@ -605,17 +605,34 @@ class ConditionalArchetypePredictor:
         else:
             risk_features['ABDICATION_MAGNITUDE'] = 0.0
         
-        # 3. INEFFICIENT_VOLUME_SCORE: Interaction of Usage × Volume × Negative Creation Tax
+        # 3. INEFFICIENT_VOLUME_SCORE: Multi-Signal Inefficiency Penalty
         # Enhancement (Dec 9, 2025): Added USG_PCT to strengthen signal - penalizes inefficiency scaled by usage level
-        # Formula: USG_PCT × CREATION_VOLUME_RATIO × max(0, -CREATION_TAX)
+        # Enhancement (Current): Multi-signal approach - combines self-relative (CREATION_TAX), league-relative (SQ_DELTA), and clutch (LEVERAGE_TS_DELTA) inefficiency
+        # Formula: USG_PCT × CREATION_VOLUME_RATIO × (max(0, -CREATION_TAX) + max(0, -SHOT_QUALITY_GENERATION_DELTA) + max(0, -LEVERAGE_TS_DELTA))
         creation_vol = player_data.get('CREATION_VOLUME_RATIO', 0.0)
         creation_tax = player_data.get('CREATION_TAX', 0.0)
+        sq_delta = player_data.get('SHOT_QUALITY_GENERATION_DELTA', 0.0)
+        leverage_ts = player_data.get('LEVERAGE_TS_DELTA', 0.0)
         usg_pct = usage_level  # Use target usage level for prediction
         
         if pd.notna(creation_vol) and pd.notna(creation_tax):
-            negative_tax_magnitude = max(0, -creation_tax)
-            # Base interaction: Volume × Negative Tax
-            base_score = creation_vol * negative_tax_magnitude
+            # Multi-signal inefficiency: Combine multiple inefficiency signals
+            # 1. CREATION_TAX: Self-relative inefficiency (how much efficiency drops when creating)
+            negative_tax_magnitude = max(0, -creation_tax) if pd.notna(creation_tax) else 0.0
+            
+            # 2. SHOT_QUALITY_GENERATION_DELTA: League-relative inefficiency (how much worse than replacement)
+            negative_sq_magnitude = max(0, -sq_delta) if pd.notna(sq_delta) else 0.0
+            
+            # 3. LEVERAGE_TS_DELTA: Clutch inefficiency (how much efficiency drops under pressure)
+            negative_leverage_magnitude = max(0, -leverage_ts) if pd.notna(leverage_ts) else 0.0
+            
+            # Combined inefficiency signal: Sum of all negative inefficiency magnitudes
+            # This captures inefficiency across multiple dimensions (self-relative, league-relative, clutch)
+            combined_inefficiency = negative_tax_magnitude + negative_sq_magnitude + negative_leverage_magnitude
+            
+            # Base interaction: Volume × Combined Inefficiency
+            base_score = creation_vol * combined_inefficiency
+            
             # Enhanced: Scale by usage level
             risk_features['INEFFICIENT_VOLUME_SCORE'] = usg_pct * base_score
         else:

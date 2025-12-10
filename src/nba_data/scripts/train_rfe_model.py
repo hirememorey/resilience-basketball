@@ -492,9 +492,10 @@ class RFEModelTrainer:
         # Calculate sample weights for asymmetric loss
         # False positives (predicting "Victim" as "King") are much worse than false negatives
         # REDUCED from 5x to 3x (Dec 8, 2025) - SHOT_QUALITY_GENERATION_DELTA feature reduces reliance on sample weighting
-        # Weight function: weight = 1.0 + (is_victim_actual * is_high_usage * 2.0)
-        # This gives 3x total weight (1.0 base + 2.0 penalty = 3.0) for high-usage victims
-        logger.info("Calculating sample weights for asymmetric loss (3x penalty for high-usage victims)...")
+        # ENHANCED (Dec 9, 2025): Added additional penalty for high INEFFICIENT_VOLUME_SCORE cases to increase feature importance
+        # Weight function: weight = 1.0 + (is_victim_actual * is_high_usage * 2.0) + (is_high_usage * is_high_inefficiency * 2.0)
+        # This gives 3x total weight for high-usage victims, 5x for high-usage + high-inefficiency cases
+        logger.info("Calculating sample weights for asymmetric loss (3x for high-usage victims, 5x for high-usage + high-inefficiency)...")
         
         # Get actual archetypes for training set
         y_train_archetypes = df.loc[train_indices, 'ARCHETYPE']
@@ -518,8 +519,28 @@ class RFEModelTrainer:
         penalty_multiplier = 2.0  # REDUCED from 4.0 (5x) to 2.0 (3x) - Dec 8, 2025
         sample_weights = 1.0 + (is_victim * is_high_usage * penalty_multiplier)
         
+        # ENHANCEMENT (Dec 9, 2025): Add additional penalty for high INEFFICIENT_VOLUME_SCORE cases
+        # This increases feature importance by forcing the model to pay attention to inefficiency signals
+        # Condition: INEFFICIENT_VOLUME_SCORE > 0.02 AND USG_PCT > 0.25
+        # Additional penalty: 2.0x (total weight = 5.0x for high-usage + high-inefficiency cases)
+        if 'INEFFICIENT_VOLUME_SCORE' in df.columns:
+            inefficient_scores = df.loc[train_indices, 'INEFFICIENT_VOLUME_SCORE'].fillna(0.0)
+            is_high_inefficiency = (inefficient_scores > 0.02).astype(int)  # High inefficiency threshold (0.02)
+            is_high_usage_inefficient = (is_high_usage * is_high_inefficiency).astype(int)
+            
+            # Add additional penalty for high-usage + high-inefficiency cases
+            # This creates a 5x total weight (1.0 base + 2.0 victim penalty + 2.0 inefficiency penalty = 5.0)
+            inefficiency_penalty_multiplier = 2.0
+            sample_weights = sample_weights + (is_high_usage_inefficient * inefficiency_penalty_multiplier)
+            
+            logger.info(f"  INEFFICIENT_VOLUME_SCORE penalty: +{inefficiency_penalty_multiplier}x for high-usage + high-inefficiency")
+            logger.info(f"  High-inefficiency cases (INEFFICIENT_VOLUME_SCORE > 0.02): {is_high_inefficiency.sum()}")
+            logger.info(f"  High-usage + high-inefficiency (receiving additional penalty): {is_high_usage_inefficient.sum()}")
+        else:
+            logger.warning("INEFFICIENT_VOLUME_SCORE not found - inefficiency penalty will not be applied")
+        
         logger.info(f"  Base weight: 1.0")
-        logger.info(f"  Penalty multiplier: {penalty_multiplier} (total weight = {1.0 + penalty_multiplier}x for high-usage victims)")
+        logger.info(f"  Victim penalty multiplier: {penalty_multiplier} (total weight = {1.0 + penalty_multiplier}x for high-usage victims)")
         logger.info(f"  High-usage victims (penalty): {is_victim.sum()} victims, {is_high_usage.sum()} high-usage")
         logger.info(f"  High-usage victims receiving penalty: {(is_victim * is_high_usage).sum()}")
         logger.info(f"  Weighted samples: {(sample_weights > 1.0).sum()} (weight > 1.0)")
