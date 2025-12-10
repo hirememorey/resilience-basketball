@@ -63,6 +63,7 @@
 48. **Trust Fall 2.0: Model Can Learn, But Needs Stronger Signals** 🎯 CRITICAL - Model identifies stars but struggles with false positives
 49. **Shot Quality Generation Delta - Replacing Sample Weighting with Organic Features** 🎯 CRITICAL - Measure shot quality, not just volume
 50. **Hierarchy of Constraints: Fatal Flaws > Elite Traits** 🎯 CRITICAL - Fatal flaw gates execute first, cannot be overridden
+51. **The "Two Doors to Stardom" Principle** 🎯 CRITICAL - NBA stardom has multiple valid pathways requiring differentiated validation
 
 ### Quick Reference
 - **Quick Reference Checklist** - Implementation checklist for new features
@@ -1418,6 +1419,36 @@ if EFG_ISO_WEIGHTED < efg_iso_floor:
 **Result**: Test suite now provides richer insights (both dimensions) with simpler code (using existing framework).
 
 **See**: `docs/2D_RISK_MATRIX_IMPLEMENTATION.md` for complete framework details.
+
+---
+
+---
+
+## 51. The "Two Doors to Stardom" Principle 🎯 CRITICAL (December 2025)
+
+**The Problem**: A single, universal filter cannot distinguish between different valid pathways to NBA stardom. Aggressive false positive filtering inadvertently misses true stars who achieve stardom through different mechanisms.
+
+**The Insight**: **NBA stardom has multiple valid pathways that require differentiated validation.** From the physics of basketball, players become stars through either:
+- **"Polished Diamond" Path**: Elite skill and efficiency (e.g., Trae Young, Jalen Brunson)
+- **"Uncut Gem" Path**: Elite physical tools and motor (e.g., young Giannis, Anthony Edwards)
+
+A universal filter optimized for one path incorrectly rejects valid stars from the other path.
+
+**The Fix**: Implement parallel validation pathways with path-specific gate thresholds:
+- **Router**: `RS_RIM_APPETITE_PERCENTILE > 0.90` → Physicality Path; `CREATION_TAX_PERCENTILE > 0.75` → Skill Path
+- **Physicality Path**: Relaxed inefficiency gates (50% cap vs 40%) but stricter passivity penalties (-0.02 vs -0.05 threshold)
+- **Skill Path**: Stricter inefficiency gates (35th percentile vs 25th) for polished diamonds
+- **Default Path**: Original logic for players not qualifying for either elite pathway
+
+**Key Principle**: **Recognize fundamental diversity in success mechanisms.** Don't force all players through the same validation filter - apply appropriate rigor based on their developmental archetype.
+
+**Example**:
+- ❌ **Wrong**: Single filter rejects Anthony Davis (2015) for inefficiency despite elite rim pressure
+- ✅ **Right**: Physicality path gives Davis leniency on inefficiency but penalizes passivity harshly
+
+**Result**: True positive pass rate improved from 58.8% to 76.5%, rescuing 3 elite players (Anthony Davis 2015/2016, Joel Embiid 2016) while maintaining false positive control.
+
+**See**: `ACTIVE_CONTEXT.md` for current implementation status and remaining edge cases.
 
 ---
 

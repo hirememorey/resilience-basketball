@@ -1,34 +1,34 @@
 # Latent Star Detection: Critical Case Studies Test Report
 
-**Date**: 2025-12-10 14:45:00
+**Date**: 2025-12-10 15:05:06
 
 ## Executive Summary
 
 - **Total Test Cases**: 40
 - **Data Found**: 40
-- **Passed**: 28
-- **Failed**: 12
-- **Pass Rate**: 70.0%
+- **Passed**: 25
+- **Failed**: 15
+- **Pass Rate**: 62.5%
 
 ## Results by Category
 
 ### True Positive
 - **Total**: 17
-- **Passed**: 10
-- **Failed**: 7
-- **Pass Rate**: 58.8%
-
-### False Positive
-- **Total**: 5
-- **Passed**: 4
-- **Failed**: 1
-- **Pass Rate**: 80.0%
-
-### True Negative
-- **Total**: 17
 - **Passed**: 13
 - **Failed**: 4
 - **Pass Rate**: 76.5%
+
+### False Positive
+- **Total**: 5
+- **Passed**: 3
+- **Failed**: 2
+- **Pass Rate**: 60.0%
+
+### True Negative
+- **Total**: 17
+- **Passed**: 8
+- **Failed**: 9
+- **Pass Rate**: 47.1%
 
 ### System Player
 - **Total**: 1
@@ -52,32 +52,32 @@
 | 10 | Nikola Jokić | 2016-17 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Bulldozer (Fragile Star) | 66.20% | 40.00% | Moderate Performance, Moderate Dependence | ❌ FAIL |
 | 11 | Nikola Jokić | 2017-18 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | King (Resilient Star) | 85.95% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ✅ PASS |
 | 12 | Nikola Jokić | 2018-19 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | King (Resilient Star) | 84.90% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ✅ PASS |
-| 13 | Anthony Davis | 2015-16 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Bulldozer (Fragile Star) | 40.00% | 40.00% | Moderate Performance, Moderate Dependence | ❌ FAIL |
-| 14 | Anthony Davis | 2016-17 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Victim (Fragile Role) | 30.00% | 40.00% | Moderate Performance, Moderate Dependence | ❌ FAIL |
-| 15 | Joel Embiid | 2016-17 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | King (Resilient Star) | 40.00% | 40.00% | Moderate Performance, Moderate Dependence | ❌ FAIL |
+| 13 | Anthony Davis | 2015-16 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Bulldozer (Fragile Star) | 73.51% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ✅ PASS |
+| 14 | Anthony Davis | 2016-17 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Bulldozer (Fragile Star) | 82.83% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ✅ PASS |
+| 15 | Joel Embiid | 2016-17 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | King (Resilient Star) | 92.29% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ✅ PASS |
 | 16 | Joel Embiid | 2017-18 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Bulldozer (Fragile Star) | 86.97% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ✅ PASS |
-| 17 | Jordan Poole | 2021-22 | False Positive - Mirage Breakout | Victim (Low) [Luxury Component] | Victim (Fragile Role) | 30.00% | 46.20% | Luxury Component | ✅ PASS |
+| 17 | Jordan Poole | 2021-22 | False Positive - Mirage Breakout | Victim (Low) [Luxury Component] | Bulldozer (Fragile Star) | 93.98% | 46.20% | Luxury Component | ✅ PASS |
 | 18 | Talen Horton-Tucker | 2020-21 | False Positive - Mirage Breakout | Victim (Low) | Victim (Fragile Role) | 20.15% | N/A | Low Performance (Dependence Unknown) | ✅ PASS |
-| 19 | Christian Wood | 2020-21 | False Positive - Empty Calories | Victim (Low) | Victim (Fragile Role) | 30.00% | 40.00% | Moderate Performance, Moderate Dependence | ✅ PASS |
+| 19 | Christian Wood | 2020-21 | False Positive - Empty Calories | Victim (Low) | Victim (Fragile Role) | 39.08% | 40.00% | Moderate Performance, Moderate Dependence | ✅ PASS |
 | 20 | D'Angelo Russell | 2018-19 | False Positive - Fool's Gold | Victim (Low) | Bulldozer (Fragile Star) | 99.15% | 22.61% | Franchise Cornerstone | ❌ FAIL |
-| 21 | Julius Randle | 2020-21 | False Positive - Empty Calories | Victim (Low) | Victim (Fragile Role) | 30.00% | 38.30% | Moderate Performance, Moderate Dependence | ✅ PASS |
+| 21 | Julius Randle | 2020-21 | False Positive - Empty Calories | Victim (Low) | Bulldozer (Fragile Star) | 95.18% | 38.30% | Franchise Cornerstone (Moderate Dependence) | ❌ FAIL |
 | 22 | Ben Simmons | 2017-18 | True Negative - Fragile Star | Victim (Low) | Victim (Fragile Role) | 52.54% | 24.88% | Moderate Performance, Low Dependence | ✅ PASS |
-| 23 | Ben Simmons | 2018-19 | True Negative - Fragile Star | Victim (Low) | Victim (Fragile Role) | 30.00% | 35.72% | Moderate Performance, Moderate Dependence | ✅ PASS |
+| 23 | Ben Simmons | 2018-19 | True Negative - Fragile Star | Victim (Low) | Victim (Fragile Role) | 49.43% | 35.72% | Moderate Performance, Moderate Dependence | ✅ PASS |
 | 24 | Ben Simmons | 2020-21 | True Negative - Fragile Star | Victim (Low) | Victim (Fragile Role) | 39.83% | 36.07% | Moderate Performance, Moderate Dependence | ✅ PASS |
 | 25 | Tyus Jones | 2021-22 | System Player - Ceiling Test | Sniper (Low) | Victim (Fragile Role) | 47.54% | 34.63% | Moderate Performance, Low Dependence | ✅ PASS |
 | 26 | Domantas Sabonis | 2021-22 | True Negative - Comparison Case | Victim (Low) [Luxury Component] | Victim (Fragile Role) | 54.16% | 40.00% | Moderate Performance, Moderate Dependence | ❌ FAIL |
 | 27 | Tyrese Haliburton | 2021-22 | True Positive - Comparison Case | Bulldozer (High) [Franchise Cornerstone] | Bulldozer (Fragile Star) | 93.77% | 28.74% | Franchise Cornerstone | ✅ PASS |
-| 28 | Karl-Anthony Towns | 2015-16 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 30.00% | 40.00% | Moderate Performance, Moderate Dependence | ✅ PASS |
-| 29 | Karl-Anthony Towns | 2016-17 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 30.00% | 40.00% | Moderate Performance, Moderate Dependence | ✅ PASS |
-| 30 | Karl-Anthony Towns | 2017-18 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 0.00% | 40.00% | Depth (Moderate Dependence) | ✅ PASS |
-| 31 | Karl-Anthony Towns | 2018-19 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 0.00% | 40.00% | Depth (Moderate Dependence) | ✅ PASS |
-| 32 | Karl-Anthony Towns | 2019-20 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 0.00% | 40.00% | Depth (Moderate Dependence) | ✅ PASS |
+| 28 | Karl-Anthony Towns | 2015-16 | True Negative - Empty Stats Star | Victim (Low) | King (Resilient Star) | 93.72% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ❌ FAIL |
+| 29 | Karl-Anthony Towns | 2016-17 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 37.73% | 40.00% | Moderate Performance, Moderate Dependence | ✅ PASS |
+| 30 | Karl-Anthony Towns | 2017-18 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 50.67% | 40.00% | Moderate Performance, Moderate Dependence | ✅ PASS |
+| 31 | Karl-Anthony Towns | 2018-19 | True Negative - Empty Stats Star | Victim (Low) | King (Resilient Star) | 77.52% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ❌ FAIL |
+| 32 | Karl-Anthony Towns | 2019-20 | True Negative - Empty Stats Star | Victim (Low) | King (Resilient Star) | 86.62% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ❌ FAIL |
 | 33 | Karl-Anthony Towns | 2020-21 | True Negative - Empty Stats Star | Victim (Low) | Bulldozer (Fragile Star) | 88.54% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ❌ FAIL |
-| 34 | Markelle Fultz | 2017-18 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 30.00% | N/A | Moderate Performance (Dependence Unknown) | ✅ PASS |
-| 35 | Markelle Fultz | 2018-19 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 30.00% | 28.74% | Moderate Performance, Low Dependence | ✅ PASS |
+| 34 | Markelle Fultz | 2017-18 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 30.61% | N/A | Moderate Performance (Dependence Unknown) | ✅ PASS |
+| 35 | Markelle Fultz | 2018-19 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 50.19% | 28.74% | Moderate Performance, Low Dependence | ✅ PASS |
 | 36 | Markelle Fultz | 2019-20 | True Negative - Draft Bust | Victim (Low) | King (Resilient Star) | 51.01% | 27.85% | Moderate Performance, Low Dependence | ✅ PASS |
-| 37 | Markelle Fultz | 2020-21 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 30.00% | 17.06% | Moderate Performance, Low Dependence | ✅ PASS |
-| 38 | Markelle Fultz | 2021-22 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 30.00% | 17.39% | Moderate Performance, Low Dependence | ✅ PASS |
+| 37 | Markelle Fultz | 2020-21 | True Negative - Draft Bust | Victim (Low) | King (Resilient Star) | 74.59% | 17.06% | Franchise Cornerstone | ❌ FAIL |
+| 38 | Markelle Fultz | 2021-22 | True Negative - Draft Bust | Victim (Low) | King (Resilient Star) | 66.91% | 17.39% | Moderate Performance, Low Dependence | ❌ FAIL |
 | 39 | Markelle Fultz | 2022-23 | True Negative - Draft Bust | Victim (Low) | King (Resilient Star) | 75.65% | 28.71% | Franchise Cornerstone | ❌ FAIL |
 | 40 | Markelle Fultz | 2023-24 | True Negative - Draft Bust | Victim (Low) | King (Resilient Star) | 86.91% | 28.73% | Franchise Cornerstone | ❌ FAIL |
 
@@ -93,17 +93,23 @@
 
 **Nikola Jokić (2016-17)**: Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'
 
-**Anthony Davis (2015-16)**: Expected high performance (≥65%), got 40.00%; Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'; Risk category matches but performance doesn't: 40.00%
-
-**Anthony Davis (2016-17)**: Expected high performance (≥65%), got 30.00%; Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'; Risk category matches but performance doesn't: 30.00%
-
-**Joel Embiid (2016-17)**: Expected high performance (≥65%), got 40.00%; Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'; Risk category matches but performance doesn't: 40.00%
-
 **D'Angelo Russell (2018-19)**: Expected low performance (<55%), got 99.15%; Archetype mismatch: expected Victim, got Bulldozer (Fragile Star)
+
+**Julius Randle (2020-21)**: Expected low performance (<55%), got 95.18%; Archetype mismatch: expected Victim, got Bulldozer (Fragile Star)
 
 **Domantas Sabonis (2021-22)**: Expected risk category 'Luxury Component', got 'Moderate Performance, Moderate Dependence'
 
+**Karl-Anthony Towns (2015-16)**: Expected low performance (<55%), got 93.72%; Archetype mismatch: expected Victim, got King (Resilient Star)
+
+**Karl-Anthony Towns (2018-19)**: Expected low performance (<55%), got 77.52%; Archetype mismatch: expected Victim, got King (Resilient Star)
+
+**Karl-Anthony Towns (2019-20)**: Expected low performance (<55%), got 86.62%; Archetype mismatch: expected Victim, got King (Resilient Star)
+
 **Karl-Anthony Towns (2020-21)**: Expected low performance (<55%), got 88.54%; Archetype mismatch: expected Victim, got Bulldozer (Fragile Star)
+
+**Markelle Fultz (2020-21)**: Expected low performance (<55%), got 74.59%; Archetype mismatch: expected Victim, got King (Resilient Star)
+
+**Markelle Fultz (2021-22)**: Expected low performance (<55%), got 66.91%; Archetype mismatch: expected Victim, got King (Resilient Star)
 
 **Markelle Fultz (2022-23)**: Expected low performance (<55%), got 75.65%; Archetype mismatch: expected Victim, got King (Resilient Star)
 

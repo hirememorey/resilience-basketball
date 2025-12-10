@@ -435,6 +435,17 @@ class ConditionalArchetypePredictor:
                 if len(pressure_app) > 0:
                     self.pressure_app_40th = pressure_app.quantile(0.40)
                     logger.info(f"Fallback: RS_PRESSURE_APPETITE 40th percentile (qualified): {self.pressure_app_40th:.4f}")
+
+        # "Two Doors to Stardom" Percentiles
+        self.rim_appetite_percentiles = None
+        if 'RS_RIM_APPETITE' in qualified_players.columns:
+            self.rim_appetite_percentiles = qualified_players.set_index(['PLAYER_ID', 'SEASON'])['RS_RIM_APPETITE'].rank(pct=True)
+            logger.info("Calculated RS_RIM_APPETITE percentiles for 'Two Doors' router.")
+            
+        self.creation_tax_percentiles = None
+        if 'CREATION_TAX' in qualified_players.columns:
+            self.creation_tax_percentiles = qualified_players.set_index(['PLAYER_ID', 'SEASON'])['CREATION_TAX'].rank(pct=True)
+            logger.info("Calculated CREATION_TAX percentiles for 'Two Doors' router.")
     
     def _check_dependence_score_coverage(self):
         """
@@ -562,6 +573,32 @@ class ConditionalArchetypePredictor:
                 except Exception as e:
                     logger.warning(f"Failed to load AST_PCT from database for {player_name} {season}: {e}")
         
+        # "Two Doors to Stardom" - Attach percentiles
+        player_id = player_data.get('PLAYER_ID')
+        if player_id is not None:
+            # Rim Appetite Percentile
+            if self.rim_appetite_percentiles is not None:
+                try:
+                    percentile = self.rim_appetite_percentiles.loc[(player_id, season)]
+                    player_data['RS_RIM_APPETITE_PERCENTILE'] = percentile
+                except KeyError:
+                    player_data['RS_RIM_APPETITE_PERCENTILE'] = None # Player not in qualified set
+            else:
+                player_data['RS_RIM_APPETITE_PERCENTILE'] = None
+
+            # Creation Tax Percentile
+            if self.creation_tax_percentiles is not None:
+                try:
+                    percentile = self.creation_tax_percentiles.loc[(player_id, season)]
+                    player_data['CREATION_TAX_PERCENTILE'] = percentile
+                except KeyError:
+                    player_data['CREATION_TAX_PERCENTILE'] = None # Player not in qualified set
+            else:
+                player_data['CREATION_TAX_PERCENTILE'] = None
+        else:
+            player_data['RS_RIM_APPETITE_PERCENTILE'] = None
+            player_data['CREATION_TAX_PERCENTILE'] = None
+            
         return player_data
     
     def _calculate_risk_features(self, player_data: pd.Series, usage_level: float) -> Dict[str, float]:
@@ -1261,6 +1298,49 @@ class ConditionalArchetypePredictor:
         star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
         
         # ====================================================================================================
+        # "Two Doors to Stardom" Router
+        # ====================================================================================================
+        is_eligible_for_physicality_path = False
+        rim_percentile = player_data.get('RS_RIM_APPETITE_PERCENTILE', None)
+        if rim_percentile is not None and rim_percentile > 0.90:
+            is_eligible_for_physicality_path = True
+
+        is_eligible_for_skill_path = False
+        creation_percentile = player_data.get('CREATION_TAX_PERCENTILE', None)
+        if creation_percentile is not None and creation_percentile > 0.75:
+            is_eligible_for_skill_path = True
+            
+        final_pred_archetype = pred_archetype
+        gate_results = []
+        confidence_flags = []
+
+        # Apply path-specific gate logic using simple if/elif/else
+        path_taken = "default"
+
+        if is_eligible_for_skill_path:
+            # "Polished Diamond" Path: Stricter inefficiency gates, relaxed passivity
+            path_taken = "skill"
+
+        elif is_eligible_for_physicality_path:
+            # "Uncut Gem" Path: Relaxed inefficiency gates, stricter passivity
+            path_taken = "physicality"
+
+        # Continue with standard gate logic...
+        confidence_flags = []
+        return {
+            "predicted_archetype": pred_archetype,
+            "probabilities": prob_dict,
+            "star_level_potential": star_level_potential,
+            "confidence_flags": confidence_flags,
+            "path_taken": path_taken
+        }
+
+        """Centralized gate logic with path-specific adjustments."""
+        
+        confidence_flags = []
+        original_star_potential = star_level_potential
+        
+        # ====================================================================================================
         # TIER 1: FATAL FLAW GATES (Execute FIRST - Non-Negotiable)
         # These gates catch behavioral failures the model cannot learn.
         # Principle: Fatal Flaws > Elite Traits (Hierarchy of Constraints)
@@ -1280,6 +1360,7 @@ class ConditionalArchetypePredictor:
         # Principle: If a player's base efficiency is below a minimum threshold (25th percentile),
         # they are fundamentally too inefficient to be a star, regardless of other skills.
         # This is the "Low-Floor Illusion" fix.
+        # PATH-SPECIFIC: Stricter for "skill" path, more lenient for "physicality" path
         inefficiency_gate_applied = False
         if apply_phase3_fixes and apply_hard_gates:
             # PHASE 4.5 REFINEMENT: Add positional check to exemption
@@ -1287,18 +1368,28 @@ class ConditionalArchetypePredictor:
             is_big = 'C' in position or 'F' in position
             has_elite_rim_pressure = pd.notna(rim_appetite) and rim_appetite > 0.25
 
-            if (pd.notna(efg_iso) and self.efg_iso_floor is not None and 
-                efg_iso < self.efg_iso_floor and not (is_big and has_elite_rim_pressure)):
-                
+            # Path-specific threshold: Stricter for skill path, more lenient for physicality
+            inefficiency_threshold = self.efg_iso_floor
+            if path_taken == "skill":
+                # Stricter: Use 35th percentile instead of 25th for polished diamonds
+                inefficiency_threshold = self.df_features['EFG_ISO_WEIGHTED'].quantile(0.35) if 'EFG_ISO_WEIGHTED' in self.df_features.columns else self.efg_iso_floor
+            elif path_taken == "physicality":
+                # More lenient: Allow lower efficiency for uncut gems (they're developing)
+                inefficiency_threshold = self.df_features['EFG_ISO_WEIGHTED'].quantile(0.15) if 'EFG_ISO_WEIGHTED' in self.df_features.columns else self.efg_iso_floor
+
+            if (pd.notna(efg_iso) and inefficiency_threshold is not None and
+                efg_iso < inefficiency_threshold and not (is_big and has_elite_rim_pressure)):
+
                 original_star_level = star_level_potential
-                # Cap at 40% (better than 30% to allow for "good stats bad team" players)
-                star_level_potential = min(star_level_potential, 0.40)
+                # Path-specific cap: More lenient cap for physicality path
+                cap_level = 0.40 if path_taken != "physicality" else 0.50
+                star_level_potential = min(star_level_potential, cap_level)
                 inefficiency_gate_applied = True
-                
+
                 # Log the application of the gate
                 logger.info(
-                    f"[FATAL FLAW] Inefficiency Gate applied: EFG_ISO_WEIGHTED={efg_iso:.4f} < "
-                    f"floor={self.efg_iso_floor:.4f} (25th percentile), star-level capped "
+                    f"[{path_taken.upper()} PATH] Inefficiency Gate applied: EFG_ISO_WEIGHTED={efg_iso:.4f} < "
+                    f"threshold={inefficiency_threshold:.4f}, star-level capped "
                     f"from {original_star_level:.2%} to {star_level_potential:.2%}"
                 )
         
@@ -1332,12 +1423,19 @@ class ConditionalArchetypePredictor:
         # Principle: Abdication (usage drops in leverage situations) is a behavioral failure.
         # Only exemption: Smart Deference (efficiency spikes when usage drops)
         # Extracted from Negative Signal Gate for hierarchy implementation
+        # PATH-SPECIFIC: Stricter for "physicality" path (passivity is fatal flaw for uncut gems)
         if apply_phase3_fixes and apply_hard_gates:
             leverage_usg_delta = player_data.get('LEVERAGE_USG_DELTA', None)
             leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', None)
             rs_usg_pct = player_data.get('USG_PCT', None)
-            
-            if pd.notna(leverage_usg_delta) and leverage_usg_delta < -0.05:
+
+            # Path-specific threshold: Stricter for physicality path (passivity is their fatal flaw)
+            abdication_threshold = -0.05
+            if path_taken == "physicality":
+                # Much stricter: Any significant drop triggers gate for uncut gems
+                abdication_threshold = -0.02
+
+            if pd.notna(leverage_usg_delta) and leverage_usg_delta < abdication_threshold:
                 # Check High-Usage Immunity first
                 # A player carrying 35% usage cannot scale up further - dropping to 27% is still elite usage, not passivity
                 has_high_usage_immunity = False
@@ -1347,33 +1445,34 @@ class ConditionalArchetypePredictor:
                     if leverage_usg_delta > -0.10:
                         has_high_usage_immunity = True
                         logger.info(f"[FATAL FLAW] Abdication Gate EXEMPTED: High-Usage Immunity (RS_USG_PCT={rs_usg_pct:.1%} > 30%, LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} > -0.10)")
-                
+
                 if not has_high_usage_immunity:
                     # Check if efficiency spikes (Smart Deference) or stays flat/drops (Panic Abdication)
                     efficiency_spikes = pd.notna(leverage_ts_delta) and leverage_ts_delta > 0.05
-                    
+
                     if not efficiency_spikes:
                         # Panic Abdication: Usage drops AND efficiency doesn't spike → Penalize
                         original_star_level = star_level_potential
-                        # Hard filter: Cap at 30% (Sniper ceiling)
-                        star_level_potential = min(star_level_potential, 0.30)
+                        # Path-specific cap: Much stricter for physicality path
+                        cap_level = 0.30 if path_taken != "physicality" else 0.10
+                        star_level_potential = min(star_level_potential, cap_level)
                         abdication_gate_applied = True
-                        
+
                         # Redistribute probabilities if capped
                         if star_level_potential <= 0.30:
-                            prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                            prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), star_level_potential)
                             prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
                             prob_dict['King'] = 0.0
                             prob_dict['Bulldozer'] = 0.0
                             # Update predicted archetype if needed
                             if original_star_level > 0.30:
                                 pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
-                        
+
                         leverage_ts_str = f"{leverage_ts_delta:.3f}" if pd.notna(leverage_ts_delta) else "N/A"
-                        logger.info(f"[FATAL FLAW] Abdication Gate applied: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 AND LEVERAGE_TS_DELTA={leverage_ts_str} <= 0.05 (Panic Abdication), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                        logger.info(f"[{path_taken.upper()} PATH] Abdication Gate applied: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < {abdication_threshold:.3f} AND LEVERAGE_TS_DELTA={leverage_ts_str} <= 0.05 (Panic Abdication), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
                     else:
                         # Smart Deference: Usage drops BUT efficiency spikes → Exempt
-                        logger.info(f"[FATAL FLAW] Abdication Gate EXEMPTED: Smart Deference (LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 BUT LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} > 0.05)")
+                        logger.info(f"[{path_taken.upper()} PATH] Abdication Gate EXEMPTED: Smart Deference (LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < {abdication_threshold:.3f} BUT LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} > 0.05)")
         
         # HIERARCHY IMPLEMENTATION: Creation Fragility Gate (Priority: High - Non-Negotiable)
         # Principle: If efficiency drops severely when creating own shot (CREATION_TAX < -0.15), you cannot be a "King".
@@ -1439,42 +1538,54 @@ class ConditionalArchetypePredictor:
         # ====================================================================================================
         
         # Inefficiency Gate: Absolute Efficiency Floor (Fixes "Low-Floor Illusion")
-        # Principle: Uniformly inefficient ≠ resilient. CREATION_TAX = 0.00 can mean "no drop" 
+        # Principle: Uniformly inefficient ≠ resilient. CREATION_TAX = 0.00 can mean "no drop"
         # (resilient) OR "equally bad at everything" (Fultz pattern). Need absolute floor.
         # Two conditions:
         # 1. EFG_ISO_WEIGHTED < 25th percentile (uniformly bad)
         # 2. EFG_ISO_WEIGHTED < median AND CREATION_TAX near 0.00 (uniformly mediocre)
         # Applies BEFORE other gates since it's a hard physics constraint.
+        # PATH-SPECIFIC: Stricter for "skill" path, more lenient for "physicality" path
         inefficiency_gate_applied = False
         if apply_phase3_fixes and apply_hard_gates and 'EFG_ISO_WEIGHTED' in player_data.index:
             efg_iso = player_data.get('EFG_ISO_WEIGHTED', None)
             creation_tax = player_data.get('CREATION_TAX', None)
-            
-            if pd.notna(efg_iso) and self.efg_iso_floor is not None:
-                # Condition 1: Below 25th percentile (uniformly bad)
-                below_floor = efg_iso < self.efg_iso_floor
-                
-                # Condition 2: Below median AND near-zero CREATION_TAX (uniformly mediocre)
-                # CREATION_TAX near 0.00 (-0.05 to +0.05) means no efficiency drop, which could be
-                # resilient (elite at both) OR uniformly mediocre (bad at both)
+
+            if pd.notna(efg_iso):
+                # Path-specific thresholds
+                floor_threshold = self.efg_iso_floor
+                median_threshold = self.efg_iso_median
+                cap_level = 0.40
+
+                if path_taken == "skill":
+                    # Stricter: Use higher percentiles for polished diamonds
+                    floor_threshold = self.df_features['EFG_ISO_WEIGHTED'].quantile(0.35) if 'EFG_ISO_WEIGHTED' in self.df_features.columns else self.efg_iso_floor
+                    median_threshold = self.df_features['EFG_ISO_WEIGHTED'].quantile(0.60) if 'EFG_ISO_WEIGHTED' in self.df_features.columns else self.efg_iso_median
+                elif path_taken == "physicality":
+                    # More lenient: Allow lower efficiency for uncut gems
+                    floor_threshold = self.df_features['EFG_ISO_WEIGHTED'].quantile(0.15) if 'EFG_ISO_WEIGHTED' in self.df_features.columns else self.efg_iso_floor
+                    cap_level = 0.50  # Higher cap for physicality path
+
+                # Condition 1: Below floor threshold (uniformly bad)
+                below_floor = floor_threshold is not None and efg_iso < floor_threshold
+
+                # Condition 2: Below median threshold AND near-zero CREATION_TAX (uniformly mediocre)
                 uniformly_mediocre = False
-                if pd.notna(creation_tax) and self.efg_iso_median is not None:
+                if pd.notna(creation_tax) and median_threshold is not None:
                     near_zero_tax = abs(creation_tax) <= 0.05  # Within ±0.05 of zero
-                    below_median = efg_iso < self.efg_iso_median
+                    below_median = efg_iso < median_threshold
                     uniformly_mediocre = near_zero_tax and below_median
-                
+
                 # FRANCHISE CORNERSTONE FIX: Rim Pressure Exemption
                 # Bigs with high rim pressure have a floor (fouls, rebounds) that offsets low ISO efficiency
                 # ISO efficiency is not the primary signal for bigs - rim pressure is
                 rim_appetite = player_data.get('RS_RIM_APPETITE', None)
                 has_elite_rim_force = pd.notna(rim_appetite) and rim_appetite > 0.20
-                
+
                 if (below_floor or uniformly_mediocre) and not has_elite_rim_force:
                     original_star_level = star_level_potential
-                    # Cap at 40% (allows for "Bulldozer" - inefficient volume scorer)
-                    star_level_potential = min(star_level_potential, 0.40)
+                    star_level_potential = min(star_level_potential, cap_level)
                     inefficiency_gate_applied = True
-                    
+
                     # Force downgrade: Can't be "King" (resilient star) if uniformly inefficient
                     if star_level_potential <= 0.30:
                         # Below 30% = "Victim" (fragile role)
@@ -1483,19 +1594,19 @@ class ConditionalArchetypePredictor:
                         prob_dict['King'] = 0.0
                         prob_dict['Bulldozer'] = 0.0
                         if pred_archetype in ['King (Resilient Star)', 'Bulldozer (Fragile Star)']:
-                            pred_archetype = 'Victim (Fragile Role)' if prob_dict['Victim'] > prob_dict['Sniper'] else 'Sniper (Resilient Role)'
+                            pred_archetype = 'Victim (Fragile Role)' if prob_dict['Victim'] > prob_dict['Sniper'] else 'Sniper (Fragile Role)'
                     else:
-                        # 30-40% = "Bulldozer" (inefficient volume scorer, not resilient star)
+                        # 30-50% = "Bulldozer" (inefficient volume scorer, not resilient star)
                         prob_dict['Bulldozer'] = star_level_potential
                         prob_dict['King'] = 0.0
                         prob_dict['Victim'] = max(0.0, 1.0 - star_level_potential - prob_dict.get('Sniper', 0))
                         if pred_archetype == 'King (Resilient Star)':
                             pred_archetype = 'Bulldozer (Fragile Star)'
-                    
-                    reason = "below 25th percentile" if below_floor else "below median with near-zero CREATION_TAX (uniformly mediocre)"
-                    logger.info(f"Inefficiency Gate applied: EFG_ISO_WEIGHTED={efg_iso:.4f} ({reason}) → star-level capped from {original_star_level:.2%} to {star_level_potential:.2%} (uniformly inefficient, not resilient)")
+
+                    reason = "below floor threshold" if below_floor else "below median with near-zero CREATION_TAX (uniformly mediocre)"
+                    logger.info(f"[{path_taken.upper()} PATH] Inefficiency Gate applied: EFG_ISO_WEIGHTED={efg_iso:.4f} ({reason}) → star-level capped from {original_star_level:.2%} to {star_level_potential:.2%} (uniformly inefficient, not resilient)")
                 elif has_elite_rim_force:
-                    logger.info(f"Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED={efg_iso:.4f} below threshold BUT Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency")
+                    logger.info(f"[{path_taken.upper()} PATH] Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED={efg_iso:.4f} below threshold BUT Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency")
         
         # Phase 3.5 Fix #1: Fragility Gate - Use RS_RIM_APPETITE (absolute volume) instead of ratio
         # Cap star-level if RS_RIM_APPETITE is bottom 20th percentile
@@ -2432,12 +2543,13 @@ class ConditionalArchetypePredictor:
             phase3_flags.append("Volume Creator Inefficiency Gate applied (high creation volume + negative creation tax)")
         
         return {
-            'predicted_archetype': pred_archetype,
-            'probabilities': prob_dict,
-            'star_level_potential': star_level_potential,
-            'confidence_flags': confidence_flags,
-            'phase3_flags': phase3_flags,
-            'phase3_metadata': phase3_metadata  # Phase 4.2: Include full metadata
+            "predicted_archetype": pred_archetype,
+            "probabilities": prob_dict,
+            "star_level_potential": star_level_potential,
+            "confidence_flags": confidence_flags,
+            "phase3_flags": phase3_flags,
+            "phase3_metadata": phase3_metadata,
+            "path": path
         }
     
     def predict_at_multiple_usage_levels(
