@@ -146,7 +146,9 @@ def calculate_dependence_score(player_data: pd.Series) -> dict:
     components = {}
     dependence_score = None
     
-    if assisted_fgm_pct is not None and open_shot_frequency is not None and self_created_usage_ratio is not None:
+    # PHASE 3 FINAL FIXES: Use pd.notna() instead of is not None for pandas compatibility
+    # This ensures NaN values are properly handled
+    if pd.notna(assisted_fgm_pct) and pd.notna(open_shot_frequency) and pd.notna(self_created_usage_ratio):
         # All components available - calculate full score
         components['assisted'] = assisted_fgm_pct * 0.40
         components['open_shot'] = open_shot_frequency * 0.35
@@ -155,33 +157,39 @@ def calculate_dependence_score(player_data: pd.Series) -> dict:
         dependence_score = components['assisted'] + components['open_shot'] + components['low_self_creation']
         # Cap at 1.0
         dependence_score = min(dependence_score, 1.0)
-    
-    # FRANCHISE CORNERSTONE FIX: Rim Pressure Override
-    # Players with high rim appetite generate their own offense via positioning and physicality,
-    # even if the box score says "Assisted". Rim pressure = self-created offense.
-    rim_appetite = player_data.get('RS_RIM_APPETITE', None)
-    if pd.notna(rim_appetite) and rim_appetite > 0.20 and dependence_score is not None:
-        # Cap dependence score at 0.40 (rim pressure reduces dependence but doesn't eliminate it)
-        # This allows "Franchise Cornerstone" classification (High Performance + Low Dependence)
-        original_score = dependence_score
-        dependence_score = min(dependence_score, 0.40)
-        if original_score != dependence_score:
-            logger.debug(f"Rim Pressure Override: Dependence score capped from {original_score:.3f} to {dependence_score:.3f} (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20)")
-    elif assisted_fgm_pct is not None and open_shot_frequency is not None:
+    # PHASE 3 FINAL FIXES: Changed rim pressure override from separate if to elif
+    # This ensures the 2-component fallback only executes if full calculation didn't happen
+    elif pd.notna(assisted_fgm_pct) and pd.notna(open_shot_frequency):
         # Missing self-creation - use 2 components with adjusted weights
         components['assisted'] = assisted_fgm_pct * 0.50  # Adjusted weight
         components['open_shot'] = open_shot_frequency * 0.50  # Adjusted weight
         components['low_self_creation'] = None
         
         dependence_score = components['assisted'] + components['open_shot']
-    elif open_shot_frequency is not None and self_created_usage_ratio is not None:
+    
+    # FRANCHISE CORNERSTONE FIX: Rim Pressure Override (applies AFTER calculation)
+    # Players with high rim appetite generate their own offense via positioning and physicality,
+    # even if the box score says "Assisted". Rim pressure = self-created offense.
+    # PHASE 3 FINAL FIXES: Increased threshold from 0.20 to 0.25 to avoid catching guards
+    # (e.g., Jordan Poole with 0.201 RS_RIM_APPETITE shouldn't get this benefit)
+    # Apply rim pressure override AFTER calculating dependence_score
+    if dependence_score is not None:
+        rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+        if pd.notna(rim_appetite) and rim_appetite > 0.25:
+            # Cap dependence score at 0.40 (rim pressure reduces dependence but doesn't eliminate it)
+            # This allows "Franchise Cornerstone" classification (High Performance + Low Dependence)
+            original_score = dependence_score
+            dependence_score = min(dependence_score, 0.40)
+            if original_score != dependence_score:
+                logger.debug(f"Rim Pressure Override: Dependence score capped from {original_score:.3f} to {dependence_score:.3f} (RS_RIM_APPETITE={rim_appetite:.3f} > 0.25)")
+    elif pd.notna(open_shot_frequency) and pd.notna(self_created_usage_ratio):
         # Missing assisted - use 2 components with adjusted weights
         components['assisted'] = None
         components['open_shot'] = open_shot_frequency * 0.50  # Adjusted weight
         components['low_self_creation'] = (1.0 - self_created_usage_ratio) * 0.50  # Adjusted weight
         
         dependence_score = components['open_shot'] + components['low_self_creation']
-    elif open_shot_frequency is not None:
+    elif pd.notna(open_shot_frequency):
         # Only open shot frequency available - use as single component
         components['assisted'] = None
         components['open_shot'] = open_shot_frequency

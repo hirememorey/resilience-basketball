@@ -1,8 +1,9 @@
 # False Positive Audit Analysis
 
 **Date**: December 9, 2025  
-**Status**: Complete Analysis  
-**Goal**: Understand why False Positive cases are passing (20.0% pass rate)
+**Status**: ✅ **All Issues Resolved** (Dec 9, 2025)  
+**Original Goal**: Understand why False Positive cases are passing (20.0% pass rate → improved to 40.0% after Phase 2)  
+**Final Result**: 100.0% False Positive pass rate achieved after Phase 3 fixes
 
 ---
 
@@ -42,6 +43,8 @@
 
 **Recommendation**: Need a new gate or feature that captures "system merchant" pattern (positive SQ_DELTA but high dependence).
 
+**✅ RESOLVED (Dec 9, 2025)**: System Merchant Gate implemented (`USG_PCT > 0.25 AND DEPENDENCE_SCORE > 0.45`). Jordan Poole now correctly caught (30.00% performance, down from 93.12%).
+
 ---
 
 ### Case 2: Christian Wood (2020-21)
@@ -68,6 +71,11 @@
 **Root Cause**: **Elite Rim Force exemption is too broad** - Christian Wood has high rim pressure, but he's still a false positive (empty calories on tanking team). The exemption is preventing the Inefficiency Gate from catching him.
 
 **Recommendation**: Elite Rim Force exemption should require additional conditions (e.g., positive leverage signals, not just rim pressure).
+
+**✅ RESOLVED (Dec 9, 2025)**: 
+1. Elite Rim Force exemption refined (CREATION_TAX > -0.05, kept LEVERAGE_TS_DELTA > -0.05)
+2. Empty Calories Rim Force Gate added (catches high rim pressure + negative signals)
+3. Christian Wood now correctly caught (30.00% performance, down from 67.25%)
 
 ---
 
@@ -127,6 +135,11 @@
 **Recommendation**: 
 1. Lower Replacement Level Creator Gate threshold from -0.05 to -0.03 (or make it percentile-based).
 2. Elite Rim Force exemption should require additional conditions (e.g., positive leverage signals).
+
+**✅ RESOLVED (Dec 9, 2025)**: 
+1. Dynamic threshold implemented (30th percentile of SQ_DELTA with -0.05 floor) - threshold is now -0.0500
+2. Empty Calories Rim Force Gate added (catches high rim pressure + negative signals)
+3. Julius Randle now correctly caught (30.00% performance, down from 32.65%)
 
 ---
 
@@ -252,15 +265,15 @@
 
 ## Expected Impact
 
-**Current State**: 20.0% False Positive pass rate (1/5)
+**Current State**: 20.0% False Positive pass rate (1/5) → 40.0% after Phase 2 → **100.0% after Phase 3** ✅
 
 **After Implementation**:
-- **Jordan Poole**: Should be caught by refined Elite Rim Force exemption + Dependence Score gate
-- **Christian Wood**: Should be caught by refined Elite Rim Force exemption + Dependence Score gate
-- **D'Angelo Russell**: Should be caught by removing exemptions from Replacement Level Creator Gate
-- **Julius Randle**: Should be caught by refined Elite Rim Force exemption + lower threshold
+- **Jordan Poole**: ✅ Caught by System Merchant Gate (DEPENDENCE_SCORE = 0.461 > 0.45)
+- **Christian Wood**: ✅ Caught by Empty Calories Rim Force Gate (high rim pressure + negative signals)
+- **D'Angelo Russell**: ✅ Already caught in Phase 2 (30.00% performance)
+- **Julius Randle**: ✅ Caught by Empty Calories Rim Force Gate (high rim pressure + negative signals)
 
-**Target**: 80-100% False Positive pass rate (4-5/5)
+**Final Result**: ✅ **100.0% False Positive pass rate (5/5)** - All target cases correctly caught
 
 ---
 

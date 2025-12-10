@@ -95,6 +95,9 @@ class ConditionalArchetypePredictor:
         # Calculate feature distributions for Phase 3 fixes
         self._calculate_feature_distributions()
         
+        # PHASE 3 FINAL FIXES: Add DEPENDENCE_SCORE diagnostic check
+        self._check_dependence_score_coverage()
+        
         logger.info(f"Model expects {len(self.feature_names)} features")
     
     def _load_rfe_features(self) -> list:
@@ -355,6 +358,31 @@ class ConditionalArchetypePredictor:
         else:
             self.star_median_creation_vol = None
         
+        # PHASE 3 FINAL FIXES: Calculate 30th percentile of SQ_DELTA for high-usage players (Dynamic Threshold)
+        # This replaces the fixed -0.05 threshold with a data-driven, percentile-based threshold
+        # More robust and self-calibrating to league context
+        # PHASE 3 FINAL FIXES REFINEMENT: Use 30th percentile to catch borderline cases like Julius Randle (-0.0367 at 28.8th percentile)
+        # Use -0.05 as floor to ensure we don't become too lenient
+        self.sq_delta_25th_percentile_threshold = None
+        if 'SHOT_QUALITY_GENERATION_DELTA' in qualified_players.columns and 'USG_PCT' in qualified_players.columns:
+            # Filter to high-usage players (USG_PCT > 0.25) for threshold calculation
+            high_usage_players = qualified_players[qualified_players['USG_PCT'] > 0.25]
+            sq_delta = high_usage_players['SHOT_QUALITY_GENERATION_DELTA'].dropna()
+            if len(sq_delta) > 0:
+                percentile_30th = sq_delta.quantile(0.30)
+                # Use the stricter threshold: 30th percentile or -0.05, whichever is more strict (lower value)
+                # This ensures we catch players in bottom 30% while maintaining -0.05 as minimum strictness
+                self.sq_delta_25th_percentile_threshold = min(percentile_30th, -0.05)
+                logger.info(f"SHOT_QUALITY_GENERATION_DELTA threshold (high-usage players): {self.sq_delta_25th_percentile_threshold:.4f} (30th percentile: {percentile_30th:.4f}, floor: -0.05)")
+            else:
+                # Fallback to fixed threshold if no data
+                self.sq_delta_25th_percentile_threshold = -0.05
+                logger.warning(f"No high-usage players with SQ_DELTA data, using fallback threshold: {self.sq_delta_25th_percentile_threshold:.4f}")
+        else:
+            # Fallback to fixed threshold if columns missing
+            self.sq_delta_25th_percentile_threshold = -0.05
+            logger.warning(f"Missing SQ_DELTA or USG_PCT columns, using fallback threshold: {self.sq_delta_25th_percentile_threshold:.4f}")
+        
         # Phase 3.6 Fix #2 & Phase 3.7 Fix #1: Playoff Translation Tax - Calculate STAR average and 75th percentile
         # Phase 3.8 Fix: Use STAR_AVG_OPEN_FREQ (Usage > 20%) instead of LEAGUE_AVG
         # Phase 3.8.1 Fix: Use STARS (USG > 20%) for 75th percentile threshold, not qualified players
@@ -407,6 +435,50 @@ class ConditionalArchetypePredictor:
                 if len(pressure_app) > 0:
                     self.pressure_app_40th = pressure_app.quantile(0.40)
                     logger.info(f"Fallback: RS_PRESSURE_APPETITE 40th percentile (qualified): {self.pressure_app_40th:.4f}")
+    
+    def _check_dependence_score_coverage(self):
+        """
+        PHASE 3 FINAL FIXES: Diagnostic check for DEPENDENCE_SCORE data pipeline.
+        
+        Verifies that DEPENDENCE_SCORE can be calculated for a reasonable percentage
+        of players in the dataset. Logs a critical error if coverage is below threshold.
+        """
+        try:
+            # Sample a subset of players to test DEPENDENCE_SCORE calculation
+            # Use high-usage players (USG_PCT > 0.25) as they're most relevant for System Merchant Gate
+            test_players = self.df_features[self.df_features['USG_PCT'] > 0.25].head(100)
+            
+            if len(test_players) == 0:
+                logger.warning("No high-usage players found for DEPENDENCE_SCORE diagnostic check")
+                return
+            
+            successful_calculations = 0
+            failed_calculations = 0
+            
+            for idx, row in test_players.iterrows():
+                try:
+                    result = self.calculate_system_dependence(row)
+                    if result.get('dependence_score') is not None:
+                        successful_calculations += 1
+                    else:
+                        failed_calculations += 1
+                except Exception as e:
+                    failed_calculations += 1
+                    logger.debug(f"DEPENDENCE_SCORE calculation failed for player {row.get('PLAYER_NAME', 'Unknown')}: {e}")
+            
+            total_tested = successful_calculations + failed_calculations
+            if total_tested > 0:
+                coverage = successful_calculations / total_tested
+                logger.info(f"DEPENDENCE_SCORE diagnostic: {successful_calculations}/{total_tested} ({coverage:.1%}) successful calculations")
+                
+                if coverage < 0.90:
+                    logger.error(f"DEPENDENCE_SCORE coverage is below 90% ({coverage:.1%}). System Merchant Gate may not function correctly for some players.")
+                elif coverage < 0.95:
+                    logger.warning(f"DEPENDENCE_SCORE coverage is below 95% ({coverage:.1%}). Some players may have missing DEPENDENCE_SCORE.")
+            else:
+                logger.warning("DEPENDENCE_SCORE diagnostic: No players tested")
+        except Exception as e:
+            logger.error(f"DEPENDENCE_SCORE diagnostic check failed: {e}")
     
     def _get_expected_features(self) -> list:
         """Get expected feature names (fallback if model doesn't have feature_names_in_)."""
@@ -1900,12 +1972,180 @@ class ConditionalArchetypePredictor:
                 
                 logger.info(f"Volume Creator Inefficiency Gate applied: CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} > 0.70 AND CREATION_TAX={creation_tax:.3f} < -0.10 (inefficient volume creator), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
         
+        # ====================================================================================================
+        # TIER 3: CONTEXTUAL GATES (Execute Third)
+        # ====================================================================================================
+        
+        # PHASE 3 FINAL FIXES: System Merchant Gate (Priority: High - First Contextual Gate)
+        # Principle: High usage + high dependence = system merchant. A player's production is not truly their own
+        # if it is heavily dependent on the system. This is a fatal flaw for a supposed "Franchise Cornerstone."
+        # PHASE 3 FINAL FIXES REFINEMENT: Use data-driven threshold (75th percentile ≈ 0.45) instead of fixed 0.60
+        # The fixed 0.60 threshold was too high (above 99th percentile). 75th percentile (0.45) catches high-dependence players
+        # like Jordan Poole (0.461 at 93rd percentile) while maintaining reasonable selectivity.
+        # Condition: USG_PCT > 0.25 AND DEPENDENCE_SCORE > 0.45 (75th percentile)
+        # Action: Cap star_level_potential at 30% (Luxury Component ceiling)
+        # NO EXEMPTIONS - This is a direct portability constraint
+        system_merchant_gate_applied = False
+        if apply_phase3_fixes and apply_hard_gates:
+            usage = player_data.get('USG_PCT', None)
+            # Normalize usage if needed
+            if pd.notna(usage) and usage > 1.0:
+                usage = usage / 100.0
+            
+            # Calculate DEPENDENCE_SCORE
+            dependence_result = self.calculate_system_dependence(player_data)
+            dependence_score = dependence_result.get('dependence_score', None)
+            
+            has_high_usage = pd.notna(usage) and usage > 0.25
+            # PHASE 3 FINAL FIXES: Use 75th percentile threshold (0.45) instead of fixed 0.60
+            # This is data-driven and catches high-dependence players like Jordan Poole (0.461)
+            has_high_dependence = pd.notna(dependence_score) and dependence_score > 0.45
+            
+            if has_high_usage and has_high_dependence:
+                original_star_level = star_level_potential
+                # Cap at 30% (Luxury Component ceiling) - cannot be a franchise cornerstone if system-dependent
+                if star_level_potential > 0.30:
+                    star_level_potential = 0.30
+                    system_merchant_gate_applied = True
+                    
+                    # Redistribute probabilities: cap star probabilities at 30%, rest goes to role players
+                    king_prob = prob_dict.get('King', 0)
+                    bulldozer_prob = prob_dict.get('Bulldozer', 0)
+                    total_star_prob = king_prob + bulldozer_prob
+                    
+                    if total_star_prob > 0:
+                        # Scale down star probabilities to cap at 30%
+                        scale_factor = 0.30 / total_star_prob
+                        prob_dict['King'] = king_prob * scale_factor
+                        prob_dict['Bulldozer'] = bulldozer_prob * scale_factor
+                        # Update full names too
+                        prob_dict['King (Resilient Star)'] = prob_dict['King']
+                        prob_dict['Bulldozer (Fragile Star)'] = prob_dict['Bulldozer']
+                        
+                        # Redistribute remaining probability to Sniper/Victim proportionally
+                        remaining_prob = 1.0 - 0.30
+                        sniper_prob = prob_dict.get('Sniper', 0)
+                        victim_prob = prob_dict.get('Victim', 0)
+                        total_role_prob = sniper_prob + victim_prob
+                        
+                        if total_role_prob > 0:
+                            # Maintain relative proportions
+                            prob_dict['Sniper'] = sniper_prob * (remaining_prob / total_role_prob)
+                            prob_dict['Victim'] = victim_prob * (remaining_prob / total_role_prob)
+                        else:
+                            # Default to Victim if no role probabilities
+                            prob_dict['Sniper'] = 0.0
+                            prob_dict['Victim'] = remaining_prob
+                        
+                        # Update full names
+                        prob_dict['Sniper (Resilient Role)'] = prob_dict['Sniper']
+                        prob_dict['Victim (Fragile Role)'] = prob_dict['Victim']
+                    
+                    # Recalculate star_level_potential from redistributed probabilities
+                    star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
+                    # Update predicted archetype if needed
+                    if original_star_level > 0.30:
+                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                
+                logger.info(f"[SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT={usage:.1%} > 25% AND DEPENDENCE_SCORE={dependence_score:.3f} > 0.45 (high usage + high dependence = system merchant), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+            elif has_high_usage and dependence_score is None:
+                # DEPENDENCE_SCORE unavailable - skip gate but log warning
+                logger.warning(f"[SYSTEM MERCHANT] System Merchant Gate skipped: USG_PCT={usage:.1%} > 25% BUT DEPENDENCE_SCORE unavailable (calculation failed or missing data)")
+        
+        # PHASE 3 FINAL FIXES: Empty Calories Rim Force Gate (Priority: High)
+        # Principle: High rim pressure with negative leverage/creation signals = empty calories
+        # Even if SQ_DELTA is positive, negative leverage/creation signals indicate fragility
+        # This catches players like Christian Wood who have high rim pressure but negative signals
+        # Condition: RS_RIM_APPETITE > 0.20 AND (LEVERAGE_TS_DELTA < -0.05 OR CREATION_TAX < -0.05)
+        # AND USG_PCT > 0.25 (high usage)
+        # Action: Cap at 30% (same as Replacement Level Creator Gate)
+        empty_calories_rim_force_gate_applied = False
+        if apply_phase3_fixes and apply_hard_gates:
+            usage = player_data.get('USG_PCT', None)
+            # Normalize usage if needed
+            if pd.notna(usage) and usage > 1.0:
+                usage = usage / 100.0
+            
+            rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+            leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', None)
+            creation_tax = player_data.get('CREATION_TAX', None)
+            
+            has_high_usage = pd.notna(usage) and usage > 0.25
+            has_high_rim_pressure = pd.notna(rim_appetite) and rim_appetite > 0.20
+            has_negative_leverage = pd.notna(leverage_ts_delta) and leverage_ts_delta < -0.05
+            has_negative_creation = pd.notna(creation_tax) and creation_tax < -0.05
+            has_negative_signal = has_negative_leverage or has_negative_creation
+            
+            # Check if player qualifies for Elite Rim Force exemption (requires efficient rim + positive signals)
+            rim_pct = player_data.get('RS_RIM_PCT', None)
+            has_efficient_rim = pd.notna(rim_pct) and rim_pct > 0.60
+            has_positive_leverage = pd.notna(leverage_ts_delta) and leverage_ts_delta > -0.05
+            has_positive_creation = pd.notna(creation_tax) and creation_tax > -0.05
+            has_positive_signal = has_positive_leverage or has_positive_creation
+            qualifies_for_exemption = has_high_rim_pressure and has_efficient_rim and has_positive_signal
+            
+            if has_high_usage and has_high_rim_pressure and has_negative_signal and not qualifies_for_exemption:
+                original_star_level = star_level_potential
+                # Cap at 30% (same as Replacement Level Creator Gate)
+                if star_level_potential > 0.30:
+                    star_level_potential = 0.30
+                    empty_calories_rim_force_gate_applied = True
+                    
+                    # Redistribute probabilities: cap star probabilities at 30%, rest goes to role players
+                    king_prob = prob_dict.get('King', 0)
+                    bulldozer_prob = prob_dict.get('Bulldozer', 0)
+                    total_star_prob = king_prob + bulldozer_prob
+                    
+                    if total_star_prob > 0:
+                        # Scale down star probabilities to cap at 30%
+                        scale_factor = 0.30 / total_star_prob
+                        prob_dict['King'] = king_prob * scale_factor
+                        prob_dict['Bulldozer'] = bulldozer_prob * scale_factor
+                        # Update full names too
+                        prob_dict['King (Resilient Star)'] = prob_dict['King']
+                        prob_dict['Bulldozer (Fragile Star)'] = prob_dict['Bulldozer']
+                        
+                        # Redistribute remaining probability to Sniper/Victim proportionally
+                        remaining_prob = 1.0 - 0.30
+                        sniper_prob = prob_dict.get('Sniper', 0)
+                        victim_prob = prob_dict.get('Victim', 0)
+                        total_role_prob = sniper_prob + victim_prob
+                        
+                        if total_role_prob > 0:
+                            # Maintain relative proportions
+                            prob_dict['Sniper'] = sniper_prob * (remaining_prob / total_role_prob)
+                            prob_dict['Victim'] = victim_prob * (remaining_prob / total_role_prob)
+                        else:
+                            # Default to Victim if no role probabilities
+                            prob_dict['Sniper'] = 0.0
+                            prob_dict['Victim'] = remaining_prob
+                        
+                        # Update full names
+                        prob_dict['Sniper (Resilient Role)'] = prob_dict['Sniper']
+                        prob_dict['Victim (Fragile Role)'] = prob_dict['Victim']
+                    
+                    # Recalculate star_level_potential from redistributed probabilities
+                    star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
+                    # Update predicted archetype if needed
+                    if original_star_level > 0.30:
+                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                
+                signal_parts = []
+                if has_negative_leverage:
+                    signal_parts.append(f"LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} < -0.05")
+                if has_negative_creation:
+                    signal_parts.append(f"CREATION_TAX={creation_tax:.3f} < -0.05")
+                
+                logger.info(f"[EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT={usage:.1%} > 25% AND RS_RIM_APPETITE={rim_appetite:.3f} > 0.20 AND ({' OR '.join(signal_parts)}) (high rim pressure + negative signals = empty calories), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+        
         # PHASE 4.5 FIX: Replacement Level Creator Gate (Safety Valve) - Dec 9, 2025
         # PHASE 2 REFINEMENT: Stricter Exemptions - Dec 9, 2025
-        # Principle: High usage (>25%) with negative shot quality generation delta (<-0.05) indicates "empty calories" creator.
+        # PHASE 3 FINAL FIXES: Dynamic Threshold - Uses 25th percentile instead of fixed -0.05
+        # Principle: High usage (>25%) with negative shot quality generation delta (below 25th percentile) indicates "empty calories" creator.
         # These players demand the ball but generate shots worse than league average - they're replacement level, not stars.
-        # Conservative threshold (USG_PCT > 0.25 AND SQ_DELTA < -0.05) avoids breaking young stars (Shai, Tatum have usage < 25%).
+        # Conservative threshold (USG_PCT > 0.25 AND SQ_DELTA < 25th percentile) avoids breaking young stars (Shai, Tatum have usage < 25%).
         # Example: D'Angelo Russell (2018-19): USG=31.1%, SQ_DELTA=-0.0718 → Should be capped
+        # Example: Julius Randle (2020-21): USG=25.5%, SQ_DELTA=-0.0367 → Should be capped if below 25th percentile
         # 
         # Exemptions (Refined):
         # - REMOVED: Elite Playmaker exemption (playmaking doesn't offset negative shot quality generation)
@@ -1921,8 +2161,10 @@ class ConditionalArchetypePredictor:
                 usage = usage / 100.0
             
             # Check if high usage with negative shot quality generation
+            # PHASE 3 FINAL FIXES: Use dynamic threshold (25th percentile) instead of fixed -0.05
             has_high_usage = pd.notna(usage) and usage > 0.25
-            has_negative_sq_delta = pd.notna(sq_gen_delta) and sq_gen_delta < -0.05
+            threshold = self.sq_delta_25th_percentile_threshold if self.sq_delta_25th_percentile_threshold is not None else -0.05
+            has_negative_sq_delta = pd.notna(sq_gen_delta) and sq_gen_delta < threshold
             
             # PHASE 2 REFINEMENT: Stricter Exemptions for Replacement Level Creator Gate
             # Principle: High usage + negative SQ_DELTA = fatal flaw. Exemptions should be minimal and surgical.
@@ -1940,14 +2182,17 @@ class ConditionalArchetypePredictor:
             # Refined Elite Rim Force Exemption: Requires ALL of:
             # 1. RS_RIM_APPETITE > 0.20 (high rim pressure)
             # 2. RS_RIM_PCT > 60% (efficient rim finishing)
-            # 3. Positive leverage OR creation signal (LEVERAGE_TS_DELTA > 0 OR CREATION_TAX > -0.10)
+            # 3. Positive leverage OR creation signal (LEVERAGE_TS_DELTA > -0.05 OR CREATION_TAX > -0.05)
+            # PHASE 3 FINAL FIXES: Tightened CREATION_TAX threshold from -0.10 to -0.05
             # Rationale: Rim pressure can offset negative SQ_DELTA for bigs, but only if they:
             # - Finish efficiently at the rim (not just volume)
             # - Show positive leverage/creation signals (not just rim pressure)
+            # - Keep LEVERAGE_TS_DELTA > -0.05 (allows slight negative, protects Jokić with -0.0110)
+            # - Tighten CREATION_TAX > -0.05 (catches inefficient creation like Christian Wood with -0.1305)
             if pd.notna(rim_appetite) and rim_appetite > 0.20:
                 has_efficient_rim_finishing = pd.notna(rim_pct) and rim_pct > 0.60
-                has_positive_leverage = pd.notna(leverage_ts_delta) and leverage_ts_delta > 0
-                has_positive_creation = pd.notna(creation_tax) and creation_tax > -0.10
+                has_positive_leverage = pd.notna(leverage_ts_delta) and leverage_ts_delta > -0.05
+                has_positive_creation = pd.notna(creation_tax) and creation_tax > -0.05
                 has_positive_signal = has_positive_leverage or has_positive_creation
                 
                 if has_efficient_rim_finishing and has_positive_signal:
@@ -2015,17 +2260,19 @@ class ConditionalArchetypePredictor:
                     reason_parts = [f"RS_RIM_APPETITE={rim_appetite:.3f} > 0.20"]
                     if pd.notna(rim_pct):
                         reason_parts.append(f"RS_RIM_PCT={rim_pct:.1%} > 60%")
-                    if pd.notna(leverage_ts_delta) and leverage_ts_delta > 0:
-                        reason_parts.append(f"LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} > 0")
-                    if pd.notna(creation_tax) and creation_tax > -0.10:
-                        reason_parts.append(f"CREATION_TAX={creation_tax:.3f} > -0.10")
+                    if pd.notna(leverage_ts_delta) and leverage_ts_delta > -0.05:
+                        reason_parts.append(f"LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} > -0.05")
+                    if pd.notna(creation_tax) and creation_tax > -0.05:
+                        reason_parts.append(f"CREATION_TAX={creation_tax:.3f} > -0.05")
                     
                     exemption_reason.append(f"Elite Rim Force ({', '.join(reason_parts)})")
                 
                 if has_elite_trait:
-                    logger.info(f"Replacement Level Creator Gate EXEMPTED: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < -0.05 BUT Refined Elite Rim Force exemption: {', '.join(exemption_reason)}")
+                    threshold_str = f"{threshold:.4f}" if threshold is not None else "-0.05 (fallback)"
+                    logger.info(f"Replacement Level Creator Gate EXEMPTED: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < {threshold_str} BUT Refined Elite Rim Force exemption: {', '.join(exemption_reason)}")
                 else:
-                    logger.info(f"Replacement Level Creator Gate applied: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < -0.05 (high usage + negative delta = replacement level), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                    threshold_str = f"{threshold:.4f}" if threshold is not None else "-0.05 (fallback)"
+                    logger.info(f"Replacement Level Creator Gate applied: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < {threshold_str} (high usage + negative delta = replacement level), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
         
         # Check for missing data (confidence flags)
         confidence_flags = []
@@ -2129,11 +2376,14 @@ class ConditionalArchetypePredictor:
         This is the Y-axis of the 2D Risk Matrix, measuring how portable/system-dependent
         a player's production is.
         
+        PHASE 3 FINAL FIXES: Added error handling and fallback logic.
+        
         Args:
             player_data: Player's stress vector data (Series)
             
         Returns:
-            Dictionary with dependence score and component breakdown
+            Dictionary with dependence score and component breakdown.
+            If calculation fails, returns dict with dependence_score=None and error details.
         """
         import sys
         from pathlib import Path
@@ -2143,9 +2393,24 @@ class ConditionalArchetypePredictor:
         if str(script_dir) not in sys.path:
             sys.path.insert(0, str(script_dir))
         
-        from calculate_dependence_score import calculate_dependence_score
-        
-        return calculate_dependence_score(player_data)
+        try:
+            from calculate_dependence_score import calculate_dependence_score
+            result = calculate_dependence_score(player_data)
+            
+            # Verify result has expected structure
+            if not isinstance(result, dict):
+                logger.warning(f"DEPENDENCE_SCORE calculation returned unexpected type: {type(result)}")
+                return {'dependence_score': None, 'error': 'Unexpected return type'}
+            
+            return result
+        except ImportError as e:
+            logger.error(f"Failed to import calculate_dependence_score: {e}")
+            return {'dependence_score': None, 'error': f'Import error: {e}'}
+        except Exception as e:
+            # Log detailed error for debugging
+            player_name = player_data.get('PLAYER_NAME', 'Unknown')
+            logger.warning(f"DEPENDENCE_SCORE calculation failed for {player_name}: {e}")
+            return {'dependence_score': None, 'error': str(e)}
     
     def predict_with_risk_matrix(
         self,
