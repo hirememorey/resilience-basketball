@@ -567,22 +567,27 @@ class ConditionalArchetypePredictor:
     def _calculate_risk_features(self, player_data: pd.Series, usage_level: float) -> Dict[str, float]:
         """
         Calculate continuous gradient risk features dynamically.
-        
-        These features replace hard gates with continuous gradients that preserve
-        information about the magnitude of flaws.
-        
-        Args:
-            player_data: Player's stress vector data
-            usage_level: Target usage level (for interaction terms)
-            
-        Returns:
-            Dictionary of risk feature values
+        Includes exponential flaw scaling for usage projection.
         """
         risk_features = {}
+        
+        # Calculate projection ratio for exponential flaw scaling
+        current_usg = player_data.get('USG_PCT', 0.0)
+        # Handle percentage format if present
+        if current_usg > 1.0: current_usg /= 100.0
+        
+        projection_ratio = 1.0
+        if current_usg > 0.001:  # Avoid division by zero
+            projection_ratio = usage_level / current_usg
         
         # 1. RIM_PRESSURE_DEFICIT: Normalized distance below threshold
         # Formula: max(0, threshold - RS_RIM_APPETITE) / threshold
         rim_appetite = player_data.get('RS_RIM_APPETITE', 0.0)
+        
+        # EXPONENTIAL FLAW SCALING: Rim pressure degrades as usage rises
+        if projection_ratio > 1.0:
+            rim_appetite = rim_appetite / (projection_ratio ** 0.5)
+            
         if pd.notna(rim_appetite) and self.rim_appetite_bottom_20th is not None:
             threshold = self.rim_appetite_bottom_20th
             deficit = max(0, threshold - rim_appetite) / threshold
@@ -634,7 +639,8 @@ class ConditionalArchetypePredictor:
             base_score = creation_vol * combined_inefficiency
             
             # Enhanced: Scale by usage level
-            risk_features['INEFFICIENT_VOLUME_SCORE'] = usg_pct * base_score
+            # REFINED (Dec 2025): Increased exponent from 1.0 to 2.0 to catch D'Angelo Russell
+            risk_features['INEFFICIENT_VOLUME_SCORE'] = (usg_pct ** 2.0) * base_score
         else:
             risk_features['INEFFICIENT_VOLUME_SCORE'] = 0.0
         
@@ -651,6 +657,12 @@ class ConditionalArchetypePredictor:
             open_shot_freq = 0.0
         
         system_dependence = min(assisted_pct + open_shot_freq, 1.0)
+        
+        # EXPONENTIAL FLAW SCALING: Dependence becomes more exploitable as usage rises
+        if projection_ratio > 1.0:
+            # Increase dependence score (capped at 1.0)
+            system_dependence = min(system_dependence * (projection_ratio ** 0.5), 1.0)
+            
         risk_features['SYSTEM_DEPENDENCE_SCORE'] = usg_pct * system_dependence
         
         # 5. EMPTY_CALORIES_RISK: USG_PCT × RIM_PRESSURE_DEFICIT
@@ -1133,22 +1145,31 @@ class ConditionalArchetypePredictor:
                             'RS_EARLY_CLOCK_PRESSURE_APPETITE'
                         ]
                         
+                        # PHASE 4.5 REFINEMENT: Exponential Flaw Scaling
+                        # Principle: Flaws get worse as usage goes up because defenses adjust.
+                        flaw_features = [
+                            'RIM_PRESSURE_DEFICIT',
+                            'SYSTEM_DEPENDENCE_SCORE',
+                            'EMPTY_CALORIES_RISK',
+                            'ABDICATION_MAGNITUDE'
+                        ]
+
                         if feature_name in volume_features:
                             # Project volume feature: simulate what it would be at higher usage
-                            # Note: val is already taxed at this point
                             val = val * projection_factor
-                            
-                            # Phase 3.7 Fix #1: Legacy playoff volume tax (now handled by multi-signal tax)
-                            # Keep for backward compatibility but multi-signal tax takes precedence
-                            if feature_name == 'CREATION_VOLUME_RATIO' and playoff_volume_tax_applied:
-                                # This is redundant now (multi-signal tax already applied), but keep for logging
-                                logger.debug(f"Legacy Playoff Volume Tax: CREATION_VOLUME_RATIO already taxed by multi-signal system")
                         
+                        elif feature_name in flaw_features:
+                            # Exponential degradation for flaw features
+                            # Flaws get WORSE as usage goes up (defenses adjust)
+                            usage_scaling_factor = usage_level / max(current_usage, 0.01)
+                            # Apply square root degradation to prevent overly aggressive penalties
+                            val = val * (usage_scaling_factor ** 0.5)
+                            logger.debug(f"Exponential flaw scaling applied to {feature_name}: {val:.4f}")
+                            
                         elif feature_name in ['RS_PRESSURE_RESILIENCE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE', 
                                              'RS_EARLY_CLOCK_PRESSURE_RESILIENCE', 'CREATION_TAX', 'EFG_ISO_WEIGHTED',
                                              'EFG_PCT_0_DRIBBLE']:
                             # Efficiency features: keep as-is, but apply context penalty if applicable
-                            # Note: EFG_ISO_WEIGHTED is already taxed above (multi-signal tax)
                             if context_penalty > 0:
                                 val = max(0.0, val - context_penalty)
                         # All other features: use as-is
@@ -1249,6 +1270,37 @@ class ConditionalArchetypePredictor:
         clutch_fragility_gate_applied = False
         abdication_gate_applied = False
         creation_fragility_gate_applied = False
+        
+        # Define common variables for gates
+        rim_appetite = player_data.get('RS_RIM_APPETITE', 0)
+        efg_iso = player_data.get('EFG_ISO_WEIGHTED', None)
+        position = player_data.get('POSITION', '')
+
+        # HIERARCHY IMPLEMENTATION: Inefficiency Gate (Priority: High - Non-Negotiable)
+        # Principle: If a player's base efficiency is below a minimum threshold (25th percentile),
+        # they are fundamentally too inefficient to be a star, regardless of other skills.
+        # This is the "Low-Floor Illusion" fix.
+        inefficiency_gate_applied = False
+        if apply_phase3_fixes and apply_hard_gates:
+            # PHASE 4.5 REFINEMENT: Add positional check to exemption
+            # Exemption should only apply to bigs, not guards/wings
+            is_big = 'C' in position or 'F' in position
+            has_elite_rim_pressure = pd.notna(rim_appetite) and rim_appetite > 0.25
+
+            if (pd.notna(efg_iso) and self.efg_iso_floor is not None and 
+                efg_iso < self.efg_iso_floor and not (is_big and has_elite_rim_pressure)):
+                
+                original_star_level = star_level_potential
+                # Cap at 40% (better than 30% to allow for "good stats bad team" players)
+                star_level_potential = min(star_level_potential, 0.40)
+                inefficiency_gate_applied = True
+                
+                # Log the application of the gate
+                logger.info(
+                    f"[FATAL FLAW] Inefficiency Gate applied: EFG_ISO_WEIGHTED={efg_iso:.4f} < "
+                    f"floor={self.efg_iso_floor:.4f} (25th percentile), star-level capped "
+                    f"from {original_star_level:.2%} to {star_level_potential:.2%}"
+                )
         
         # HIERARCHY IMPLEMENTATION: Clutch Fragility Gate (Priority: Highest - Non-Negotiable)
         # Principle: Resilience = maintaining output under pressure. If you collapse in clutch (10%+ efficiency drop),
@@ -2012,15 +2064,45 @@ class ConditionalArchetypePredictor:
                 usage = usage / 100.0
             
             # Calculate DEPENDENCE_SCORE
-            dependence_result = self.calculate_system_dependence(player_data)
-            dependence_score = dependence_result.get('dependence_score', None)
+            # PHASE 4.5 FIX: Use stored DEPENDENCE_SCORE if available (more reliable than on-the-fly calculation)
+            # On-the-fly calculation may be missing data (e.g., returns 0.4 instead of stored 0.664)
+            if 'DEPENDENCE_SCORE' in player_data.index and pd.notna(player_data['DEPENDENCE_SCORE']):
+                dependence_score = player_data['DEPENDENCE_SCORE']
+            else:
+                # Fallback to on-the-fly calculation if stored value not available
+                dependence_result = self.calculate_system_dependence(player_data)
+                dependence_score = dependence_result.get('dependence_score', None)
             
             has_high_usage = pd.notna(usage) and usage > 0.25
             # PHASE 3 FINAL FIXES: Use 75th percentile threshold (0.45) instead of fixed 0.60
             # This is data-driven and catches high-dependence players like Jordan Poole (0.461)
             has_high_dependence = pd.notna(dependence_score) and dependence_score > 0.45
+            # PHASE 4.5 FIX: Very high dependence (0.60+) is a flaw, but only if combined with low creation
+            # High dependence + low creation = system merchant (Hernangomez: DEP=0.664, CREATION_VOL=0.055)
+            # High dependence + high creation/rim pressure = franchise cornerstone (Jokić: DEP=0.641, CREATION_VOL=0.131, RIM=0.497)
+            has_very_high_dependence = pd.notna(dependence_score) and dependence_score > 0.60
             
-            if has_high_usage and has_high_dependence:
+            # Check for creation volume and rim pressure (exemptions for franchise cornerstones)
+            # PHASE 4.5 FIX REFINEMENT: Very high dependence + very low creation = system merchant
+            # Hernangomez: DEP=0.664, CREATION_VOL=0.055 (purely rim finisher, not creator)
+            # Jokić: DEP=0.641, CREATION_VOL=0.131 (low creation but has elite efficiency/rim pressure)
+            creation_vol = player_data.get('CREATION_VOLUME_RATIO', None)
+            rim_pressure = player_data.get('RS_RIM_APPETITE', None)
+            has_very_low_creation = pd.notna(creation_vol) and creation_vol < 0.10  # Very low creation volume (< 10%)
+            has_high_rim_pressure = pd.notna(rim_pressure) and rim_pressure > 0.25  # High rim pressure (self-created offense)
+            
+            # PHASE 4.5 FIX REFINEMENT: Rim pressure exemption for high usage + high dependence
+            # Players with high rim pressure (>0.25) create their own offense even if shots are "assisted"
+            # This protects franchise cornerstones like Davis (RIM=0.316) and Jokić (RIM=0.497)
+            # from being incorrectly flagged as system merchants
+            has_rim_pressure_exemption = has_high_rim_pressure
+            
+            # Apply gate if: (high usage + moderate dependence + no rim pressure exemption) OR (very high dependence + very low creation)
+            # The first condition catches system merchants like Jordan Poole (USG=25.2%, DEP=0.462, no rim pressure)
+            # The second condition catches system merchants like Hernangomez (DEP=0.664, CREATION_VOL=0.055)
+            # Rim pressure exemption protects franchise cornerstones like Davis and Jokić
+            if (has_high_usage and has_high_dependence and not has_rim_pressure_exemption) or \
+               (has_very_high_dependence and has_very_low_creation and not has_rim_pressure_exemption):
                 original_star_level = star_level_potential
                 # Cap at 30% (Luxury Component ceiling) - cannot be a franchise cornerstone if system-dependent
                 if star_level_potential > 0.30:
@@ -2066,7 +2148,10 @@ class ConditionalArchetypePredictor:
                     if original_star_level > 0.30:
                         pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
                 
-                logger.info(f"[SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT={usage:.1%} > 25% AND DEPENDENCE_SCORE={dependence_score:.3f} > 0.45 (high usage + high dependence = system merchant), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                if has_very_high_dependence and has_very_low_creation:
+                    logger.info(f"[SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE={dependence_score:.3f} > 0.60 AND CREATION_VOLUME_RATIO={creation_vol:.3f} < 0.10 (very high dependence + very low creation = system merchant), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                elif has_high_usage and has_high_dependence:
+                    logger.info(f"[SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT={usage:.1%} > 25% AND DEPENDENCE_SCORE={dependence_score:.3f} > 0.45 (high usage + high dependence = system merchant), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
             elif has_high_usage and dependence_score is None:
                 # DEPENDENCE_SCORE unavailable - skip gate but log warning
                 logger.warning(f"[SYSTEM MERCHANT] System Merchant Gate skipped: USG_PCT={usage:.1%} > 25% BUT DEPENDENCE_SCORE unavailable (calculation failed or missing data)")

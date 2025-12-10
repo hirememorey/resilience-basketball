@@ -1,0 +1,41 @@
+player_name,season,category,test_usage,expected_outcome,expected_star_level,data_found,predicted_archetype,star_level,star_level_decimal,star_level_match,archetype_match,overall_pass,status
+Shai Gilgeous-Alexander,2018-19,True Positive - Latent Star,30%,Bulldozer,High,True,Unknown,76.85%,0.76850355,True,False,False,❌ FAIL
+Victor Oladipo,2016-17,True Positive - Latent Star,30%,Bulldozer,High,True,Unknown,89.28%,0.8927586,True,False,False,❌ FAIL
+Jalen Brunson,2020-21,True Positive - Latent Star,32%,Bulldozer,High,True,Unknown,98.43%,0.98430926,True,False,False,❌ FAIL
+Tyrese Maxey,2021-22,True Positive - Latent Star,28%,Bulldozer,High,True,Unknown,99.27%,0.9927269,True,False,False,❌ FAIL
+Pascal Siakam,2018-19,True Positive - Latent Star,28%,Bulldozer,High,True,Unknown,89.77%,0.8977499,True,False,False,❌ FAIL
+Jayson Tatum,2017-18,True Positive - Rookie Sensation,28%,Bulldozer,High,True,Unknown,88.19%,0.8819332,True,False,False,❌ FAIL
+Mikal Bridges,2021-22,True Positive - Usage Shock,30%,Bulldozer,High,True,Unknown,84.88%,0.84881234,True,False,False,❌ FAIL
+Desmond Bane,2021-22,True Positive - Latent Star,28%,Bulldozer,High,True,Unknown,97.32%,0.9732408,True,False,False,❌ FAIL
+Nikola Jokić,2015-16,True Positive - Franchise Cornerstone,30%,King,High,True,Unknown,88.64%,0.88640535,True,False,False,❌ FAIL
+Nikola Jokić,2016-17,True Positive - Franchise Cornerstone,30%,King,High,True,Unknown,89.81%,0.8981069,True,False,False,❌ FAIL
+Nikola Jokić,2017-18,True Positive - Franchise Cornerstone,30%,King,High,True,Unknown,91.53%,0.9152894,True,False,False,❌ FAIL
+Nikola Jokić,2018-19,True Positive - Franchise Cornerstone,30%,King,High,True,Unknown,51.34%,0.5133718,False,False,False,❌ FAIL
+Anthony Davis,2015-16,True Positive - Franchise Cornerstone,30%,Bulldozer,High,True,Unknown,88.38%,0.8838462,True,False,False,❌ FAIL
+Anthony Davis,2016-17,True Positive - Franchise Cornerstone,30%,Bulldozer,High,True,Unknown,88.06%,0.8805978,True,False,False,❌ FAIL
+Joel Embiid,2016-17,True Positive - Franchise Cornerstone,30%,King,High,True,Unknown,95.37%,0.95370364,True,False,False,❌ FAIL
+Joel Embiid,2017-18,True Positive - Franchise Cornerstone,30%,Bulldozer,High,True,Unknown,89.20%,0.89204323,True,False,False,❌ FAIL
+Jordan Poole,2021-22,False Positive - Mirage Breakout,30%,Victim,Low,True,Unknown,97.05%,0.9704852,False,False,False,❌ FAIL
+Talen Horton-Tucker,2020-21,False Positive - Mirage Breakout,25%,Victim,Low,True,Unknown,15.44%,0.15441772,True,False,False,❌ FAIL
+Christian Wood,2020-21,False Positive - Empty Calories,26%,Victim,Low,True,Unknown,38.99%,0.38986182,True,False,False,❌ FAIL
+D'Angelo Russell,2018-19,False Positive - Fool's Gold,31%,Victim,Low,True,Unknown,94.62%,0.9461875,False,False,False,❌ FAIL
+Julius Randle,2020-21,False Positive - Empty Calories,30%,Victim,Low,True,Unknown,76.91%,0.7690537,False,False,False,❌ FAIL
+Ben Simmons,2017-18,True Negative - Fragile Star,25%,Victim,Low,True,Unknown,51.07%,0.5106794,True,False,False,❌ FAIL
+Ben Simmons,2018-19,True Negative - Fragile Star,25%,Victim,Low,True,Unknown,71.01%,0.71010804,False,False,False,❌ FAIL
+Ben Simmons,2020-21,True Negative - Fragile Star,25%,Victim,Low,True,Unknown,30.28%,0.3028321,True,False,False,❌ FAIL
+Tyus Jones,2021-22,System Player - Ceiling Test,25%,Sniper,Low,True,Unknown,68.79%,0.68786424,False,False,False,❌ FAIL
+Domantas Sabonis,2021-22,True Negative - Comparison Case,28%,Victim,Low,True,Unknown,61.17%,0.61166465,False,False,False,❌ FAIL
+Tyrese Haliburton,2021-22,True Positive - Comparison Case,28%,Bulldozer,High,True,Unknown,95.92%,0.95923865,True,False,False,❌ FAIL
+Karl-Anthony Towns,2015-16,True Negative - Empty Stats Star,28%,Victim,Low,True,Unknown,85.79%,0.8578776,False,False,False,❌ FAIL
+Karl-Anthony Towns,2016-17,True Negative - Empty Stats Star,28%,Victim,Low,True,Unknown,47.53%,0.47528636,True,False,False,❌ FAIL
+Karl-Anthony Towns,2017-18,True Negative - Empty Stats Star,28%,Victim,Low,True,Unknown,68.92%,0.6891655,False,False,False,❌ FAIL
+Karl-Anthony Towns,2018-19,True Negative - Empty Stats Star,28%,Victim,Low,True,Unknown,86.98%,0.8697734,False,False,False,❌ FAIL
+Karl-Anthony Towns,2019-20,True Negative - Empty Stats Star,28%,Victim,Low,True,Unknown,85.58%,0.8558223,False,False,False,❌ FAIL
+Karl-Anthony Towns,2020-21,True Negative - Empty Stats Star,28%,Victim,Low,True,Unknown,79.38%,0.79376566,False,False,False,❌ FAIL
+Markelle Fultz,2017-18,True Negative - Draft Bust,25%,Victim,Low,True,Unknown,27.57%,0.27569276,True,False,False,❌ FAIL
+Markelle Fultz,2018-19,True Negative - Draft Bust,25%,Victim,Low,True,Unknown,20.50%,0.2049983,True,False,False,❌ FAIL
+Markelle Fultz,2019-20,True Negative - Draft Bust,25%,Victim,Low,True,Unknown,56.65%,0.5664796,False,False,False,❌ FAIL
+Markelle Fultz,2020-21,True Negative - Draft Bust,25%,Victim,Low,True,Unknown,49.04%,0.49040854,True,False,False,❌ FAIL
+Markelle Fultz,2021-22,True Negative - Draft Bust,25%,Victim,Low,True,Unknown,83.55%,0.8355035,False,False,False,❌ FAIL
+Markelle Fultz,2022-23,True Negative - Draft Bust,25%,Victim,Low,True,Unknown,78.32%,0.7832219,False,False,False,❌ FAIL
+Markelle Fultz,2023-24,True Negative - Draft Bust,25%,Victim,Low,True,Unknown,91.05%,0.91054094,False,False,False,❌ FAIL

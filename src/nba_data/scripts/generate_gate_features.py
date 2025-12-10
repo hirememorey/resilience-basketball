@@ -297,7 +297,8 @@ class GateFeatureGenerator:
                     logger.info(f"Normalized USG_PCT for INEFFICIENT_VOLUME_SCORE calculation")
                 
                 # Triple interaction: Usage × Volume × Combined Inefficiency
-                df['INEFFICIENT_VOLUME_SCORE'] = usg_pct * base_score
+                # REFINED (Dec 2025): Increased exponent from 1.0 to 2.0 to catch D'Angelo Russell
+                df['INEFFICIENT_VOLUME_SCORE'] = (usg_pct ** 2.0) * base_score
             else:
                 # Fallback to original formula if USG_PCT not available
                 df['INEFFICIENT_VOLUME_SCORE'] = base_score
@@ -377,6 +378,44 @@ class GateFeatureGenerator:
             df['EMPTY_CALORIES_RISK'] = 0.0
             logger.warning("USG_PCT or RIM_PRESSURE_DEFICIT not found - EMPTY_CALORIES_RISK set to 0.0")
         
+        # 6. QUALITY_ADJUSTED_RESILIENCE (New - Addresses Low Floor Illusion)
+        if 'EFG_ISO_WEIGHTED' in df.columns and 'CREATION_TAX' in df.columns:
+            base_eff = df['EFG_ISO_WEIGHTED'].fillna(0.0)
+            resilience = df['CREATION_TAX'].fillna(0.0)
+            
+            # If efficiency is below scrub threshold, resilience is penalized
+            # We add a penalty term to the resilience score itself
+            # REFINED (Dec 2025): Set threshold to 0.46 based on audit of Elfrid Payton (0.458)
+            self.scrub_efficiency_threshold = 0.46
+            is_scrub = base_eff < self.scrub_efficiency_threshold
+            
+            # If scrub: Flip resilience to penalty. 
+            # E.g. Tax -0.01 (Great resilience) becomes -1.0 penalty
+            penalty = -1.0 * (np.abs(resilience) + 0.5)
+            
+            df['QUALITY_ADJUSTED_RESILIENCE'] = np.where(is_scrub, penalty, resilience)
+            logger.info(f"Calculated QUALITY_ADJUSTED_RESILIENCE. Penalized {is_scrub.sum()} low-efficiency players.")
+        else:
+            df['QUALITY_ADJUSTED_RESILIENCE'] = 0.0
+
+        # 6. QUALITY_ADJUSTED_RESILIENCE (New - Addresses Low Floor Illusion)
+        if 'EFG_ISO_WEIGHTED' in df.columns and 'CREATION_TAX' in df.columns:
+            base_eff = df['EFG_ISO_WEIGHTED'].fillna(0.0)
+            resilience = df['CREATION_TAX'].fillna(0.0)
+            
+            # If efficiency is below scrub threshold, resilience is penalized
+            # REFINED (Dec 2025): Set threshold to 0.46 based on audit of Elfrid Payton (0.458)
+            self.scrub_efficiency_threshold = 0.46
+            is_scrub = base_eff < self.scrub_efficiency_threshold
+            
+            # If scrub: Flip resilience to penalty. 
+            penalty = -1.0 * (np.abs(resilience) + 0.5)
+            
+            df['QUALITY_ADJUSTED_RESILIENCE'] = np.where(is_scrub, penalty, resilience)
+            logger.info(f"Calculated QUALITY_ADJUSTED_RESILIENCE. Penalized {is_scrub.sum()} low-efficiency players.")
+        else:
+            df['QUALITY_ADJUSTED_RESilience'] = 0.0
+
         # ========== PORTABLE VOLUME FEATURES (Phase 2: Upstream Dependence) ==========
         
         # 6. PORTABLE_USG_PCT: Raw Usage discounted by Dependence Score

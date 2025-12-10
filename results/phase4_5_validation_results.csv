@@ -1,0 +1,6 @@
+player,season,usage,archetype,star_level,expected,status,is_correct
+Elfrid Payton,2018-19,25%,Unknown,19.10%,False Positive,✅ PASS,True
+Kris Dunn,2017-18,25%,Unknown,78.25%,False Positive,❌ FAIL,False
+Willy Hernangomez,2016-17,25%,Unknown,72.37%,False Positive,❌ FAIL,False
+Jalen Brunson,2020-21,30%,Unknown,98.20%,True Positive,✅ PASS,True
+Tyrese Maxey,2021-22,30%,Unknown,98.12%,True Positive,✅ PASS,True

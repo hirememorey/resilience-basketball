@@ -1,0 +1,1292 @@
+2025-12-10 13:31:33,392 - INFO - ====================================================================================================
+2025-12-10 13:31:33,392 - INFO - CRITICAL CASE STUDIES FOR LATENT STAR DETECTION - Gates: ENABLED
+2025-12-10 13:31:33,392 - INFO - ====================================================================================================
+2025-12-10 13:31:34,060 - INFO - Using RFE model with 10 features
+2025-12-10 13:31:34,118 - INFO - Loaded trajectory features: 5312 rows
+2025-12-10 13:31:34,128 - INFO - Loaded gate features: 5312 rows
+2025-12-10 13:31:34,135 - INFO - Loaded previous playoff features: 5256 rows
+2025-12-10 13:31:34,135 - INFO - Normalized USG_PCT from percentage to decimal format in feature dataset
+2025-12-10 13:31:34,139 - INFO - Qualified players: 3574 / 5312 (filtered by volume thresholds)
+2025-12-10 13:31:34,140 - INFO - RS_RIM_APPETITE bottom 20th percentile (qualified): 0.1892
+2025-12-10 13:31:34,140 - INFO - CREATION_VOLUME_RATIO 25th percentile (qualified): 0.1196
+2025-12-10 13:31:34,140 - INFO - CREATION_TAX 80th percentile (qualified): -0.0480
+2025-12-10 13:31:34,140 - INFO - EFG_ISO_WEIGHTED 80th percentile (qualified): 0.5188
+2025-12-10 13:31:34,141 - INFO - EFG_ISO_WEIGHTED 25th percentile (inefficiency floor): 0.4042
+2025-12-10 13:31:34,141 - INFO - EFG_ISO_WEIGHTED 50th percentile (median): 0.4594
+2025-12-10 13:31:34,141 - INFO - RS_PRESSURE_RESILIENCE 80th percentile (qualified, min 50 pressure shots): 0.5370
+2025-12-10 13:31:34,141 - WARNING - Missing SQ_DELTA or USG_PCT columns, using fallback threshold: -0.0500
+2025-12-10 13:31:34,142 - INFO - STAR average RS_OPEN_SHOT_FREQUENCY (Usage > 20%): 0.1934
+2025-12-10 13:31:34,142 - INFO - RS_OPEN_SHOT_FREQUENCY 75th percentile (STARS, USG > 20%): 0.2500
+2025-12-10 13:31:34,142 - INFO - RS_PRESSURE_APPETITE 40th percentile (STARS, USG > 20%): 0.4693
+2025-12-10 13:31:34,148 - INFO - DEPENDENCE_SCORE diagnostic: 97/100 (97.0%) successful calculations
+2025-12-10 13:31:34,148 - INFO - Model expects 10 features
+2025-12-10 13:31:34,148 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,148 - INFO - Test 1/40: Shai Gilgeous-Alexander (2018-19)
+2025-12-10 13:31:34,148 - INFO - Category: True Positive - Latent Star
+2025-12-10 13:31:34,148 - INFO - ====================================================================================================
+2025-12-10 13:31:34,148 - INFO - Context: Rookie year. 18.3% Usage. Role player behind Lou Williams and Danilo Gallinari.
+2025-12-10 13:31:34,148 - INFO - Mechanism: Should see elite Driving/Physicality Vector (Rim Pressure) even at low volume.
+2025-12-10 13:31:34,148 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,148 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,152 - INFO -   Actual Usage: 18.2%
+2025-12-10 13:31:34,155 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5036 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.362 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,155 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=18.2% < 22% AND abs(CREATION_TAX)=0.081 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.362 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,156 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5036 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.362 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,156 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=18.2% < 22% AND abs(CREATION_TAX)=0.081 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.362 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,157 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,157 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-10 13:31:34,157 - INFO -     Performance Score: 76.85%
+2025-12-10 13:31:34,157 - INFO -     Dependence Score: 27.56%
+2025-12-10 13:31:34,157 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-10 13:31:34,157 - INFO -     Probabilities:
+2025-12-10 13:31:34,157 - INFO -       King: 19.41%
+2025-12-10 13:31:34,157 - INFO -       Bulldozer: 57.44%
+2025-12-10 13:31:34,157 - INFO -       Sniper: 0.18%
+2025-12-10 13:31:34,157 - INFO -       Victim: 22.97%
+2025-12-10 13:31:34,157 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,157 - INFO -     ✅ PASS
+2025-12-10 13:31:34,157 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,157 - INFO - Test 2/40: Victor Oladipo (2016-17)
+2025-12-10 13:31:34,157 - INFO - Category: True Positive - Latent Star
+2025-12-10 13:31:34,157 - INFO - ====================================================================================================
+2025-12-10 13:31:34,157 - INFO - Context: Russell Westbrook's MVP usage-hole year. Oladipo was relegated to a spot-up shooter (21% Usage).
+2025-12-10 13:31:34,157 - INFO - Mechanism: Did he maintain Creation Vector efficiency on the few self-created shots?
+2025-12-10 13:31:34,157 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,157 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,159 - INFO -   Actual Usage: 21.0%
+2025-12-10 13:31:34,161 - INFO - [FATAL FLAW] Abdication Gate EXEMPTED: Smart Deference (LEVERAGE_USG_DELTA=-0.068 < -0.05 BUT LEVERAGE_TS_DELTA=0.143 > 0.05)
+2025-12-10 13:31:34,161 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.290 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,161 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4254 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.290 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,161 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.0% < 22% AND abs(CREATION_TAX)=0.643 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.290 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,162 - INFO - [FATAL FLAW] Abdication Gate EXEMPTED: Smart Deference (LEVERAGE_USG_DELTA=-0.068 < -0.05 BUT LEVERAGE_TS_DELTA=0.143 > 0.05)
+2025-12-10 13:31:34,162 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.290 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,162 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4254 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.290 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,162 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.0% < 22% AND abs(CREATION_TAX)=0.643 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.290 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,162 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,162 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-10 13:31:34,162 - INFO -     Performance Score: 89.28%
+2025-12-10 13:31:34,162 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,162 - INFO -     Risk Category: Franchise Cornerstone (Moderate Dependence)
+2025-12-10 13:31:34,162 - INFO -     Probabilities:
+2025-12-10 13:31:34,162 - INFO -       King: 82.05%
+2025-12-10 13:31:34,162 - INFO -       Bulldozer: 7.23%
+2025-12-10 13:31:34,162 - INFO -       Sniper: 0.14%
+2025-12-10 13:31:34,162 - INFO -       Victim: 10.58%
+2025-12-10 13:31:34,162 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,162 - INFO -     ✅ PASS
+2025-12-10 13:31:34,162 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,162 - INFO - Test 3/40: Jalen Brunson (2020-21)
+2025-12-10 13:31:34,162 - INFO - Category: True Positive - Latent Star
+2025-12-10 13:31:34,162 - INFO - ====================================================================================================
+2025-12-10 13:31:34,162 - INFO - Context: 19.6% Usage. Backup to Luka Dončić.
+2025-12-10 13:31:34,162 - INFO - Mechanism: Gold Standard validation. High Creation Efficiency + High Leverage Resilience.
+2025-12-10 13:31:34,162 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,162 - INFO - Test Usage: 32.0%
+2025-12-10 13:31:34,164 - INFO -   Actual Usage: 19.6%
+2025-12-10 13:31:34,165 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5764 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.263 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,165 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=19.6% < 22% AND abs(CREATION_TAX)=0.080 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.263 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,166 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5764 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.263 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,166 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=19.6% < 22% AND abs(CREATION_TAX)=0.080 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.263 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,166 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,166 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-10 13:31:34,166 - INFO -     Performance Score: 98.43%
+2025-12-10 13:31:34,166 - INFO -     Dependence Score: 31.31%
+2025-12-10 13:31:34,166 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-10 13:31:34,166 - INFO -     Probabilities:
+2025-12-10 13:31:34,166 - INFO -       King: 7.68%
+2025-12-10 13:31:34,166 - INFO -       Bulldozer: 90.75%
+2025-12-10 13:31:34,166 - INFO -       Sniper: 0.03%
+2025-12-10 13:31:34,166 - INFO -       Victim: 1.54%
+2025-12-10 13:31:34,166 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,166 - INFO -     ✅ PASS
+2025-12-10 13:31:34,166 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,166 - INFO - Test 4/40: Tyrese Maxey (2021-22)
+2025-12-10 13:31:34,166 - INFO - Category: True Positive - Latent Star
+2025-12-10 13:31:34,166 - INFO - ====================================================================================================
+2025-12-10 13:31:34,166 - INFO - Context: 22.2% Usage. Broke out to 27.3% in '24.
+2025-12-10 13:31:34,166 - INFO - Mechanism: Elite Creation Vector and Leverage Vector even at lower usage.
+2025-12-10 13:31:34,166 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,166 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,168 - INFO -   Actual Usage: 19.9%
+2025-12-10 13:31:34,168 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.310 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,168 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5152 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.310 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,168 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=19.9% < 22% AND abs(CREATION_TAX)=0.170 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.310 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,170 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.310 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,170 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5152 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.310 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,170 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=19.9% < 22% AND abs(CREATION_TAX)=0.170 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.310 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,170 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,170 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-10 13:31:34,170 - INFO -     Performance Score: 99.27%
+2025-12-10 13:31:34,170 - INFO -     Dependence Score: 30.53%
+2025-12-10 13:31:34,170 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-10 13:31:34,170 - INFO -     Probabilities:
+2025-12-10 13:31:34,170 - INFO -       King: 88.30%
+2025-12-10 13:31:34,170 - INFO -       Bulldozer: 10.98%
+2025-12-10 13:31:34,170 - INFO -       Sniper: 0.03%
+2025-12-10 13:31:34,170 - INFO -       Victim: 0.69%
+2025-12-10 13:31:34,170 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,170 - INFO -     ✅ PASS
+2025-12-10 13:31:34,170 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,170 - INFO - Test 5/40: Pascal Siakam (2018-19)
+2025-12-10 13:31:34,170 - INFO - Category: True Positive - Latent Star
+2025-12-10 13:31:34,170 - INFO - ====================================================================================================
+2025-12-10 13:31:34,170 - INFO - Context: The 'Spin Cycle' breakout year (20.5% Usage). Won MIP and Championship.
+2025-12-10 13:31:34,170 - INFO - Mechanism: High motor, transition scoring, improving face-up game. Demonstrates scalability of efficiency with volume.
+2025-12-10 13:31:34,170 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,170 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,172 - INFO -   Actual Usage: 20.5%
+2025-12-10 13:31:34,173 - INFO - [FATAL FLAW] Abdication Gate EXEMPTED: Smart Deference (LEVERAGE_USG_DELTA=-0.068 < -0.05 BUT LEVERAGE_TS_DELTA=0.119 > 0.05)
+2025-12-10 13:31:34,173 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5166 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.483 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,173 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=20.5% < 22% AND abs(CREATION_TAX)=0.130 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.483 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,174 - INFO - [FATAL FLAW] Abdication Gate EXEMPTED: Smart Deference (LEVERAGE_USG_DELTA=-0.068 < -0.05 BUT LEVERAGE_TS_DELTA=0.119 > 0.05)
+2025-12-10 13:31:34,174 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5166 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.483 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,174 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=20.5% < 22% AND abs(CREATION_TAX)=0.130 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.483 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,174 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,174 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-10 13:31:34,174 - INFO -     Performance Score: 89.77%
+2025-12-10 13:31:34,174 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,174 - INFO -     Risk Category: Franchise Cornerstone (Moderate Dependence)
+2025-12-10 13:31:34,174 - INFO -     Probabilities:
+2025-12-10 13:31:34,174 - INFO -       King: 42.56%
+2025-12-10 13:31:34,174 - INFO -       Bulldozer: 47.21%
+2025-12-10 13:31:34,174 - INFO -       Sniper: 0.12%
+2025-12-10 13:31:34,174 - INFO -       Victim: 10.11%
+2025-12-10 13:31:34,174 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,174 - INFO -     ✅ PASS
+2025-12-10 13:31:34,174 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,174 - INFO - Test 6/40: Jayson Tatum (2017-18)
+2025-12-10 13:31:34,174 - INFO - Category: True Positive - Rookie Sensation
+2025-12-10 13:31:34,174 - INFO - ====================================================================================================
+2025-12-10 13:31:34,174 - INFO - Context: Rookie year (19.5% Usage). Exploded in playoffs without Kyrie/Hayward.
+2025-12-10 13:31:34,174 - INFO - Mechanism: Elite shot creation profile and positional size even at low usage.
+2025-12-10 13:31:34,174 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,174 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,176 - INFO -   Actual Usage: 19.2%
+2025-12-10 13:31:34,177 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.351 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,177 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4151 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.351 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,177 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=19.2% < 22% AND abs(CREATION_TAX)=0.764 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.351 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,178 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.351 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,178 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4151 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.351 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,178 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=19.2% < 22% AND abs(CREATION_TAX)=0.764 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.351 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,178 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,178 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-10 13:31:34,178 - INFO -     Performance Score: 88.19%
+2025-12-10 13:31:34,178 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,178 - INFO -     Risk Category: Franchise Cornerstone (Moderate Dependence)
+2025-12-10 13:31:34,178 - INFO -     Probabilities:
+2025-12-10 13:31:34,178 - INFO -       King: 72.91%
+2025-12-10 13:31:34,178 - INFO -       Bulldozer: 15.28%
+2025-12-10 13:31:34,178 - INFO -       Sniper: 0.13%
+2025-12-10 13:31:34,178 - INFO -       Victim: 11.68%
+2025-12-10 13:31:34,178 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,178 - INFO -     ✅ PASS
+2025-12-10 13:31:34,178 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,178 - INFO - Test 7/40: Mikal Bridges (2021-22)
+2025-12-10 13:31:34,178 - INFO - Category: True Positive - Usage Shock
+2025-12-10 13:31:34,178 - INFO - ====================================================================================================
+2025-12-10 13:31:34,178 - INFO - Context: Role player in Phoenix (14.2% Usage). Broke out when traded to Brooklyn with higher usage.
+2025-12-10 13:31:34,178 - INFO - Mechanism: Tests model's ability to see star potential through role constraints. Elite efficiency on low volume.
+2025-12-10 13:31:34,178 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,178 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,180 - INFO -   Actual Usage: 14.9%
+2025-12-10 13:31:34,181 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5626 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.270 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,181 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0952 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.270 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,181 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=14.9% < 22% AND abs(CREATION_TAX)=0.051 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.270 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,181 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.626 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 84.88% to 30.00%
+2025-12-10 13:31:34,181 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5626 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.270 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,181 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0952 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.270 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,181 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=14.9% < 22% AND abs(CREATION_TAX)=0.051 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.270 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,181 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.626 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 84.88% to 30.00%
+2025-12-10 13:31:34,181 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,181 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,181 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,181 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,181 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,182 - INFO -     Probabilities:
+2025-12-10 13:31:34,182 - INFO -       King: 3.72%
+2025-12-10 13:31:34,182 - INFO -       Bulldozer: 26.28%
+2025-12-10 13:31:34,182 - INFO -       Sniper: 0.16%
+2025-12-10 13:31:34,182 - INFO -       Victim: 69.84%
+2025-12-10 13:31:34,182 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,182 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,182 - INFO -       - Expected high performance (≥65%), got 30.00%
+2025-12-10 13:31:34,182 - INFO -       - Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
+2025-12-10 13:31:34,182 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,182 - INFO - Test 8/40: Desmond Bane (2021-22)
+2025-12-10 13:31:34,182 - INFO - Category: True Positive - Latent Star
+2025-12-10 13:31:34,182 - INFO - ====================================================================================================
+2025-12-10 13:31:34,182 - INFO - Context: 22.6% Usage. Elite secondary creator with high shooting efficiency.
+2025-12-10 13:31:34,182 - INFO - Mechanism: Tests model's ability to identify secondary creators who can scale up. Elite Creation Vector and shooting.
+2025-12-10 13:31:34,182 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,182 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,184 - INFO -   Actual Usage: 22.6%
+2025-12-10 13:31:34,186 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,186 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-10 13:31:34,186 - INFO -     Performance Score: 70.66%
+2025-12-10 13:31:34,186 - INFO -     Dependence Score: 52.06%
+2025-12-10 13:31:34,186 - INFO -     Risk Category: Luxury Component
+2025-12-10 13:31:34,186 - INFO -     Probabilities:
+2025-12-10 13:31:34,186 - INFO -       King: 11.69%
+2025-12-10 13:31:34,186 - INFO -       Bulldozer: 58.98%
+2025-12-10 13:31:34,186 - INFO -       Sniper: 0.17%
+2025-12-10 13:31:34,186 - INFO -       Victim: 29.17%
+2025-12-10 13:31:34,186 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,186 - INFO -     ✅ PASS
+2025-12-10 13:31:34,186 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,186 - INFO - Test 9/40: Nikola Jokić (2015-16)
+2025-12-10 13:31:34,186 - INFO - Category: True Positive - Franchise Cornerstone
+2025-12-10 13:31:34,186 - INFO - ====================================================================================================
+2025-12-10 13:31:34,186 - INFO - Context: Rookie year (19.4% Usage). Age 21. Future MVP and champion. Elite passing and efficiency.
+2025-12-10 13:31:34,186 - INFO - Mechanism: Tests model's ability to identify elite bigs with unique skill sets. Should see high creation volume, elite efficiency, and low dependence.
+2025-12-10 13:31:34,186 - INFO - Expected: King (Star-Level: High)
+2025-12-10 13:31:34,186 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,188 - INFO -   Actual Usage: 19.4%
+2025-12-10 13:31:34,189 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5466 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.497 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,189 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0462 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.497 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,189 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=19.4% < 22% AND abs(CREATION_TAX)=0.046 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.497 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,189 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.641 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 34.31% to 30.00%
+2025-12-10 13:31:34,190 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5466 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.497 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,190 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0462 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.497 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,190 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=19.4% < 22% AND abs(CREATION_TAX)=0.046 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.497 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,190 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.641 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 34.31% to 30.00%
+2025-12-10 13:31:34,190 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,190 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,190 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,190 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,190 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,190 - INFO -     Probabilities:
+2025-12-10 13:31:34,190 - INFO -       King: 13.22%
+2025-12-10 13:31:34,190 - INFO -       Bulldozer: 16.78%
+2025-12-10 13:31:34,190 - INFO -       Sniper: 0.15%
+2025-12-10 13:31:34,190 - INFO -       Victim: 69.85%
+2025-12-10 13:31:34,190 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,190 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,190 - INFO -       - Expected high performance (≥65%), got 30.00%
+2025-12-10 13:31:34,190 - INFO -       - Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'
+2025-12-10 13:31:34,190 - INFO -       - Risk category matches but performance doesn't: 30.00%
+2025-12-10 13:31:34,190 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,190 - INFO - Test 10/40: Nikola Jokić (2016-17)
+2025-12-10 13:31:34,190 - INFO - Category: True Positive - Franchise Cornerstone
+2025-12-10 13:31:34,190 - INFO - ====================================================================================================
+2025-12-10 13:31:34,190 - INFO - Context: Age 22 (23.1% Usage). Emerging as elite playmaker and scorer. Future MVP trajectory.
+2025-12-10 13:31:34,190 - INFO - Mechanism: Elite creation volume and efficiency. Low dependence on system. Should be identified as franchise cornerstone.
+2025-12-10 13:31:34,190 - INFO - Expected: King (Star-Level: High)
+2025-12-10 13:31:34,190 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,192 - INFO -   Actual Usage: 23.1%
+2025-12-10 13:31:34,192 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5218 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.417 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,192 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0784 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.417 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,192 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.613 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 89.35% to 30.00%
+2025-12-10 13:31:34,194 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5218 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.417 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,194 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0784 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.417 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,194 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.613 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 89.35% to 30.00%
+2025-12-10 13:31:34,194 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,194 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,194 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,194 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,194 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,194 - INFO -     Probabilities:
+2025-12-10 13:31:34,194 - INFO -       King: 18.40%
+2025-12-10 13:31:34,194 - INFO -       Bulldozer: 11.60%
+2025-12-10 13:31:34,194 - INFO -       Sniper: 0.94%
+2025-12-10 13:31:34,194 - INFO -       Victim: 69.06%
+2025-12-10 13:31:34,194 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,194 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,194 - INFO -       - Expected high performance (≥65%), got 30.00%
+2025-12-10 13:31:34,194 - INFO -       - Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'
+2025-12-10 13:31:34,194 - INFO -       - Risk category matches but performance doesn't: 30.00%
+2025-12-10 13:31:34,194 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,194 - INFO - Test 11/40: Nikola Jokić (2017-18)
+2025-12-10 13:31:34,194 - INFO - Category: True Positive - Franchise Cornerstone
+2025-12-10 13:31:34,194 - INFO - ====================================================================================================
+2025-12-10 13:31:34,194 - INFO - Context: Age 23 (23.8% Usage). All-Star season. Elite passing and scoring efficiency.
+2025-12-10 13:31:34,194 - INFO - Mechanism: Should identify elite creation and efficiency. Low dependence - self-created offense.
+2025-12-10 13:31:34,194 - INFO - Expected: King (Star-Level: High)
+2025-12-10 13:31:34,194 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,196 - INFO -   Actual Usage: 23.8%
+2025-12-10 13:31:34,198 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4867 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.277 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,198 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0642 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.277 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,198 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.606 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 95.45% to 30.00%
+2025-12-10 13:31:34,199 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4867 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.277 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,199 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0642 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.277 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,199 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.606 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 95.45% to 30.00%
+2025-12-10 13:31:34,199 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,199 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,199 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,199 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,199 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,199 - INFO -     Probabilities:
+2025-12-10 13:31:34,199 - INFO -       King: 22.89%
+2025-12-10 13:31:34,199 - INFO -       Bulldozer: 7.11%
+2025-12-10 13:31:34,199 - INFO -       Sniper: 2.79%
+2025-12-10 13:31:34,199 - INFO -       Victim: 67.21%
+2025-12-10 13:31:34,199 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,199 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,199 - INFO -       - Expected high performance (≥65%), got 30.00%
+2025-12-10 13:31:34,199 - INFO -       - Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'
+2025-12-10 13:31:34,199 - INFO -       - Risk category matches but performance doesn't: 30.00%
+2025-12-10 13:31:34,199 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,199 - INFO - Test 12/40: Nikola Jokić (2018-19)
+2025-12-10 13:31:34,199 - INFO - Category: True Positive - Franchise Cornerstone
+2025-12-10 13:31:34,199 - INFO - ====================================================================================================
+2025-12-10 13:31:34,199 - INFO - Context: Age 24 (27.1% Usage). First-team All-NBA. Elite playmaker and scorer.
+2025-12-10 13:31:34,199 - INFO - Mechanism: Franchise cornerstone with elite creation volume and efficiency. Low dependence on system.
+2025-12-10 13:31:34,199 - INFO - Expected: King (Star-Level: High)
+2025-12-10 13:31:34,199 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,201 - INFO -   Actual Usage: 27.1%
+2025-12-10 13:31:34,201 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5178 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.386 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,201 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.1000 < 0.10 BUT Elite Playmaker (AST_PCT=0.361 OR CREATION_VOLUME_RATIO=0.290) = passing substitutes for isolation
+2025-12-10 13:31:34,202 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=27.1% > 25% AND DEPENDENCE_SCORE=0.566 > 0.45 (high usage + high dependence = system merchant), star-level capped from 51.34% to 30.00%
+2025-12-10 13:31:34,204 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5178 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.386 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,204 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.1000 < 0.10 BUT Elite Playmaker (AST_PCT=0.361 OR CREATION_VOLUME_RATIO=0.290) = passing substitutes for isolation
+2025-12-10 13:31:34,204 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=27.1% > 25% AND DEPENDENCE_SCORE=0.566 > 0.45 (high usage + high dependence = system merchant), star-level capped from 51.34% to 30.00%
+2025-12-10 13:31:34,204 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,204 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,204 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,204 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,204 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,204 - INFO -     Probabilities:
+2025-12-10 13:31:34,204 - INFO -       King: 23.46%
+2025-12-10 13:31:34,204 - INFO -       Bulldozer: 6.54%
+2025-12-10 13:31:34,204 - INFO -       Sniper: 0.12%
+2025-12-10 13:31:34,204 - INFO -       Victim: 69.88%
+2025-12-10 13:31:34,204 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,204 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,204 - INFO -       - Expected high performance (≥65%), got 30.00%
+2025-12-10 13:31:34,205 - INFO -       - Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'
+2025-12-10 13:31:34,205 - INFO -       - Risk category matches but performance doesn't: 30.00%
+2025-12-10 13:31:34,205 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,205 - INFO - Test 13/40: Anthony Davis (2015-16)
+2025-12-10 13:31:34,205 - INFO - Category: True Positive - Franchise Cornerstone
+2025-12-10 13:31:34,205 - INFO - ====================================================================================================
+2025-12-10 13:31:34,205 - INFO - Context: Age 23 (29.0% Usage). All-Star, All-NBA. Elite rim pressure and defensive anchor.
+2025-12-10 13:31:34,205 - INFO - Mechanism: Elite physicality vector (rim pressure) and creation. Should be identified as franchise cornerstone.
+2025-12-10 13:31:34,205 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,205 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,206 - INFO -   Actual Usage: 29.0%
+2025-12-10 13:31:34,207 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.316 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,207 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.3744 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.316 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,207 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=29.0% > 25% AND DEPENDENCE_SCORE=0.625 > 0.45 (high usage + high dependence = system merchant), star-level capped from 88.38% to 30.00%
+2025-12-10 13:31:34,208 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.316 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,208 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.3744 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.316 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,208 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=29.0% > 25% AND DEPENDENCE_SCORE=0.625 > 0.45 (high usage + high dependence = system merchant), star-level capped from 88.38% to 30.00%
+2025-12-10 13:31:34,208 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,208 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,208 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,208 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,208 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,208 - INFO -     Probabilities:
+2025-12-10 13:31:34,208 - INFO -       King: 3.14%
+2025-12-10 13:31:34,208 - INFO -       Bulldozer: 26.86%
+2025-12-10 13:31:34,208 - INFO -       Sniper: 0.97%
+2025-12-10 13:31:34,208 - INFO -       Victim: 69.03%
+2025-12-10 13:31:34,208 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,208 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,208 - INFO -       - Expected high performance (≥65%), got 30.00%
+2025-12-10 13:31:34,208 - INFO -       - Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'
+2025-12-10 13:31:34,208 - INFO -       - Risk category matches but performance doesn't: 30.00%
+2025-12-10 13:31:34,208 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,208 - INFO - Test 14/40: Anthony Davis (2016-17)
+2025-12-10 13:31:34,209 - INFO - Category: True Positive - Franchise Cornerstone
+2025-12-10 13:31:34,209 - INFO - ====================================================================================================
+2025-12-10 13:31:34,209 - INFO - Context: Age 24 (32.1% Usage). All-Star, All-NBA. Elite two-way player.
+2025-12-10 13:31:34,209 - INFO - Mechanism: Elite rim pressure, creation volume, and efficiency. Low dependence - self-created offense.
+2025-12-10 13:31:34,209 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,209 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,211 - INFO -   Actual Usage: 32.1%
+2025-12-10 13:31:34,212 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4966 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.317 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,212 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=32.1% > 25% AND DEPENDENCE_SCORE=0.596 > 0.45 (high usage + high dependence = system merchant), star-level capped from 88.06% to 30.00%
+2025-12-10 13:31:34,212 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=32.1% > 25% AND RS_RIM_APPETITE=0.317 > 0.20 AND (LEVERAGE_TS_DELTA=-0.067 < -0.05 OR CREATION_TAX=-0.068 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,213 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4966 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.317 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,213 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=32.1% > 25% AND DEPENDENCE_SCORE=0.596 > 0.45 (high usage + high dependence = system merchant), star-level capped from 88.06% to 30.00%
+2025-12-10 13:31:34,213 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=32.1% > 25% AND RS_RIM_APPETITE=0.317 > 0.20 AND (LEVERAGE_TS_DELTA=-0.067 < -0.05 OR CREATION_TAX=-0.068 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,214 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,214 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,214 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,214 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,214 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,214 - INFO -     Probabilities:
+2025-12-10 13:31:34,214 - INFO -       King: 9.59%
+2025-12-10 13:31:34,214 - INFO -       Bulldozer: 20.41%
+2025-12-10 13:31:34,214 - INFO -       Sniper: 0.76%
+2025-12-10 13:31:34,214 - INFO -       Victim: 69.24%
+2025-12-10 13:31:34,214 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,214 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,214 - INFO -       - Expected high performance (≥65%), got 30.00%
+2025-12-10 13:31:34,214 - INFO -       - Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'
+2025-12-10 13:31:34,214 - INFO -       - Risk category matches but performance doesn't: 30.00%
+2025-12-10 13:31:34,214 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,214 - INFO - Test 15/40: Joel Embiid (2016-17)
+2025-12-10 13:31:34,214 - INFO - Category: True Positive - Franchise Cornerstone
+2025-12-10 13:31:34,214 - INFO - ====================================================================================================
+2025-12-10 13:31:34,214 - INFO - Context: Rookie year (35.6% Usage). Age 23. Elite rim pressure and scoring. Future MVP.
+2025-12-10 13:31:34,214 - INFO - Mechanism: Elite physicality vector and creation volume. Should be identified as franchise cornerstone despite high usage.
+2025-12-10 13:31:34,214 - INFO - Expected: King (Star-Level: High)
+2025-12-10 13:31:34,214 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,216 - INFO -   Actual Usage: 35.6%
+2025-12-10 13:31:34,217 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.375 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,217 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.3612 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.375 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,217 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0924 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.375 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,217 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=35.6% > 25% AND DEPENDENCE_SCORE=0.644 > 0.45 (high usage + high dependence = system merchant), star-level capped from 95.37% to 30.00%
+2025-12-10 13:31:34,218 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.375 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,218 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.3612 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.375 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,218 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0924 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.375 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,218 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=35.6% > 25% AND DEPENDENCE_SCORE=0.644 > 0.45 (high usage + high dependence = system merchant), star-level capped from 95.37% to 30.00%
+2025-12-10 13:31:34,218 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,218 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,218 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,218 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,218 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,218 - INFO -     Probabilities:
+2025-12-10 13:31:34,218 - INFO -       King: 25.21%
+2025-12-10 13:31:34,218 - INFO -       Bulldozer: 4.79%
+2025-12-10 13:31:34,218 - INFO -       Sniper: 1.63%
+2025-12-10 13:31:34,218 - INFO -       Victim: 68.37%
+2025-12-10 13:31:34,218 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,218 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,218 - INFO -       - Expected high performance (≥65%), got 30.00%
+2025-12-10 13:31:34,218 - INFO -       - Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'
+2025-12-10 13:31:34,218 - INFO -       - Risk category matches but performance doesn't: 30.00%
+2025-12-10 13:31:34,218 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,218 - INFO - Test 16/40: Joel Embiid (2017-18)
+2025-12-10 13:31:34,218 - INFO - Category: True Positive - Franchise Cornerstone
+2025-12-10 13:31:34,218 - INFO - ====================================================================================================
+2025-12-10 13:31:34,218 - INFO - Context: Age 24 (33.0% Usage). All-Star. Elite rim pressure and scoring efficiency.
+2025-12-10 13:31:34,218 - INFO - Mechanism: Elite creation volume and physicality. Low dependence - self-created offense.
+2025-12-10 13:31:34,218 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,218 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,221 - INFO -   Actual Usage: 33.0%
+2025-12-10 13:31:34,221 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4603 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.326 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,222 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=33.0% > 25% AND DEPENDENCE_SCORE=0.601 > 0.45 (high usage + high dependence = system merchant), star-level capped from 89.20% to 30.00%
+2025-12-10 13:31:34,223 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4603 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.326 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,223 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=33.0% > 25% AND DEPENDENCE_SCORE=0.601 > 0.45 (high usage + high dependence = system merchant), star-level capped from 89.20% to 30.00%
+2025-12-10 13:31:34,223 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,223 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,223 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,223 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,223 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,223 - INFO -     Probabilities:
+2025-12-10 13:31:34,223 - INFO -       King: 3.93%
+2025-12-10 13:31:34,223 - INFO -       Bulldozer: 26.07%
+2025-12-10 13:31:34,223 - INFO -       Sniper: 0.89%
+2025-12-10 13:31:34,223 - INFO -       Victim: 69.11%
+2025-12-10 13:31:34,223 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,223 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,223 - INFO -       - Expected high performance (≥65%), got 30.00%
+2025-12-10 13:31:34,223 - INFO -       - Expected risk category 'Franchise Cornerstone', got 'Moderate Performance, Moderate Dependence'
+2025-12-10 13:31:34,223 - INFO -       - Risk category matches but performance doesn't: 30.00%
+2025-12-10 13:31:34,223 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,223 - INFO - Test 17/40: Jordan Poole (2021-22)
+2025-12-10 13:31:34,223 - INFO - Category: False Positive - Mirage Breakout
+2025-12-10 13:31:34,223 - INFO - ====================================================================================================
+2025-12-10 13:31:34,223 - INFO - Context: 26% Usage. System merchant relying on Curry gravity.
+2025-12-10 13:31:34,223 - INFO - Mechanism: Should detect low Pressure Resilience and dependence on open shots. 2D: High Performance (succeeded) + High Dependence (system merchant).
+2025-12-10 13:31:34,223 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,223 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,224 - INFO -   Actual Usage: 25.2%
+2025-12-10 13:31:34,225 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5368 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.201 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,225 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=25.2% > 25% AND DEPENDENCE_SCORE=0.462 > 0.45 (high usage + high dependence = system merchant), star-level capped from 95.78% to 30.00%
+2025-12-10 13:31:34,226 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5368 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.201 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,226 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=25.2% > 25% AND DEPENDENCE_SCORE=0.462 > 0.45 (high usage + high dependence = system merchant), star-level capped from 95.78% to 30.00%
+2025-12-10 13:31:34,226 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,226 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,226 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,226 - INFO -     Dependence Score: 46.20%
+2025-12-10 13:31:34,226 - INFO -     Risk Category: Luxury Component
+2025-12-10 13:31:34,226 - INFO -     Probabilities:
+2025-12-10 13:31:34,226 - INFO -       King: 12.00%
+2025-12-10 13:31:34,226 - INFO -       Bulldozer: 18.00%
+2025-12-10 13:31:34,226 - INFO -       Sniper: 2.13%
+2025-12-10 13:31:34,226 - INFO -       Victim: 67.87%
+2025-12-10 13:31:34,226 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,226 - INFO -     ✅ PASS
+2025-12-10 13:31:34,226 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,226 - INFO - Test 18/40: Talen Horton-Tucker (2020-21)
+2025-12-10 13:31:34,226 - INFO - Category: False Positive - Mirage Breakout
+2025-12-10 13:31:34,226 - INFO - ====================================================================================================
+2025-12-10 13:31:34,226 - INFO - Context: 18% Usage. Elite rim pressure numbers on low volume but poor efficiency.
+2025-12-10 13:31:34,226 - INFO - Mechanism: Creation Efficiency was actually poor despite high Physicality Vector.
+2025-12-10 13:31:34,226 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,226 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,228 - INFO -   Actual Usage: 21.0%
+2025-12-10 13:31:34,229 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5295 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.503 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,229 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 15.44% to 15.44%. Missing: RS_PRESSURE_APPETITE, RS_PRESSURE_RESILIENCE
+2025-12-10 13:31:34,229 - INFO - Sample Size Gate applied: insufficient pressure shots (NaN < 50), star-level capped from 15.44% to 15.44%
+2025-12-10 13:31:34,229 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.0% < 22% AND abs(CREATION_TAX)=0.081 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.503 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,230 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5295 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.503 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,230 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 15.44% to 15.44%. Missing: RS_PRESSURE_APPETITE, RS_PRESSURE_RESILIENCE
+2025-12-10 13:31:34,230 - INFO - Sample Size Gate applied: insufficient pressure shots (NaN < 50), star-level capped from 15.44% to 15.44%
+2025-12-10 13:31:34,230 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.0% < 22% AND abs(CREATION_TAX)=0.081 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.503 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,230 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,230 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,230 - INFO -     Performance Score: 15.44%
+2025-12-10 13:31:34,230 - INFO -     Dependence Score: N/A (Missing data)
+2025-12-10 13:31:34,230 - INFO -     Risk Category: Low Performance (Dependence Unknown)
+2025-12-10 13:31:34,230 - INFO -     Probabilities:
+2025-12-10 13:31:34,230 - INFO -       King: 9.59%
+2025-12-10 13:31:34,230 - INFO -       Bulldozer: 5.85%
+2025-12-10 13:31:34,230 - INFO -       Sniper: 0.67%
+2025-12-10 13:31:34,230 - INFO -       Victim: 83.89%
+2025-12-10 13:31:34,230 - INFO -     Confidence Flags: Missing RS_PRESSURE_APPETITE, Missing RS_LATE_CLOCK_PRESSURE_RESILIENCE
+2025-12-10 13:31:34,230 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,230 - INFO -     ✅ PASS
+2025-12-10 13:31:34,230 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,230 - INFO - Test 19/40: Christian Wood (2020-21)
+2025-12-10 13:31:34,230 - INFO - Category: False Positive - Empty Calories
+2025-12-10 13:31:34,230 - INFO - ====================================================================================================
+2025-12-10 13:31:34,230 - INFO - Context: Massive stats on tanking team. Low leverage performance.
+2025-12-10 13:31:34,230 - INFO - Mechanism: Tests Leverage Vector (Clutch) and Pressure Vector.
+2025-12-10 13:31:34,230 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,230 - INFO - Test Usage: 26.0%
+2025-12-10 13:31:34,232 - INFO -   Actual Usage: 25.5%
+2025-12-10 13:31:34,234 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4935 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.378 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,234 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=25.5% > 25% AND DEPENDENCE_SCORE=0.619 > 0.45 (high usage + high dependence = system merchant), star-level capped from 33.43% to 30.00%
+2025-12-10 13:31:34,234 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=25.5% > 25% AND RS_RIM_APPETITE=0.378 > 0.20 AND (LEVERAGE_TS_DELTA=-0.059 < -0.05 OR CREATION_TAX=-0.130 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,235 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4935 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.378 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,235 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=25.5% > 25% AND DEPENDENCE_SCORE=0.619 > 0.45 (high usage + high dependence = system merchant), star-level capped from 33.43% to 30.00%
+2025-12-10 13:31:34,235 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=25.5% > 25% AND RS_RIM_APPETITE=0.378 > 0.20 AND (LEVERAGE_TS_DELTA=-0.059 < -0.05 OR CREATION_TAX=-0.130 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,235 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,235 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,235 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,235 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,235 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,235 - INFO -     Probabilities:
+2025-12-10 13:31:34,235 - INFO -       King: 21.58%
+2025-12-10 13:31:34,235 - INFO -       Bulldozer: 8.42%
+2025-12-10 13:31:34,235 - INFO -       Sniper: 0.42%
+2025-12-10 13:31:34,235 - INFO -       Victim: 69.58%
+2025-12-10 13:31:34,235 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,235 - INFO -     ✅ PASS
+2025-12-10 13:31:34,235 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,235 - INFO - Test 20/40: D'Angelo Russell (2018-19)
+2025-12-10 13:31:34,235 - INFO - Category: False Positive - Fool's Gold
+2025-12-10 13:31:34,235 - INFO - ====================================================================================================
+2025-12-10 13:31:34,235 - INFO - Context: All-Star season (31% Usage). Reliance on mid-range/floaters.
+2025-12-10 13:31:34,235 - INFO - Mechanism: Tests Physicality fragility (low Rim Pressure Resilience).
+2025-12-10 13:31:34,235 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,235 - INFO - Test Usage: 31.0%
+2025-12-10 13:31:34,238 - INFO -   Actual Usage: 31.1%
+2025-12-10 13:31:34,239 - INFO - Elite Creator Exemption: elite creation volume (CREATION_VOLUME_RATIO=0.75 > 0.70) OR elite creation efficiency (CREATION_TAX=-0.101 < -0.10) → Fragility Gate EXEMPTED
+2025-12-10 13:31:34,239 - INFO - Elite Creator Exemption: elite creation volume (CREATION_VOLUME_RATIO=0.75 > 0.70) OR elite creation efficiency (CREATION_TAX=-0.101 < -0.10) → Fragility Gate EXEMPTED
+2025-12-10 13:31:34,240 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,240 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-10 13:31:34,240 - INFO -     Performance Score: 94.62%
+2025-12-10 13:31:34,240 - INFO -     Dependence Score: 22.61%
+2025-12-10 13:31:34,240 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-10 13:31:34,240 - INFO -     Probabilities:
+2025-12-10 13:31:34,240 - INFO -       King: 41.09%
+2025-12-10 13:31:34,240 - INFO -       Bulldozer: 53.53%
+2025-12-10 13:31:34,240 - INFO -       Sniper: 0.12%
+2025-12-10 13:31:34,240 - INFO -       Victim: 5.26%
+2025-12-10 13:31:34,240 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,240 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,240 - INFO -       - Expected low performance (<55%), got 94.62%
+2025-12-10 13:31:34,240 - INFO -       - Archetype mismatch: expected Victim, got Bulldozer (Fragile Star)
+2025-12-10 13:31:34,240 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,240 - INFO - Test 21/40: Julius Randle (2020-21)
+2025-12-10 13:31:34,240 - INFO - Category: False Positive - Empty Calories
+2025-12-10 13:31:34,240 - INFO - ====================================================================================================
+2025-12-10 13:31:34,240 - INFO - Context: All-NBA season (29% Usage). Imploded in playoffs (29.8% FG).
+2025-12-10 13:31:34,240 - INFO - Mechanism: Tests for 'Bulldozer' profile that lacks true resilience traits (tough shot making, leverage stability).
+2025-12-10 13:31:34,240 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,240 - INFO - Test Usage: 30.0%
+2025-12-10 13:31:34,241 - INFO -   Actual Usage: 28.5%
+2025-12-10 13:31:34,242 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4548 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.201 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,242 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=28.5% > 25% AND RS_RIM_APPETITE=0.201 > 0.20 AND (LEVERAGE_TS_DELTA=-0.062 < -0.05 OR CREATION_TAX=-0.136 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 76.91% to 30.00%
+2025-12-10 13:31:34,243 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4548 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.201 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,243 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=28.5% > 25% AND RS_RIM_APPETITE=0.201 > 0.20 AND (LEVERAGE_TS_DELTA=-0.062 < -0.05 OR CREATION_TAX=-0.136 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 76.91% to 30.00%
+2025-12-10 13:31:34,243 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,243 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,243 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,243 - INFO -     Dependence Score: 38.30%
+2025-12-10 13:31:34,243 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,243 - INFO -     Probabilities:
+2025-12-10 13:31:34,243 - INFO -       King: 17.38%
+2025-12-10 13:31:34,243 - INFO -       Bulldozer: 12.62%
+2025-12-10 13:31:34,243 - INFO -       Sniper: 0.32%
+2025-12-10 13:31:34,243 - INFO -       Victim: 69.68%
+2025-12-10 13:31:34,243 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,243 - INFO -     ✅ PASS
+2025-12-10 13:31:34,243 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,243 - INFO - Test 22/40: Ben Simmons (2017-18)
+2025-12-10 13:31:34,243 - INFO - Category: True Negative - Fragile Star
+2025-12-10 13:31:34,243 - INFO - ====================================================================================================
+2025-12-10 13:31:34,243 - INFO - Context: Rookie year (22.3% Usage). Playoff collapse vs Celtics (1 point game).
+2025-12-10 13:31:34,243 - INFO - Mechanism: High raw stats but fatal flaws in Creation (shooting) and Leverage (passivity).
+2025-12-10 13:31:34,243 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,243 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,252 - INFO -   Actual Usage: 21.9%
+2025-12-10 13:31:34,264 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.529 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,264 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4849 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.529 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,284 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.9% < 22% AND abs(CREATION_TAX)=0.266 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.529 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,363 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.529 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,364 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4849 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.529 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,364 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.9% < 22% AND abs(CREATION_TAX)=0.266 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.529 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,364 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,364 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,364 - INFO -     Performance Score: 51.07%
+2025-12-10 13:31:34,364 - INFO -     Dependence Score: 24.88%
+2025-12-10 13:31:34,364 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-10 13:31:34,364 - INFO -     Probabilities:
+2025-12-10 13:31:34,364 - INFO -       King: 42.62%
+2025-12-10 13:31:34,364 - INFO -       Bulldozer: 8.45%
+2025-12-10 13:31:34,364 - INFO -       Sniper: 0.32%
+2025-12-10 13:31:34,364 - INFO -       Victim: 48.61%
+2025-12-10 13:31:34,364 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,364 - INFO -     ✅ PASS
+2025-12-10 13:31:34,364 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,364 - INFO - Test 23/40: Ben Simmons (2018-19)
+2025-12-10 13:31:34,364 - INFO - Category: True Negative - Fragile Star
+2025-12-10 13:31:34,364 - INFO - ====================================================================================================
+2025-12-10 13:31:34,364 - INFO - Context: 22.1% Usage. Continued playoff struggles.
+2025-12-10 13:31:34,364 - INFO - Mechanism: Persistent lack of creation tax viability.
+2025-12-10 13:31:34,364 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,364 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,366 - INFO -   Actual Usage: 21.5%
+2025-12-10 13:31:34,367 - INFO - [FATAL FLAW] Abdication Gate applied: LEVERAGE_USG_DELTA=-0.067 < -0.05 AND LEVERAGE_TS_DELTA=0.007 <= 0.05 (Panic Abdication), star-level capped from 71.01% to 30.00%
+2025-12-10 13:31:34,367 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5227 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.660 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,367 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.5% < 22% AND abs(CREATION_TAX)=0.147 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.660 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,367 - INFO - [FATAL FLAW] Abdication Gate applied: LEVERAGE_USG_DELTA=-0.067 < -0.05 AND LEVERAGE_TS_DELTA=0.007 <= 0.05 (Panic Abdication), star-level capped from 71.01% to 30.00%
+2025-12-10 13:31:34,368 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5227 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.660 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,368 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.5% < 22% AND abs(CREATION_TAX)=0.147 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.660 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,368 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,368 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,368 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,368 - INFO -     Dependence Score: 35.72%
+2025-12-10 13:31:34,368 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,368 - INFO -     Probabilities:
+2025-12-10 13:31:34,368 - INFO -       King: 69.79%
+2025-12-10 13:31:34,368 - INFO -       Bulldozer: 1.23%
+2025-12-10 13:31:34,368 - INFO -       Sniper: 0.25%
+2025-12-10 13:31:34,368 - INFO -       Victim: 28.74%
+2025-12-10 13:31:34,368 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,368 - INFO -     ✅ PASS
+2025-12-10 13:31:34,368 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,368 - INFO - Test 24/40: Ben Simmons (2020-21)
+2025-12-10 13:31:34,368 - INFO - Category: True Negative - Fragile Star
+2025-12-10 13:31:34,368 - INFO - ====================================================================================================
+2025-12-10 13:31:34,368 - INFO - Context: 20.2% Usage. The Hawks series collapse. Fear of free throws.
+2025-12-10 13:31:34,368 - INFO - Mechanism: Abdication Tax should trigger (negative Leverage USG Delta) and low Creation Tax.
+2025-12-10 13:31:34,368 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,368 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,370 - INFO -   Actual Usage: 20.0%
+2025-12-10 13:31:34,373 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5423 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.624 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,373 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=20.0% < 22% AND abs(CREATION_TAX)=0.096 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.624 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,374 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5423 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.624 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,374 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=20.0% < 22% AND abs(CREATION_TAX)=0.096 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.624 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,374 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,375 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,375 - INFO -     Performance Score: 30.28%
+2025-12-10 13:31:34,375 - INFO -     Dependence Score: 36.07%
+2025-12-10 13:31:34,375 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,375 - INFO -     Probabilities:
+2025-12-10 13:31:34,375 - INFO -       King: 26.57%
+2025-12-10 13:31:34,375 - INFO -       Bulldozer: 3.72%
+2025-12-10 13:31:34,375 - INFO -       Sniper: 0.31%
+2025-12-10 13:31:34,375 - INFO -       Victim: 69.40%
+2025-12-10 13:31:34,375 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,375 - INFO -     ✅ PASS
+2025-12-10 13:31:34,375 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,375 - INFO - Test 25/40: Tyus Jones (2021-22)
+2025-12-10 13:31:34,375 - INFO - Category: System Player - Ceiling Test
+2025-12-10 13:31:34,375 - INFO - ====================================================================================================
+2025-12-10 13:31:34,375 - INFO - Context: Elite assist-to-turnover ratio role player.
+2025-12-10 13:31:34,375 - INFO - Mechanism: Should predict 'Sniper' or 'Victim' at high usage. Lacks creation ceiling.
+2025-12-10 13:31:34,375 - INFO - Expected: Sniper (Star-Level: Low)
+2025-12-10 13:31:34,375 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,377 - INFO -   Actual Usage: 16.4%
+2025-12-10 13:31:34,378 - INFO - [FATAL FLAW] Abdication Gate EXEMPTED: Smart Deference (LEVERAGE_USG_DELTA=-0.057 < -0.05 BUT LEVERAGE_TS_DELTA=0.198 > 0.05)
+2025-12-10 13:31:34,378 - INFO - Elite Creator Exemption: elite creation efficiency (CREATION_TAX=-0.674 < -0.10) → Fragility Gate EXEMPTED
+2025-12-10 13:31:34,380 - INFO - [FATAL FLAW] Abdication Gate EXEMPTED: Smart Deference (LEVERAGE_USG_DELTA=-0.057 < -0.05 BUT LEVERAGE_TS_DELTA=0.198 > 0.05)
+2025-12-10 13:31:34,380 - INFO - Elite Creator Exemption: elite creation efficiency (CREATION_TAX=-0.674 < -0.10) → Fragility Gate EXEMPTED
+2025-12-10 13:31:34,380 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,380 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-10 13:31:34,380 - INFO -     Performance Score: 68.79%
+2025-12-10 13:31:34,380 - INFO -     Dependence Score: 34.63%
+2025-12-10 13:31:34,380 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-10 13:31:34,380 - INFO -     Probabilities:
+2025-12-10 13:31:34,380 - INFO -       King: 66.42%
+2025-12-10 13:31:34,380 - INFO -       Bulldozer: 2.37%
+2025-12-10 13:31:34,380 - INFO -       Sniper: 0.25%
+2025-12-10 13:31:34,380 - INFO -       Victim: 30.96%
+2025-12-10 13:31:34,380 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,380 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,380 - INFO -       - Expected low performance (<55%), got 68.79%
+2025-12-10 13:31:34,380 - INFO -       - Archetype mismatch: expected Sniper, got King (Resilient Star)
+2025-12-10 13:31:34,380 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,380 - INFO - Test 26/40: Domantas Sabonis (2021-22)
+2025-12-10 13:31:34,380 - INFO - Category: True Negative - Comparison Case
+2025-12-10 13:31:34,380 - INFO - ====================================================================================================
+2025-12-10 13:31:34,380 - INFO - Context: Traded 1-1 for Haliburton. All-Star, but lacks playoff resilience.
+2025-12-10 13:31:34,380 - INFO - Mechanism: Model should identify lack of stress vectors (Physicality/Creation) needed for playoff success. 2D: High Performance + High Dependence (system-based rim pressure).
+2025-12-10 13:31:34,380 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,381 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,383 - INFO -   Actual Usage: 22.1%
+2025-12-10 13:31:34,384 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4806 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.574 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,384 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0461 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.574 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,385 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.609 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 51.89% to 30.00%
+2025-12-10 13:31:34,391 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4806 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.574 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,391 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0461 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.574 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,392 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.609 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 51.89% to 30.00%
+2025-12-10 13:31:34,392 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,392 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,392 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,392 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,392 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,392 - INFO -     Probabilities:
+2025-12-10 13:31:34,392 - INFO -       King: 16.82%
+2025-12-10 13:31:34,392 - INFO -       Bulldozer: 13.18%
+2025-12-10 13:31:34,392 - INFO -       Sniper: 0.56%
+2025-12-10 13:31:34,392 - INFO -       Victim: 69.44%
+2025-12-10 13:31:34,392 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,392 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,392 - INFO -       - Expected risk category 'Luxury Component', got 'Moderate Performance, Moderate Dependence'
+2025-12-10 13:31:34,392 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,392 - INFO - Test 27/40: Tyrese Haliburton (2021-22)
+2025-12-10 13:31:34,393 - INFO - Category: True Positive - Comparison Case
+2025-12-10 13:31:34,393 - INFO - ====================================================================================================
+2025-12-10 13:31:34,393 - INFO - Context: Traded 1-1 for Sabonis. Elite Creation and Leverage vectors.
+2025-12-10 13:31:34,393 - INFO - Mechanism: Model should identify elite stress vectors. 2D: High Performance + Low Dependence (portable, self-created).
+2025-12-10 13:31:34,393 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-10 13:31:34,393 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,396 - INFO -   Actual Usage: 18.4%
+2025-12-10 13:31:34,398 - INFO - Elite Creator Exemption: elite creation volume (CREATION_VOLUME_RATIO=0.74 > 0.70) OR elite creation efficiency (CREATION_TAX=-0.152 < -0.10) → Fragility Gate EXEMPTED
+2025-12-10 13:31:34,399 - INFO - Elite Creator Exemption: elite creation volume (CREATION_VOLUME_RATIO=0.74 > 0.70) OR elite creation efficiency (CREATION_TAX=-0.152 < -0.10) → Fragility Gate EXEMPTED
+2025-12-10 13:31:34,399 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,399 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-10 13:31:34,399 - INFO -     Performance Score: 95.92%
+2025-12-10 13:31:34,399 - INFO -     Dependence Score: 28.74%
+2025-12-10 13:31:34,399 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-10 13:31:34,400 - INFO -     Probabilities:
+2025-12-10 13:31:34,400 - INFO -       King: 42.66%
+2025-12-10 13:31:34,400 - INFO -       Bulldozer: 53.27%
+2025-12-10 13:31:34,400 - INFO -       Sniper: 0.09%
+2025-12-10 13:31:34,400 - INFO -       Victim: 3.99%
+2025-12-10 13:31:34,400 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,400 - INFO -     ✅ PASS
+2025-12-10 13:31:34,400 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,400 - INFO - Test 28/40: Karl-Anthony Towns (2015-16)
+2025-12-10 13:31:34,400 - INFO - Category: True Negative - Empty Stats Star
+2025-12-10 13:31:34,400 - INFO - ====================================================================================================
+2025-12-10 13:31:34,400 - INFO - Context: Rookie year (25.5% Usage). High volume scorer but lacks playoff resilience.
+2025-12-10 13:31:34,400 - INFO - Mechanism: Tests model's ability to identify players with high raw stats but low stress vectors (Physicality/Creation/Leverage).
+2025-12-10 13:31:34,400 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,400 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,402 - INFO -   Actual Usage: 24.3%
+2025-12-10 13:31:34,404 - INFO - [FATAL FLAW] Abdication Gate applied: LEVERAGE_USG_DELTA=-0.058 < -0.05 AND LEVERAGE_TS_DELTA=0.028 <= 0.05 (Panic Abdication), star-level capped from 85.79% to 30.00%
+2025-12-10 13:31:34,404 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5143 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.382 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,404 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0826 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.382 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,404 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.672 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,405 - INFO - [FATAL FLAW] Abdication Gate applied: LEVERAGE_USG_DELTA=-0.058 < -0.05 AND LEVERAGE_TS_DELTA=0.028 <= 0.05 (Panic Abdication), star-level capped from 85.79% to 30.00%
+2025-12-10 13:31:34,405 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5143 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.382 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,405 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0826 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.382 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,405 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.672 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,405 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,405 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,405 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,405 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,405 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,405 - INFO -     Probabilities:
+2025-12-10 13:31:34,405 - INFO -       King: 71.50%
+2025-12-10 13:31:34,405 - INFO -       Bulldozer: 14.29%
+2025-12-10 13:31:34,405 - INFO -       Sniper: 0.09%
+2025-12-10 13:31:34,405 - INFO -       Victim: 14.12%
+2025-12-10 13:31:34,405 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,405 - INFO -     ✅ PASS
+2025-12-10 13:31:34,405 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,405 - INFO - Test 29/40: Karl-Anthony Towns (2016-17)
+2025-12-10 13:31:34,405 - INFO - Category: True Negative - Empty Stats Star
+2025-12-10 13:31:34,405 - INFO - ====================================================================================================
+2025-12-10 13:31:34,405 - INFO - Context: Age 21. High usage scorer (28.1%) but playoff struggles.
+2025-12-10 13:31:34,405 - INFO - Mechanism: Persistent lack of playoff resilience despite elite regular season production.
+2025-12-10 13:31:34,405 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,405 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,407 - INFO -   Actual Usage: 27.1%
+2025-12-10 13:31:34,408 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4883 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.414 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,408 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=27.1% > 25% AND DEPENDENCE_SCORE=0.643 > 0.45 (high usage + high dependence = system merchant), star-level capped from 37.67% to 30.00%
+2025-12-10 13:31:34,408 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=27.1% > 25% AND RS_RIM_APPETITE=0.414 > 0.20 AND (LEVERAGE_TS_DELTA=-0.052 < -0.05 OR CREATION_TAX=-0.141 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,409 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4883 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.414 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,409 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=27.1% > 25% AND DEPENDENCE_SCORE=0.643 > 0.45 (high usage + high dependence = system merchant), star-level capped from 37.67% to 30.00%
+2025-12-10 13:31:34,409 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=27.1% > 25% AND RS_RIM_APPETITE=0.414 > 0.20 AND (LEVERAGE_TS_DELTA=-0.052 < -0.05 OR CREATION_TAX=-0.141 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,409 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,409 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,409 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,409 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,409 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-10 13:31:34,409 - INFO -     Probabilities:
+2025-12-10 13:31:34,409 - INFO -       King: 17.16%
+2025-12-10 13:31:34,409 - INFO -       Bulldozer: 12.84%
+2025-12-10 13:31:34,409 - INFO -       Sniper: 0.39%
+2025-12-10 13:31:34,409 - INFO -       Victim: 69.61%
+2025-12-10 13:31:34,409 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,409 - INFO -     ✅ PASS
+2025-12-10 13:31:34,409 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,409 - INFO - Test 30/40: Karl-Anthony Towns (2017-18)
+2025-12-10 13:31:34,409 - INFO - Category: True Negative - Empty Stats Star
+2025-12-10 13:31:34,409 - INFO - ====================================================================================================
+2025-12-10 13:31:34,409 - INFO - Context: Age 22. All-Star but playoff performance doesn't match regular season.
+2025-12-10 13:31:34,409 - INFO - Mechanism: Model should identify lack of stress vectors needed for playoff success.
+2025-12-10 13:31:34,409 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,409 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,411 - INFO -   Actual Usage: 22.5%
+2025-12-10 13:31:34,412 - INFO - [FATAL FLAW] Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.132 < -0.10 (catastrophic clutch collapse), star-level capped from 56.64% to 0.00%
+2025-12-10 13:31:34,412 - INFO - [FATAL FLAW] Abdication Gate applied: LEVERAGE_USG_DELTA=-0.081 < -0.05 AND LEVERAGE_TS_DELTA=-0.132 <= 0.05 (Panic Abdication), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,412 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.381 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,412 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4353 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.381 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,412 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0522 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.381 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,412 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.663 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,413 - INFO - [FATAL FLAW] Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.132 < -0.10 (catastrophic clutch collapse), star-level capped from 56.64% to 0.00%
+2025-12-10 13:31:34,413 - INFO - [FATAL FLAW] Abdication Gate applied: LEVERAGE_USG_DELTA=-0.081 < -0.05 AND LEVERAGE_TS_DELTA=-0.132 <= 0.05 (Panic Abdication), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,413 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.381 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,413 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4353 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.381 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,413 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0522 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.381 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,413 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: DEPENDENCE_SCORE=0.663 > 0.60 (very high dependence = system merchant, regardless of usage), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,414 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,414 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,414 - INFO -     Performance Score: 0.00%
+2025-12-10 13:31:34,414 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,414 - INFO -     Risk Category: Depth (Moderate Dependence)
+2025-12-10 13:31:34,414 - INFO -     Probabilities:
+2025-12-10 13:31:34,414 - INFO -       King: 42.45%
+2025-12-10 13:31:34,414 - INFO -       Bulldozer: 14.19%
+2025-12-10 13:31:34,414 - INFO -       Sniper: 0.21%
+2025-12-10 13:31:34,414 - INFO -       Victim: 43.15%
+2025-12-10 13:31:34,414 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,414 - INFO -     ✅ PASS
+2025-12-10 13:31:34,414 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,414 - INFO - Test 31/40: Karl-Anthony Towns (2018-19)
+2025-12-10 13:31:34,414 - INFO - Category: True Negative - Empty Stats Star
+2025-12-10 13:31:34,414 - INFO - ====================================================================================================
+2025-12-10 13:31:34,414 - INFO - Context: Age 23. High volume scorer but playoff fragility persists.
+2025-12-10 13:31:34,414 - INFO - Mechanism: Tests consistency - same flaws across multiple seasons.
+2025-12-10 13:31:34,414 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,414 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,415 - INFO -   Actual Usage: 28.0%
+2025-12-10 13:31:34,416 - INFO - [FATAL FLAW] Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.119 < -0.10 (catastrophic clutch collapse), star-level capped from 83.71% to 0.00%
+2025-12-10 13:31:34,416 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5320 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.340 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,416 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=28.0% > 25% AND DEPENDENCE_SCORE=0.646 > 0.45 (high usage + high dependence = system merchant), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,416 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=28.0% > 25% AND RS_RIM_APPETITE=0.340 > 0.20 AND (LEVERAGE_TS_DELTA=-0.119 < -0.05 OR CREATION_TAX=-0.082 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,417 - INFO - [FATAL FLAW] Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.119 < -0.10 (catastrophic clutch collapse), star-level capped from 83.71% to 0.00%
+2025-12-10 13:31:34,417 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5320 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.340 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,417 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=28.0% > 25% AND DEPENDENCE_SCORE=0.646 > 0.45 (high usage + high dependence = system merchant), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,417 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=28.0% > 25% AND RS_RIM_APPETITE=0.340 > 0.20 AND (LEVERAGE_TS_DELTA=-0.119 < -0.05 OR CREATION_TAX=-0.082 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,417 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,417 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,417 - INFO -     Performance Score: 0.00%
+2025-12-10 13:31:34,417 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,417 - INFO -     Risk Category: Depth (Moderate Dependence)
+2025-12-10 13:31:34,417 - INFO -     Probabilities:
+2025-12-10 13:31:34,417 - INFO -       King: 35.56%
+2025-12-10 13:31:34,417 - INFO -       Bulldozer: 48.15%
+2025-12-10 13:31:34,417 - INFO -       Sniper: 0.16%
+2025-12-10 13:31:34,417 - INFO -       Victim: 16.13%
+2025-12-10 13:31:34,417 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,417 - INFO -     ✅ PASS
+2025-12-10 13:31:34,417 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,417 - INFO - Test 32/40: Karl-Anthony Towns (2019-20)
+2025-12-10 13:31:34,417 - INFO - Category: True Negative - Empty Stats Star
+2025-12-10 13:31:34,417 - INFO - ====================================================================================================
+2025-12-10 13:31:34,417 - INFO - Context: Age 24. Elite regular season stats but playoff struggles continue.
+2025-12-10 13:31:34,417 - INFO - Mechanism: Model should consistently identify lack of playoff resilience.
+2025-12-10 13:31:34,417 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,417 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,420 - INFO -   Actual Usage: 27.8%
+2025-12-10 13:31:34,421 - INFO - [FATAL FLAW] Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.108 < -0.10 (catastrophic clutch collapse), star-level capped from 88.77% to 0.00%
+2025-12-10 13:31:34,421 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.359 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,421 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4854 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.359 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,421 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0929 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.359 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,421 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=27.8% > 25% AND DEPENDENCE_SCORE=0.642 > 0.45 (high usage + high dependence = system merchant), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,421 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=27.8% > 25% AND RS_RIM_APPETITE=0.359 > 0.20 AND (LEVERAGE_TS_DELTA=-0.108 < -0.05 OR CREATION_TAX=-0.156 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,422 - INFO - [FATAL FLAW] Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.108 < -0.10 (catastrophic clutch collapse), star-level capped from 88.77% to 0.00%
+2025-12-10 13:31:34,422 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.359 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,422 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4854 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.359 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,422 - INFO - Bag Check Gate EXEMPTED: Self-created freq 0.0929 < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE=0.359 > 0.20) = rim pressure is self-created offense for bigs
+2025-12-10 13:31:34,422 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=27.8% > 25% AND DEPENDENCE_SCORE=0.642 > 0.45 (high usage + high dependence = system merchant), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,422 - INFO - [EMPTY CALORIES RIM FORCE] Empty Calories Rim Force Gate applied: USG_PCT=27.8% > 25% AND RS_RIM_APPETITE=0.359 > 0.20 AND (LEVERAGE_TS_DELTA=-0.108 < -0.05 OR CREATION_TAX=-0.156 < -0.05) (high rim pressure + negative signals = empty calories), star-level capped from 0.00% to 0.00%
+2025-12-10 13:31:34,422 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,422 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,422 - INFO -     Performance Score: 0.00%
+2025-12-10 13:31:34,422 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,422 - INFO -     Risk Category: Depth (Moderate Dependence)
+2025-12-10 13:31:34,422 - INFO -     Probabilities:
+2025-12-10 13:31:34,422 - INFO -       King: 84.25%
+2025-12-10 13:31:34,422 - INFO -       Bulldozer: 4.52%
+2025-12-10 13:31:34,422 - INFO -       Sniper: 0.18%
+2025-12-10 13:31:34,422 - INFO -       Victim: 11.05%
+2025-12-10 13:31:34,422 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,422 - INFO -     ✅ PASS
+2025-12-10 13:31:34,422 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,422 - INFO - Test 33/40: Karl-Anthony Towns (2020-21)
+2025-12-10 13:31:34,422 - INFO - Category: True Negative - Empty Stats Star
+2025-12-10 13:31:34,422 - INFO - ====================================================================================================
+2025-12-10 13:31:34,422 - INFO - Context: Age 25. High usage scorer but playoff performance gap remains.
+2025-12-10 13:31:34,422 - INFO - Mechanism: Final pre-age-25 season. Tests model's ability to identify persistent patterns.
+2025-12-10 13:31:34,422 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,422 - INFO - Test Usage: 28.0%
+2025-12-10 13:31:34,424 - INFO -   Actual Usage: 28.6%
+2025-12-10 13:31:34,425 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.338 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,425 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4223 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.338 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,425 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=28.6% > 25% AND DEPENDENCE_SCORE=0.614 > 0.45 (high usage + high dependence = system merchant), star-level capped from 79.38% to 30.00%
+2025-12-10 13:31:34,426 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.338 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,426 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4223 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.338 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,426 - INFO - [SYSTEM MERCHANT] System Merchant Gate applied: USG_PCT=28.6% > 25% AND DEPENDENCE_SCORE=0.614 > 0.45 (high usage + high dependence = system merchant), star-level capped from 79.38% to 30.00%
+2025-12-10 13:31:34,426 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,426 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,426 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,426 - INFO -     Dependence Score: 40.00%
+2025-12-10 13:31:34,426 - INFO -     Risk Category: Depth (Moderate Dependence)
+2025-12-10 13:31:34,426 - INFO -     Probabilities:
+2025-12-10 13:31:34,426 - INFO -       King: 5.95%
+2025-12-10 13:31:34,426 - INFO -       Bulldozer: 24.05%
+2025-12-10 13:31:34,426 - INFO -       Sniper: 0.48%
+2025-12-10 13:31:34,426 - INFO -       Victim: 69.52%
+2025-12-10 13:31:34,426 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,426 - INFO -     ✅ PASS
+2025-12-10 13:31:34,426 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,426 - INFO - Test 34/40: Markelle Fultz (2017-18)
+2025-12-10 13:31:34,426 - INFO - Category: True Negative - Draft Bust
+2025-12-10 13:31:34,426 - INFO - ====================================================================================================
+2025-12-10 13:31:34,426 - INFO - Context: Rookie year (19.5% Usage). #1 overall pick with shooting yips.
+2025-12-10 13:31:34,426 - INFO - Mechanism: Tests model's ability to identify fatal flaws (shooting, creation) even in high draft picks.
+2025-12-10 13:31:34,426 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,426 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,427 - INFO -   Actual Usage: 21.8%
+2025-12-10 13:31:34,428 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.394 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,428 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.3596 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.394 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,428 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 27.57% to 27.57%
+2025-12-10 13:31:34,428 - INFO - Data Completeness Gate applied: 2/6 features present (33.3% < 67%), star-level capped from 27.57% to 27.57%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA, RS_PRESSURE_APPETITE, RS_PRESSURE_RESILIENCE
+2025-12-10 13:31:34,428 - INFO - Sample Size Gate applied: insufficient pressure shots (NaN < 50), insufficient clutch minutes (NaN < 15), star-level capped from 27.57% to 27.57%
+2025-12-10 13:31:34,428 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.8% < 22% AND abs(CREATION_TAX)=0.807 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.394 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,429 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.394 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,429 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.3596 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.394 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,429 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 27.57% to 27.57%
+2025-12-10 13:31:34,429 - INFO - Data Completeness Gate applied: 2/6 features present (33.3% < 67%), star-level capped from 27.57% to 27.57%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA, RS_PRESSURE_APPETITE, RS_PRESSURE_RESILIENCE
+2025-12-10 13:31:34,429 - INFO - Sample Size Gate applied: insufficient pressure shots (NaN < 50), insufficient clutch minutes (NaN < 15), star-level capped from 27.57% to 27.57%
+2025-12-10 13:31:34,430 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.8% < 22% AND abs(CREATION_TAX)=0.807 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.394 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,430 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,430 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,430 - INFO -     Performance Score: 27.57%
+2025-12-10 13:31:34,430 - INFO -     Dependence Score: N/A (Missing data)
+2025-12-10 13:31:34,430 - INFO -     Risk Category: Low Performance (Dependence Unknown)
+2025-12-10 13:31:34,430 - INFO -     Probabilities:
+2025-12-10 13:31:34,430 - INFO -       King: 22.66%
+2025-12-10 13:31:34,430 - INFO -       Bulldozer: 4.91%
+2025-12-10 13:31:34,430 - INFO -       Sniper: 1.15%
+2025-12-10 13:31:34,430 - INFO -       Victim: 71.28%
+2025-12-10 13:31:34,430 - INFO -     Confidence Flags: Missing LEVERAGE_TS_DELTA, Missing LEVERAGE_USG_DELTA, Missing RS_PRESSURE_APPETITE, Missing RS_LATE_CLOCK_PRESSURE_RESILIENCE
+2025-12-10 13:31:34,430 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,430 - INFO -     ✅ PASS
+2025-12-10 13:31:34,430 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,430 - INFO - Test 35/40: Markelle Fultz (2018-19)
+2025-12-10 13:31:34,430 - INFO - Category: True Negative - Draft Bust
+2025-12-10 13:31:34,430 - INFO - ====================================================================================================
+2025-12-10 13:31:34,430 - INFO - Context: Age 20. Continued shooting struggles and injury issues.
+2025-12-10 13:31:34,430 - INFO - Mechanism: Persistent lack of creation tax viability and shooting ability.
+2025-12-10 13:31:34,430 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,430 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,431 - INFO -   Actual Usage: 18.9%
+2025-12-10 13:31:34,432 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.387 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,432 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4285 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.387 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,432 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 20.50% to 20.50%
+2025-12-10 13:31:34,432 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 20.50% to 20.50%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-10 13:31:34,432 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 20.50% to 20.50%
+2025-12-10 13:31:34,432 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=18.9% < 22% AND abs(CREATION_TAX)=0.512 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.387 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,433 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.387 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,434 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4285 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.387 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,434 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 20.50% to 20.50%
+2025-12-10 13:31:34,434 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 20.50% to 20.50%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-10 13:31:34,434 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 20.50% to 20.50%
+2025-12-10 13:31:34,434 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=18.9% < 22% AND abs(CREATION_TAX)=0.512 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.387 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,434 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,434 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,434 - INFO -     Performance Score: 20.50%
+2025-12-10 13:31:34,434 - INFO -     Dependence Score: 28.74%
+2025-12-10 13:31:34,434 - INFO -     Risk Category: Depth
+2025-12-10 13:31:34,434 - INFO -     Probabilities:
+2025-12-10 13:31:34,434 - INFO -       King: 9.45%
+2025-12-10 13:31:34,434 - INFO -       Bulldozer: 11.05%
+2025-12-10 13:31:34,434 - INFO -       Sniper: 1.31%
+2025-12-10 13:31:34,434 - INFO -       Victim: 78.19%
+2025-12-10 13:31:34,434 - INFO -     Confidence Flags: Missing LEVERAGE_TS_DELTA, Missing LEVERAGE_USG_DELTA
+2025-12-10 13:31:34,434 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,434 - INFO -     ✅ PASS
+2025-12-10 13:31:34,434 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,434 - INFO - Test 36/40: Markelle Fultz (2019-20)
+2025-12-10 13:31:34,434 - INFO - Category: True Negative - Draft Bust
+2025-12-10 13:31:34,434 - INFO - ====================================================================================================
+2025-12-10 13:31:34,434 - INFO - Context: Age 21. Traded to Orlando, continued struggles.
+2025-12-10 13:31:34,434 - INFO - Mechanism: Model should identify lack of star-level potential despite draft position.
+2025-12-10 13:31:34,434 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,434 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,436 - INFO -   Actual Usage: 21.0%
+2025-12-10 13:31:34,437 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4826 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.400 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,437 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.0% < 22% AND abs(CREATION_TAX)=0.007 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.400 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,438 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4826 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.400 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,438 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=21.0% < 22% AND abs(CREATION_TAX)=0.007 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.400 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,438 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,439 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-10 13:31:34,439 - INFO -     Performance Score: 56.65%
+2025-12-10 13:31:34,439 - INFO -     Dependence Score: 27.85%
+2025-12-10 13:31:34,439 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-10 13:31:34,439 - INFO -     Probabilities:
+2025-12-10 13:31:34,439 - INFO -       King: 54.87%
+2025-12-10 13:31:34,439 - INFO -       Bulldozer: 1.78%
+2025-12-10 13:31:34,439 - INFO -       Sniper: 0.41%
+2025-12-10 13:31:34,439 - INFO -       Victim: 42.95%
+2025-12-10 13:31:34,439 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,439 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,439 - INFO -       - Expected low performance (<55%), got 56.65%
+2025-12-10 13:31:34,439 - INFO -       - Archetype mismatch: expected Victim, got King (Resilient Star)
+2025-12-10 13:31:34,439 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,439 - INFO - Test 37/40: Markelle Fultz (2020-21)
+2025-12-10 13:31:34,439 - INFO - Category: True Negative - Draft Bust
+2025-12-10 13:31:34,439 - INFO - ====================================================================================================
+2025-12-10 13:31:34,439 - INFO - Context: Age 22. ACL injury, limited playing time.
+2025-12-10 13:31:34,439 - INFO - Mechanism: Tests model's handling of injury-affected seasons.
+2025-12-10 13:31:34,439 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,439 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,440 - INFO -   Actual Usage: 25.0%
+2025-12-10 13:31:34,441 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.288 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,441 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4179 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.288 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,441 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 49.04% to 30.00%
+2025-12-10 13:31:34,441 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 30.00% to 30.00%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-10 13:31:34,441 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,442 - INFO - [FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE=0.288 > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax
+2025-12-10 13:31:34,442 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4179 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.288 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,442 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 49.04% to 30.00%
+2025-12-10 13:31:34,442 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 30.00% to 30.00%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-10 13:31:34,442 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,442 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,442 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,442 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,442 - INFO -     Dependence Score: 17.06%
+2025-12-10 13:31:34,442 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-10 13:31:34,442 - INFO -     Probabilities:
+2025-12-10 13:31:34,442 - INFO -       King: 48.63%
+2025-12-10 13:31:34,442 - INFO -       Bulldozer: 0.41%
+2025-12-10 13:31:34,442 - INFO -       Sniper: 0.15%
+2025-12-10 13:31:34,442 - INFO -       Victim: 50.81%
+2025-12-10 13:31:34,442 - INFO -     Confidence Flags: Missing LEVERAGE_TS_DELTA, Missing LEVERAGE_USG_DELTA
+2025-12-10 13:31:34,442 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,442 - INFO -     ✅ PASS
+2025-12-10 13:31:34,442 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,442 - INFO - Test 38/40: Markelle Fultz (2021-22)
+2025-12-10 13:31:34,442 - INFO - Category: True Negative - Draft Bust
+2025-12-10 13:31:34,442 - INFO - ====================================================================================================
+2025-12-10 13:31:34,442 - INFO - Context: Age 23. Return from injury, role player production.
+2025-12-10 13:31:34,442 - INFO - Mechanism: Model should identify lack of star-level potential.
+2025-12-10 13:31:34,442 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,442 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,445 - INFO -   Actual Usage: 26.5%
+2025-12-10 13:31:34,446 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4921 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.331 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,447 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 83.55% to 30.00%
+2025-12-10 13:31:34,447 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 30.00% to 30.00%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-10 13:31:34,447 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,449 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4921 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.331 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,449 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 83.55% to 30.00%
+2025-12-10 13:31:34,449 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 30.00% to 30.00%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-10 13:31:34,449 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 30.00% to 30.00%
+2025-12-10 13:31:34,449 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,449 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-10 13:31:34,449 - INFO -     Performance Score: 30.00%
+2025-12-10 13:31:34,449 - INFO -     Dependence Score: 17.39%
+2025-12-10 13:31:34,449 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-10 13:31:34,449 - INFO -     Probabilities:
+2025-12-10 13:31:34,449 - INFO -       King: 82.68%
+2025-12-10 13:31:34,449 - INFO -       Bulldozer: 0.87%
+2025-12-10 13:31:34,449 - INFO -       Sniper: 0.14%
+2025-12-10 13:31:34,449 - INFO -       Victim: 16.31%
+2025-12-10 13:31:34,449 - INFO -     Confidence Flags: Missing LEVERAGE_TS_DELTA, Missing LEVERAGE_USG_DELTA
+2025-12-10 13:31:34,449 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,449 - INFO -     ✅ PASS
+2025-12-10 13:31:34,449 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,449 - INFO - Test 39/40: Markelle Fultz (2022-23)
+2025-12-10 13:31:34,449 - INFO - Category: True Negative - Draft Bust
+2025-12-10 13:31:34,449 - INFO - ====================================================================================================
+2025-12-10 13:31:34,449 - INFO - Context: Age 24. Solid role player but not star-level.
+2025-12-10 13:31:34,450 - INFO - Mechanism: Tests consistency - model should maintain low star-level prediction.
+2025-12-10 13:31:34,450 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,450 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,452 - INFO -   Actual Usage: 20.8%
+2025-12-10 13:31:34,453 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5186 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.373 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,453 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=20.8% < 22% AND abs(CREATION_TAX)=0.033 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.373 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,455 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.5186 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.373 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,455 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=20.8% < 22% AND abs(CREATION_TAX)=0.033 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.373 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,455 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,455 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-10 13:31:34,455 - INFO -     Performance Score: 78.32%
+2025-12-10 13:31:34,455 - INFO -     Dependence Score: 28.71%
+2025-12-10 13:31:34,455 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-10 13:31:34,455 - INFO -     Probabilities:
+2025-12-10 13:31:34,455 - INFO -       King: 77.70%
+2025-12-10 13:31:34,455 - INFO -       Bulldozer: 0.62%
+2025-12-10 13:31:34,455 - INFO -       Sniper: 0.10%
+2025-12-10 13:31:34,455 - INFO -       Victim: 21.58%
+2025-12-10 13:31:34,455 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,455 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,455 - INFO -       - Expected low performance (<55%), got 78.32%
+2025-12-10 13:31:34,455 - INFO -       - Archetype mismatch: expected Victim, got King (Resilient Star)
+2025-12-10 13:31:34,455 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,455 - INFO - Test 40/40: Markelle Fultz (2023-24)
+2025-12-10 13:31:34,455 - INFO - Category: True Negative - Draft Bust
+2025-12-10 13:31:34,455 - INFO - ====================================================================================================
+2025-12-10 13:31:34,455 - INFO - Context: Age 25. Role player, never reached star potential.
+2025-12-10 13:31:34,455 - INFO - Mechanism: Final age-25 season. Tests model's ability to identify persistent lack of star traits.
+2025-12-10 13:31:34,455 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-10 13:31:34,455 - INFO - Test Usage: 25.0%
+2025-12-10 13:31:34,457 - INFO -   Actual Usage: 18.2%
+2025-12-10 13:31:34,459 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4634 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.445 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,459 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=18.2% < 22% AND abs(CREATION_TAX)=0.055 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.445 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,460 - INFO - Inefficiency Gate EXEMPTED: EFG_ISO_WEIGHTED=0.4634 below threshold BUT Elite Rim Force (RS_RIM_APPETITE=0.445 > 0.20) - rim pressure is primary signal for bigs, not ISO efficiency
+2025-12-10 13:31:34,460 - INFO - Low-Usage Noise Gate EXEMPTED: USG_PCT=18.2% < 22% AND abs(CREATION_TAX)=0.055 < 0.05 BUT Elite Rim Force (RS_RIM_APPETITE=0.445 > 0.20) - rim pressure provides clear signal even at low usage
+2025-12-10 13:31:34,460 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-10 13:31:34,460 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-10 13:31:34,460 - INFO -     Performance Score: 91.05%
+2025-12-10 13:31:34,460 - INFO -     Dependence Score: 28.73%
+2025-12-10 13:31:34,460 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-10 13:31:34,460 - INFO -     Probabilities:
+2025-12-10 13:31:34,460 - INFO -       King: 90.64%
+2025-12-10 13:31:34,460 - INFO -       Bulldozer: 0.42%
+2025-12-10 13:31:34,460 - INFO -       Sniper: 0.13%
+2025-12-10 13:31:34,460 - INFO -       Victim: 8.82%
+2025-12-10 13:31:34,460 - INFO - 
+  Evaluation:
+2025-12-10 13:31:34,460 - INFO -     ❌ FAIL
+2025-12-10 13:31:34,460 - INFO -       - Expected low performance (<55%), got 91.05%
+2025-12-10 13:31:34,460 - INFO -       - Archetype mismatch: expected Victim, got King (Resilient Star)
+2025-12-10 13:31:34,460 - INFO - 
+====================================================================================================
+2025-12-10 13:31:34,460 - INFO - SUMMARY REPORT
+2025-12-10 13:31:34,460 - INFO - ====================================================================================================
+2025-12-10 13:31:34,460 - INFO - Total Test Cases: 40
+2025-12-10 13:31:34,460 - INFO - Data Found: 40
+2025-12-10 13:31:34,460 - INFO - Passed: 25
+2025-12-10 13:31:34,460 - INFO - Failed: 15
+2025-12-10 13:31:34,460 - INFO - Pass Rate: 62.5%
+2025-12-10 13:31:34,460 - INFO - 
+By Category:
+2025-12-10 13:31:34,460 - INFO -   True Positive: 8/17 passed (47.1%)
+2025-12-10 13:31:34,460 - INFO -   False Positive: 4/5 passed (80.0%)
+2025-12-10 13:31:34,460 - INFO -   True Negative: 13/17 passed (76.5%)
+2025-12-10 13:31:34,460 - INFO -   System Player: 0/1 passed (0.0%)
+2025-12-10 13:31:34,463 - INFO - 
+Detailed results saved to: results/latent_star_test_cases_results.csv
+2025-12-10 13:31:34,467 - INFO - Markdown report saved to: results/latent_star_test_cases_report.md

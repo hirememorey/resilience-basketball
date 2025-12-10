@@ -597,17 +597,15 @@ class RFEModelTrainer:
         # This increases feature importance by forcing the model to pay attention to inefficiency signals
         # Condition: INEFFICIENT_VOLUME_SCORE > threshold AND USG_PCT > 0.25
         # Additional penalty: 2.0x (total weight = 5.0x for high-usage + high-inefficiency cases)
-        # ADJUSTED (Dec 10, 2025): Lowered threshold from 0.02 to 0.015 for linear feature distribution
-        # Linear transformation (no exponential) has different score distribution, requiring lower threshold
+        # REFINED (Dec 2025): Lowered threshold to 0.005 for Squared Usage calculation
         if 'INEFFICIENT_VOLUME_SCORE' in df.columns:
             inefficient_scores = df.loc[train_indices, 'INEFFICIENT_VOLUME_SCORE'].fillna(0.0)
-            inefficiency_threshold = 0.015  # Adjusted for exponential transformation (was 0.02)
-            is_high_inefficiency = (inefficient_scores > inefficiency_threshold).astype(int)  # High inefficiency threshold
+            inefficiency_threshold = 0.005  # Adjusted for USG^2 transformation (was 0.015)
+            is_high_inefficiency = (inefficient_scores > inefficiency_threshold).astype(int)
             is_high_usage_inefficient = (is_high_usage * is_high_inefficiency).astype(int)
             
-            # Add additional penalty for high-usage + high-inefficiency cases
-            # This creates a 5x total weight (1.0 base + 2.0 victim penalty + 2.0 inefficiency penalty = 5.0)
-            inefficiency_penalty_multiplier = 2.0
+            # Total weight: ~13x for high-usage, inefficient victims (1 + 2 + 10)
+            inefficiency_penalty_multiplier = 10.0 # Increased from 7.0 to 10.0
             sample_weights = sample_weights + (is_high_usage_inefficient * inefficiency_penalty_multiplier)
             
             logger.info(f"  INEFFICIENT_VOLUME_SCORE penalty: +{inefficiency_penalty_multiplier}x for high-usage + high-inefficiency")
