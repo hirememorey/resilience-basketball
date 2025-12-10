@@ -13,7 +13,7 @@ Key Innovation: "Risk Amplification"
 New Features:
 1. RIM_PRESSURE_DEFICIT: Normalized distance below rim pressure threshold (0.0 = safe, 1.0 = zero rim pressure)
 2. ABDICATION_MAGNITUDE: Normalized magnitude of negative leverage delta (with Smart Deference exemption)
-3. INEFFICIENT_VOLUME_SCORE: Interaction of Usage × Volume × Negative Creation Tax (enhanced Dec 9, 2025)
+3. INEFFICIENT_VOLUME_SCORE: Interaction of Usage × Volume × Negative Creation Tax (enhanced Dec 9-10, 2025)
 4. SYSTEM_DEPENDENCE_SCORE: Interaction of Usage × (Assisted% + Open Shot%)
 5. EMPTY_CALORIES_RISK: USG_PCT × RIM_PRESSURE_DEFICIT (high usage + no rim pressure = disaster)
 
@@ -252,10 +252,11 @@ class GateFeatureGenerator:
             df['ABDICATION_RISK'] = 0.0
         
         # 3. INEFFICIENT_VOLUME_SCORE: Multi-Signal Inefficiency Penalty
-        # Formula: USG_PCT × CREATION_VOLUME_RATIO × (max(0, -CREATION_TAX) + max(0, -SHOT_QUALITY_GENERATION_DELTA) + max(0, -LEVERAGE_TS_DELTA))
+        # Formula: USG_PCT × CREATION_VOLUME_RATIO × combined_inefficiency
+        #   where combined_inefficiency = max(0, -CREATION_TAX) + max(0, -SHOT_QUALITY_GENERATION_DELTA) + max(0, -LEVERAGE_TS_DELTA)
         # Result: High usage + high volume + multiple inefficiency signals generates huge penalty
         # Enhancement (Dec 9, 2025): Added USG_PCT to strengthen signal - penalizes inefficiency scaled by usage level
-        # Enhancement (Current): Multi-signal approach - combines self-relative (CREATION_TAX), league-relative (SQ_DELTA), and clutch (LEVERAGE_TS_DELTA) inefficiency
+        # Enhancement (Dec 9, 2025): Multi-signal approach - combines self-relative (CREATION_TAX), league-relative (SQ_DELTA), and clutch (LEVERAGE_TS_DELTA) inefficiency
         if 'CREATION_VOLUME_RATIO' in df.columns and 'CREATION_TAX' in df.columns:
             creation_vol = df['CREATION_VOLUME_RATIO'].fillna(0.0)
             creation_tax = df['CREATION_TAX'].fillna(0.0)
@@ -284,7 +285,7 @@ class GateFeatureGenerator:
             # This captures inefficiency across multiple dimensions (self-relative, league-relative, clutch)
             combined_inefficiency = negative_tax_magnitude + negative_sq_magnitude + negative_leverage_magnitude
             
-            # Base interaction: Volume × Combined Inefficiency
+            # Base interaction: Volume × Combined Inefficiency (linear)
             base_score = creation_vol * combined_inefficiency
             
             # Enhancement: Scale by usage level (USG_PCT) if available

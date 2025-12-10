@@ -630,7 +630,7 @@ class ConditionalArchetypePredictor:
             # This captures inefficiency across multiple dimensions (self-relative, league-relative, clutch)
             combined_inefficiency = negative_tax_magnitude + negative_sq_magnitude + negative_leverage_magnitude
             
-            # Base interaction: Volume × Combined Inefficiency
+            # Base interaction: Volume × Combined Inefficiency (linear)
             base_score = creation_vol * combined_inefficiency
             
             # Enhanced: Scale by usage level

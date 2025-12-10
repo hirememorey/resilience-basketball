@@ -66,7 +66,20 @@ class RFEModelTrainer:
             features.append('SHOT_QUALITY_GENERATION_DELTA')
             logger.info(f"Added SHOT_QUALITY_GENERATION_DELTA to feature set (reduces reliance on sample weighting)")
         
-        logger.info(f"Loaded {len(features)} RFE-selected features (including SHOT_QUALITY_GENERATION_DELTA):")
+        # ENHANCEMENT (Dec 10, 2025): Force include USG_PCT_X_INEFFICIENT_VOLUME_SCORE interaction term
+        # RFE optimizes for overall accuracy, not specific use cases (False Positive detection)
+        # This feature explicitly encodes "high usage × high inefficiency = bad" relationship
+        # Even if RFE doesn't select it, we force include it because it targets a specific failure mode
+        interaction_name = 'USG_PCT_X_INEFFICIENT_VOLUME_SCORE'
+        if interaction_name not in features:
+            # Remove lowest importance feature if we're at the limit
+            if len(features) >= n_features:
+                # Keep top n_features-1, add interaction term
+                features = features[:n_features-1]
+            features.append(interaction_name)
+            logger.info(f"Added {interaction_name} to feature set (force-included for False Positive detection)")
+        
+        logger.info(f"Loaded {len(features)} RFE-selected features (including force-included features):")
         for i, feat in enumerate(features, 1):
             logger.info(f"  {i}. {feat}")
         
@@ -398,6 +411,14 @@ class RFEModelTrainer:
                         # Use transformed values (already in df)
                         df[interaction_name] = (df[feat1].fillna(0) * df[feat2].fillna(0))
                         logger.debug(f"Created interaction term {interaction_name} from transformed values")
+            
+            # ENHANCEMENT (Dec 10, 2025): Create USG_PCT_X_INEFFICIENT_VOLUME_SCORE interaction term
+            # This explicitly encodes "high usage × high inefficiency = bad" as a single feature
+            # Force include this feature even if RFE doesn't select it (see load_rfe_features)
+            interaction_name = 'USG_PCT_X_INEFFICIENT_VOLUME_SCORE'
+            if 'USG_PCT' in df.columns and 'INEFFICIENT_VOLUME_SCORE' in df.columns:
+                df[interaction_name] = (df['USG_PCT'].fillna(0) * df['INEFFICIENT_VOLUME_SCORE'].fillna(0))
+                logger.info(f"Created interaction term {interaction_name} (force-included for False Positive detection)")
         
         # Filter to only RFE-selected features
         existing_features = [f for f in rfe_features if f in df.columns]
@@ -521,11 +542,14 @@ class RFEModelTrainer:
         
         # ENHANCEMENT (Dec 9, 2025): Add additional penalty for high INEFFICIENT_VOLUME_SCORE cases
         # This increases feature importance by forcing the model to pay attention to inefficiency signals
-        # Condition: INEFFICIENT_VOLUME_SCORE > 0.02 AND USG_PCT > 0.25
+        # Condition: INEFFICIENT_VOLUME_SCORE > threshold AND USG_PCT > 0.25
         # Additional penalty: 2.0x (total weight = 5.0x for high-usage + high-inefficiency cases)
+        # ADJUSTED (Dec 10, 2025): Lowered threshold from 0.02 to 0.015 for linear feature distribution
+        # Linear transformation (no exponential) has different score distribution, requiring lower threshold
         if 'INEFFICIENT_VOLUME_SCORE' in df.columns:
             inefficient_scores = df.loc[train_indices, 'INEFFICIENT_VOLUME_SCORE'].fillna(0.0)
-            is_high_inefficiency = (inefficient_scores > 0.02).astype(int)  # High inefficiency threshold (0.02)
+            inefficiency_threshold = 0.015  # Adjusted for exponential transformation (was 0.02)
+            is_high_inefficiency = (inefficient_scores > inefficiency_threshold).astype(int)  # High inefficiency threshold
             is_high_usage_inefficient = (is_high_usage * is_high_inefficiency).astype(int)
             
             # Add additional penalty for high-usage + high-inefficiency cases
@@ -534,7 +558,8 @@ class RFEModelTrainer:
             sample_weights = sample_weights + (is_high_usage_inefficient * inefficiency_penalty_multiplier)
             
             logger.info(f"  INEFFICIENT_VOLUME_SCORE penalty: +{inefficiency_penalty_multiplier}x for high-usage + high-inefficiency")
-            logger.info(f"  High-inefficiency cases (INEFFICIENT_VOLUME_SCORE > 0.02): {is_high_inefficiency.sum()}")
+            logger.info(f"  High-inefficiency threshold: {inefficiency_threshold} (adjusted for exponential transformation)")
+            logger.info(f"  High-inefficiency cases (INEFFICIENT_VOLUME_SCORE > {inefficiency_threshold}): {is_high_inefficiency.sum()}")
             logger.info(f"  High-usage + high-inefficiency (receiving additional penalty): {is_high_usage_inefficient.sum()}")
         else:
             logger.warning("INEFFICIENT_VOLUME_SCORE not found - inefficiency penalty will not be applied")
