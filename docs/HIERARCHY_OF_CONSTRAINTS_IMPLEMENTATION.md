@@ -310,3 +310,4 @@ The Hierarchy of Constraints implementation is **complete and working correctly*
 - `ACTIVE_CONTEXT.md` - Current project state
 - `KEY_INSIGHTS.md` - Hard-won lessons (see Insight #40: Empty Calories Creator Pattern)
 
+

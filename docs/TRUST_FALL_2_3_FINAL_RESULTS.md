@@ -1,7 +1,8 @@
 # Trust Fall 2.3 Final Results: Interaction Term + Threshold Adjustment
 
 **Date**: December 10, 2025  
-**Status**: ✅ **IMPLEMENTATION COMPLETE** | ✅ **BASELINE MAINTAINED**
+**Status**: ✅ **SUPERSEDED** - See `docs/INVERSE_INTERACTION_TERM_RESULTS.md` for latest results  
+**Note**: This document covers the initial interaction term implementation. The inverse interaction term was added later and achieved the Project Sloan target (80% False Positive pass rate).
 
 ---
 

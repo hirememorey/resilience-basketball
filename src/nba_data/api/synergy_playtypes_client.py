@@ -27,17 +27,19 @@ class SynergyPlaytypesClient:
     """Client for fetching NBA synergy play type statistics."""
 
     # Common NBA play types from synergy data
+    # Note: API uses specific names - "PutBack" is actually "OffRebound", "PostUp" is "Postup"
+    # Note: "SpotUp" is not a valid playtype name in the API (returns 400 error)
     PLAY_TYPES = [
         'Isolation',
         'Transition',
         'PRBallHandler',  # Pick & Roll Ball Handler
         'PRRollMan',      # Pick & Roll Roll Man
-        'PostUp',
-        'SpotUp',
+        'Postup',         # Post Up (correct API name, not "PostUp")
+        # 'SpotUp',       # REMOVED: Not a valid playtype name (returns 400 error)
         'Handoff',
         'Cut',
         'OffScreen',
-        'PutBack',
+        'OffRebound',     # Put Back (correct API name, not "PutBack")
         'Misc'
     ]
 
@@ -120,6 +122,12 @@ class SynergyPlaytypesClient:
 
         try:
             response = requests.get(url, params=params, headers=headers, timeout=30)
+            
+            # Handle 400/404 errors gracefully (some playtypes may not be valid or available)
+            if response.status_code in [400, 404]:
+                logger.warning(f"Playtype {play_type} returned {response.status_code} for {season_year} {season_type} - May be invalid playtype name or not available for this season")
+                return {'resultSets': []}
+            
             response.raise_for_status()
 
             data = response.json()
@@ -137,6 +145,10 @@ class SynergyPlaytypesClient:
 
             return data
 
+        except requests.HTTPError as e:
+            # Other HTTP errors (500, etc.) - log as error
+            logger.error(f"Request failed for {play_type}: {e}")
+            raise
         except requests.RequestException as e:
             logger.error(f"Request failed for {play_type}: {e}")
             raise

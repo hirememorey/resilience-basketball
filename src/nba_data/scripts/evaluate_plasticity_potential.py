@@ -504,7 +504,8 @@ class StressVectorEngine:
                 df_pnr = pd.DataFrame(columns=['PLAYER_ID', 'PNR_HANDLER_FGA'])
             
             # Get PostUp FGA (bonus)
-            df_post = df_playtype_grouped[df_playtype_grouped['play_type'] == 'PostUp'].copy()
+            # Note: API uses "Postup" (not "PostUp")
+            df_post = df_playtype_grouped[df_playtype_grouped['play_type'] == 'Postup'].copy()
             if not df_post.empty:
                 df_post = df_post[['player_id', 'field_goals_attempted']].copy()
                 df_post.columns = ['PLAYER_ID', 'POST_FGA']
@@ -661,7 +662,42 @@ class StressVectorEngine:
             
         final_df = pd.concat(all_seasons_data, ignore_index=True)
         
+        # PHASE 1 FIX: Merge pressure features before calculating Dependence Scores
+        # Dependence Score calculation requires RS_OPEN_SHOT_FREQUENCY from pressure features
+        logger.info("Loading pressure features for Dependence Score calculation...")
+        pressure_path = self.results_dir / "pressure_features.csv"
+        if pressure_path.exists():
+            df_pressure = pd.read_csv(pressure_path)
+            logger.info(f"Loaded {len(df_pressure)} rows of pressure features")
+            
+            # Merge pressure features (need RS_OPEN_SHOT_FREQUENCY for dependence calculation)
+            merge_cols = ['PLAYER_ID', 'SEASON']
+            if 'PLAYER_NAME' in df_pressure.columns:
+                merge_cols.append('PLAYER_NAME')
+            
+            # Only merge the columns needed for dependence calculation
+            pressure_cols_to_merge = ['PLAYER_ID', 'SEASON', 'RS_OPEN_SHOT_FREQUENCY']
+            if 'PLAYER_NAME' in df_pressure.columns:
+                pressure_cols_to_merge.append('PLAYER_NAME')
+            
+            final_df = pd.merge(
+                final_df,
+                df_pressure[pressure_cols_to_merge],
+                on=merge_cols,
+                how='left'
+            )
+            logger.info(f"Merged pressure features: {final_df['RS_OPEN_SHOT_FREQUENCY'].notna().sum()}/{len(final_df)} rows have RS_OPEN_SHOT_FREQUENCY")
+        else:
+            logger.warning(f"Pressure features file not found at {pressure_path}")
+            logger.warning("Dependence Score calculation may have limited coverage without RS_OPEN_SHOT_FREQUENCY")
+        
         # PHASE 1: Calculate Dependence Scores for all historical data
+        # Drop any existing NaN columns from previous failed attempts (they'll be recalculated)
+        cols_to_drop = ['DEPENDENCE_SCORE', 'ASSISTED_FGM_PCT', 'OPEN_SHOT_FREQUENCY', 'SELF_CREATED_USAGE_RATIO']
+        for col in cols_to_drop:
+            if col in final_df.columns:
+                final_df = final_df.drop(columns=[col])
+        
         logger.info("Calculating Dependence Scores for all player-seasons...")
         try:
             final_df = calculate_dependence_scores_batch(final_df)
@@ -669,7 +705,7 @@ class StressVectorEngine:
         except Exception as e:
             logger.error(f"Error calculating Dependence Scores: {e}", exc_info=True)
             logger.warning("Continuing without Dependence Scores - will be calculated during inference")
-            # Add empty columns to maintain structure
+            # Add empty columns to maintain structure (only if calculation completely fails)
             final_df['DEPENDENCE_SCORE'] = np.nan
             final_df['ASSISTED_FGM_PCT'] = np.nan
             final_df['OPEN_SHOT_FREQUENCY'] = np.nan

@@ -1656,7 +1656,9 @@ class ConditionalArchetypePredictor:
                 if flash_multiplier_conditions_met:
                     logger.info(f"Bag Check Gate EXEMPTED: Self-created freq {self_created_freq:.4f} < 0.10 BUT Flash Multiplier conditions met (low volume={creation_vol:.4f} + elite efficiency) = role constraint, not skill deficit")
                 elif is_elite_playmaker:
-                    logger.info(f"Bag Check Gate EXEMPTED: Self-created freq {self_created_freq:.4f} < 0.10 BUT Elite Playmaker (AST_PCT={ast_pct:.3f if pd.notna(ast_pct) else 'N/A'} OR CREATION_VOLUME_RATIO={creation_vol_ratio:.3f if pd.notna(creation_vol_ratio) else 'N/A'}) = passing substitutes for isolation")
+                    ast_pct_str = f"{ast_pct:.3f}" if pd.notna(ast_pct) else "N/A"
+                    creation_vol_str = f"{creation_vol_ratio:.3f}" if pd.notna(creation_vol_ratio) else "N/A"
+                    logger.info(f"Bag Check Gate EXEMPTED: Self-created freq {self_created_freq:.4f} < 0.10 BUT Elite Playmaker (AST_PCT={ast_pct_str} OR CREATION_VOLUME_RATIO={creation_vol_str}) = passing substitutes for isolation")
                 elif is_elite_rim_force:
                     logger.info(f"Bag Check Gate EXEMPTED: Self-created freq {self_created_freq:.4f} < 0.10 BUT Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20) = rim pressure is self-created offense for bigs")
                 else:

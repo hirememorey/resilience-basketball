@@ -239,9 +239,15 @@ def calculate_dependence_scores_batch(df: pd.DataFrame) -> pd.DataFrame:
     
     df_dependence = pd.DataFrame(results)
     
+    # Drop existing dependence score columns if they exist (they may be NaN from previous failed attempts)
+    cols_to_drop = ['DEPENDENCE_SCORE', 'ASSISTED_FGM_PCT', 'OPEN_SHOT_FREQUENCY', 'SELF_CREATED_USAGE_RATIO']
+    for col in cols_to_drop:
+        if col in df.columns:
+            df = df.drop(columns=[col])
+    
     # Merge back into original dataframe
     merge_cols = ['PLAYER_ID', 'SEASON']
-    if 'PLAYER_NAME' in df.columns:
+    if 'PLAYER_NAME' in df.columns and 'PLAYER_NAME' in df_dependence.columns:
         merge_cols.append('PLAYER_NAME')
     
     df = pd.merge(df, df_dependence, on=merge_cols, how='left')

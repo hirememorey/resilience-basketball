@@ -305,3 +305,4 @@ Maybe the model needs better features, not just better gates. The feedback menti
 - `docs/HIERARCHY_OF_CONSTRAINTS_ATTEMPT.md` - Previous failed attempt (referenced in feedback)
 - `results/latent_star_test_cases_report.md` - Current test results
 
+

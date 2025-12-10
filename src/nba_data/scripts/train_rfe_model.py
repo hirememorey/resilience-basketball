@@ -79,6 +79,40 @@ class RFEModelTrainer:
             features.append(interaction_name)
             logger.info(f"Added {interaction_name} to feature set (force-included for False Positive detection)")
         
+        # PROJECT SLOAN FIX (Dec 10, 2025): Force include DEPENDENCE_SCORE and interaction term
+        # DEPENDENCE_SCORE enables the model to learn about System Merchants
+        # DEPENDENCE_SCORE is now populated (100% coverage in training data) - critical for Project Sloan
+        # NOTE: We're NOT adding PORTABLE_USG_PCT because it has 1.0000 correlation with USG_PCT
+        #       (redundant - model can't distinguish them). Instead, we'll let the model learn
+        #       the relationship between USG_PCT and DEPENDENCE_SCORE directly.
+        features_to_add = []
+        
+        if 'DEPENDENCE_SCORE' not in features:
+            features_to_add.append('DEPENDENCE_SCORE')
+            logger.info("Added DEPENDENCE_SCORE to feature set (Project Sloan - System Merchant detection)")
+        
+        # Add DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE interaction term
+        # This catches "low dependence + high inefficiency = False Positive" pattern (D'Angelo Russell)
+        dep_ineff_interaction = 'DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE'
+        if dep_ineff_interaction not in features:
+            features_to_add.append(dep_ineff_interaction)
+            logger.info(f"Added {dep_ineff_interaction} to feature set (Project Sloan - False Positive detection)")
+        
+        # Add INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE interaction term
+        # This is HIGH for low-dependence + high-inefficiency cases (stronger signal than direct interaction)
+        # Catches D'Angelo Russell pattern: low dependence (22.61%) + high inefficiency = False Positive
+        inverse_dep_ineff_interaction = 'INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE'
+        if inverse_dep_ineff_interaction not in features:
+            features_to_add.append(inverse_dep_ineff_interaction)
+            logger.info(f"Added {inverse_dep_ineff_interaction} to feature set (Project Sloan - Low-Dep + High-Ineff detection)")
+        
+        # Add new features, removing lowest importance features if at limit
+        for new_feat in features_to_add:
+            if len(features) >= n_features:
+                # Remove lowest importance feature (will be reordered by model)
+                features = features[:n_features-1]
+            features.append(new_feat)
+        
         logger.info(f"Loaded {len(features)} RFE-selected features (including force-included features):")
         for i, feat in enumerate(features, 1):
             logger.info(f"  {i}. {feat}")
@@ -419,6 +453,25 @@ class RFEModelTrainer:
             if 'USG_PCT' in df.columns and 'INEFFICIENT_VOLUME_SCORE' in df.columns:
                 df[interaction_name] = (df['USG_PCT'].fillna(0) * df['INEFFICIENT_VOLUME_SCORE'].fillna(0))
                 logger.info(f"Created interaction term {interaction_name} (force-included for False Positive detection)")
+            
+            # PROJECT SLOAN FIX (Dec 10, 2025): Create DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE interaction term
+            # This explicitly encodes "low dependence + high inefficiency = False Positive" (D'Angelo Russell pattern)
+            # Catches players who are portable (low dependence) but inefficient (high inefficiency)
+            # Force include this feature even if RFE doesn't select it
+            dep_ineff_interaction = 'DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE'
+            if 'DEPENDENCE_SCORE' in df.columns and 'INEFFICIENT_VOLUME_SCORE' in df.columns:
+                df[dep_ineff_interaction] = (df['DEPENDENCE_SCORE'].fillna(0) * df['INEFFICIENT_VOLUME_SCORE'].fillna(0))
+                logger.info(f"Created interaction term {dep_ineff_interaction} (Project Sloan - False Positive detection)")
+                
+                # PROJECT SLOAN FIX (Dec 10, 2025): Create INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE interaction term
+                # This explicitly encodes "(1 - DEPENDENCE_SCORE) × INEFFICIENT_VOLUME_SCORE"
+                # HIGH for low-dependence + high-inefficiency cases (D'Angelo Russell pattern)
+                # The inverse term is stronger for low-dependence players than the direct interaction
+                inverse_dep_ineff_interaction = 'INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE'
+                # Clip DEPENDENCE_SCORE to [0, 1] before calculating inverse
+                dep_score_clipped = df['DEPENDENCE_SCORE'].fillna(0).clip(0, 1.0)
+                df[inverse_dep_ineff_interaction] = ((1.0 - dep_score_clipped) * df['INEFFICIENT_VOLUME_SCORE'].fillna(0))
+                logger.info(f"Created inverse interaction term {inverse_dep_ineff_interaction} (Project Sloan - Low-Dep + High-Ineff detection)")
         
         # Filter to only RFE-selected features
         existing_features = [f for f in rfe_features if f in df.columns]
