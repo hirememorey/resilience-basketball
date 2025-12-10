@@ -1,0 +1,907 @@
+2025-12-09 10:08:13,503 - INFO - ====================================================================================================
+2025-12-09 10:08:13,503 - INFO - CRITICAL CASE STUDIES FOR LATENT STAR DETECTION - Gates: ENABLED
+2025-12-09 10:08:13,503 - INFO - ====================================================================================================
+2025-12-09 10:08:14,169 - INFO - Using RFE model with 10 features
+2025-12-09 10:08:14,253 - INFO - Loaded trajectory features: 5312 rows
+2025-12-09 10:08:14,265 - INFO - Loaded gate features: 5312 rows
+2025-12-09 10:08:14,283 - INFO - Loaded previous playoff features: 5256 rows
+2025-12-09 10:08:14,283 - INFO - Normalized USG_PCT from percentage to decimal format in feature dataset
+2025-12-09 10:08:14,290 - INFO - Qualified players: 3574 / 5312 (filtered by volume thresholds)
+2025-12-09 10:08:14,294 - INFO - RS_RIM_APPETITE bottom 20th percentile (qualified): 0.1892
+2025-12-09 10:08:14,295 - INFO - CREATION_VOLUME_RATIO 25th percentile (qualified): 0.1196
+2025-12-09 10:08:14,295 - INFO - CREATION_TAX 80th percentile (qualified): -0.0391
+2025-12-09 10:08:14,295 - INFO - EFG_ISO_WEIGHTED 80th percentile (qualified): 0.5188
+2025-12-09 10:08:14,295 - INFO - EFG_ISO_WEIGHTED 25th percentile (inefficiency floor): 0.4042
+2025-12-09 10:08:14,295 - INFO - EFG_ISO_WEIGHTED 50th percentile (median): 0.4594
+2025-12-09 10:08:14,296 - INFO - RS_PRESSURE_RESILIENCE 80th percentile (qualified, min 50 pressure shots): 0.5370
+2025-12-09 10:08:14,296 - INFO - STAR average RS_OPEN_SHOT_FREQUENCY (Usage > 20%): 0.1934
+2025-12-09 10:08:14,296 - INFO - RS_OPEN_SHOT_FREQUENCY 75th percentile (STARS, USG > 20%): 0.2500
+2025-12-09 10:08:14,297 - INFO - RS_PRESSURE_APPETITE 40th percentile (STARS, USG > 20%): 0.4693
+2025-12-09 10:08:14,297 - INFO - Model expects 10 features
+2025-12-09 10:08:14,297 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,297 - INFO - Test 1/32: Shai Gilgeous-Alexander (2018-19)
+2025-12-09 10:08:14,297 - INFO - Category: True Positive - Latent Star
+2025-12-09 10:08:14,297 - INFO - ====================================================================================================
+2025-12-09 10:08:14,297 - INFO - Context: Rookie year. 18.3% Usage. Role player behind Lou Williams and Danilo Gallinari.
+2025-12-09 10:08:14,297 - INFO - Mechanism: Should see elite Driving/Physicality Vector (Rim Pressure) even at low volume.
+2025-12-09 10:08:14,297 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-09 10:08:14,297 - INFO - Test Usage: 30.0%
+2025-12-09 10:08:14,297 - INFO -   Actual Usage: 18.2%
+2025-12-09 10:08:14,323 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,323 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-09 10:08:14,323 - INFO -     Performance Score: 96.04%
+2025-12-09 10:08:14,323 - INFO -     Dependence Score: 27.10%
+2025-12-09 10:08:14,323 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-09 10:08:14,323 - INFO -     Probabilities:
+2025-12-09 10:08:14,323 - INFO -       King: 55.17%
+2025-12-09 10:08:14,323 - INFO -       Bulldozer: 40.87%
+2025-12-09 10:08:14,323 - INFO -       Sniper: 0.59%
+2025-12-09 10:08:14,323 - INFO -       Victim: 3.38%
+2025-12-09 10:08:14,323 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,323 - INFO -     ✅ PASS
+2025-12-09 10:08:14,323 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,323 - INFO - Test 2/32: Victor Oladipo (2016-17)
+2025-12-09 10:08:14,323 - INFO - Category: True Positive - Latent Star
+2025-12-09 10:08:14,323 - INFO - ====================================================================================================
+2025-12-09 10:08:14,323 - INFO - Context: Russell Westbrook's MVP usage-hole year. Oladipo was relegated to a spot-up shooter (21% Usage).
+2025-12-09 10:08:14,323 - INFO - Mechanism: Did he maintain Creation Vector efficiency on the few self-created shots?
+2025-12-09 10:08:14,323 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-09 10:08:14,323 - INFO - Test Usage: 30.0%
+2025-12-09 10:08:14,324 - INFO -   Actual Usage: 21.0%
+2025-12-09 10:08:14,324 - INFO - Smart Deference detected: LEVERAGE_USG_DELTA=-0.068 < -0.05 BUT LEVERAGE_TS_DELTA=0.143 > 0.05 (efficiency spikes) → Abdication Tax EXEMPTED
+2025-12-09 10:08:14,325 - INFO - Smart Deference detected: LEVERAGE_USG_DELTA=-0.068 < -0.05 BUT LEVERAGE_TS_DELTA=0.143 > 0.05 (efficiency spikes) → Abdication Tax EXEMPTED
+2025-12-09 10:08:14,325 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,325 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-09 10:08:14,325 - INFO -     Performance Score: 95.06%
+2025-12-09 10:08:14,325 - INFO -     Dependence Score: 44.50%
+2025-12-09 10:08:14,325 - INFO -     Risk Category: Franchise Cornerstone (Moderate Dependence)
+2025-12-09 10:08:14,325 - INFO -     Probabilities:
+2025-12-09 10:08:14,325 - INFO -       King: 74.27%
+2025-12-09 10:08:14,325 - INFO -       Bulldozer: 20.79%
+2025-12-09 10:08:14,325 - INFO -       Sniper: 0.80%
+2025-12-09 10:08:14,325 - INFO -       Victim: 4.14%
+2025-12-09 10:08:14,325 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,325 - INFO -     ✅ PASS
+2025-12-09 10:08:14,325 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,325 - INFO - Test 3/32: Jalen Brunson (2020-21)
+2025-12-09 10:08:14,325 - INFO - Category: True Positive - Latent Star
+2025-12-09 10:08:14,325 - INFO - ====================================================================================================
+2025-12-09 10:08:14,325 - INFO - Context: 19.6% Usage. Backup to Luka Dončić.
+2025-12-09 10:08:14,325 - INFO - Mechanism: Gold Standard validation. High Creation Efficiency + High Leverage Resilience.
+2025-12-09 10:08:14,325 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-09 10:08:14,325 - INFO - Test Usage: 32.0%
+2025-12-09 10:08:14,326 - INFO -   Actual Usage: 19.6%
+2025-12-09 10:08:14,327 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,327 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-09 10:08:14,327 - INFO -     Performance Score: 99.52%
+2025-12-09 10:08:14,327 - INFO -     Dependence Score: 31.31%
+2025-12-09 10:08:14,327 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-09 10:08:14,327 - INFO -     Probabilities:
+2025-12-09 10:08:14,327 - INFO -       King: 11.64%
+2025-12-09 10:08:14,327 - INFO -       Bulldozer: 87.88%
+2025-12-09 10:08:14,327 - INFO -       Sniper: 0.07%
+2025-12-09 10:08:14,327 - INFO -       Victim: 0.40%
+2025-12-09 10:08:14,327 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,327 - INFO -     ✅ PASS
+2025-12-09 10:08:14,327 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,327 - INFO - Test 4/32: Tyrese Maxey (2021-22)
+2025-12-09 10:08:14,327 - INFO - Category: True Positive - Latent Star
+2025-12-09 10:08:14,327 - INFO - ====================================================================================================
+2025-12-09 10:08:14,327 - INFO - Context: 22.2% Usage. Broke out to 27.3% in '24.
+2025-12-09 10:08:14,327 - INFO - Mechanism: Elite Creation Vector and Leverage Vector even at lower usage.
+2025-12-09 10:08:14,327 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-09 10:08:14,327 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,328 - INFO -   Actual Usage: 19.9%
+2025-12-09 10:08:14,329 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,329 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-09 10:08:14,329 - INFO -     Performance Score: 93.81%
+2025-12-09 10:08:14,329 - INFO -     Dependence Score: 30.53%
+2025-12-09 10:08:14,329 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-09 10:08:14,329 - INFO -     Probabilities:
+2025-12-09 10:08:14,329 - INFO -       King: 88.06%
+2025-12-09 10:08:14,329 - INFO -       Bulldozer: 5.76%
+2025-12-09 10:08:14,329 - INFO -       Sniper: 0.16%
+2025-12-09 10:08:14,329 - INFO -       Victim: 6.03%
+2025-12-09 10:08:14,329 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,329 - INFO -     ✅ PASS
+2025-12-09 10:08:14,329 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,329 - INFO - Test 5/32: Pascal Siakam (2018-19)
+2025-12-09 10:08:14,329 - INFO - Category: True Positive - Latent Star
+2025-12-09 10:08:14,329 - INFO - ====================================================================================================
+2025-12-09 10:08:14,329 - INFO - Context: The 'Spin Cycle' breakout year (20.5% Usage). Won MIP and Championship.
+2025-12-09 10:08:14,329 - INFO - Mechanism: High motor, transition scoring, improving face-up game. Demonstrates scalability of efficiency with volume.
+2025-12-09 10:08:14,329 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-09 10:08:14,329 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,330 - INFO -   Actual Usage: 20.5%
+2025-12-09 10:08:14,330 - INFO - Smart Deference detected: LEVERAGE_USG_DELTA=-0.068 < -0.05 BUT LEVERAGE_TS_DELTA=0.119 > 0.05 (efficiency spikes) → Abdication Tax EXEMPTED
+2025-12-09 10:08:14,331 - INFO - Smart Deference detected: LEVERAGE_USG_DELTA=-0.068 < -0.05 BUT LEVERAGE_TS_DELTA=0.119 > 0.05 (efficiency spikes) → Abdication Tax EXEMPTED
+2025-12-09 10:08:14,331 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,331 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-09 10:08:14,331 - INFO -     Performance Score: 76.76%
+2025-12-09 10:08:14,331 - INFO -     Dependence Score: 47.63%
+2025-12-09 10:08:14,331 - INFO -     Risk Category: Luxury Component
+2025-12-09 10:08:14,331 - INFO -     Probabilities:
+2025-12-09 10:08:14,331 - INFO -       King: 59.44%
+2025-12-09 10:08:14,331 - INFO -       Bulldozer: 17.32%
+2025-12-09 10:08:14,331 - INFO -       Sniper: 0.54%
+2025-12-09 10:08:14,331 - INFO -       Victim: 22.69%
+2025-12-09 10:08:14,331 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,331 - INFO -     ✅ PASS
+2025-12-09 10:08:14,331 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,331 - INFO - Test 6/32: Jayson Tatum (2017-18)
+2025-12-09 10:08:14,331 - INFO - Category: True Positive - Rookie Sensation
+2025-12-09 10:08:14,331 - INFO - ====================================================================================================
+2025-12-09 10:08:14,331 - INFO - Context: Rookie year (19.5% Usage). Exploded in playoffs without Kyrie/Hayward.
+2025-12-09 10:08:14,331 - INFO - Mechanism: Elite shot creation profile and positional size even at low usage.
+2025-12-09 10:08:14,331 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-09 10:08:14,331 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,332 - INFO -   Actual Usage: 19.2%
+2025-12-09 10:08:14,332 - INFO - Creation Fragility Gate EXEMPTED: Young player (AGE=20 < 22) with positive leverage signals - learning curve, not true inefficiency
+2025-12-09 10:08:14,333 - INFO - Creation Fragility Gate EXEMPTED: Young player (AGE=20 < 22) with positive leverage signals - learning curve, not true inefficiency
+2025-12-09 10:08:14,333 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,333 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-09 10:08:14,333 - INFO -     Performance Score: 70.13%
+2025-12-09 10:08:14,333 - INFO -     Dependence Score: 45.60%
+2025-12-09 10:08:14,333 - INFO -     Risk Category: Luxury Component
+2025-12-09 10:08:14,333 - INFO -     Probabilities:
+2025-12-09 10:08:14,333 - INFO -       King: 53.45%
+2025-12-09 10:08:14,333 - INFO -       Bulldozer: 16.68%
+2025-12-09 10:08:14,333 - INFO -       Sniper: 0.42%
+2025-12-09 10:08:14,333 - INFO -       Victim: 29.45%
+2025-12-09 10:08:14,333 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,333 - INFO -     ✅ PASS
+2025-12-09 10:08:14,333 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,333 - INFO - Test 7/32: Mikal Bridges (2021-22)
+2025-12-09 10:08:14,333 - INFO - Category: True Positive - Usage Shock
+2025-12-09 10:08:14,333 - INFO - ====================================================================================================
+2025-12-09 10:08:14,333 - INFO - Context: Role player in Phoenix (14.2% Usage). Broke out when traded to Brooklyn with higher usage.
+2025-12-09 10:08:14,333 - INFO - Mechanism: Tests model's ability to see star potential through role constraints. Elite efficiency on low volume.
+2025-12-09 10:08:14,333 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-09 10:08:14,333 - INFO - Test Usage: 30.0%
+2025-12-09 10:08:14,334 - INFO -   Actual Usage: 14.9%
+2025-12-09 10:08:14,335 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,335 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-09 10:08:14,335 - INFO -     Performance Score: 99.48%
+2025-12-09 10:08:14,335 - INFO -     Dependence Score: 62.36%
+2025-12-09 10:08:14,335 - INFO -     Risk Category: Luxury Component
+2025-12-09 10:08:14,335 - INFO -     Probabilities:
+2025-12-09 10:08:14,335 - INFO -       King: 31.24%
+2025-12-09 10:08:14,335 - INFO -       Bulldozer: 68.24%
+2025-12-09 10:08:14,335 - INFO -       Sniper: 0.10%
+2025-12-09 10:08:14,335 - INFO -       Victim: 0.43%
+2025-12-09 10:08:14,335 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,335 - INFO -     ✅ PASS
+2025-12-09 10:08:14,335 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,335 - INFO - Test 8/32: Desmond Bane (2021-22)
+2025-12-09 10:08:14,335 - INFO - Category: True Positive - Latent Star
+2025-12-09 10:08:14,335 - INFO - ====================================================================================================
+2025-12-09 10:08:14,335 - INFO - Context: 22.6% Usage. Elite secondary creator with high shooting efficiency.
+2025-12-09 10:08:14,335 - INFO - Mechanism: Tests model's ability to identify secondary creators who can scale up. Elite Creation Vector and shooting.
+2025-12-09 10:08:14,335 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-09 10:08:14,335 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,335 - INFO -   Actual Usage: 22.6%
+2025-12-09 10:08:14,337 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,337 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-09 10:08:14,337 - INFO -     Performance Score: 86.76%
+2025-12-09 10:08:14,337 - INFO -     Dependence Score: 51.90%
+2025-12-09 10:08:14,337 - INFO -     Risk Category: Luxury Component
+2025-12-09 10:08:14,337 - INFO -     Probabilities:
+2025-12-09 10:08:14,337 - INFO -       King: 3.34%
+2025-12-09 10:08:14,337 - INFO -       Bulldozer: 83.43%
+2025-12-09 10:08:14,337 - INFO -       Sniper: 0.17%
+2025-12-09 10:08:14,337 - INFO -       Victim: 13.07%
+2025-12-09 10:08:14,337 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,337 - INFO -     ✅ PASS
+2025-12-09 10:08:14,337 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,337 - INFO - Test 9/32: Jordan Poole (2021-22)
+2025-12-09 10:08:14,337 - INFO - Category: False Positive - Mirage Breakout
+2025-12-09 10:08:14,337 - INFO - ====================================================================================================
+2025-12-09 10:08:14,337 - INFO - Context: 26% Usage. System merchant relying on Curry gravity.
+2025-12-09 10:08:14,337 - INFO - Mechanism: Should detect low Pressure Resilience and dependence on open shots. 2D: High Performance (succeeded) + High Dependence (system merchant).
+2025-12-09 10:08:14,337 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,337 - INFO - Test Usage: 30.0%
+2025-12-09 10:08:14,337 - INFO -   Actual Usage: 25.2%
+2025-12-09 10:08:14,338 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,338 - INFO -     Predicted Archetype: Bulldozer (Fragile Star)
+2025-12-09 10:08:14,338 - INFO -     Performance Score: 98.79%
+2025-12-09 10:08:14,338 - INFO -     Dependence Score: 46.11%
+2025-12-09 10:08:14,338 - INFO -     Risk Category: Luxury Component
+2025-12-09 10:08:14,338 - INFO -     Probabilities:
+2025-12-09 10:08:14,338 - INFO -       King: 19.52%
+2025-12-09 10:08:14,339 - INFO -       Bulldozer: 79.28%
+2025-12-09 10:08:14,339 - INFO -       Sniper: 0.21%
+2025-12-09 10:08:14,339 - INFO -       Victim: 1.00%
+2025-12-09 10:08:14,339 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,339 - INFO -     ✅ PASS
+2025-12-09 10:08:14,339 - INFO -       - Expected low performance (<55%), got 98.79%
+2025-12-09 10:08:14,339 - INFO -       - Risk category matches but performance doesn't: 98.79%
+2025-12-09 10:08:14,339 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,339 - INFO - Test 10/32: Talen Horton-Tucker (2020-21)
+2025-12-09 10:08:14,339 - INFO - Category: False Positive - Mirage Breakout
+2025-12-09 10:08:14,339 - INFO - ====================================================================================================
+2025-12-09 10:08:14,339 - INFO - Context: 18% Usage. Elite rim pressure numbers on low volume but poor efficiency.
+2025-12-09 10:08:14,339 - INFO - Mechanism: Creation Efficiency was actually poor despite high Physicality Vector.
+2025-12-09 10:08:14,339 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,339 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,339 - INFO -   Actual Usage: 21.0%
+2025-12-09 10:08:14,340 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 47.85% to 30.00%. Missing: RS_PRESSURE_APPETITE, RS_PRESSURE_RESILIENCE
+2025-12-09 10:08:14,340 - INFO - Sample Size Gate applied: insufficient pressure shots (NaN < 50), star-level capped from 30.00% to 30.00%
+2025-12-09 10:08:14,340 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 47.85% to 30.00%. Missing: RS_PRESSURE_APPETITE, RS_PRESSURE_RESILIENCE
+2025-12-09 10:08:14,340 - INFO - Sample Size Gate applied: insufficient pressure shots (NaN < 50), star-level capped from 30.00% to 30.00%
+2025-12-09 10:08:14,340 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,340 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,340 - INFO -     Performance Score: 30.00%
+2025-12-09 10:08:14,340 - INFO -     Dependence Score: nan%
+2025-12-09 10:08:14,340 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-09 10:08:14,340 - INFO -     Probabilities:
+2025-12-09 10:08:14,340 - INFO -       King: 44.49%
+2025-12-09 10:08:14,340 - INFO -       Bulldozer: 3.36%
+2025-12-09 10:08:14,340 - INFO -       Sniper: 1.72%
+2025-12-09 10:08:14,340 - INFO -       Victim: 50.44%
+2025-12-09 10:08:14,340 - INFO -     Confidence Flags: Missing RS_PRESSURE_APPETITE, Missing RS_LATE_CLOCK_PRESSURE_RESILIENCE
+2025-12-09 10:08:14,341 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,341 - INFO -     ✅ PASS
+2025-12-09 10:08:14,341 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,341 - INFO - Test 11/32: Christian Wood (2020-21)
+2025-12-09 10:08:14,341 - INFO - Category: False Positive - Empty Calories
+2025-12-09 10:08:14,341 - INFO - ====================================================================================================
+2025-12-09 10:08:14,341 - INFO - Context: Massive stats on tanking team. Low leverage performance.
+2025-12-09 10:08:14,341 - INFO - Mechanism: Tests Leverage Vector (Clutch) and Pressure Vector.
+2025-12-09 10:08:14,341 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,341 - INFO - Test Usage: 26.0%
+2025-12-09 10:08:14,341 - INFO -   Actual Usage: 25.5%
+2025-12-09 10:08:14,342 - INFO - Compound Fragility Gate applied: CREATION_TAX=-0.130 < -0.10 AND LEVERAGE_TS_DELTA=-0.059 < -0.05 (compound fragility), star-level capped from 72.81% to 0.00%
+2025-12-09 10:08:14,342 - INFO - Compound Fragility Gate applied: CREATION_TAX=-0.130 < -0.10 AND LEVERAGE_TS_DELTA=-0.059 < -0.05 (compound fragility), star-level capped from 72.81% to 0.00%
+2025-12-09 10:08:14,342 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,342 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,342 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,342 - INFO -     Dependence Score: 61.21%
+2025-12-09 10:08:14,342 - INFO -     Risk Category: Avoid
+2025-12-09 10:08:14,342 - INFO -     Probabilities:
+2025-12-09 10:08:14,342 - INFO -       King: 35.76%
+2025-12-09 10:08:14,342 - INFO -       Bulldozer: 37.06%
+2025-12-09 10:08:14,343 - INFO -       Sniper: 0.30%
+2025-12-09 10:08:14,343 - INFO -       Victim: 26.88%
+2025-12-09 10:08:14,343 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,343 - INFO -     ✅ PASS
+2025-12-09 10:08:14,343 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,343 - INFO - Test 12/32: D'Angelo Russell (2018-19)
+2025-12-09 10:08:14,343 - INFO - Category: False Positive - Fool's Gold
+2025-12-09 10:08:14,343 - INFO - ====================================================================================================
+2025-12-09 10:08:14,343 - INFO - Context: All-Star season (31% Usage). Reliance on mid-range/floaters.
+2025-12-09 10:08:14,343 - INFO - Mechanism: Tests Physicality fragility (low Rim Pressure Resilience).
+2025-12-09 10:08:14,343 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,343 - INFO - Test Usage: 31.0%
+2025-12-09 10:08:14,343 - INFO -   Actual Usage: 31.1%
+2025-12-09 10:08:14,344 - INFO - Elite Creator Exemption: elite creation volume (CREATION_VOLUME_RATIO=0.75 > 0.70) OR elite creation efficiency (CREATION_TAX=-0.101 < -0.10) → Fragility Gate EXEMPTED
+2025-12-09 10:08:14,344 - INFO - Replacement Level Creator Gate applied: USG_PCT=31.1% > 25% AND SHOT_QUALITY_GENERATION_DELTA=-0.0718 < -0.05 (high usage + negative delta = replacement level), star-level capped from 96.57% to 30.00%
+2025-12-09 10:08:14,344 - INFO - Elite Creator Exemption: elite creation volume (CREATION_VOLUME_RATIO=0.75 > 0.70) OR elite creation efficiency (CREATION_TAX=-0.101 < -0.10) → Fragility Gate EXEMPTED
+2025-12-09 10:08:14,344 - INFO - Replacement Level Creator Gate applied: USG_PCT=31.1% > 25% AND SHOT_QUALITY_GENERATION_DELTA=-0.0718 < -0.05 (high usage + negative delta = replacement level), star-level capped from 96.57% to 30.00%
+2025-12-09 10:08:14,344 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,344 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,345 - INFO -     Performance Score: 30.00%
+2025-12-09 10:08:14,345 - INFO -     Dependence Score: 22.14%
+2025-12-09 10:08:14,345 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-09 10:08:14,345 - INFO -     Probabilities:
+2025-12-09 10:08:14,345 - INFO -       King: 21.10%
+2025-12-09 10:08:14,345 - INFO -       Bulldozer: 8.90%
+2025-12-09 10:08:14,345 - INFO -       Sniper: 5.84%
+2025-12-09 10:08:14,345 - INFO -       Victim: 64.16%
+2025-12-09 10:08:14,345 - INFO -     Confidence Flags: Replacement Level Creator (High Usage + Negative Delta)
+2025-12-09 10:08:14,345 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,345 - INFO -     ✅ PASS
+2025-12-09 10:08:14,345 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,345 - INFO - Test 13/32: Julius Randle (2020-21)
+2025-12-09 10:08:14,345 - INFO - Category: False Positive - Empty Calories
+2025-12-09 10:08:14,345 - INFO - ====================================================================================================
+2025-12-09 10:08:14,345 - INFO - Context: All-NBA season (29% Usage). Imploded in playoffs (29.8% FG).
+2025-12-09 10:08:14,345 - INFO - Mechanism: Tests for 'Bulldozer' profile that lacks true resilience traits (tough shot making, leverage stability).
+2025-12-09 10:08:14,345 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,345 - INFO - Test Usage: 30.0%
+2025-12-09 10:08:14,345 - INFO -   Actual Usage: 28.5%
+2025-12-09 10:08:14,346 - INFO - Compound Fragility Gate applied: CREATION_TAX=-0.136 < -0.10 AND LEVERAGE_TS_DELTA=-0.062 < -0.05 (compound fragility), star-level capped from 88.05% to 0.00%
+2025-12-09 10:08:14,346 - INFO - Compound Fragility Gate applied: CREATION_TAX=-0.136 < -0.10 AND LEVERAGE_TS_DELTA=-0.062 < -0.05 (compound fragility), star-level capped from 88.05% to 0.00%
+2025-12-09 10:08:14,346 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,346 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,346 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,346 - INFO -     Dependence Score: 35.02%
+2025-12-09 10:08:14,346 - INFO -     Risk Category: Depth
+2025-12-09 10:08:14,346 - INFO -     Probabilities:
+2025-12-09 10:08:14,346 - INFO -       King: 64.38%
+2025-12-09 10:08:14,346 - INFO -       Bulldozer: 23.67%
+2025-12-09 10:08:14,346 - INFO -       Sniper: 0.43%
+2025-12-09 10:08:14,346 - INFO -       Victim: 11.52%
+2025-12-09 10:08:14,346 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,346 - INFO -     ✅ PASS
+2025-12-09 10:08:14,346 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,346 - INFO - Test 14/32: Ben Simmons (2017-18)
+2025-12-09 10:08:14,346 - INFO - Category: True Negative - Fragile Star
+2025-12-09 10:08:14,346 - INFO - ====================================================================================================
+2025-12-09 10:08:14,346 - INFO - Context: Rookie year (22.3% Usage). Playoff collapse vs Celtics (1 point game).
+2025-12-09 10:08:14,346 - INFO - Mechanism: High raw stats but fatal flaws in Creation (shooting) and Leverage (passivity).
+2025-12-09 10:08:14,347 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,347 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,347 - INFO -   Actual Usage: 21.9%
+2025-12-09 10:08:14,348 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,348 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-09 10:08:14,348 - INFO -     Performance Score: 54.63%
+2025-12-09 10:08:14,348 - INFO -     Dependence Score: 22.68%
+2025-12-09 10:08:14,348 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-09 10:08:14,348 - INFO -     Probabilities:
+2025-12-09 10:08:14,348 - INFO -       King: 48.11%
+2025-12-09 10:08:14,348 - INFO -       Bulldozer: 6.51%
+2025-12-09 10:08:14,348 - INFO -       Sniper: 1.10%
+2025-12-09 10:08:14,348 - INFO -       Victim: 44.27%
+2025-12-09 10:08:14,348 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,348 - INFO -     ✅ PASS
+2025-12-09 10:08:14,348 - INFO -       - Archetype mismatch: expected Victim, got King (Resilient Star)
+2025-12-09 10:08:14,348 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,348 - INFO - Test 15/32: Ben Simmons (2018-19)
+2025-12-09 10:08:14,348 - INFO - Category: True Negative - Fragile Star
+2025-12-09 10:08:14,348 - INFO - ====================================================================================================
+2025-12-09 10:08:14,348 - INFO - Context: 22.1% Usage. Continued playoff struggles.
+2025-12-09 10:08:14,348 - INFO - Mechanism: Persistent lack of creation tax viability.
+2025-12-09 10:08:14,348 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,348 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,349 - INFO -   Actual Usage: 21.5%
+2025-12-09 10:08:14,349 - INFO - Abdication Tax detected: LEVERAGE_USG_DELTA=-0.067 < -0.05 AND LEVERAGE_TS_DELTA=0.007 <= 0.05 (Panic Abdication), star-level capped from 45.38% to 30.00%
+2025-12-09 10:08:14,350 - INFO - Abdication Tax detected: LEVERAGE_USG_DELTA=-0.067 < -0.05 AND LEVERAGE_TS_DELTA=0.007 <= 0.05 (Panic Abdication), star-level capped from 45.38% to 30.00%
+2025-12-09 10:08:14,350 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,350 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,350 - INFO -     Performance Score: 30.00%
+2025-12-09 10:08:14,350 - INFO -     Dependence Score: 33.87%
+2025-12-09 10:08:14,350 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-09 10:08:14,350 - INFO -     Probabilities:
+2025-12-09 10:08:14,350 - INFO -       King: 43.86%
+2025-12-09 10:08:14,350 - INFO -       Bulldozer: 1.52%
+2025-12-09 10:08:14,350 - INFO -       Sniper: 2.49%
+2025-12-09 10:08:14,350 - INFO -       Victim: 52.13%
+2025-12-09 10:08:14,350 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,350 - INFO -     ✅ PASS
+2025-12-09 10:08:14,350 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,350 - INFO - Test 16/32: Ben Simmons (2020-21)
+2025-12-09 10:08:14,350 - INFO - Category: True Negative - Fragile Star
+2025-12-09 10:08:14,350 - INFO - ====================================================================================================
+2025-12-09 10:08:14,350 - INFO - Context: 20.2% Usage. The Hawks series collapse. Fear of free throws.
+2025-12-09 10:08:14,350 - INFO - Mechanism: Abdication Tax should trigger (negative Leverage USG Delta) and low Creation Tax.
+2025-12-09 10:08:14,350 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,350 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,351 - INFO -   Actual Usage: 20.0%
+2025-12-09 10:08:14,352 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,352 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,352 - INFO -     Performance Score: 46.88%
+2025-12-09 10:08:14,352 - INFO -     Dependence Score: 34.30%
+2025-12-09 10:08:14,352 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-09 10:08:14,352 - INFO -     Probabilities:
+2025-12-09 10:08:14,352 - INFO -       King: 40.41%
+2025-12-09 10:08:14,352 - INFO -       Bulldozer: 6.47%
+2025-12-09 10:08:14,352 - INFO -       Sniper: 0.51%
+2025-12-09 10:08:14,352 - INFO -       Victim: 52.61%
+2025-12-09 10:08:14,352 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,352 - INFO -     ✅ PASS
+2025-12-09 10:08:14,352 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,352 - INFO - Test 17/32: Tyus Jones (2021-22)
+2025-12-09 10:08:14,352 - INFO - Category: System Player - Ceiling Test
+2025-12-09 10:08:14,352 - INFO - ====================================================================================================
+2025-12-09 10:08:14,352 - INFO - Context: Elite assist-to-turnover ratio role player.
+2025-12-09 10:08:14,352 - INFO - Mechanism: Should predict 'Sniper' or 'Victim' at high usage. Lacks creation ceiling.
+2025-12-09 10:08:14,352 - INFO - Expected: Sniper (Star-Level: Low)
+2025-12-09 10:08:14,352 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,352 - INFO -   Actual Usage: 16.4%
+2025-12-09 10:08:14,353 - INFO - Elite Creator Exemption: elite creation efficiency (CREATION_TAX=-0.174 < -0.10) → Fragility Gate EXEMPTED
+2025-12-09 10:08:14,353 - INFO - Smart Deference detected: LEVERAGE_USG_DELTA=-0.057 < -0.05 BUT LEVERAGE_TS_DELTA=0.198 > 0.05 (efficiency spikes) → Abdication Tax EXEMPTED
+2025-12-09 10:08:14,353 - INFO - Creation Fragility Gate applied: CREATION_TAX=-0.174 < -0.15 (severe efficiency drop in creation), star-level capped from 59.73% to 0.00%
+2025-12-09 10:08:14,353 - INFO - Elite Creator Exemption: elite creation efficiency (CREATION_TAX=-0.174 < -0.10) → Fragility Gate EXEMPTED
+2025-12-09 10:08:14,353 - INFO - Smart Deference detected: LEVERAGE_USG_DELTA=-0.057 < -0.05 BUT LEVERAGE_TS_DELTA=0.198 > 0.05 (efficiency spikes) → Abdication Tax EXEMPTED
+2025-12-09 10:08:14,354 - INFO - Creation Fragility Gate applied: CREATION_TAX=-0.174 < -0.15 (severe efficiency drop in creation), star-level capped from 59.73% to 0.00%
+2025-12-09 10:08:14,354 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,354 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,354 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,354 - INFO -     Dependence Score: 34.63%
+2025-12-09 10:08:14,354 - INFO -     Risk Category: Depth
+2025-12-09 10:08:14,354 - INFO -     Probabilities:
+2025-12-09 10:08:14,354 - INFO -       King: 58.72%
+2025-12-09 10:08:14,354 - INFO -       Bulldozer: 1.00%
+2025-12-09 10:08:14,354 - INFO -       Sniper: 0.58%
+2025-12-09 10:08:14,354 - INFO -       Victim: 39.69%
+2025-12-09 10:08:14,354 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,354 - INFO -     ✅ PASS
+2025-12-09 10:08:14,354 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,354 - INFO - Test 18/32: Domantas Sabonis (2021-22)
+2025-12-09 10:08:14,354 - INFO - Category: True Negative - Comparison Case
+2025-12-09 10:08:14,354 - INFO - ====================================================================================================
+2025-12-09 10:08:14,354 - INFO - Context: Traded 1-1 for Haliburton. All-Star, but lacks playoff resilience.
+2025-12-09 10:08:14,354 - INFO - Mechanism: Model should identify lack of stress vectors (Physicality/Creation) needed for playoff success. 2D: High Performance + High Dependence (system-based rim pressure).
+2025-12-09 10:08:14,354 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,354 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,354 - INFO -   Actual Usage: 22.1%
+2025-12-09 10:08:14,355 - INFO - Bag Check Gate applied: Self-created freq 0.0690 < 0.10, star-level capped from 74.52% to 30.00%. Reason: Explicit: ISO=0.069, PNR=0.000
+2025-12-09 10:08:14,355 - INFO - Bag Check Gate applied: Self-created freq 0.0690 < 0.10, star-level capped from 74.52% to 30.00%. Reason: Explicit: ISO=0.069, PNR=0.000
+2025-12-09 10:08:14,355 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,355 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,355 - INFO -     Performance Score: 30.00%
+2025-12-09 10:08:14,355 - INFO -     Dependence Score: 60.37%
+2025-12-09 10:08:14,355 - INFO -     Risk Category: Luxury Component
+2025-12-09 10:08:14,355 - INFO -     Probabilities:
+2025-12-09 10:08:14,355 - INFO -       King: 31.67%
+2025-12-09 10:08:14,355 - INFO -       Bulldozer: 42.84%
+2025-12-09 10:08:14,355 - INFO -       Sniper: 0.41%
+2025-12-09 10:08:14,355 - INFO -       Victim: 25.07%
+2025-12-09 10:08:14,355 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,355 - INFO -     ✅ PASS
+2025-12-09 10:08:14,355 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,356 - INFO - Test 19/32: Tyrese Haliburton (2021-22)
+2025-12-09 10:08:14,356 - INFO - Category: True Positive - Comparison Case
+2025-12-09 10:08:14,356 - INFO - ====================================================================================================
+2025-12-09 10:08:14,356 - INFO - Context: Traded 1-1 for Sabonis. Elite Creation and Leverage vectors.
+2025-12-09 10:08:14,356 - INFO - Mechanism: Model should identify elite stress vectors. 2D: High Performance + Low Dependence (portable, self-created).
+2025-12-09 10:08:14,356 - INFO - Expected: Bulldozer (Star-Level: High)
+2025-12-09 10:08:14,356 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,356 - INFO -   Actual Usage: 18.4%
+2025-12-09 10:08:14,357 - INFO - Elite Creator Exemption: elite creation volume (CREATION_VOLUME_RATIO=0.74 > 0.70) OR elite creation efficiency (CREATION_TAX=-0.152 < -0.10) → Fragility Gate EXEMPTED
+2025-12-09 10:08:14,357 - INFO - Elite Creator Exemption: elite creation volume (CREATION_VOLUME_RATIO=0.74 > 0.70) OR elite creation efficiency (CREATION_TAX=-0.152 < -0.10) → Fragility Gate EXEMPTED
+2025-12-09 10:08:14,357 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,357 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-09 10:08:14,357 - INFO -     Performance Score: 79.68%
+2025-12-09 10:08:14,357 - INFO -     Dependence Score: 28.55%
+2025-12-09 10:08:14,357 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-09 10:08:14,357 - INFO -     Probabilities:
+2025-12-09 10:08:14,357 - INFO -       King: 48.57%
+2025-12-09 10:08:14,357 - INFO -       Bulldozer: 31.11%
+2025-12-09 10:08:14,357 - INFO -       Sniper: 0.44%
+2025-12-09 10:08:14,357 - INFO -       Victim: 19.88%
+2025-12-09 10:08:14,357 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,357 - INFO -     ✅ PASS
+2025-12-09 10:08:14,357 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,357 - INFO - Test 20/32: Karl-Anthony Towns (2015-16)
+2025-12-09 10:08:14,357 - INFO - Category: True Negative - Empty Stats Star
+2025-12-09 10:08:14,357 - INFO - ====================================================================================================
+2025-12-09 10:08:14,357 - INFO - Context: Rookie year (25.5% Usage). High volume scorer but lacks playoff resilience.
+2025-12-09 10:08:14,357 - INFO - Mechanism: Tests model's ability to identify players with high raw stats but low stress vectors (Physicality/Creation/Leverage).
+2025-12-09 10:08:14,357 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,357 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,358 - INFO -   Actual Usage: 24.3%
+2025-12-09 10:08:14,358 - INFO - Abdication Tax detected: LEVERAGE_USG_DELTA=-0.058 < -0.05 AND LEVERAGE_TS_DELTA=0.028 <= 0.05 (Panic Abdication), star-level capped from 94.20% to 30.00%
+2025-12-09 10:08:14,359 - INFO - Abdication Tax detected: LEVERAGE_USG_DELTA=-0.058 < -0.05 AND LEVERAGE_TS_DELTA=0.028 <= 0.05 (Panic Abdication), star-level capped from 94.20% to 30.00%
+2025-12-09 10:08:14,359 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,359 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,359 - INFO -     Performance Score: 30.00%
+2025-12-09 10:08:14,359 - INFO -     Dependence Score: 66.09%
+2025-12-09 10:08:14,359 - INFO -     Risk Category: Luxury Component
+2025-12-09 10:08:14,359 - INFO -     Probabilities:
+2025-12-09 10:08:14,359 - INFO -       King: 70.59%
+2025-12-09 10:08:14,359 - INFO -       Bulldozer: 23.61%
+2025-12-09 10:08:14,359 - INFO -       Sniper: 0.39%
+2025-12-09 10:08:14,359 - INFO -       Victim: 5.41%
+2025-12-09 10:08:14,359 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,359 - INFO -     ✅ PASS
+2025-12-09 10:08:14,359 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,359 - INFO - Test 21/32: Karl-Anthony Towns (2016-17)
+2025-12-09 10:08:14,359 - INFO - Category: True Negative - Empty Stats Star
+2025-12-09 10:08:14,359 - INFO - ====================================================================================================
+2025-12-09 10:08:14,359 - INFO - Context: Age 21. High usage scorer (28.1%) but playoff struggles.
+2025-12-09 10:08:14,359 - INFO - Mechanism: Persistent lack of playoff resilience despite elite regular season production.
+2025-12-09 10:08:14,359 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,359 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,360 - INFO -   Actual Usage: 27.1%
+2025-12-09 10:08:14,360 - INFO - Compound Fragility Gate applied: CREATION_TAX=-0.141 < -0.10 AND LEVERAGE_TS_DELTA=-0.052 < -0.05 (compound fragility), star-level capped from 72.95% to 0.00%
+2025-12-09 10:08:14,361 - INFO - Compound Fragility Gate applied: CREATION_TAX=-0.141 < -0.10 AND LEVERAGE_TS_DELTA=-0.052 < -0.05 (compound fragility), star-level capped from 72.95% to 0.00%
+2025-12-09 10:08:14,361 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,361 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,361 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,361 - INFO -     Dependence Score: 62.40%
+2025-12-09 10:08:14,361 - INFO -     Risk Category: Avoid
+2025-12-09 10:08:14,361 - INFO -     Probabilities:
+2025-12-09 10:08:14,361 - INFO -       King: 36.13%
+2025-12-09 10:08:14,361 - INFO -       Bulldozer: 36.82%
+2025-12-09 10:08:14,361 - INFO -       Sniper: 0.47%
+2025-12-09 10:08:14,361 - INFO -       Victim: 26.59%
+2025-12-09 10:08:14,361 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,361 - INFO -     ✅ PASS
+2025-12-09 10:08:14,361 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,361 - INFO - Test 22/32: Karl-Anthony Towns (2017-18)
+2025-12-09 10:08:14,361 - INFO - Category: True Negative - Empty Stats Star
+2025-12-09 10:08:14,361 - INFO - ====================================================================================================
+2025-12-09 10:08:14,361 - INFO - Context: Age 22. All-Star but playoff performance doesn't match regular season.
+2025-12-09 10:08:14,361 - INFO - Mechanism: Model should identify lack of stress vectors needed for playoff success.
+2025-12-09 10:08:14,361 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,361 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,361 - INFO -   Actual Usage: 22.5%
+2025-12-09 10:08:14,362 - INFO - Bag Check Gate applied: Self-created freq 0.0909 < 0.10, star-level capped from 64.89% to 30.00%. Reason: Explicit: ISO=0.091, PNR=0.000
+2025-12-09 10:08:14,362 - INFO - Abdication Tax detected: LEVERAGE_USG_DELTA=-0.081 < -0.05 AND LEVERAGE_TS_DELTA=-0.132 <= 0.05 (Panic Abdication), star-level capped from 30.00% to 30.00%
+2025-12-09 10:08:14,362 - INFO - Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.132 < -0.10 (catastrophic clutch collapse), star-level capped from 30.00% to 0.00%
+2025-12-09 10:08:14,362 - INFO - Creation Fragility Gate applied: CREATION_TAX=-0.200 < -0.15 (severe efficiency drop in creation), star-level capped from 0.00% to 0.00%
+2025-12-09 10:08:14,362 - INFO - Compound Fragility Gate applied: CREATION_TAX=-0.200 < -0.10 AND LEVERAGE_TS_DELTA=-0.132 < -0.05 (compound fragility), star-level capped from 0.00% to 0.00%
+2025-12-09 10:08:14,363 - INFO - Bag Check Gate applied: Self-created freq 0.0909 < 0.10, star-level capped from 64.89% to 30.00%. Reason: Explicit: ISO=0.091, PNR=0.000
+2025-12-09 10:08:14,363 - INFO - Abdication Tax detected: LEVERAGE_USG_DELTA=-0.081 < -0.05 AND LEVERAGE_TS_DELTA=-0.132 <= 0.05 (Panic Abdication), star-level capped from 30.00% to 30.00%
+2025-12-09 10:08:14,363 - INFO - Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.132 < -0.10 (catastrophic clutch collapse), star-level capped from 30.00% to 0.00%
+2025-12-09 10:08:14,363 - INFO - Creation Fragility Gate applied: CREATION_TAX=-0.200 < -0.15 (severe efficiency drop in creation), star-level capped from 0.00% to 0.00%
+2025-12-09 10:08:14,363 - INFO - Compound Fragility Gate applied: CREATION_TAX=-0.200 < -0.10 AND LEVERAGE_TS_DELTA=-0.132 < -0.05 (compound fragility), star-level capped from 0.00% to 0.00%
+2025-12-09 10:08:14,363 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,363 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,363 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,363 - INFO -     Dependence Score: 65.31%
+2025-12-09 10:08:14,363 - INFO -     Risk Category: Avoid
+2025-12-09 10:08:14,363 - INFO -     Probabilities:
+2025-12-09 10:08:14,363 - INFO -       King: 24.98%
+2025-12-09 10:08:14,363 - INFO -       Bulldozer: 39.92%
+2025-12-09 10:08:14,363 - INFO -       Sniper: 0.49%
+2025-12-09 10:08:14,363 - INFO -       Victim: 34.61%
+2025-12-09 10:08:14,363 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,363 - INFO -     ✅ PASS
+2025-12-09 10:08:14,363 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,363 - INFO - Test 23/32: Karl-Anthony Towns (2018-19)
+2025-12-09 10:08:14,363 - INFO - Category: True Negative - Empty Stats Star
+2025-12-09 10:08:14,363 - INFO - ====================================================================================================
+2025-12-09 10:08:14,363 - INFO - Context: Age 23. High volume scorer but playoff fragility persists.
+2025-12-09 10:08:14,363 - INFO - Mechanism: Tests consistency - same flaws across multiple seasons.
+2025-12-09 10:08:14,363 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,363 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,364 - INFO -   Actual Usage: 28.0%
+2025-12-09 10:08:14,364 - INFO - Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.119 < -0.10 (catastrophic clutch collapse), star-level capped from 68.70% to 0.00%
+2025-12-09 10:08:14,364 - INFO - Replacement Level Creator Gate applied: USG_PCT=28.0% > 25% AND SHOT_QUALITY_GENERATION_DELTA=-0.1412 < -0.05 (high usage + negative delta = replacement level), star-level capped from 0.00% to 0.00%
+2025-12-09 10:08:14,365 - INFO - Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.119 < -0.10 (catastrophic clutch collapse), star-level capped from 68.70% to 0.00%
+2025-12-09 10:08:14,365 - INFO - Replacement Level Creator Gate applied: USG_PCT=28.0% > 25% AND SHOT_QUALITY_GENERATION_DELTA=-0.1412 < -0.05 (high usage + negative delta = replacement level), star-level capped from 0.00% to 0.00%
+2025-12-09 10:08:14,365 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,365 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,365 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,365 - INFO -     Dependence Score: 61.97%
+2025-12-09 10:08:14,365 - INFO -     Risk Category: Avoid
+2025-12-09 10:08:14,365 - INFO -     Probabilities:
+2025-12-09 10:08:14,365 - INFO -       King: 22.26%
+2025-12-09 10:08:14,365 - INFO -       Bulldozer: 46.44%
+2025-12-09 10:08:14,365 - INFO -       Sniper: 0.21%
+2025-12-09 10:08:14,365 - INFO -       Victim: 31.10%
+2025-12-09 10:08:14,365 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,365 - INFO -     ✅ PASS
+2025-12-09 10:08:14,365 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,365 - INFO - Test 24/32: Karl-Anthony Towns (2019-20)
+2025-12-09 10:08:14,365 - INFO - Category: True Negative - Empty Stats Star
+2025-12-09 10:08:14,365 - INFO - ====================================================================================================
+2025-12-09 10:08:14,365 - INFO - Context: Age 24. Elite regular season stats but playoff struggles continue.
+2025-12-09 10:08:14,365 - INFO - Mechanism: Model should consistently identify lack of playoff resilience.
+2025-12-09 10:08:14,365 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,365 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,366 - INFO -   Actual Usage: 27.8%
+2025-12-09 10:08:14,366 - INFO - Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.108 < -0.10 (catastrophic clutch collapse), star-level capped from 85.89% to 0.00%
+2025-12-09 10:08:14,366 - INFO - Creation Fragility Gate applied: CREATION_TAX=-0.156 < -0.15 (severe efficiency drop in creation), star-level capped from 0.00% to 0.00%
+2025-12-09 10:08:14,366 - INFO - Compound Fragility Gate applied: CREATION_TAX=-0.156 < -0.10 AND LEVERAGE_TS_DELTA=-0.108 < -0.05 (compound fragility), star-level capped from 0.00% to 0.00%
+2025-12-09 10:08:14,367 - INFO - Clutch Fragility Gate applied: LEVERAGE_TS_DELTA=-0.108 < -0.10 (catastrophic clutch collapse), star-level capped from 85.89% to 0.00%
+2025-12-09 10:08:14,367 - INFO - Creation Fragility Gate applied: CREATION_TAX=-0.156 < -0.15 (severe efficiency drop in creation), star-level capped from 0.00% to 0.00%
+2025-12-09 10:08:14,367 - INFO - Compound Fragility Gate applied: CREATION_TAX=-0.156 < -0.10 AND LEVERAGE_TS_DELTA=-0.108 < -0.05 (compound fragility), star-level capped from 0.00% to 0.00%
+2025-12-09 10:08:14,367 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,367 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,367 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,367 - INFO -     Dependence Score: 62.95%
+2025-12-09 10:08:14,367 - INFO -     Risk Category: Avoid
+2025-12-09 10:08:14,367 - INFO -     Probabilities:
+2025-12-09 10:08:14,367 - INFO -       King: 59.86%
+2025-12-09 10:08:14,367 - INFO -       Bulldozer: 26.02%
+2025-12-09 10:08:14,367 - INFO -       Sniper: 0.29%
+2025-12-09 10:08:14,367 - INFO -       Victim: 13.82%
+2025-12-09 10:08:14,367 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,367 - INFO -     ✅ PASS
+2025-12-09 10:08:14,367 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,367 - INFO - Test 25/32: Karl-Anthony Towns (2020-21)
+2025-12-09 10:08:14,367 - INFO - Category: True Negative - Empty Stats Star
+2025-12-09 10:08:14,367 - INFO - ====================================================================================================
+2025-12-09 10:08:14,367 - INFO - Context: Age 25. High usage scorer but playoff performance gap remains.
+2025-12-09 10:08:14,367 - INFO - Mechanism: Final pre-age-25 season. Tests model's ability to identify persistent patterns.
+2025-12-09 10:08:14,367 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,367 - INFO - Test Usage: 28.0%
+2025-12-09 10:08:14,367 - INFO -   Actual Usage: 28.6%
+2025-12-09 10:08:14,368 - INFO - Creation Fragility Gate applied: CREATION_TAX=-0.200 < -0.15 (severe efficiency drop in creation), star-level capped from 59.68% to 0.00%
+2025-12-09 10:08:14,369 - INFO - Creation Fragility Gate applied: CREATION_TAX=-0.200 < -0.15 (severe efficiency drop in creation), star-level capped from 59.68% to 0.00%
+2025-12-09 10:08:14,369 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,369 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,369 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,369 - INFO -     Dependence Score: 59.27%
+2025-12-09 10:08:14,369 - INFO -     Risk Category: Avoid
+2025-12-09 10:08:14,369 - INFO -     Probabilities:
+2025-12-09 10:08:14,369 - INFO -       King: 25.60%
+2025-12-09 10:08:14,369 - INFO -       Bulldozer: 34.08%
+2025-12-09 10:08:14,369 - INFO -       Sniper: 0.27%
+2025-12-09 10:08:14,369 - INFO -       Victim: 40.05%
+2025-12-09 10:08:14,369 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,369 - INFO -     ✅ PASS
+2025-12-09 10:08:14,369 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,369 - INFO - Test 26/32: Markelle Fultz (2017-18)
+2025-12-09 10:08:14,369 - INFO - Category: True Negative - Draft Bust
+2025-12-09 10:08:14,369 - INFO - ====================================================================================================
+2025-12-09 10:08:14,369 - INFO - Context: Rookie year (19.5% Usage). #1 overall pick with shooting yips.
+2025-12-09 10:08:14,369 - INFO - Mechanism: Tests model's ability to identify fatal flaws (shooting, creation) even in high draft picks.
+2025-12-09 10:08:14,369 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,369 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,369 - INFO -   Actual Usage: 21.8%
+2025-12-09 10:08:14,370 - INFO - Inefficiency Gate applied: EFG_ISO_WEIGHTED=0.3596 (below 25th percentile) → star-level capped from 53.89% to 40.00% (uniformly inefficient, not resilient)
+2025-12-09 10:08:14,370 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 40.00% to 30.00%
+2025-12-09 10:08:14,370 - INFO - Data Completeness Gate applied: 2/6 features present (33.3% < 67%), star-level capped from 30.00% to 30.00%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA, RS_PRESSURE_APPETITE, RS_PRESSURE_RESILIENCE
+2025-12-09 10:08:14,370 - INFO - Sample Size Gate applied: insufficient pressure shots (NaN < 50), insufficient clutch minutes (NaN < 15), star-level capped from 30.00% to 30.00%
+2025-12-09 10:08:14,370 - INFO - Inefficiency Gate applied: EFG_ISO_WEIGHTED=0.3596 (below 25th percentile) → star-level capped from 53.89% to 40.00% (uniformly inefficient, not resilient)
+2025-12-09 10:08:14,370 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 40.00% to 30.00%
+2025-12-09 10:08:14,370 - INFO - Data Completeness Gate applied: 2/6 features present (33.3% < 67%), star-level capped from 30.00% to 30.00%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA, RS_PRESSURE_APPETITE, RS_PRESSURE_RESILIENCE
+2025-12-09 10:08:14,371 - INFO - Sample Size Gate applied: insufficient pressure shots (NaN < 50), insufficient clutch minutes (NaN < 15), star-level capped from 30.00% to 30.00%
+2025-12-09 10:08:14,371 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,371 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,371 - INFO -     Performance Score: 30.00%
+2025-12-09 10:08:14,371 - INFO -     Dependence Score: nan%
+2025-12-09 10:08:14,371 - INFO -     Risk Category: Moderate Performance, Moderate Dependence
+2025-12-09 10:08:14,371 - INFO -     Probabilities:
+2025-12-09 10:08:14,371 - INFO -       King: 49.30%
+2025-12-09 10:08:14,371 - INFO -       Bulldozer: 4.59%
+2025-12-09 10:08:14,371 - INFO -       Sniper: 2.29%
+2025-12-09 10:08:14,371 - INFO -       Victim: 43.82%
+2025-12-09 10:08:14,371 - INFO -     Confidence Flags: Missing LEVERAGE_TS_DELTA, Missing LEVERAGE_USG_DELTA, Missing RS_PRESSURE_APPETITE, Missing RS_LATE_CLOCK_PRESSURE_RESILIENCE
+2025-12-09 10:08:14,371 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,371 - INFO -     ✅ PASS
+2025-12-09 10:08:14,371 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,371 - INFO - Test 27/32: Markelle Fultz (2018-19)
+2025-12-09 10:08:14,371 - INFO - Category: True Negative - Draft Bust
+2025-12-09 10:08:14,371 - INFO - ====================================================================================================
+2025-12-09 10:08:14,371 - INFO - Context: Age 20. Continued shooting struggles and injury issues.
+2025-12-09 10:08:14,371 - INFO - Mechanism: Persistent lack of creation tax viability and shooting ability.
+2025-12-09 10:08:14,371 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,371 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,371 - INFO -   Actual Usage: 18.9%
+2025-12-09 10:08:14,372 - INFO - Inefficiency Gate applied: EFG_ISO_WEIGHTED=0.4285 (below median with near-zero CREATION_TAX (uniformly mediocre)) → star-level capped from 26.08% to 26.08% (uniformly inefficient, not resilient)
+2025-12-09 10:08:14,372 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 26.08% to 26.08%
+2025-12-09 10:08:14,372 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 26.08% to 26.08%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-09 10:08:14,372 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 26.08% to 26.08%
+2025-12-09 10:08:14,372 - INFO - Low-Usage Noise Gate applied: USG_PCT=18.9% < 22% AND abs(CREATION_TAX)=0.012 < 0.05 (ambiguous signal = noise), star-level capped from 26.08% to 0.00%
+2025-12-09 10:08:14,372 - INFO - Inefficiency Gate applied: EFG_ISO_WEIGHTED=0.4285 (below median with near-zero CREATION_TAX (uniformly mediocre)) → star-level capped from 26.08% to 26.08% (uniformly inefficient, not resilient)
+2025-12-09 10:08:14,372 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 26.08% to 26.08%
+2025-12-09 10:08:14,372 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 26.08% to 26.08%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-09 10:08:14,372 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 26.08% to 26.08%
+2025-12-09 10:08:14,372 - INFO - Low-Usage Noise Gate applied: USG_PCT=18.9% < 22% AND abs(CREATION_TAX)=0.012 < 0.05 (ambiguous signal = noise), star-level capped from 26.08% to 0.00%
+2025-12-09 10:08:14,373 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,373 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,373 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,373 - INFO -     Dependence Score: 27.88%
+2025-12-09 10:08:14,373 - INFO -     Risk Category: Depth
+2025-12-09 10:08:14,373 - INFO -     Probabilities:
+2025-12-09 10:08:14,373 - INFO -       King: 17.54%
+2025-12-09 10:08:14,373 - INFO -       Bulldozer: 8.53%
+2025-12-09 10:08:14,373 - INFO -       Sniper: 3.38%
+2025-12-09 10:08:14,373 - INFO -       Victim: 70.54%
+2025-12-09 10:08:14,373 - INFO -     Confidence Flags: Missing LEVERAGE_TS_DELTA, Missing LEVERAGE_USG_DELTA
+2025-12-09 10:08:14,373 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,373 - INFO -     ✅ PASS
+2025-12-09 10:08:14,373 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,373 - INFO - Test 28/32: Markelle Fultz (2019-20)
+2025-12-09 10:08:14,373 - INFO - Category: True Negative - Draft Bust
+2025-12-09 10:08:14,373 - INFO - ====================================================================================================
+2025-12-09 10:08:14,373 - INFO - Context: Age 21. Traded to Orlando, continued struggles.
+2025-12-09 10:08:14,373 - INFO - Mechanism: Model should identify lack of star-level potential despite draft position.
+2025-12-09 10:08:14,373 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,373 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,373 - INFO -   Actual Usage: 21.0%
+2025-12-09 10:08:14,374 - INFO - Low-Usage Noise Gate applied: USG_PCT=21.0% < 22% AND abs(CREATION_TAX)=0.007 < 0.05 (ambiguous signal = noise), star-level capped from 47.98% to 0.00%
+2025-12-09 10:08:14,374 - INFO - Low-Usage Noise Gate applied: USG_PCT=21.0% < 22% AND abs(CREATION_TAX)=0.007 < 0.05 (ambiguous signal = noise), star-level capped from 47.98% to 0.00%
+2025-12-09 10:08:14,374 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,374 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,374 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,374 - INFO -     Dependence Score: 27.19%
+2025-12-09 10:08:14,374 - INFO -     Risk Category: Depth
+2025-12-09 10:08:14,374 - INFO -     Probabilities:
+2025-12-09 10:08:14,374 - INFO -       King: 45.87%
+2025-12-09 10:08:14,374 - INFO -       Bulldozer: 2.11%
+2025-12-09 10:08:14,374 - INFO -       Sniper: 1.75%
+2025-12-09 10:08:14,374 - INFO -       Victim: 50.26%
+2025-12-09 10:08:14,374 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,374 - INFO -     ✅ PASS
+2025-12-09 10:08:14,374 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,374 - INFO - Test 29/32: Markelle Fultz (2020-21)
+2025-12-09 10:08:14,374 - INFO - Category: True Negative - Draft Bust
+2025-12-09 10:08:14,374 - INFO - ====================================================================================================
+2025-12-09 10:08:14,375 - INFO - Context: Age 22. ACL injury, limited playing time.
+2025-12-09 10:08:14,375 - INFO - Mechanism: Tests model's handling of injury-affected seasons.
+2025-12-09 10:08:14,375 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,375 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,375 - INFO -   Actual Usage: 25.0%
+2025-12-09 10:08:14,376 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 45.74% to 30.00%
+2025-12-09 10:08:14,376 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 30.00% to 30.00%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-09 10:08:14,376 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 30.00% to 30.00%
+2025-12-09 10:08:14,376 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 45.74% to 30.00%
+2025-12-09 10:08:14,376 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 30.00% to 30.00%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-09 10:08:14,376 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 30.00% to 30.00%
+2025-12-09 10:08:14,376 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,376 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,376 - INFO -     Performance Score: 30.00%
+2025-12-09 10:08:14,376 - INFO -     Dependence Score: 17.06%
+2025-12-09 10:08:14,376 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-09 10:08:14,376 - INFO -     Probabilities:
+2025-12-09 10:08:14,376 - INFO -       King: 44.92%
+2025-12-09 10:08:14,376 - INFO -       Bulldozer: 0.82%
+2025-12-09 10:08:14,376 - INFO -       Sniper: 0.63%
+2025-12-09 10:08:14,376 - INFO -       Victim: 53.62%
+2025-12-09 10:08:14,376 - INFO -     Confidence Flags: Missing LEVERAGE_TS_DELTA, Missing LEVERAGE_USG_DELTA
+2025-12-09 10:08:14,376 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,376 - INFO -     ✅ PASS
+2025-12-09 10:08:14,376 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,376 - INFO - Test 30/32: Markelle Fultz (2021-22)
+2025-12-09 10:08:14,376 - INFO - Category: True Negative - Draft Bust
+2025-12-09 10:08:14,376 - INFO - ====================================================================================================
+2025-12-09 10:08:14,376 - INFO - Context: Age 23. Return from injury, role player production.
+2025-12-09 10:08:14,376 - INFO - Mechanism: Model should identify lack of star-level potential.
+2025-12-09 10:08:14,376 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,376 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,377 - INFO -   Actual Usage: 26.5%
+2025-12-09 10:08:14,378 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 77.17% to 30.00%
+2025-12-09 10:08:14,378 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 30.00% to 30.00%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-09 10:08:14,378 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 30.00% to 30.00%
+2025-12-09 10:08:14,378 - INFO - Leverage Data Penalty applied: missing leverage data, insufficient clutch minutes (NaN < 15), star-level capped from 77.17% to 30.00%
+2025-12-09 10:08:14,378 - INFO - Data Completeness Gate applied: 4/6 features present (66.7% < 67%), star-level capped from 30.00% to 30.00%. Missing: LEVERAGE_USG_DELTA, LEVERAGE_TS_DELTA
+2025-12-09 10:08:14,378 - INFO - Sample Size Gate applied: insufficient clutch minutes (NaN < 15), star-level capped from 30.00% to 30.00%
+2025-12-09 10:08:14,378 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,378 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,378 - INFO -     Performance Score: 30.00%
+2025-12-09 10:08:14,378 - INFO -     Dependence Score: 15.77%
+2025-12-09 10:08:14,378 - INFO -     Risk Category: Moderate Performance, Low Dependence
+2025-12-09 10:08:14,378 - INFO -     Probabilities:
+2025-12-09 10:08:14,378 - INFO -       King: 76.17%
+2025-12-09 10:08:14,378 - INFO -       Bulldozer: 0.99%
+2025-12-09 10:08:14,378 - INFO -       Sniper: 1.34%
+2025-12-09 10:08:14,378 - INFO -       Victim: 21.49%
+2025-12-09 10:08:14,378 - INFO -     Confidence Flags: Missing LEVERAGE_TS_DELTA, Missing LEVERAGE_USG_DELTA
+2025-12-09 10:08:14,378 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,378 - INFO -     ✅ PASS
+2025-12-09 10:08:14,378 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,378 - INFO - Test 31/32: Markelle Fultz (2022-23)
+2025-12-09 10:08:14,378 - INFO - Category: True Negative - Draft Bust
+2025-12-09 10:08:14,378 - INFO - ====================================================================================================
+2025-12-09 10:08:14,378 - INFO - Context: Age 24. Solid role player but not star-level.
+2025-12-09 10:08:14,378 - INFO - Mechanism: Tests consistency - model should maintain low star-level prediction.
+2025-12-09 10:08:14,378 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,378 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,379 - INFO -   Actual Usage: 20.8%
+2025-12-09 10:08:14,379 - INFO - Low-Usage Noise Gate applied: USG_PCT=20.8% < 22% AND abs(CREATION_TAX)=0.033 < 0.05 (ambiguous signal = noise), star-level capped from 62.74% to 0.00%
+2025-12-09 10:08:14,380 - INFO - Low-Usage Noise Gate applied: USG_PCT=20.8% < 22% AND abs(CREATION_TAX)=0.033 < 0.05 (ambiguous signal = noise), star-level capped from 62.74% to 0.00%
+2025-12-09 10:08:14,380 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,380 - INFO -     Predicted Archetype: Victim (Fragile Role)
+2025-12-09 10:08:14,380 - INFO -     Performance Score: 0.00%
+2025-12-09 10:08:14,380 - INFO -     Dependence Score: 27.25%
+2025-12-09 10:08:14,380 - INFO -     Risk Category: Depth
+2025-12-09 10:08:14,380 - INFO -     Probabilities:
+2025-12-09 10:08:14,380 - INFO -       King: 61.77%
+2025-12-09 10:08:14,380 - INFO -       Bulldozer: 0.97%
+2025-12-09 10:08:14,380 - INFO -       Sniper: 0.26%
+2025-12-09 10:08:14,380 - INFO -       Victim: 37.00%
+2025-12-09 10:08:14,380 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,380 - INFO -     ✅ PASS
+2025-12-09 10:08:14,380 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,380 - INFO - Test 32/32: Markelle Fultz (2023-24)
+2025-12-09 10:08:14,380 - INFO - Category: True Negative - Draft Bust
+2025-12-09 10:08:14,380 - INFO - ====================================================================================================
+2025-12-09 10:08:14,380 - INFO - Context: Age 25. Role player, never reached star potential.
+2025-12-09 10:08:14,380 - INFO - Mechanism: Final age-25 season. Tests model's ability to identify persistent lack of star traits.
+2025-12-09 10:08:14,380 - INFO - Expected: Victim (Star-Level: Low)
+2025-12-09 10:08:14,380 - INFO - Test Usage: 25.0%
+2025-12-09 10:08:14,381 - INFO -   Actual Usage: 18.2%
+2025-12-09 10:08:14,382 - INFO - 
+  Prediction Results (2D Risk Matrix):
+2025-12-09 10:08:14,382 - INFO -     Predicted Archetype: King (Resilient Star)
+2025-12-09 10:08:14,382 - INFO -     Performance Score: 78.84%
+2025-12-09 10:08:14,382 - INFO -     Dependence Score: 26.60%
+2025-12-09 10:08:14,382 - INFO -     Risk Category: Franchise Cornerstone
+2025-12-09 10:08:14,382 - INFO -     Probabilities:
+2025-12-09 10:08:14,382 - INFO -       King: 78.38%
+2025-12-09 10:08:14,382 - INFO -       Bulldozer: 0.46%
+2025-12-09 10:08:14,382 - INFO -       Sniper: 0.38%
+2025-12-09 10:08:14,382 - INFO -       Victim: 20.77%
+2025-12-09 10:08:14,382 - INFO - 
+  Evaluation:
+2025-12-09 10:08:14,382 - INFO -     ❌ FAIL
+2025-12-09 10:08:14,382 - INFO -       - Expected low performance (<55%), got 78.84%
+2025-12-09 10:08:14,382 - INFO -       - Archetype mismatch: expected Victim, got King (Resilient Star)
+2025-12-09 10:08:14,382 - INFO - 
+====================================================================================================
+2025-12-09 10:08:14,382 - INFO - SUMMARY REPORT
+2025-12-09 10:08:14,382 - INFO - ====================================================================================================
+2025-12-09 10:08:14,382 - INFO - Total Test Cases: 32
+2025-12-09 10:08:14,382 - INFO - Data Found: 32
+2025-12-09 10:08:14,382 - INFO - Passed: 31
+2025-12-09 10:08:14,382 - INFO - Failed: 1
+2025-12-09 10:08:14,382 - INFO - Pass Rate: 96.9%
+2025-12-09 10:08:14,382 - INFO - 
+By Category:
+2025-12-09 10:08:14,382 - INFO -   True Positive: 9/9 passed (100.0%)
+2025-12-09 10:08:14,382 - INFO -   False Positive: 5/5 passed (100.0%)
+2025-12-09 10:08:14,382 - INFO -   True Negative: 16/17 passed (94.1%)
+2025-12-09 10:08:14,382 - INFO -   System Player: 1/1 passed (100.0%)
+2025-12-09 10:08:14,384 - INFO - 
+Detailed results saved to: results/latent_star_test_cases_results.csv
+2025-12-09 10:08:14,386 - INFO - Markdown report saved to: results/latent_star_test_cases_report.md

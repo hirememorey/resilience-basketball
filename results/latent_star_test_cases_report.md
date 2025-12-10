@@ -1,14 +1,14 @@
 # Latent Star Detection: Critical Case Studies Test Report
 
-**Date**: 2025-12-09 11:27:22
+**Date**: 2025-12-09 19:54:57
 
 ## Executive Summary
 
 - **Total Test Cases**: 40
 - **Data Found**: 40
-- **Passed**: 31
-- **Failed**: 9
-- **Pass Rate**: 77.5%
+- **Passed**: 30
+- **Failed**: 10
+- **Pass Rate**: 75.0%
 
 ## Results by Category
 
@@ -32,9 +32,9 @@
 
 ### System Player
 - **Total**: 1
-- **Passed**: 1
-- **Failed**: 0
-- **Pass Rate**: 100.0%
+- **Passed**: 0
+- **Failed**: 1
+- **Pass Rate**: 0.0%
 
 ## Detailed Results
 
@@ -64,7 +64,7 @@
 | 22 | Ben Simmons | 2017-18 | True Negative - Fragile Star | Victim (Low) | King (Resilient Star) | 54.63% | 22.68% | Moderate Performance, Low Dependence | ✅ PASS |
 | 23 | Ben Simmons | 2018-19 | True Negative - Fragile Star | Victim (Low) | Victim (Fragile Role) | 30.00% | 33.87% | Moderate Performance, Low Dependence | ✅ PASS |
 | 24 | Ben Simmons | 2020-21 | True Negative - Fragile Star | Victim (Low) | Victim (Fragile Role) | 46.88% | 34.30% | Moderate Performance, Low Dependence | ✅ PASS |
-| 25 | Tyus Jones | 2021-22 | System Player - Ceiling Test | Sniper (Low) | Victim (Fragile Role) | 0.00% | 32.41% | Depth | ✅ PASS |
+| 25 | Tyus Jones | 2021-22 | System Player - Ceiling Test | Sniper (Low) | King (Resilient Star) | 59.73% | 32.41% | Moderate Performance, Low Dependence | ❌ FAIL |
 | 26 | Domantas Sabonis | 2021-22 | True Negative - Comparison Case | Victim (Low) [Luxury Component] | Bulldozer (Fragile Star) | 74.52% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ❌ FAIL |
 | 27 | Tyrese Haliburton | 2021-22 | True Positive - Comparison Case | Bulldozer (High) [Franchise Cornerstone] | King (Resilient Star) | 79.68% | 28.57% | Franchise Cornerstone | ✅ PASS |
 | 28 | Karl-Anthony Towns | 2015-16 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 30.00% | 40.00% | Moderate Performance, Moderate Dependence | ✅ PASS |
@@ -92,6 +92,8 @@
 **D'Angelo Russell (2018-19)**: Expected low performance (<55%), got 96.57%; Archetype mismatch: expected Victim, got King (Resilient Star)
 
 **Julius Randle (2020-21)**: Expected low performance (<55%), got 88.05%; Archetype mismatch: expected Victim, got King (Resilient Star)
+
+**Tyus Jones (2021-22)**: Expected low performance (<55%), got 59.73%; Archetype mismatch: expected Sniper, got King (Resilient Star)
 
 **Domantas Sabonis (2021-22)**: Expected low performance (<55%), got 74.52%; Expected risk category 'Luxury Component', got 'Franchise Cornerstone (Moderate Dependence)'; Risk category matches but performance doesn't: 74.52%
 

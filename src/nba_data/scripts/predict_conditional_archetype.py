@@ -1150,6 +1150,153 @@ class ConditionalArchetypePredictor:
         # Calculate star-level potential (King + Bulldozer)
         star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
         
+        # ====================================================================================================
+        # TIER 1: FATAL FLAW GATES (Execute FIRST - Non-Negotiable)
+        # These gates catch behavioral failures the model cannot learn.
+        # Principle: Fatal Flaws > Elite Traits (Hierarchy of Constraints)
+        # ====================================================================================================
+        
+        # Initialize fatal flaw gate flags
+        clutch_fragility_gate_applied = False
+        abdication_gate_applied = False
+        creation_fragility_gate_applied = False
+        
+        # HIERARCHY IMPLEMENTATION: Clutch Fragility Gate (Priority: Highest - Non-Negotiable)
+        # Principle: Resilience = maintaining output under pressure. If you collapse in clutch (10%+ efficiency drop),
+        # you are physically disqualified from "King" status. This is a definitional constraint.
+        # NO EXEMPTIONS - This is an absolute fatal flaw.
+        if apply_phase3_fixes and apply_hard_gates:
+            leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', None)
+            if pd.notna(leverage_ts_delta) and leverage_ts_delta < -0.10:
+                original_star_level = star_level_potential
+                # Cap at 30% (Sniper ceiling) - cannot be a resilient star if you collapse in clutch
+                star_level_potential = min(star_level_potential, 0.30)
+                clutch_fragility_gate_applied = True
+                
+                # Redistribute probabilities if capped
+                if star_level_potential <= 0.30:
+                    prob_dict['King'] = 0.0
+                    prob_dict['Bulldozer'] = 0.0
+                    prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                    prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                    # Recalculate star_level_potential from redistributed probabilities
+                    star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
+                    # Update predicted archetype if needed
+                    if original_star_level > 0.30:
+                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                
+                logger.info(f"[FATAL FLAW] Clutch Fragility Gate applied: LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} < -0.10 (catastrophic clutch collapse), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+        
+        # HIERARCHY IMPLEMENTATION: Abdication Gate (Priority: High - Non-Negotiable)
+        # Principle: Abdication (usage drops in leverage situations) is a behavioral failure.
+        # Only exemption: Smart Deference (efficiency spikes when usage drops)
+        # Extracted from Negative Signal Gate for hierarchy implementation
+        if apply_phase3_fixes and apply_hard_gates:
+            leverage_usg_delta = player_data.get('LEVERAGE_USG_DELTA', None)
+            leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', None)
+            rs_usg_pct = player_data.get('USG_PCT', None)
+            
+            if pd.notna(leverage_usg_delta) and leverage_usg_delta < -0.05:
+                # Check High-Usage Immunity first
+                # A player carrying 35% usage cannot scale up further - dropping to 27% is still elite usage, not passivity
+                has_high_usage_immunity = False
+                if pd.notna(rs_usg_pct) and rs_usg_pct > 0.30:
+                    # High-usage player: Only trigger if drop is massive (> -10%)
+                    # At 35% usage, dropping to 25% is still elite - not abdication
+                    if leverage_usg_delta > -0.10:
+                        has_high_usage_immunity = True
+                        logger.info(f"[FATAL FLAW] Abdication Gate EXEMPTED: High-Usage Immunity (RS_USG_PCT={rs_usg_pct:.1%} > 30%, LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} > -0.10)")
+                
+                if not has_high_usage_immunity:
+                    # Check if efficiency spikes (Smart Deference) or stays flat/drops (Panic Abdication)
+                    efficiency_spikes = pd.notna(leverage_ts_delta) and leverage_ts_delta > 0.05
+                    
+                    if not efficiency_spikes:
+                        # Panic Abdication: Usage drops AND efficiency doesn't spike → Penalize
+                        original_star_level = star_level_potential
+                        # Hard filter: Cap at 30% (Sniper ceiling)
+                        star_level_potential = min(star_level_potential, 0.30)
+                        abdication_gate_applied = True
+                        
+                        # Redistribute probabilities if capped
+                        if star_level_potential <= 0.30:
+                            prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                            prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                            prob_dict['King'] = 0.0
+                            prob_dict['Bulldozer'] = 0.0
+                            # Update predicted archetype if needed
+                            if original_star_level > 0.30:
+                                pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                        
+                        leverage_ts_str = f"{leverage_ts_delta:.3f}" if pd.notna(leverage_ts_delta) else "N/A"
+                        logger.info(f"[FATAL FLAW] Abdication Gate applied: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 AND LEVERAGE_TS_DELTA={leverage_ts_str} <= 0.05 (Panic Abdication), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                    else:
+                        # Smart Deference: Usage drops BUT efficiency spikes → Exempt
+                        logger.info(f"[FATAL FLAW] Abdication Gate EXEMPTED: Smart Deference (LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 BUT LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} > 0.05)")
+        
+        # HIERARCHY IMPLEMENTATION: Creation Fragility Gate (Priority: High - Non-Negotiable)
+        # Principle: If efficiency drops severely when creating own shot (CREATION_TAX < -0.15), you cannot be a "King".
+        # This is a fatal flaw for a primary initiator - you must be able to create efficiently.
+        # EXCEPTIONS: Elite creators (high volume OR elite efficiency) OR Elite Rim Force (bigs)
+        if apply_phase3_fixes and apply_hard_gates:
+            creation_tax = player_data.get('CREATION_TAX', None)
+            creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', None)
+            
+            # Check if player qualifies for Elite Creator exemption
+            # Exemption: High creation volume (>65%) OR elite creation efficiency (< -0.10)
+            # NOTE: Negative CREATION_TAX means efficiency DROPS, so CREATION_TAX < -0.10 means MORE efficient in creation (good)
+            has_elite_creator_exemption = False
+            if pd.notna(creation_vol_ratio):
+                has_elite_creation_volume = creation_vol_ratio > 0.65
+                if has_elite_creation_volume:
+                    has_elite_creator_exemption = True
+            
+            # Also check for elite creation efficiency (CREATION_TAX < -0.10 = more efficient in creation)
+            if pd.notna(creation_tax) and creation_tax < -0.10:
+                has_elite_creator_exemption = True
+            
+            # Elite Rim Force Exemption: Bigs with high rim pressure have a floor (fouls, rebounds)
+            rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+            has_elite_rim_force = pd.notna(rim_appetite) and rim_appetite > 0.20
+            
+            if pd.notna(creation_tax) and creation_tax < -0.15 and not has_elite_creator_exemption and not has_elite_rim_force:
+                # PHASE 4.4 REFINEMENT: Rookie/Young Player Exemption
+                # Rookies often have negative creation tax due to learning curve, not true inefficiency
+                age = player_data.get('AGE', None)
+                is_young_player = pd.notna(age) and age < 22
+                leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', None)
+                leverage_usg_delta = player_data.get('LEVERAGE_USG_DELTA', None)
+                has_positive_leverage = (pd.notna(leverage_ts_delta) and leverage_ts_delta > 0) or (pd.notna(leverage_usg_delta) and leverage_usg_delta > 0)
+                young_player_exempt = is_young_player and has_positive_leverage
+                
+                if not young_player_exempt:
+                    original_star_level = star_level_potential
+                    # Cap at 30% (Sniper ceiling) - cannot be a star if you're inefficient at creation
+                    star_level_potential = min(star_level_potential, 0.30)
+                    creation_fragility_gate_applied = True
+                    
+                    # Redistribute probabilities if capped
+                    if star_level_potential <= 0.30:
+                        prob_dict['King'] = 0.0
+                        prob_dict['Bulldozer'] = 0.0
+                        prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
+                        prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
+                        # Recalculate star_level_potential from redistributed probabilities
+                        star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
+                        # Update predicted archetype if needed
+                        if original_star_level > 0.30:
+                            pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
+                    
+                    logger.info(f"[FATAL FLAW] Creation Fragility Gate applied: CREATION_TAX={creation_tax:.3f} < -0.15 (severe efficiency drop in creation), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+                else:
+                    logger.info(f"[FATAL FLAW] Creation Fragility Gate EXEMPTED: Young player (AGE={age:.0f} < 22) with positive leverage signals - learning curve, not true inefficiency")
+            elif has_elite_rim_force and pd.notna(creation_tax) and creation_tax < -0.15:
+                logger.info(f"[FATAL FLAW] Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax")
+        
+        # ====================================================================================================
+        # TIER 2: DATA QUALITY GATES (Execute Second)
+        # ====================================================================================================
+        
         # Inefficiency Gate: Absolute Efficiency Floor (Fixes "Low-Floor Illusion")
         # Principle: Uniformly inefficient ≠ resilient. CREATION_TAX = 0.00 can mean "no drop" 
         # (resilient) OR "equally bad at everything" (Fultz pattern). Need absolute floor.
@@ -1299,13 +1446,11 @@ class ConditionalArchetypePredictor:
         self_created_freq = None
         bag_check_reason = None
         
-        # Initialize new gate flags
+        # Initialize gate flags (fatal flaw gates initialized above in Tier 1)
         leverage_data_penalty_applied = False
         negative_signal_gate_applied = False
         data_completeness_gate_applied = False
         sample_size_gate_applied = False
-        clutch_fragility_gate_applied = False
-        creation_fragility_gate_applied = False
         compound_fragility_gate_applied = False
         low_usage_noise_gate_applied = False
         volume_creator_inefficiency_gate_applied = False
@@ -1500,49 +1645,8 @@ class ConditionalArchetypePredictor:
             if pd.notna(creation_tax) and creation_tax < -0.10:
                 negative_signals.append(f"CREATION_TAX={creation_tax:.3f}")
             
-            # Negative leverage USG delta (doesn't scale up - "Abdication Tax")
-            # PHASE 4.1 FIX: Conditional Abdication Tax - Distinguish "Panic Abdication" (Simmons) from "Smart Deference" (Oladipo)
-            # If LEVERAGE_TS_DELTA > 0.05 (elite efficiency), the usage drop is smart, not cowardly
-            # Logic: Only penalize if BOTH usage drops AND efficiency doesn't spike
-            # PHASE 4.3 FIX: High-Usage Immunity - Players with RS_USG_PCT > 30% cannot be accused of abdication
-            # A player carrying 35% usage cannot scale up further - dropping to 27% is still elite usage, not passivity
-            if pd.notna(leverage_usg_delta) and leverage_usg_delta < -0.05:
-                # Check High-Usage Immunity first
-                rs_usg_pct = player_data.get('USG_PCT', None)
-                has_high_usage_immunity = False
-                
-                if pd.notna(rs_usg_pct) and rs_usg_pct > 0.30:
-                    # High-usage player: Only trigger if drop is massive (> -10%)
-                    # At 35% usage, dropping to 25% is still elite - not abdication
-                    if leverage_usg_delta > -0.10:
-                        has_high_usage_immunity = True
-                        logger.info(f"High-Usage Immunity: RS_USG_PCT={rs_usg_pct:.1%} > 30%, LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} > -0.10 → Abdication Tax EXEMPTED (cannot scale up from {rs_usg_pct:.1%})")
-                
-                if not has_high_usage_immunity:
-                    # Check if efficiency spikes (Smart Deference) or stays flat/drops (Panic Abdication)
-                    efficiency_spikes = pd.notna(leverage_ts_delta) and leverage_ts_delta > 0.05
-                    
-                    if not efficiency_spikes:
-                        # Panic Abdication: Usage drops AND efficiency doesn't spike → Penalize
-                        original_star_level = star_level_potential
-                        # Hard filter: Cap at 30% (Sniper ceiling)
-                        star_level_potential = min(star_level_potential, 0.30)
-                        negative_signal_gate_applied = True
-                        
-                        # Redistribute probabilities if capped
-                        if star_level_potential <= 0.30:
-                            prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
-                            prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
-                            prob_dict['King'] = 0.0
-                            prob_dict['Bulldozer'] = 0.0
-                            # Update predicted archetype if needed
-                            if original_star_level > 0.30:
-                                pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
-                        
-                        logger.info(f"Abdication Tax detected: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 AND LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} <= 0.05 (Panic Abdication), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
-                    else:
-                        # Smart Deference: Usage drops BUT efficiency spikes → Exempt
-                        logger.info(f"Smart Deference detected: LEVERAGE_USG_DELTA={leverage_usg_delta:.3f} < -0.05 BUT LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} > 0.05 (efficiency spikes) → Abdication Tax EXEMPTED")
+            # NOTE: Abdication logic moved to Tier 1 (Fatal Flaw Gates) - executes first
+            # Remaining logic here handles multiple negative signals (contextual, not fatal flaw)
             
             # Negative leverage TS delta (declines in clutch)
             if pd.notna(leverage_ts_delta) and leverage_ts_delta < -0.15:
@@ -1653,94 +1757,9 @@ class ConditionalArchetypePredictor:
                     reasons.append(f"suspicious creation efficiency (CREATION_TAX={creation_tax:.3f} with usage={usage*100:.1f}% - likely small sample)")
                 logger.info(f"Sample Size Gate applied: {', '.join(reasons)}, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
         
-        # PHASE 4.4 FIX: Clutch Fragility Gate (Priority: High)
-        # Principle: Resilience = maintaining output under pressure. If you collapse in clutch (10%+ efficiency drop),
-        # you are physically disqualified from "King" status. This is a definitional constraint.
-        clutch_fragility_gate_applied = False
-        if apply_phase3_fixes and apply_hard_gates:
-            leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', None)
-            if pd.notna(leverage_ts_delta) and leverage_ts_delta < -0.10:
-                original_star_level = star_level_potential
-                # Cap at 30% (Sniper ceiling) - cannot be a resilient star if you collapse in clutch
-                star_level_potential = min(star_level_potential, 0.30)
-                clutch_fragility_gate_applied = True
-                
-                # Redistribute probabilities if capped
-                if star_level_potential <= 0.30:
-                    prob_dict['King'] = 0.0
-                    prob_dict['Bulldozer'] = 0.0
-                    prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
-                    prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
-                    # Recalculate star_level_potential from redistributed probabilities
-                    star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
-                    # Update predicted archetype if needed
-                    if original_star_level > 0.30:
-                        pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
-                
-                logger.info(f"Clutch Fragility Gate applied: LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} < -0.10 (catastrophic clutch collapse), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
+        # NOTE: Clutch Fragility Gate moved to Tier 1 (Fatal Flaw Gates) - executes first
         
-        # PHASE 4.4 FIX: Creation Fragility Gate (Priority: High)
-        # Principle: If efficiency drops severely when creating own shot (CREATION_TAX < -0.15), you cannot be a "King".
-        # This is a fatal flaw for a primary initiator - you must be able to create efficiently.
-        # EXCEPTION: Elite creators (high creation volume >70% OR elite creation efficiency < -0.10) are exempt
-        # because negative CREATION_TAX for them means they're MORE efficient in creation than overall (good thing).
-        creation_fragility_gate_applied = False
-        if apply_phase3_fixes and apply_hard_gates:
-            creation_tax = player_data.get('CREATION_TAX', None)
-            creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', None)
-            
-            # Check if player qualifies for Elite Creator exemption
-            # Exemption: High creation volume (>65%) means they can create offense even if efficiency drops
-            # Lowered threshold from 0.70 to 0.65 to catch players like Maxey (0.698) who are elite creators
-            # NOTE: Negative CREATION_TAX means efficiency DROPS, so it's NOT an exemption condition
-            has_elite_creator_exemption = False
-            if pd.notna(creation_vol_ratio):
-                has_elite_creation_volume = creation_vol_ratio > 0.65
-                if has_elite_creation_volume:
-                    has_elite_creator_exemption = True
-            
-            # FRANCHISE CORNERSTONE FIX: Rim Pressure Exemption
-            # Bigs with high rim pressure have a floor (fouls, rebounds) that offsets negative creation tax
-            # Being inefficient at creation is fatal unless you live at the rim (AD/Embiid)
-            rim_appetite = player_data.get('RS_RIM_APPETITE', None)
-            has_elite_rim_force = pd.notna(rim_appetite) and rim_appetite > 0.20
-            
-            if pd.notna(creation_tax) and creation_tax < -0.15 and not has_elite_creator_exemption and not has_elite_rim_force:
-                # PHASE 4.4 REFINEMENT: Rookie/Young Player Exemption
-                # Rookies often have negative creation tax due to learning curve, not true inefficiency
-                # Exempt players under age 22 (rookie/2nd year) if they have positive leverage signals
-                # (indicates resilience despite creation inefficiency - learning curve, not true flaw)
-                age = player_data.get('AGE', None)
-                is_young_player = pd.notna(age) and age < 22
-                leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', None)
-                leverage_usg_delta = player_data.get('LEVERAGE_USG_DELTA', None)
-                has_positive_leverage = (pd.notna(leverage_ts_delta) and leverage_ts_delta > 0) or (pd.notna(leverage_usg_delta) and leverage_usg_delta > 0)
-                young_player_exempt = is_young_player and has_positive_leverage
-                
-                if not young_player_exempt:
-                    original_star_level = star_level_potential
-                    # Cap at 30% (Sniper ceiling) - cannot be a star if you're inefficient at creation
-                    star_level_potential = min(star_level_potential, 0.30)
-                    creation_fragility_gate_applied = True
-                    
-                    # Redistribute probabilities if capped
-                    if star_level_potential <= 0.30:
-                        prob_dict['King'] = 0.0
-                        prob_dict['Bulldozer'] = 0.0
-                        prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
-                        prob_dict['Victim'] = 1.0 - prob_dict['Sniper']
-                        # Recalculate star_level_potential from redistributed probabilities
-                        star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
-                        # Update predicted archetype if needed
-                        if original_star_level > 0.30:
-                            pred_archetype = 'Sniper (Resilient Role)' if prob_dict['Sniper'] > prob_dict['Victim'] else 'Victim (Fragile Role)'
-                    
-                    logger.info(f"Creation Fragility Gate applied: CREATION_TAX={creation_tax:.3f} < -0.15 (severe efficiency drop in creation), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
-                else:
-                    if has_elite_rim_force:
-                        logger.info(f"Creation Fragility Gate EXEMPTED: Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20) - rim pressure creates floor (fouls/rebounds) that offsets negative creation tax")
-                    elif young_player_exempt:
-                        logger.info(f"Creation Fragility Gate EXEMPTED: Young player (AGE={age:.0f} < 22) with positive leverage signals - learning curve, not true inefficiency")
+        # NOTE: Creation Fragility Gate moved to Tier 1 (Fatal Flaw Gates) - executes first
         
         # PHASE 4.4 FIX: Compound Fragility Gate (Priority: High)
         # Principle: Multiple moderate negative signals compound to indicate fragility. If you have both
@@ -2215,6 +2234,20 @@ class ConditionalArchetypePredictor:
                 return "Low Performance (Dependence Unknown)"
             else:
                 return "Moderate Performance (Dependence Unknown)"
+        
+        # HIERARCHY IMPLEMENTATION: Dependence Law (Non-Negotiable Constraint)
+        # Principle: If DEPENDENCE_SCORE > 0.60, you cannot be a "Franchise Cornerstone".
+        # High dependence = not portable = not a franchise cornerstone, regardless of performance.
+        # This is a hard cap - no exemptions.
+        if dependence_score > 0.60:
+            # High dependence (>60%) = cannot be Franchise Cornerstone
+            # Categorize based on performance, but cap at "Luxury Component" for high performance
+            if performance_score >= 0.70:
+                return "Luxury Component"  # High performance but high dependence
+            elif performance_score < 0.30:
+                return "Avoid"  # Low performance + high dependence = avoid
+            else:
+                return "Luxury Component"  # Moderate performance + high dependence = luxury component
         
         # Categorize into quadrants using data-driven thresholds
         high_performance = performance_score >= 0.70

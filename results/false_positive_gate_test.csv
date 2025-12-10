@@ -1,0 +1,11 @@
+name,season,found,leverage_ts_delta,star_level,archetype,gate_applied,status
+Kevin Porter Jr.,2021-22,True,-0.08,0.5,Victim (Fragile Role),True,PASS
+Alec Burks,2015-16,True,0.0629999999999999,0.5,Victim (Fragile Role),True,PASS
+Harrison Barnes,2016-17,True,0.0559999999999999,0.5,Victim (Fragile Role),True,PASS
+Dennis Schröder,2017-18,True,0.005,0.5,Victim (Fragile Role),True,PASS
+Andrew Wiggins,2015-16,True,-0.028,0.5,Victim (Fragile Role),True,PASS
+D'Angelo Russell,2019-20,True,0.0449999999999999,0.5,Victim (Fragile Role),True,PASS
+RJ Barrett,2024-25,True,-0.049,0.5,Victim (Fragile Role),True,PASS
+Zach LaVine,2017-18,True,-0.0409999999999999,0.720996618270874,King (Resilient Star),False,FAIL
+Zach LaVine,2019-20,True,-0.0599999999999999,0.5,Victim (Fragile Role),True,PASS
+D'Angelo Russell,2017-18,True,-0.068,0.5,Victim (Fragile Role),True,FAIL

@@ -4,6 +4,8 @@
 **Status**: ⚠️ **REVERTED** - Implementation had bugs, but principle is sound  
 **Outcome**: Reverted to maintain 100% True Positive pass rate (17/17)
 
+**UPDATE**: This attempt was later successfully implemented. See `docs/HIERARCHY_OF_CONSTRAINTS_IMPLEMENTATION.md` for the complete successful implementation.
+
 ---
 
 ## Executive Summary

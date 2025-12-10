@@ -50,7 +50,7 @@
 37. **The Trust Fall Experiment & Ground Truth Trap** 🎯 CRITICAL - Performance vs. Portability are orthogonal
 38. **Data-Driven Thresholds** 🎯 CRITICAL - Fit model to data, not data to model
 
-### Recent Critical Fixes (39-49)
+### Recent Critical Fixes (39-50)
 39. **The Creator's Dilemma: Volume vs. Stabilizers** 🎯 CRITICAL - High-usage creators need stabilizers
 40. **The "Empty Calories" Creator Pattern** 🎯 CRITICAL - High volume + negative tax = volume scorer
 41. **Shot Chart Collection Data Completeness Fix** 🎯 CRITICAL - Collect for all players, not just qualified
@@ -62,6 +62,7 @@
 47. **Asymmetric Loss (Sample Weighting)** 🎯 CRITICAL - False positives cost more than false negatives
 48. **Trust Fall 2.0: Model Can Learn, But Needs Stronger Signals** 🎯 CRITICAL - Model identifies stars but struggles with false positives
 49. **Shot Quality Generation Delta - Replacing Sample Weighting with Organic Features** 🎯 CRITICAL - Measure shot quality, not just volume
+50. **Hierarchy of Constraints: Fatal Flaws > Elite Traits** 🎯 CRITICAL - Fatal flaw gates execute first, cannot be overridden
 
 ### Quick Reference
 - **Quick Reference Checklist** - Implementation checklist for new features
@@ -1143,6 +1144,53 @@ model.fit(X_train, y_train, sample_weight=sample_weight)
 ---
 
 ## 49. Shot Quality Generation Delta - Replacing Sample Weighting with Organic Features 🎯 CRITICAL (December 2025)
+
+**The Problem**: Reliance on 5x sample weighting and hard gates suggests incomplete features. The model struggles to distinguish "Empty Calories" creators from true stars.
+
+**The Solution**: SHOT_QUALITY_GENERATION_DELTA feature measures shot quality generation (self-created + assisted) vs. league average, naturally filtering out "Empty Calories" creators.
+
+**Results**: 
+- Feature importance: Rank #3, 8.63% importance
+- Model accuracy: 46.77% → 54.46% (+7.69 pp)
+- Sample weighting reduced: 5x → 3x (40% reduction)
+- Test suite maintains 90.6% pass rate
+
+**Key Insight**: Measure shot quality, not just volume. Empty calories creators generate low-quality shots even at high volume.
+
+**See**: `docs/SHOT_QUALITY_GENERATION_DELTA_VALIDATION_SUMMARY.md` for complete details.
+
+---
+
+## 50. Hierarchy of Constraints: Fatal Flaws > Elite Traits 🎯 CRITICAL (December 2025)
+
+**The Problem**: Previous gate implementation allowed elite traits to override fatal flaws, breaking the core principle that "no amount of Regular Season volume justifies a Playoff clutch collapse."
+
+**The Solution**: Implemented tiered gate execution order - fatal flaw gates execute FIRST and cannot be overridden by elite traits.
+
+**Implementation**:
+- **Tier 1 (Fatal Flaws)**: Clutch Fragility, Abdication, Creation Fragility gates execute first
+- **Tier 2 (Data Quality)**: Leverage Data Penalty, Data Completeness, Sample Size gates
+- **Tier 3 (Contextual)**: All other gates execute last
+
+**Key Features**:
+- Two-path exemption for Elite Creator: `CREATION_VOLUME_RATIO > 0.65 OR CREATION_TAX < -0.10`
+- Dependence Law: `DEPENDENCE_SCORE > 0.60` → cap at "Luxury Component"
+- Incremental testing: One change at a time, verify True Positives after each change
+
+**Results**:
+- True Positive pass rate: 100% (17/17) ✅ **MAINTAINED**
+- Overall pass rate: 75.0% (30/40) - acceptable
+- Haliburton case correctly handled (was broken in previous attempt)
+
+**Key Insight**: Fatal flaws are non-negotiable. Elite traits can exempt from contextual gates, but never from fatal flaw gates.
+
+**Lessons Learned**:
+1. Start with Trust Fall results - understand what model learns vs. doesn't learn
+2. Test incrementally - one change at a time
+3. Protect True Positives first - 100% TP rate is more important than overall pass rate
+4. Know when to stop - primary goal achieved, further optimization has diminishing returns
+
+**See**: `docs/HIERARCHY_OF_CONSTRAINTS_IMPLEMENTATION.md` for complete implementation details.
 
 **The Problem**: Reliance on 5x sample weighting and hard gates suggests incomplete features. When you have to force the model to pay attention to a class by penalizing it 5x, it means the underlying features do not provide enough mathematical separation between a "True Star" and an "Empty Calories Creator" in the vector space.
 
