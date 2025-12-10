@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
 **Last Updated**: December 9, 2025  
-**Status**: Hierarchy of Constraints Implemented ✅ | 100% True Positive Pass Rate ✅ | Dependence Law Enforced ✅
+**Status**: Phase 2 Refinements Complete ✅ | 100% True Positive Pass Rate ✅ | 40% False Positive Pass Rate (Improved from 20%) ✅
 
 ---
 
@@ -28,14 +28,14 @@ Identify players who consistently perform better than expected in the playoffs a
 - **Sample Weighting**: 3x weight for high-usage victims (reduced from 5x, Dec 8, 2025)
 
 ### Test Suite Performance (40 cases)
-- **Overall Pass Rate (With Gates)**: 75.0% (30/40) ✅
+- **Overall Pass Rate (With Gates)**: 77.5% (31/40) ✅ **+2.5 pp from Phase 2**
   - **True Positives**: 100.0% (17/17) ✅ - **Perfect** - All franchise cornerstone cases fixed
-  - **False Positives**: 20.0% (1/5) ⚠️ - Needs improvement
+  - **False Positives**: 40.0% (2/5) ✅ **+20.0 pp from Phase 2** - Improved but needs more work
   - **True Negatives**: 70.6% (12/17) ⚠️ - Acceptable
   - **System Player**: 0.0% (0/1) ⚠️ - Expected (system players should not be stars)
 - **Pass Rate (Trust Fall 2.0 - Gates Disabled)**: 62.5% (25/40)
-  - Model identifies stars well (100.0% True Positives) but struggles with false positives (20.0% False Positives)
-  - Gates provide +12.5 pp improvement, critical for True Negatives (+29.4 pp)
+  - Model identifies stars well (100.0% True Positives) but struggles with false positives
+  - Gates provide +15.0 pp improvement, critical for False Positives (+20.0 pp) and True Negatives (+29.4 pp)
 
 ### Data Coverage
 - **USG_PCT**: 100% ✅ (Fixed Dec 8, 2025)
@@ -107,6 +107,7 @@ Identify players who consistently perform better than expected in the playoffs a
   - Leverage Data Penalty, Data Completeness Gate, Sample Size Gate
   
   **Tier 3: Contextual Gates**
+  - Replacement Level Creator Gate (USG_PCT > 0.25 AND SQ_DELTA < threshold) - **REFINED Dec 9, 2025** ✅
   - Inefficiency Gate, Fragility Gate, Bag Check Gate, Compound Fragility Gate, Low-Usage Noise Gate, Volume Creator Inefficiency Gate, Negative Signal Gate
 
 - **2D Risk Matrix: Dependence Law** ✅ NEW (Dec 9, 2025)
@@ -114,13 +115,18 @@ Identify players who consistently perform better than expected in the playoffs a
   - Hard constraint with no exemptions
   - Executes before other categorization logic
 
-- **Exemptions** (Minimal, well-tested):
+- **Exemptions** (Minimal, well-tested, **REFINED Dec 9, 2025**):
   - Elite Creator: `CREATION_VOLUME_RATIO > 0.65 OR CREATION_TAX < -0.10` (two-path exemption)
   - Elite Playmaker: `AST_PCT > 0.30 OR CREATION_VOLUME_RATIO > 0.50`
-  - Elite Rim Force: `RS_RIM_APPETITE > 0.20` (for big men)
+  - Elite Rim Force: `RS_RIM_APPETITE > 0.20 AND RS_RIM_PCT > 60% AND (LEVERAGE_TS_DELTA > 0 OR CREATION_TAX > -0.10)` - **REFINED** ✅
   - Smart Deference: `LEVERAGE_TS_DELTA > 0.05` (for Abdication Gate)
   - High-Usage Immunity: `RS_USG_PCT > 30%` (for Abdication Gate)
   - Young Player: `AGE < 22` with positive leverage signals (for Creation Fragility Gate)
+  
+  **Replacement Level Creator Gate Exemptions** (Phase 2 Refinement):
+  - **REMOVED**: Elite Playmaker exemption (playmaking doesn't offset negative shot quality generation)
+  - **REMOVED**: Elite Volume Creator exemption (high volume with negative SQ_DELTA is exactly what we want to catch)
+  - **REFINED**: Elite Rim Force exemption (requires efficient rim finishing + positive leverage/creation signals)
 
 - **Dependence Score**: Rim pressure override (RS_RIM_APPETITE > 0.20 caps dependence at 40%)
 - **Continuous Gradients**: Still available as features (RIM_PRESSURE_DEFICIT, ABDICATION_MAGNITUDE, INEFFICIENT_VOLUME_SCORE)
@@ -130,49 +136,93 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ---
 
+## Next Developer: Start Here
+
+**Current Status**: Phase 2 refinements complete. False Positive pass rate improved from 20.0% to 40.0%. Ready for Phase 3 implementation.
+
+**Immediate Priority**: Implement Phase 3 fixes to improve False Positive detection to 80-100%.
+
+**Key Documents to Read**:
+1. **`docs/PHASE_3_IMPLEMENTATION_PLAN.md`** - Complete implementation plan for Phase 3 ✅ **START HERE**
+2. **`docs/FALSE_POSITIVE_AUDIT_ANALYSIS.md`** - Root cause analysis of remaining failures
+3. **`docs/FEEDBACK_EVALUATION_FINAL_FIXES.md`** - Feedback evaluation with refined recommendations
+
+**Quick Start**:
+1. Read `docs/PHASE_3_IMPLEMENTATION_PLAN.md` for complete plan
+2. Start with Step 1: Fix DEPENDENCE_SCORE data pipeline (critical dependency)
+3. Test after each step to ensure no regressions
+4. Target: 80-100% False Positive pass rate (4-5/5) while maintaining 100% True Positive pass rate
+
+---
+
 ## Immediate Next Steps (Top 3 Priorities)
 
-### 1. Monitor Model Performance ✅ COMPLETE
+### 1. Phase 2 Refinements ✅ COMPLETE
 
-**Status**: Hierarchy of Constraints successfully implemented (Dec 9, 2025). All True Positives protected (100% pass rate).
+**Status**: Phase 2 refinements successfully implemented (Dec 9, 2025). False Positive pass rate improved from 20.0% to 40.0% (+20.0 pp) while maintaining 100% True Positive pass rate.
 
-**Implementation Summary** (See `docs/HIERARCHY_OF_CONSTRAINTS_IMPLEMENTATION.md`):
-- ✅ **Hierarchy Implemented**: Fatal flaw gates execute first (Tier 1 → Tier 2 → Tier 3)
-- ✅ **Exemptions Verified**: Two-path exemption logic correctly handles Haliburton case
-- ✅ **Dependence Law Enforced**: High dependence (>60%) caps at "Luxury Component"
-- ✅ **True Positives Protected**: 100% pass rate maintained (17/17)
+**Implementation Summary** (See `docs/PHASE_2_REFINEMENT_SUMMARY.md`):
+- ✅ **Removed Elite Playmaker exemption** from Replacement Level Creator Gate
+- ✅ **Removed Elite Volume Creator exemption** from Replacement Level Creator Gate
+- ✅ **Refined Elite Rim Force exemption** (requires efficient rim finishing + positive leverage/creation signals)
+- ✅ **D'Angelo Russell now caught** (30.00% star level, down from 96.57%)
+- ✅ **True Positives protected** (100% pass rate maintained - 17/17)
 
-**Key Achievement**: Successfully implemented "Fatal Flaws > Elite Traits" principle while maintaining 100% True Positive pass rate.
+**Key Achievement**: Successfully refined gate exemptions to catch False Positives while protecting True Positives.
 
-**Next Actions**:
-- Monitor test suite performance on new cases
-- Track if False Positive detection improves over time
-- Document any new edge cases that emerge
+### 2. Phase 3: Final False Positive Fixes 🟡 HIGH PRIORITY
 
-### 2. Monitor False Positive Detection 🟡 LOW PRIORITY
+**Status**: Current False Positive pass rate is 40.0% (2/5). Three cases still failing:
+- Jordan Poole (2021-22) - System merchant pattern (positive SQ_DELTA, high dependence)
+- Christian Wood (2020-21) - Doesn't meet refined rim force exemption (correct behavior)
+- Julius Randle (2020-21) - SQ_DELTA threshold too strict (-0.0367 vs -0.05)
 
-**Status**: Current False Positive pass rate is 20.0% (1/5). Several cases still failing:
-- D'Angelo Russell (2018-19)
-- Jordan Poole (2021-22)
-- Christian Wood (2020-21)
-- Julius Randle (2020-21)
+**Root Cause Analysis** (See `docs/FALSE_POSITIVE_AUDIT_ANALYSIS.md`):
+- **Jordan Poole**: Positive SQ_DELTA (0.0762) - gate doesn't trigger. Need System Merchant Gate (high usage + high dependence).
+- **Julius Randle**: Negative SQ_DELTA (-0.0367) but not < -0.05. Need dynamic threshold (percentile-based).
+- **Christian Wood**: Doesn't meet refined exemption (correct). May need investigation if gate should trigger.
 
-**Note**: These failures are **expected** - the gates are working to catch false positives. According to first principles, we should **not** add exemptions for these cases. The model may need improvement rather than additional gates.
+**Implementation Plan** (See `docs/PHASE_3_IMPLEMENTATION_PLAN.md` for complete details):
+1. **Fix DEPENDENCE_SCORE data pipeline** (Priority: Critical)
+   - Verify calculation logic handles missing data
+   - Add diagnostic logging
+   - Add fallback logic for missing DEPENDENCE_SCORE
+   
+2. **Implement System Merchant Gate** (Priority: High)
+   - Condition: `USG_PCT > 0.25 AND DEPENDENCE_SCORE > 0.60` → cap at 30%
+   - Catches system merchants like Jordan Poole
+   
+3. **Implement Dynamic Threshold** (Priority: High)
+   - Replace fixed -0.05 with percentile-based threshold (33rd or 25th percentile)
+   - Catches borderline cases like Julius Randle
+   
+4. **Refine Elite Rim Force Exemption** (Priority: Medium - Needs Refinement)
+   - Keep `LEVERAGE_TS_DELTA > -0.05` (don't require > 0 - too aggressive)
+   - Tighten `CREATION_TAX > -0.10` to `CREATION_TAX > -0.05` (reasonable)
 
-**Next Actions** (Optional):
-- Investigate if model features can be improved to catch these cases
-- Consider if these are truly "false positives" or edge cases
-- Monitor if new patterns emerge that require attention
+### 3. Test Suite Maintenance
 
-### 3. Evaluate Test Suite Refinement
-
-**Status**: Test suite is comprehensive with 40 critical cases.
+**Status**: Test suite is comprehensive with 40 critical cases (17 True Positives, 5 False Positives, 17 True Negatives, 1 System Player).
 
 **Action**: Continue monitoring test suite performance and add new cases as patterns emerge.
 
 ---
 
 ## Key Completed Work (Recent)
+
+### ✅ Phase 2 Refinements (Dec 9, 2025) - COMPLETE
+- Refined Replacement Level Creator Gate exemptions
+- Removed Elite Playmaker and Elite Volume Creator exemptions
+- Refined Elite Rim Force exemption (requires efficient rim finishing + positive signals)
+- **Result**: False Positive pass rate improved from 20.0% to 40.0% (+20.0 pp)
+- **Key Achievement**: D'Angelo Russell now correctly caught (30.00% star level)
+- **Documentation**: See `docs/PHASE_2_REFINEMENT_SUMMARY.md` for complete details
+
+### ✅ False Positive Audit (Dec 9, 2025) - COMPLETE
+- Comprehensive audit of all False Positive cases
+- Identified root causes: exemptions too broad, thresholds too strict, missing DEPENDENCE_SCORE
+- **Key Findings**: Gates not applying due to broad exemptions and missing data
+- **Documentation**: See `docs/FALSE_POSITIVE_AUDIT_ANALYSIS.md` for complete analysis
 
 ### ✅ Hierarchy of Constraints Implementation (Dec 9, 2025) - COMPLETE
 - Successfully implemented "Fatal Flaws > Elite Traits" hierarchy
@@ -235,7 +285,11 @@ Identify players who consistently perform better than expected in the playoffs a
 - **`.cursorrules`** - System instructions (always loaded)
 - **`KEY_INSIGHTS.md`** - 48+ hard-won lessons (reference on demand)
 - **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation (reference for gate logic)
-- **`docs/HIERARCHY_OF_CONSTRAINTS_IMPLEMENTATION.md`** - Complete implementation guide (Dec 9, 2025) ✅ NEW
+- **`docs/PHASE_3_IMPLEMENTATION_PLAN.md`** - Complete Phase 3 implementation plan ✅ **START HERE**
+- **`docs/PHASE_2_REFINEMENT_SUMMARY.md`** - Phase 2 implementation and results
+- **`docs/FALSE_POSITIVE_AUDIT_ANALYSIS.md`** - Comprehensive audit of False Positive cases
+- **`docs/FEEDBACK_EVALUATION_FINAL_FIXES.md`** - Evaluation of final fixes feedback with recommendations
+- **`docs/HIERARCHY_OF_CONSTRAINTS_IMPLEMENTATION.md`** - Hierarchy implementation guide
 - **`docs/HIERARCHY_OF_CONSTRAINTS_ATTEMPT.md`** - Lessons learned from first attempt (historical reference)
 
 ### Model Files

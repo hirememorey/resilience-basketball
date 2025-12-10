@@ -1,14 +1,14 @@
 # Latent Star Detection: Critical Case Studies Test Report
 
-**Date**: 2025-12-09 19:54:57
+**Date**: 2025-12-09 22:20:40
 
 ## Executive Summary
 
 - **Total Test Cases**: 40
 - **Data Found**: 40
-- **Passed**: 30
-- **Failed**: 10
-- **Pass Rate**: 75.0%
+- **Passed**: 31
+- **Failed**: 9
+- **Pass Rate**: 77.5%
 
 ## Results by Category
 
@@ -20,9 +20,9 @@
 
 ### False Positive
 - **Total**: 5
-- **Passed**: 1
-- **Failed**: 4
-- **Pass Rate**: 20.0%
+- **Passed**: 2
+- **Failed**: 3
+- **Pass Rate**: 40.0%
 
 ### True Negative
 - **Total**: 17
@@ -59,7 +59,7 @@
 | 17 | Jordan Poole | 2021-22 | False Positive - Mirage Breakout | Victim (Low) [Luxury Component] | Bulldozer (Fragile Star) | 98.79% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ❌ FAIL |
 | 18 | Talen Horton-Tucker | 2020-21 | False Positive - Mirage Breakout | Victim (Low) | Victim (Fragile Role) | 30.00% | N/A | Moderate Performance, Moderate Dependence | ✅ PASS |
 | 19 | Christian Wood | 2020-21 | False Positive - Empty Calories | Victim (Low) | Bulldozer (Fragile Star) | 72.81% | 40.00% | Franchise Cornerstone (Moderate Dependence) | ❌ FAIL |
-| 20 | D'Angelo Russell | 2018-19 | False Positive - Fool's Gold | Victim (Low) | King (Resilient Star) | 96.57% | 20.64% | Franchise Cornerstone | ❌ FAIL |
+| 20 | D'Angelo Russell | 2018-19 | False Positive - Fool's Gold | Victim (Low) | Victim (Fragile Role) | 30.00% | 20.64% | Moderate Performance, Low Dependence | ✅ PASS |
 | 21 | Julius Randle | 2020-21 | False Positive - Empty Calories | Victim (Low) | King (Resilient Star) | 88.05% | 35.02% | Franchise Cornerstone | ❌ FAIL |
 | 22 | Ben Simmons | 2017-18 | True Negative - Fragile Star | Victim (Low) | King (Resilient Star) | 54.63% | 22.68% | Moderate Performance, Low Dependence | ✅ PASS |
 | 23 | Ben Simmons | 2018-19 | True Negative - Fragile Star | Victim (Low) | Victim (Fragile Role) | 30.00% | 33.87% | Moderate Performance, Low Dependence | ✅ PASS |
@@ -88,8 +88,6 @@
 **Jordan Poole (2021-22)**: Expected low performance (<55%), got 98.79%; Expected risk category 'Luxury Component', got 'Franchise Cornerstone (Moderate Dependence)'; Risk category matches but performance doesn't: 98.79%
 
 **Christian Wood (2020-21)**: Expected low performance (<55%), got 72.81%; Archetype mismatch: expected Victim, got Bulldozer (Fragile Star)
-
-**D'Angelo Russell (2018-19)**: Expected low performance (<55%), got 96.57%; Archetype mismatch: expected Victim, got King (Resilient Star)
 
 **Julius Randle (2020-21)**: Expected low performance (<55%), got 88.05%; Archetype mismatch: expected Victim, got King (Resilient Star)
 

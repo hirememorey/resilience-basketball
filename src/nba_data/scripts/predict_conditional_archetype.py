@@ -1901,10 +1901,16 @@ class ConditionalArchetypePredictor:
                 logger.info(f"Volume Creator Inefficiency Gate applied: CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} > 0.70 AND CREATION_TAX={creation_tax:.3f} < -0.10 (inefficient volume creator), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
         
         # PHASE 4.5 FIX: Replacement Level Creator Gate (Safety Valve) - Dec 9, 2025
+        # PHASE 2 REFINEMENT: Stricter Exemptions - Dec 9, 2025
         # Principle: High usage (>25%) with negative shot quality generation delta (<-0.05) indicates "empty calories" creator.
         # These players demand the ball but generate shots worse than league average - they're replacement level, not stars.
         # Conservative threshold (USG_PCT > 0.25 AND SQ_DELTA < -0.05) avoids breaking young stars (Shai, Tatum have usage < 25%).
         # Example: D'Angelo Russell (2018-19): USG=31.1%, SQ_DELTA=-0.0718 → Should be capped
+        # 
+        # Exemptions (Refined):
+        # - REMOVED: Elite Playmaker exemption (playmaking doesn't offset negative shot quality generation)
+        # - REMOVED: Elite Volume Creator exemption (high volume with negative SQ_DELTA is exactly what we want to catch)
+        # - REFINED: Elite Rim Force exemption (requires RS_RIM_APPETITE > 0.20 AND RS_RIM_PCT > 60% AND positive leverage/creation signals)
         replacement_level_creator_gate_applied = False
         if apply_phase3_fixes and apply_hard_gates:
             usage = player_data.get('USG_PCT', None)
@@ -1918,34 +1924,36 @@ class ConditionalArchetypePredictor:
             has_high_usage = pd.notna(usage) and usage > 0.25
             has_negative_sq_delta = pd.notna(sq_gen_delta) and sq_gen_delta < -0.05
             
-            # FRANCHISE CORNERSTONE FIX: Elite Trait Exemptions
-            # Negative SQ_Delta can mean different things:
-            # - "Bad Bad" (Russell): Actually inefficient
-            # - "Good Bad" (Jokic/Davis/Embiid): Negative delta due to playstyle/position, not actual inefficiency
-            # Exempt if player has Elite Creator, Elite Rim Force, or Elite Playmaker trait
-            is_elite_creator = False
+            # PHASE 2 REFINEMENT: Stricter Exemptions for Replacement Level Creator Gate
+            # Principle: High usage + negative SQ_DELTA = fatal flaw. Exemptions should be minimal and surgical.
+            # Removed: Elite Playmaker exemption (playmaking doesn't offset negative shot quality generation)
+            # Removed: Elite Volume Creator exemption (high volume with negative SQ_DELTA is exactly what we want to catch)
+            # Refined: Elite Rim Force exemption (requires efficient rim finishing + positive leverage/creation signals)
+            
             is_elite_rim_force = False
-            is_elite_playmaker = False
             
-            creation_vol_ratio = player_data.get('CREATION_VOLUME_RATIO', None)
             rim_appetite = player_data.get('RS_RIM_APPETITE', None)
-            ast_pct = player_data.get('AST_PCT', None)
+            rim_pct = player_data.get('RS_RIM_PCT', None)
+            leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', None)
+            creation_tax = player_data.get('CREATION_TAX', None)
             
-            # Elite Creator: CREATION_VOLUME_RATIO > 0.65 (Primary Option)
-            if pd.notna(creation_vol_ratio) and creation_vol_ratio > 0.65:
-                is_elite_creator = True
-            
-            # Elite Rim Force: RS_RIM_APPETITE > 0.20 (Top 20% physicality)
+            # Refined Elite Rim Force Exemption: Requires ALL of:
+            # 1. RS_RIM_APPETITE > 0.20 (high rim pressure)
+            # 2. RS_RIM_PCT > 60% (efficient rim finishing)
+            # 3. Positive leverage OR creation signal (LEVERAGE_TS_DELTA > 0 OR CREATION_TAX > -0.10)
+            # Rationale: Rim pressure can offset negative SQ_DELTA for bigs, but only if they:
+            # - Finish efficiently at the rim (not just volume)
+            # - Show positive leverage/creation signals (not just rim pressure)
             if pd.notna(rim_appetite) and rim_appetite > 0.20:
-                is_elite_rim_force = True
+                has_efficient_rim_finishing = pd.notna(rim_pct) and rim_pct > 0.60
+                has_positive_leverage = pd.notna(leverage_ts_delta) and leverage_ts_delta > 0
+                has_positive_creation = pd.notna(creation_tax) and creation_tax > -0.10
+                has_positive_signal = has_positive_leverage or has_positive_creation
+                
+                if has_efficient_rim_finishing and has_positive_signal:
+                    is_elite_rim_force = True
             
-            # Elite Playmaker: AST_PCT > 0.30 OR CREATION_VOLUME_RATIO > 0.50 (Offensive Engine)
-            if pd.notna(ast_pct) and ast_pct > 0.30:
-                is_elite_playmaker = True
-            elif pd.notna(creation_vol_ratio) and creation_vol_ratio > 0.50:
-                is_elite_playmaker = True
-            
-            has_elite_trait = is_elite_creator or is_elite_rim_force or is_elite_playmaker
+            has_elite_trait = is_elite_rim_force
             
             if has_high_usage and has_negative_sq_delta and not has_elite_trait:
                 original_star_level = star_level_potential
@@ -1998,18 +2006,24 @@ class ConditionalArchetypePredictor:
                             pred_archetype = 'Victim (Fragile Role)'
                 
                 exemption_reason = []
-                if is_elite_creator:
-                    exemption_reason.append(f"Elite Creator (CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} > 0.65)")
                 if is_elite_rim_force:
-                    exemption_reason.append(f"Elite Rim Force (RS_RIM_APPETITE={rim_appetite:.3f} > 0.20)")
-                if is_elite_playmaker:
-                    if pd.notna(ast_pct) and ast_pct > 0.30:
-                        exemption_reason.append(f"Elite Playmaker (AST_PCT={ast_pct:.3f} > 0.30)")
-                    elif pd.notna(creation_vol_ratio) and creation_vol_ratio > 0.50:
-                        exemption_reason.append(f"Elite Playmaker (CREATION_VOLUME_RATIO={creation_vol_ratio:.3f} > 0.50)")
+                    rim_appetite = player_data.get('RS_RIM_APPETITE', None)
+                    rim_pct = player_data.get('RS_RIM_PCT', None)
+                    leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', None)
+                    creation_tax = player_data.get('CREATION_TAX', None)
+                    
+                    reason_parts = [f"RS_RIM_APPETITE={rim_appetite:.3f} > 0.20"]
+                    if pd.notna(rim_pct):
+                        reason_parts.append(f"RS_RIM_PCT={rim_pct:.1%} > 60%")
+                    if pd.notna(leverage_ts_delta) and leverage_ts_delta > 0:
+                        reason_parts.append(f"LEVERAGE_TS_DELTA={leverage_ts_delta:.3f} > 0")
+                    if pd.notna(creation_tax) and creation_tax > -0.10:
+                        reason_parts.append(f"CREATION_TAX={creation_tax:.3f} > -0.10")
+                    
+                    exemption_reason.append(f"Elite Rim Force ({', '.join(reason_parts)})")
                 
                 if has_elite_trait:
-                    logger.info(f"Replacement Level Creator Gate EXEMPTED: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < -0.05 BUT Elite Trait present: {', '.join(exemption_reason)}")
+                    logger.info(f"Replacement Level Creator Gate EXEMPTED: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < -0.05 BUT Refined Elite Rim Force exemption: {', '.join(exemption_reason)}")
                 else:
                     logger.info(f"Replacement Level Creator Gate applied: USG_PCT={usage:.1%} > 25% AND SHOT_QUALITY_GENERATION_DELTA={sq_gen_delta:.4f} < -0.05 (high usage + negative delta = replacement level), star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
         
