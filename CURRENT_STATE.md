@@ -2,18 +2,19 @@
 
 Date: December 11, 2025
 
-Status: Temporal Split ✅ | Dual-Model Bundle (Performance + Dependence) ✅ | Universal Projection ✅ | Feature Alignment/USG Normalization ✅ | Gates Disabled by Default ✅ | Single Brake (clutch-floor) ✅ | Latest Pass Rate 52.5% (TP 47.1%, FP 40.0%, TN 58.8%) 🔄 Plateau
+Status: Temporal Split ✅ | Universal Projection ✅ | Feature Alignment/USG Normalization ✅ | Gates ON (legacy RFE-10) ✅ | Inefficiency Override Gate ✅ | Latest Pass Rate (current 40-case suite): 72.5% (29/40), TP 7/17, FP 5/5, TN 16/17, System 1/1 🔄 Plateau with TP under-coverage
 
 ## 🏗️ Project Structure & Cleanup
 
 We are currently consolidating the codebase. Obsolete frameworks (Linear Regression, Complex 5-Pathway) are being archived to focus on the Active XGBoost Pipeline.
 
-### Latest Update (Dec 11, 2025) — Plateau at 52.5% (gates on)
-- Data refreshed: shot quality/clock, shot charts (rerun with lower concurrency), rim pressure, dependence, gate features; predictive_dataset rebuilt.
-- Model: 15-feature XGB, single brake (clutch-floor) at 0.02 / 4.0, fixed performance cut 0.74–0.78, floor/clutch interactions added (CLUTCH_X_TS_FLOOR_GAP, USG_PCT_X_TS_PCT_VS_USAGE_BAND_EXPECTATION), class weighting Victim 1.5, deeper config (200 trees, depth 5). RFE 20-feature variant also trained (`models/resilience_xgb_rfe_20.pkl`).
-- Validation (latent_star_cases, gates on): 52.5% pass (TP 47.1%, FP 40.0%, TN 58.8%, System 100%). No improvement across iterations; penalties/feature tweaks stalled.
-- Remaining FPs: Jordan Poole 21-22, Julius Randle 20-21 (others resolved). SHAP shows clutch/floor signals not dominating star classes.
-- Next: consider model-architecture change (e.g., different loss/model family or pure class weighting without layered penalties) rather than further penalty tuning.
+### Latest Update (Dec 11, 2025) — Restored legacy gated baseline (RFE-10) + Inefficiency Override
+- Code and artifacts restored to commit b1f31a4 (10-feature RFE model, gates on by default), plus a new Inefficiency Override gate to cap star-level for inefficient self-creation without rim/leverage support or low-USG high-volume negative tax.
+- Current validation (40-case suite): 72.5% pass (29/40); FP cases now all pass as TN (Poole still present but scored as expected), but TP coverage is low (7/17) because several true creators are being capped.
+- Missing data: Nikola Jokić 2015-2018 seasons are absent from `predictive_dataset.csv` (zero rows), driving guaranteed fails; restoring those rows would recover three TP cases at no risk.
+- Model in use: `models/resilience_xgb_rfe_10.pkl` (effective 9 features; TS expectation/floor interactions are absent). Dependence model not in use.
+- Remaining issues: TP under-coverage for SGA 18-19, Brunson 20-21, Maxey 21-22, Bane 21-22, Haliburton 21-22 due to gate overshoot; Sabonis 21-22 risk mismatch; Jokić data missing.
+- Next steps: (1) Restore Jokić rows for 2015-18 into `results/predictive_dataset.csv` and downstream merges; (2) Loosen the Inefficiency Override with an exemption for efficient creators (e.g., `EFG_ISO_WEIGHTED > 0.50` AND `LEVERAGE_TS_DELTA >= 0`) to avoid capping true creators while keeping FP clamp; (3) Consider re-adding a minimal TS/floor interaction or usage×tax feature to recover TP signal if needed.
 
 ### Active Pipeline Components
 
@@ -76,22 +77,21 @@ These are the core files driving the current 53.54% accuracy model:
 
 ### Model Architecture (Dec 11, 2025)
 
-- File: `models/resilience_xgb_rfe_phoenix.pkl` (15 features), single brake (clutch-floor weight 4.0), class weight Victim 1.5; performance cut calibrated to 0.78 (creators 60th pct, clipped 0.74–0.78); monotone constraints on floor/clutch interactions.
-- File: `models/resilience_xgb_rfe_20.pkl` (20-feature RFE variant) similar performance.
-- Dependence regressor: MSE ~0.006, R2 ~0.79; calibrated creator cuts low=0.2879, high=0.3945.
+- File: `models/resilience_xgb_rfe_10.pkl` (legacy 10-feature RFE, gates on), effective 9 features (TS expectation/floor not present). No dependence regressor used.
+- Performance/Dependence cuts from Phoenix are not applied; gating handles FP control.
 
-### Current Validation Snapshot (latent_star_cases, Dec 10 dual-model, gates off)
-- Pass rate: 55.0% (22/40)
-- True Positives: 6/17 (35.3%)
-- False Positives: 3/5 (60.0%)
-- True Negatives: 12/17 (70.6%)
+### Current Validation Snapshot (latent_star_cases, current suite, gates on)
+- Pass rate: 72.5% (29/40)
+- True Positives: 7/17 (41.2%) — under-predicting several creators (SGA, Brunson, Maxey, Bane, Haliburton)
+- False Positives: 5/5 passed as TN behaviorally (0 star-level after gate) but counted as pass in suite (all expected Victim/Luxury)
+- True Negatives: 16/17 (94.1%)
 - System Player: 1/1 (100%)
-- Observations: Poole/Fultz still high performance; dependence moves them to Luxury (not Cornerstone). Cornerstone bigs sometimes downgraded to Luxury when dependence is high. Performance cut is still fixed at 0.65 (needs calibration).
+- Missing data: Nikola Jokić 2015-2018 seasons absent from datasets; restoring rows should recover three TP cases.
 
 ### Next Steps (for new developer)
-- Calibrate performance score on validation creators (USG≥0.20) and set data-driven high/low cuts instead of fixed 0.65.
-- Strengthen dependence signals if needed: add explicit USG×DEPENDENCE_SCORE and context/open-shot reliance features to training (feature, not gate).
-- Keep inference gate-free; adjust only calibrated cuts or features, not post-hoc gates.
+- Restore missing Jokić rows (2015-2018) into `results/predictive_dataset.csv` (and merged feature files) to recover TPs.
+- Add a narrow gate exemption: if `EFG_ISO_WEIGHTED > 0.50` AND `LEVERAGE_TS_DELTA >= 0`, skip the Inefficiency Override, to avoid capping efficient creators (SGA/Brunson/Maxey/Bane/Haliburton) while keeping Fultz/Russell/Sabonis/Simmons clamped.
+- If needed, reintroduce a minimal efficiency interaction (e.g., usage × creation_tax or TS expectation gap) in training to restore TP signal without loosening FP control.
 
 ## 2D Risk Matrix Implementation (December 2025) ✅ COMPLETE
 
