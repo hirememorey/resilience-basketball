@@ -377,8 +377,83 @@ class GateFeatureGenerator:
         else:
             df['EMPTY_CALORIES_RISK'] = 0.0
             logger.warning("USG_PCT or RIM_PRESSURE_DEFICIT not found - EMPTY_CALORIES_RISK set to 0.0")
-        
-        # 6. QUALITY_ADJUSTED_RESILIENCE (New - Addresses Low Floor Illusion)
+
+        # PHASE 1: EXPLICIT INTERACTION TERMS TO TEACH THE MODEL PHYSICS
+
+        # 6. INEFFICIENT_CREATION_SCORE: CREATION_VOLUME_RATIO × abs(min(0, CREATION_TAX))
+        # High creation volume combined with inefficiency is exponentially worse
+        if 'CREATION_VOLUME_RATIO' in df.columns and 'CREATION_TAX' in df.columns:
+            creation_vol = df['CREATION_VOLUME_RATIO'].fillna(0.0)
+            creation_tax = df['CREATION_TAX'].fillna(0.0)
+
+            df['INEFFICIENT_CREATION_SCORE'] = creation_vol * np.abs(np.minimum(0, creation_tax))
+
+            logger.info(f"INEFFICIENT_CREATION_SCORE: {df['INEFFICIENT_CREATION_SCORE'].notna().sum()}/{len(df)} values")
+            logger.info(f"  Mean score: {df['INEFFICIENT_CREATION_SCORE'].mean():.3f}")
+            logger.info(f"  Players with score > 0.10: {(df['INEFFICIENT_CREATION_SCORE'] > 0.10).sum()}")
+        else:
+            df['INEFFICIENT_CREATION_SCORE'] = 0.0
+            logger.warning("CREATION_VOLUME_RATIO or CREATION_TAX not found - INEFFICIENT_CREATION_SCORE set to 0.0")
+
+        # 7. CLUTCH_FAILURE_RISK: USG_PCT × abs(min(0, LEVERAGE_TS_DELTA))
+        # High usage combined with clutch efficiency collapse is exponentially worse
+        if 'USG_PCT' in df.columns and 'LEVERAGE_TS_DELTA' in df.columns:
+            # USG_PCT should already be normalized above, but ensure it's decimal format
+            usg_pct = df['USG_PCT'].fillna(0.0)
+            if usg_pct.max() > 1.0:
+                usg_pct = usg_pct / 100.0
+            leverage_delta = df['LEVERAGE_TS_DELTA'].fillna(0.0)
+
+            df['CLUTCH_FAILURE_RISK'] = usg_pct * np.abs(np.minimum(0, leverage_delta))
+
+            logger.info(f"CLUTCH_FAILURE_RISK: {df['CLUTCH_FAILURE_RISK'].notna().sum()}/{len(df)} values")
+            logger.info(f"  Mean risk: {df['CLUTCH_FAILURE_RISK'].mean():.3f}")
+            logger.info(f"  Players with risk > 0.10: {(df['CLUTCH_FAILURE_RISK'] > 0.10).sum()}")
+        else:
+            df['CLUTCH_FAILURE_RISK'] = 0.0
+            logger.warning("USG_PCT or LEVERAGE_TS_DELTA not found - CLUTCH_FAILURE_RISK set to 0.0")
+
+        # PHASE 2: AUTOPSY-DERIVED FEATURES FOR MISSING PHYSICS
+
+        # 8. CRAFTY_SCORER_INDEX: EFG_PCT_0_DRIBBLE × USG_PCT × (1 - DEPENDENCE_SCORE)
+        # Elite catch-and-shoot at moderate usage with moderate dependence = star potential
+        # Fixes Desmond Bane type failures
+        if 'EFG_PCT_0_DRIBBLE' in df.columns and 'USG_PCT' in df.columns and 'DEPENDENCE_SCORE' in df.columns:
+            efg_0dribble = df['EFG_PCT_0_DRIBBLE'].fillna(0.0)
+            usg_pct = df['USG_PCT'].fillna(0.0)
+            if usg_pct.max() > 1.0:
+                usg_pct = usg_pct / 100.0
+            dependence = df['DEPENDENCE_SCORE'].fillna(0.5)  # Neutral dependence if missing
+
+            df['CRAFTY_SCORER_INDEX'] = efg_0dribble * usg_pct * (1 - dependence)
+
+            logger.info(f"CRAFTY_SCORER_INDEX: {df['CRAFTY_SCORER_INDEX'].notna().sum()}/{len(df)} values")
+            logger.info(f"  Mean index: {df['CRAFTY_SCORER_INDEX'].mean():.3f}")
+            logger.info(f"  Players with index > 0.15: {(df['CRAFTY_SCORER_INDEX'] > 0.15).sum()}")
+        else:
+            df['CRAFTY_SCORER_INDEX'] = 0.0
+            logger.warning("EFG_PCT_0_DRIBBLE, USG_PCT, or DEPENDENCE_SCORE not found - CRAFTY_SCORER_INDEX set to 0.0")
+
+        # 9. INEFFICIENT_VOLUME_MERCHANT: USG_PCT × (1 - DEPENDENCE_SCORE) × (1 - EFG_ISO_WEIGHTED)
+        # High usage + low dependence + mediocre efficiency = red flag
+        # Fixes D'Angelo Russell type failures
+        if 'USG_PCT' in df.columns and 'DEPENDENCE_SCORE' in df.columns and 'EFG_ISO_WEIGHTED' in df.columns:
+            usg_pct = df['USG_PCT'].fillna(0.0)
+            if usg_pct.max() > 1.0:
+                usg_pct = usg_pct / 100.0
+            dependence = df['DEPENDENCE_SCORE'].fillna(0.5)
+            iso_eff = df['EFG_ISO_WEIGHTED'].fillna(0.45)  # League average if missing
+
+            df['INEFFICIENT_VOLUME_MERCHANT'] = usg_pct * (1 - dependence) * (1 - iso_eff)
+
+            logger.info(f"INEFFICIENT_VOLUME_MERCHANT: {df['INEFFICIENT_VOLUME_MERCHANT'].notna().sum()}/{len(df)} values")
+            logger.info(f"  Mean score: {df['INEFFICIENT_VOLUME_MERCHANT'].mean():.3f}")
+            logger.info(f"  Players with score > 0.05: {(df['INEFFICIENT_VOLUME_MERCHANT'] > 0.05).sum()}")
+        else:
+            df['INEFFICIENT_VOLUME_MERCHANT'] = 0.0
+            logger.warning("USG_PCT, DEPENDENCE_SCORE, or EFG_ISO_WEIGHTED not found - INEFFICIENT_VOLUME_MERCHANT set to 0.0")
+
+        # 8. QUALITY_ADJUSTED_RESILIENCE (New - Addresses Low Floor Illusion)
         if 'EFG_ISO_WEIGHTED' in df.columns and 'CREATION_TAX' in df.columns:
             base_eff = df['EFG_ISO_WEIGHTED'].fillna(0.0)
             resilience = df['CREATION_TAX'].fillna(0.0)

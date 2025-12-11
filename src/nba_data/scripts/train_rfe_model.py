@@ -638,12 +638,20 @@ class RFEModelTrainer:
         logger.info("Training model with asymmetric loss (sample weighting)...")
         model.fit(X_train, y_train, sample_weight=sample_weights.values)
         
-        # Save Model
-        model_path = self.models_dir / f"resilience_xgb_rfe_{n_features}.pkl"
-        encoder_path = self.models_dir / f"archetype_encoder_rfe_{n_features}.pkl"
-        joblib.dump(model, model_path)
-        joblib.dump(le, encoder_path)
-        logger.info(f"Saved model to {model_path}")
+        # Save Model Bundle (Dictionary)
+        model_bundle = {
+            'model': model,
+            'label_encoder': le,
+            'selected_features': feature_names
+        }
+        
+        if n_features == 15: # Specific override for Project Phoenix
+            model_path = self.models_dir / "resilience_xgb_rfe_phoenix.pkl"
+        else:
+            model_path = self.models_dir / f"resilience_xgb_rfe_{n_features}.pkl"
+
+        joblib.dump(model_bundle, model_path)
+        logger.info(f"Saved model bundle to {model_path}")
         
         # Evaluation
         y_pred = model.predict(X_test)
@@ -665,22 +673,27 @@ class RFEModelTrainer:
         # Visualization: Feature Importance
         plt.figure(figsize=(10, max(6, len(feature_names) * 0.3)))
         sns.barplot(data=importance, x='Importance', y='Feature', hue='Feature', legend=False)
-        plt.title(f"Feature Importance: RFE-Selected Top {n_features} Features", fontsize=14, fontweight='bold')
+        title_suffix = "Phoenix" if n_features == 15 else f"RFE Top {n_features}"
+        plt.title(f"Feature Importance: {title_suffix} Features", fontsize=14, fontweight='bold')
         plt.tight_layout()
-        plt.savefig(self.results_dir / f"feature_importance_rfe_{n_features}.png", dpi=300, bbox_inches='tight')
-        logger.info(f"Saved feature importance plot to {self.results_dir / f'feature_importance_rfe_{n_features}.png'}")
+        
+        importance_plot_path = self.results_dir / (f"feature_importance_phoenix.png" if n_features == 15 else f"feature_importance_rfe_{n_features}.png")
+        plt.savefig(importance_plot_path, dpi=300, bbox_inches='tight')
+        logger.info(f"Saved feature importance plot to {importance_plot_path}")
         
         # Visualization: Confusion Matrix
         cm = confusion_matrix(y_test, y_pred)
         plt.figure(figsize=(8, 6))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
                     xticklabels=le.classes_, yticklabels=le.classes_)
-        plt.title(f"Confusion Matrix: RFE-Selected Top {n_features} Features", fontsize=14, fontweight='bold')
+        plt.title(f"Confusion Matrix: {title_suffix} Features", fontsize=14, fontweight='bold')
         plt.ylabel('Actual')
         plt.xlabel('Predicted')
         plt.tight_layout()
-        plt.savefig(self.results_dir / f"confusion_matrix_rfe_{n_features}.png", dpi=300)
-        logger.info(f"Saved confusion matrix to {self.results_dir / f'confusion_matrix_rfe_{n_features}.png'}")
+
+        cm_plot_path = self.results_dir / (f"confusion_matrix_phoenix.png" if n_features == 15 else f"confusion_matrix_rfe_{n_features}.png")
+        plt.savefig(cm_plot_path, dpi=300)
+        logger.info(f"Saved confusion matrix to {cm_plot_path}")
         
         # Save results summary
         results_summary = {
@@ -690,8 +703,9 @@ class RFEModelTrainer:
             'feature_importance': importance.to_dict('records')
         }
         
+        results_path = self.results_dir / (f"rfe_model_results_phoenix.json" if n_features == 15 else f"rfe_model_results_{n_features}.json")
         import json
-        with open(self.results_dir / f"rfe_model_results_{n_features}.json", 'w') as f:
+        with open(results_path, 'w') as f:
             json.dump(results_summary, f, indent=2)
         
         logger.info(f"\n{'='*80}")
@@ -703,10 +717,13 @@ class RFEModelTrainer:
 if __name__ == "__main__":
     trainer = RFEModelTrainer()
     
-    # Train with top 10 features
-    model, le, accuracy, importance = trainer.train(n_features=10)
+    # --- Project Phoenix: Train and Evaluate ---
+    # We are training with the top 15 features to ensure our new Phoenix features (ranked 3rd and 4th)
+    # are included in the final model.
+    N_FEATURES_PHOENIX = 15
+    model, le, accuracy, importance = trainer.train(n_features=N_FEATURES_PHOENIX)
     
-    logger.info(f"\n✅ Model trained with 10 features")
+    logger.info(f"\n✅ Phoenix Model trained with {N_FEATURES_PHOENIX} features")
     logger.info(f"✅ Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
-    logger.info(f"✅ Model saved to: models/resilience_xgb_rfe_10.pkl")
+    logger.info(f"✅ Model saved to: models/resilience_xgb_rfe_phoenix.pkl")
 

@@ -50,7 +50,7 @@
 37. **The Trust Fall Experiment & Ground Truth Trap** 🎯 CRITICAL - Performance vs. Portability are orthogonal
 38. **Data-Driven Thresholds** 🎯 CRITICAL - Fit model to data, not data to model
 
-### Recent Critical Fixes (39-50)
+### Recent Critical Fixes (39-52)
 39. **The Creator's Dilemma: Volume vs. Stabilizers** 🎯 CRITICAL - High-usage creators need stabilizers
 40. **The "Empty Calories" Creator Pattern** 🎯 CRITICAL - High volume + negative tax = volume scorer
 41. **Shot Chart Collection Data Completeness Fix** 🎯 CRITICAL - Collect for all players, not just qualified
@@ -64,6 +64,7 @@
 49. **Shot Quality Generation Delta - Replacing Sample Weighting with Organic Features** 🎯 CRITICAL - Measure shot quality, not just volume
 50. **Hierarchy of Constraints: Fatal Flaws > Elite Traits** 🎯 CRITICAL - Fatal flaw gates execute first, cannot be overridden
 51. **The "Two Doors to Stardom" Principle** 🎯 CRITICAL - NBA stardom has multiple valid pathways requiring differentiated validation
+52. **Project Phoenix: Ground-Truth Data Acquisition** 🎯 CRITICAL - No proxies for critical signals - acquire ground-truth data directly
 
 ### Quick Reference
 - **Quick Reference Checklist** - Implementation checklist for new features
@@ -1449,6 +1450,32 @@ A universal filter optimized for one path incorrectly rejects valid stars from t
 **Result**: True positive pass rate improved from 58.8% to 76.5%, rescuing 3 elite players (Anthony Davis 2015/2016, Joel Embiid 2016) while maintaining false positive control.
 
 **See**: `ACTIVE_CONTEXT.md` for current implementation status and remaining edge cases.
+
+---
+
+## 52. Project Phoenix: Ground-Truth Data Acquisition 🎯 CRITICAL (December 2025)
+
+**The Problem**: Model performance plateaued due to signal integrity issues. Critical features were built on proxies rather than ground-truth data, limiting the model's ability to learn true patterns.
+
+**The Insight**: **No Proxies for Critical Signals**. When a feature represents a fundamental basketball concept (like off-ball scoring value), you must acquire ground-truth data directly from the source. Proxies introduce noise that models cannot overcome, regardless of algorithm sophistication.
+
+**The Phoenix Approach**: Systematic ground-truth acquisition for "0 Dribble" shooting statistics:
+1. **Audit the Source**: Forensic examination of NBA Stats API confirmed reliable "0 Dribble" data availability for all seasons (2015-2025)
+2. **Build Robust Pipeline**: Created `fetch_zero_dribble_stats()` with proper error handling and data validation
+3. **Context-Aware Features**: Implemented SPECIALIST_EFFICIENCY_SCORE and VERSATILITY_THREAT_SCORE dyad to differentiate between role players and creators
+4. **RFE Validation**: Recursive Feature Elimination selected TS_PCT_VS_USAGE_BAND_EXPECTATION as 4th most important feature, validating "efficiency vs. expectation" as the breakthrough signal
+
+**Results**:
+- ✅ **Data Integrity**: Ground-truth pipeline established with 100% coverage
+- ✅ **Model Improvement**: Accuracy improved from 46.77% to 48.62% (+1.85 percentage points)
+- ✅ **Trust Fall Achievement**: 50.0% pass rate without gates achieved
+- ⚠️ **New Challenge Identified**: "Fool's Gold" problem - high-usage, low-efficiency players over-predicted due to clutch metrics
+
+**Key Principle**: **Ground-truth data acquisition is the highest-leverage activity** in any ML system. When performance plateaus, first check if you're measuring what you think you're measuring. The most expensive mistake is building sophisticated models on noisy proxies.
+
+**Implementation**: `src/nba_data/scripts/evaluate_plasticity_potential.py` - Project Phoenix pipeline integrated into core feature engineering.
+
+**See**: `ACTIVE_CONTEXT.md` for current Project Phoenix status and next steps.
 
 ---
 

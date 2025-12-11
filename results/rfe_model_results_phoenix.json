@@ -1,0 +1,83 @@
+{
+  "n_features": 15,
+  "accuracy": 0.48615384615384616,
+  "features": [
+    "CLUTCH_MIN_TOTAL",
+    "QOC_USG_DELTA",
+    "RS_LATE_CLOCK_PRESSURE_APPETITE",
+    "TS_PCT_VS_USAGE_BAND_EXPECTATION",
+    "USG_PCT",
+    "USG_PCT_X_RS_PRESSURE_APPETITE",
+    "USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE",
+    "USG_PCT_X_EFG_ISO_WEIGHTED",
+    "EFG_ISO_WEIGHTED_YOY_DELTA",
+    "PREV_LEVERAGE_TS_DELTA",
+    "PREV_RS_RIM_APPETITE",
+    "PREV_EFG_ISO_WEIGHTED",
+    "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
+    "SKILL_MATURITY_INDEX",
+    "INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE"
+  ],
+  "feature_importance": [
+    {
+      "Feature": "USG_PCT",
+      "Importance": 0.19482466578483582
+    },
+    {
+      "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
+      "Importance": 0.10812482982873917
+    },
+    {
+      "Feature": "USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE",
+      "Importance": 0.07948040217161179
+    },
+    {
+      "Feature": "PREV_EFG_ISO_WEIGHTED",
+      "Importance": 0.07260707020759583
+    },
+    {
+      "Feature": "INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE",
+      "Importance": 0.06958639621734619
+    },
+    {
+      "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
+      "Importance": 0.0679309219121933
+    },
+    {
+      "Feature": "RS_LATE_CLOCK_PRESSURE_APPETITE",
+      "Importance": 0.06237633526325226
+    },
+    {
+      "Feature": "EFG_ISO_WEIGHTED_YOY_DELTA",
+      "Importance": 0.058124322444200516
+    },
+    {
+      "Feature": "PREV_RS_RIM_APPETITE",
+      "Importance": 0.057033296674489975
+    },
+    {
+      "Feature": "QOC_USG_DELTA",
+      "Importance": 0.04970180243253708
+    },
+    {
+      "Feature": "TS_PCT_VS_USAGE_BAND_EXPECTATION",
+      "Importance": 0.04246629402041435
+    },
+    {
+      "Feature": "PREV_LEVERAGE_TS_DELTA",
+      "Importance": 0.038017310202121735
+    },
+    {
+      "Feature": "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
+      "Importance": 0.03744296729564667
+    },
+    {
+      "Feature": "CLUTCH_MIN_TOTAL",
+      "Importance": 0.03709566593170166
+    },
+    {
+      "Feature": "SKILL_MATURITY_INDEX",
+      "Importance": 0.02518770657479763
+    }
+  ]
+}

@@ -49,6 +49,58 @@ class StressVectorEngine:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.results_dir.mkdir(parents=True, exist_ok=True)
         
+    def fetch_zero_dribble_stats(self, season: str) -> pd.DataFrame:
+        """
+        Fetches and processes shooting statistics for '0 Dribble' attempts for a given season.
+
+        This function is a dedicated pipeline for acquiring the ground-truth data for
+        off-ball scoring value, as defined in Project Phoenix. It includes robust error
+        handling and returns a clean DataFrame.
+
+        Args:
+            season (str): The season to fetch data for (e.g., "2023-24").
+
+        Returns:
+            pd.DataFrame: A DataFrame containing zero-dribble shooting stats with columns
+                          [PLAYER_ID, PLAYER_NAME, EFG_PCT_0_DRIBBLE, FGA_0_DRIBBLE].
+                          Returns an empty DataFrame if the API call fails or returns no data.
+        """
+        logger.info(f"  - Executing Phoenix Pipeline: Fetching 0 Dribble ground truth for {season}...")
+        try:
+            zero_dribbles_data = self.client.get_league_player_shooting_stats(
+                season=season, 
+                dribble_range="0 Dribbles",
+                season_type="Regular Season"
+            )
+            
+            if not zero_dribbles_data or 'resultSets' not in zero_dribbles_data or not zero_dribbles_data['resultSets']:
+                logger.warning(f"    -> No result sets found for 0 Dribble data in {season}.")
+                return pd.DataFrame()
+
+            result_set = zero_dribbles_data['resultSets'][0]
+            headers = result_set.get('headers')
+            rows = result_set.get('rowSet')
+
+            if not headers or not rows:
+                logger.warning(f"    -> API call for 0 Dribbles in {season} was successful but returned no player data.")
+                return pd.DataFrame()
+
+            df_zero = pd.DataFrame(rows, columns=headers)
+            
+            # Select and rename columns for clarity and consistency
+            df_zero = df_zero[['PLAYER_ID', 'PLAYER_NAME', 'EFG_PCT', 'FGA']]
+            df_zero = df_zero.rename(columns={
+                'EFG_PCT': 'EFG_PCT_0_DRIBBLE',
+                'FGA': 'FGA_0_DRIBBLE'
+            })
+            
+            logger.info(f"    -> Success: Fetched {len(df_zero)} rows for 0 Dribble stats.")
+            return df_zero
+
+        except Exception as e:
+            logger.error(f"    -> ❌ Critical error in fetch_zero_dribble_stats for {season}: {e}", exc_info=True)
+            return pd.DataFrame()
+        
     def fetch_creation_metrics(self, season):
         """
         Vector 1: Self-Creation (The 'Creation Tax')
@@ -57,21 +109,12 @@ class StressVectorEngine:
         logger.info(f"Fetching Creation Metrics for {season}...")
         
         try:
-            # 1. Zero Dribbles (Dependent)
-            logger.info(f"  - Fetching 0 Dribbles for {season}...")
-            zero_dribbles = self.client.get_league_player_shooting_stats(
-                season=season, 
-                dribble_range="0 Dribbles"
-            )
-            df_zero = pd.DataFrame(zero_dribbles['resultSets'][0]['rowSet'], 
-                                   columns=zero_dribbles['resultSets'][0]['headers'])
-            df_zero = df_zero[['PLAYER_ID', 'PLAYER_NAME', 'FG_PCT', 'FG3_PCT', 'EFG_PCT', 'FGA']]
-            df_zero = df_zero.rename(columns={
-                'FG_PCT': 'FG_PCT_0_DRIBBLE', 
-                'EFG_PCT': 'EFG_PCT_0_DRIBBLE',
-                'FGA': 'FGA_0_DRIBBLE'
-            })
-            logger.info(f"    -> Got {len(df_zero)} rows.")
+            # 1. Zero Dribbles (Dependent) - Using the new robust pipeline
+            df_zero = self.fetch_zero_dribble_stats(season)
+            if df_zero.empty:
+                logger.error(f"Could not fetch essential 0-dribble data for {season}. Aborting creation metrics.")
+                return pd.DataFrame()
+
             
             # 2. 3-6 Dribbles (Self-Created/Iso)
             logger.info(f"  - Fetching 3-6 Dribbles for {season}...")
@@ -391,17 +434,16 @@ class StressVectorEngine:
     
     def fetch_player_metadata(self, season):
         """
-        Fetch USG_PCT and AGE for all players in a season.
+        Fetch USG_PCT, TS_PCT, and AGE for all players in a season.
         This ensures we have complete metadata without dependency on filtered files.
         
         Returns:
-            DataFrame with columns: PLAYER_ID, PLAYER_NAME, USG_PCT, AGE
+            DataFrame with columns: PLAYER_ID, PLAYER_NAME, USG_PCT, TS_PCT, AGE
         """
-        logger.info(f"Fetching player metadata (USG_PCT, AGE) for {season}...")
+        logger.info(f"Fetching player metadata (USG_PCT, TS_PCT, AGE) for {season}...")
         
         try:
-            # Fetch Advanced stats for both USG_PCT and AGE
-            # USG_PCT is in Advanced stats, not Base stats (fix for bug where it was fetched from base_stats)
+            # Fetch Advanced stats for USG_PCT, TS_PCT and AGE
             advanced_stats = self.client.get_league_player_advanced_stats(season=season, season_type="Regular Season")
             df_advanced = pd.DataFrame(
                 advanced_stats['resultSets'][0]['rowSet'],
@@ -409,18 +451,17 @@ class StressVectorEngine:
             )
             
             # Verify required columns exist
-            required_cols = ['PLAYER_ID', 'PLAYER_NAME', 'USG_PCT', 'AGE']
+            required_cols = ['PLAYER_ID', 'PLAYER_NAME', 'USG_PCT', 'TS_PCT', 'AGE']
             missing_cols = [col for col in required_cols if col not in df_advanced.columns]
             if missing_cols:
                 logger.error(f"❌ Missing required columns in advanced_stats response: {missing_cols}")
                 logger.error(f"Available columns: {list(df_advanced.columns)}")
                 return pd.DataFrame()
             
-            # Select only needed columns - both USG_PCT and AGE are in advanced_stats
+            # Select only needed columns
             df_metadata = df_advanced[required_cols].copy()
             
             # Handle USG_PCT: API might return as decimal (0.20) or percentage (20.0)
-            # Check if values are typically < 1 (decimal) or > 1 (percentage)
             if len(df_metadata) > 0:
                 sample_usg = df_metadata['USG_PCT'].dropna()
                 if len(sample_usg) > 0:
@@ -431,6 +472,7 @@ class StressVectorEngine:
             
             logger.info(f"  ✅ Fetched metadata for {len(df_metadata)} players")
             logger.info(f"  - USG_PCT coverage: {df_metadata['USG_PCT'].notna().sum()} / {len(df_metadata)}")
+            logger.info(f"  - TS_PCT coverage: {df_metadata['TS_PCT'].notna().sum()} / {len(df_metadata)}")
             logger.info(f"  - AGE coverage: {df_metadata['AGE'].notna().sum()} / {len(df_metadata)}")
             
             return df_metadata
@@ -611,12 +653,12 @@ class StressVectorEngine:
                     df_season['ELITE_WEAK_TS_DELTA'] = np.nan
                     df_season['ELITE_WEAK_USG_DELTA'] = np.nan
                 
-                # Merge metadata (USG_PCT, AGE) - PHASE 1 FIX
+                # Merge metadata (USG_PCT, TS_PCT, AGE) - PHASE 1 FIX
                 if not df_metadata.empty:
                     # Merge on PLAYER_ID, update PLAYER_NAME if missing
                     df_season = pd.merge(
                         df_season,
-                        df_metadata[['PLAYER_ID', 'USG_PCT', 'AGE']],
+                        df_metadata[['PLAYER_ID', 'USG_PCT', 'TS_PCT', 'AGE']],
                         on='PLAYER_ID',
                         how='left'
                     )
@@ -630,6 +672,7 @@ class StressVectorEngine:
                 else:
                     logger.warning(f"No metadata data for {season}, filling with NaNs")
                     df_season['USG_PCT'] = np.nan
+                    df_season['TS_PCT'] = np.nan
                     df_season['AGE'] = np.nan
                 
                 # Merge playtype data
@@ -661,6 +704,80 @@ class StressVectorEngine:
             return
             
         final_df = pd.concat(all_seasons_data, ignore_index=True)
+        
+        # --- Project Phoenix: Surgical Feature Re-Implementation (Step 2.2) ---
+        logger.info("Implementing Project Phoenix pure features...")
+        try:
+            # Prerequisite: Get total FGA from a more reliable source if possible
+            # For now, we approximate total FGA from the sum of tracked dribble ranges
+            # This is an acknowledged limitation we can improve later.
+            if 'FGA_ISO_TOTAL' in final_df.columns and 'FGA_0_DRIBBLE' in final_df.columns:
+                 final_df['TOTAL_FGA_APPROX'] = final_df['FGA_ISO_TOTAL'] + final_df['FGA_0_DRIBBLE']
+            else:
+                final_df['TOTAL_FGA_APPROX'] = final_df['FGA_0_DRIBBLE']
+
+
+            # 1. Calculate League-Average EFG% on Zero Dribbles for each season
+            league_avg_efg_0_dribble = final_df.groupby('SEASON').apply(
+                lambda x: np.average(x['EFG_PCT_0_DRIBBLE'], weights=x['FGA_0_DRIBBLE']) if x['FGA_0_DRIBBLE'].sum() > 0 else 0
+            ).rename('LEAGUE_AVG_EFG_0_DRIBBLE').reset_index()
+            
+            final_df = pd.merge(final_df, league_avg_efg_0_dribble, on='SEASON', how='left')
+
+            # 2. Implement the Pre-Mortem-Revised Feature Dyad
+            # Formula: (player.efg_0_dribble - league_avg) * player.fga_0_dribble
+            final_df['ZERO_DRIBBLE_SCORING_VALUE_ADDED'] = (
+                (final_df['EFG_PCT_0_DRIBBLE'] - final_df['LEAGUE_AVG_EFG_0_DRIBBLE']) * final_df['FGA_0_DRIBBLE']
+            )
+
+            # Context Metric: What proportion of a player's shots are zero-dribble?
+            final_df['ZERO_DRIBBLE_SHOT_PROPORTION'] = np.where(
+                final_df['TOTAL_FGA_APPROX'] > 0,
+                final_df['FGA_0_DRIBBLE'] / final_df['TOTAL_FGA_APPROX'],
+                0
+            )
+
+            # Feature 1: Specialist Efficiency Score
+            final_df['SPECIALIST_EFFICIENCY_SCORE'] = (
+                final_df['ZERO_DRIBBLE_SCORING_VALUE_ADDED'] * final_df['ZERO_DRIBBLE_SHOT_PROPORTION']
+            )
+
+            # Feature 2: Versatility Threat Score
+            final_df['VERSATILITY_THREAT_SCORE'] = (
+                final_df['ZERO_DRIBBLE_SCORING_VALUE_ADDED'] * (1 - final_df['ZERO_DRIBBLE_SHOT_PROPORTION'])
+            )
+
+            # Feature 3: TS_PCT_VS_USAGE_BAND_EXPECTATION
+            if 'USG_PCT' in final_df.columns and 'TS_PCT' in final_df.columns:
+                 # Create usage bands (2% bins)
+                 bins = [0, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 40, 100]
+                 labels = range(len(bins) - 1)
+                 
+                 final_df['USG_BAND'] = pd.cut(final_df['USG_PCT'], bins=bins, labels=labels)
+                 
+                 # Calculate League Average TS% for each band per season
+                 # Weighted by TOTAL_FGA_APPROX to prioritize rotation players
+                 league_avg_ts_by_band = final_df.groupby(['SEASON', 'USG_BAND'], observed=False).apply(
+                     lambda x: np.average(x['TS_PCT'], weights=x['TOTAL_FGA_APPROX']) if x['TOTAL_FGA_APPROX'].sum() > 0 else x['TS_PCT'].mean()
+                 ).rename('LEAGUE_AVG_TS_FOR_BAND').reset_index()
+                 
+                 final_df = pd.merge(final_df, league_avg_ts_by_band, on=['SEASON', 'USG_BAND'], how='left')
+                 
+                 final_df['TS_PCT_VS_USAGE_BAND_EXPECTATION'] = final_df['TS_PCT'] - final_df['LEAGUE_AVG_TS_FOR_BAND']
+            else:
+                 final_df['TS_PCT_VS_USAGE_BAND_EXPECTATION'] = 0
+
+            logger.info("✅ Successfully implemented Phoenix feature dyad.")
+
+        except Exception as e:
+            logger.error(f"❌ Failed to implement Project Phoenix features: {e}", exc_info=True)
+            # Add empty columns to prevent downstream errors
+            final_df['ZERO_DRIBBLE_SCORING_VALUE_ADDED'] = 0
+            final_df['ZERO_DRIBBLE_SHOT_PROPORTION'] = 0
+            final_df['SPECIALIST_EFFICIENCY_SCORE'] = 0
+            final_df['VERSATILITY_THREAT_SCORE'] = 0
+        
+        # --- End Project Phoenix Implementation ---
         
         # PHASE 1 FIX: Merge pressure features before calculating Dependence Scores
         # Dependence Score calculation requires RS_OPEN_SHOT_FREQUENCY from pressure features
@@ -710,9 +827,45 @@ class StressVectorEngine:
             final_df['ASSISTED_FGM_PCT'] = np.nan
             final_df['OPEN_SHOT_FREQUENCY'] = np.nan
             final_df['SELF_CREATED_USAGE_RATIO'] = np.nan
-        
+
+        # PHASE 1: DEVELOPMENT STAGE FEATURES
+        # These teach the model that different player archetypes require different evaluation rigor
+
+        # SKILL_MATURITY_INDEX = CREATION_TAX / AGE
+        # Young players can have messy creation profiles, skilled players cannot
+        if 'CREATION_TAX' in final_df.columns and 'AGE' in final_df.columns:
+            final_df['SKILL_MATURITY_INDEX'] = final_df['CREATION_TAX'] / final_df['AGE']
+            logger.info(f"Calculated SKILL_MATURITY_INDEX for {final_df['SKILL_MATURITY_INDEX'].notna().sum()}/{len(final_df)} player-seasons")
+        else:
+            final_df['SKILL_MATURITY_INDEX'] = np.nan
+            logger.warning("CREATION_TAX or AGE not found - SKILL_MATURITY_INDEX set to NaN")
+
+        # PHYSICAL_DOMINANCE_RATIO = RS_PRESSURE_APPETITE / EFG_ISO_WEIGHTED
+        # Physical freaks can have raw efficiency, skilled creators cannot
+        # Use pressure appetite as a proxy for physical dominance
+        if 'RS_PRESSURE_APPETITE' in final_df.columns and 'EFG_ISO_WEIGHTED' in final_df.columns:
+            # Avoid division by zero
+            pressure_appetite = final_df['RS_PRESSURE_APPETITE'].fillna(0.0)
+            iso_eff = final_df['EFG_ISO_WEIGHTED'].fillna(0.0)
+            final_df['PHYSICAL_DOMINANCE_RATIO'] = np.where(
+                iso_eff > 0,
+                pressure_appetite / iso_eff,
+                np.where(pressure_appetite > 0, 10.0, 0.0)  # High ratio if pressure appetite exists but no iso efficiency
+            )
+            logger.info(f"Calculated PHYSICAL_DOMINANCE_RATIO for {final_df['PHYSICAL_DOMINANCE_RATIO'].notna().sum()}/{len(final_df)} player-seasons")
+        else:
+            final_df['PHYSICAL_DOMINANCE_RATIO'] = np.nan
+            logger.warning("RS_PRESSURE_APPETITE or EFG_ISO_WEIGHTED not found - PHYSICAL_DOMINANCE_RATIO set to NaN")
+
         # Clean up columns
-        cols_to_keep = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON', 
+        phoenix_cols = [
+            'SPECIALIST_EFFICIENCY_SCORE', 
+            'VERSATILITY_THREAT_SCORE',
+            'ZERO_DRIBBLE_SCORING_VALUE_ADDED',
+            'ZERO_DRIBBLE_SHOT_PROPORTION',
+            'TS_PCT_VS_USAGE_BAND_EXPECTATION'
+        ]
+        cols_to_keep = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON',
                         'CREATION_TAX', 'CREATION_VOLUME_RATIO', 'CREATION_BOOST',
                         'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CLUTCH_MIN_TOTAL',
                         'QOC_TS_DELTA', 'QOC_USG_DELTA',
@@ -721,7 +874,8 @@ class StressVectorEngine:
                         'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED',
                         'USG_PCT', 'AGE',
                         'ISO_FREQUENCY', 'PNR_HANDLER_FREQUENCY', 'POST_TOUCH_FREQUENCY',  # DATA COMPLETENESS FIX: Added playtype frequencies
-                        'DEPENDENCE_SCORE', 'ASSISTED_FGM_PCT', 'OPEN_SHOT_FREQUENCY', 'SELF_CREATED_USAGE_RATIO']  # PHASE 1: Added dependence score columns
+                        'DEPENDENCE_SCORE', 'ASSISTED_FGM_PCT', 'OPEN_SHOT_FREQUENCY', 'SELF_CREATED_USAGE_RATIO',  # PHASE 1: Added dependence score columns
+                        'SKILL_MATURITY_INDEX', 'PHYSICAL_DOMINANCE_RATIO'] + phoenix_cols  # PHASE 1: Development stage features
         
         # Only keep columns that actually exist
         existing_cols = [c for c in cols_to_keep if c in final_df.columns]

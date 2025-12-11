@@ -377,6 +377,13 @@ class RFEFeatureSelector:
             'RS_RIM_APPETITE',
             # REMOVED: 'RIM_PRESSURE_RESILIENCE' (playoff feature)
             'SHOT_QUALITY_GENERATION_DELTA',  # NEW: Shot quality generation (RS-only, measures Empty Calories)
+            
+            # --- Project Phoenix Features ---
+            'ZERO_DRIBBLE_SCORING_VALUE_ADDED',
+            'ZERO_DRIBBLE_SHOT_PROPORTION',
+            'SPECIALIST_EFFICIENCY_SCORE',
+            'VERSATILITY_THREAT_SCORE',
+            'TS_PCT_VS_USAGE_BAND_EXPECTATION',
         ]
         
         # Add Usage-Aware Features
@@ -435,6 +442,12 @@ class RFEFeatureSelector:
             'INEFFICIENT_VOLUME_SCORE',
             'SYSTEM_DEPENDENCE_SCORE',
             'EMPTY_CALORIES_RISK',
+            # PHASE 1: Explicit interaction terms
+            'INEFFICIENT_CREATION_SCORE',
+            'CLUTCH_FAILURE_RISK',
+            # PHASE 1: Development stage features
+            'SKILL_MATURITY_INDEX',
+            'PHYSICAL_DOMINANCE_RATIO',
             # Legacy features (for backward compatibility)
             'ABDICATION_RISK',
             'PHYSICALITY_FLOOR',
@@ -444,6 +457,12 @@ class RFEFeatureSelector:
             'LEVERAGE_DATA_CONFIDENCE',
             'NEGATIVE_SIGNAL_COUNT',
         ]
+
+        # PHASE 2: Add autopsy-derived features to main features list
+        features.extend([
+            'CRAFTY_SCORER_INDEX',
+            'INEFFICIENT_VOLUME_MERCHANT'
+        ])
         
         for feat in gate_features:
             if feat in df.columns:
@@ -496,9 +515,11 @@ class RFEFeatureSelector:
                     X[col] = X[col].fillna(0)
                 elif col in ['DATA_COMPLETENESS_SCORE', 'SAMPLE_SIZE_CONFIDENCE', 'LEVERAGE_DATA_CONFIDENCE']:
                     X[col] = X[col].fillna(0)
-                elif col in ['ABDICATION_RISK', 'ABDICATION_MAGNITUDE', 'PHYSICALITY_FLOOR', 'SELF_CREATED_FREQ', 
+                elif col in ['ABDICATION_RISK', 'ABDICATION_MAGNITUDE', 'PHYSICALITY_FLOOR', 'SELF_CREATED_FREQ',
                              'NEGATIVE_SIGNAL_COUNT', 'RIM_PRESSURE_DEFICIT', 'INEFFICIENT_VOLUME_SCORE',
-                             'SYSTEM_DEPENDENCE_SCORE', 'EMPTY_CALORIES_RISK']:
+                             'SYSTEM_DEPENDENCE_SCORE', 'EMPTY_CALORIES_RISK', 'INEFFICIENT_CREATION_SCORE',
+                             'CLUTCH_FAILURE_RISK', 'SKILL_MATURITY_INDEX', 'PHYSICAL_DOMINANCE_RATIO',
+                             'CRAFTY_SCORER_INDEX', 'INEFFICIENT_VOLUME_MERCHANT']:
                     X[col] = X[col].fillna(0)
                 else:
                     median_val = X[col].median()

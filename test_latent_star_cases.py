@@ -26,6 +26,7 @@ import sys
 from pathlib import Path
 import logging
 from typing import Dict, List, Optional
+import joblib
 
 # Add scripts directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src" / "nba_data" / "scripts"))
@@ -581,11 +582,24 @@ def run_test_suite(apply_hard_gates: bool = True):
     """
     
     gate_status = "ENABLED" if apply_hard_gates else "DISABLED (Trust Fall)"
+    model_name = "Phoenix Model" if not apply_hard_gates else "Default RFE Model"
     logger.info("=" * 100)
-    logger.info(f"CRITICAL CASE STUDIES FOR LATENT STAR DETECTION - Gates: {gate_status}")
+    logger.info(f"CRITICAL CASE STUDIES - Model: {model_name} | Gates: {gate_status}")
     logger.info("=" * 100)
 
     predictor = ConditionalArchetypePredictor()
+    if not apply_hard_gates:
+        try:
+            model_path = Path("models") / "resilience_xgb_rfe_phoenix.pkl"
+            model_data = joblib.load(model_path)
+            predictor.model = model_data['model']
+            predictor.label_encoder = model_data['label_encoder']
+            predictor.selected_features = model_data['selected_features']
+            logger.info("Successfully loaded Phoenix model components.")
+        except Exception as e:
+            logger.error(f"Failed to load Phoenix model: {e}")
+            return
+    
     test_cases = get_test_cases()
 
     results = []
