@@ -17,7 +17,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 import xgboost as xgb
 import ast
@@ -40,7 +41,7 @@ class RFEModelTrainer:
         self.models_dir = Path("models")
         self.models_dir.mkdir(parents=True, exist_ok=True)
         
-    def load_rfe_features(self, n_features=10):
+    def load_rfe_features(self, n_features=10, add_dependence_feats=True):
         """Load RFE-selected features from comparison CSV."""
         rfe_path = self.results_dir / "rfe_feature_count_comparison.csv"
         if not rfe_path.exists():
@@ -57,61 +58,38 @@ class RFEModelTrainer:
         features = ast.literal_eval(features_str)
         
         # Force include SHOT_QUALITY_GENERATION_DELTA if available (Dec 8, 2025)
-        # This feature reduces reliance on sample weighting and should always be included
         if 'SHOT_QUALITY_GENERATION_DELTA' not in features:
-            # Remove lowest importance feature if we're at the limit
             if len(features) >= n_features:
-                # Keep top n_features-1, add SHOT_QUALITY_GENERATION_DELTA
                 features = features[:n_features-1]
             features.append('SHOT_QUALITY_GENERATION_DELTA')
-            logger.info(f"Added SHOT_QUALITY_GENERATION_DELTA to feature set (reduces reliance on sample weighting)")
+            logger.info("Added SHOT_QUALITY_GENERATION_DELTA to feature set (reduces reliance on sample weighting)")
         
-        # ENHANCEMENT (Dec 10, 2025): Force include USG_PCT_X_INEFFICIENT_VOLUME_SCORE interaction term
-        # RFE optimizes for overall accuracy, not specific use cases (False Positive detection)
-        # This feature explicitly encodes "high usage × high inefficiency = bad" relationship
-        # Even if RFE doesn't select it, we force include it because it targets a specific failure mode
+        # Force include inefficiency interaction
         interaction_name = 'USG_PCT_X_INEFFICIENT_VOLUME_SCORE'
         if interaction_name not in features:
-            # Remove lowest importance feature if we're at the limit
             if len(features) >= n_features:
-                # Keep top n_features-1, add interaction term
                 features = features[:n_features-1]
             features.append(interaction_name)
-            logger.info(f"Added {interaction_name} to feature set (force-included for False Positive detection)")
+            logger.info(f"Added {interaction_name} to feature set (False Positive detection)")
         
-        # PROJECT SLOAN FIX (Dec 10, 2025): Force include DEPENDENCE_SCORE and interaction term
-        # DEPENDENCE_SCORE enables the model to learn about System Merchants
-        # DEPENDENCE_SCORE is now populated (100% coverage in training data) - critical for Project Sloan
-        # NOTE: We're NOT adding PORTABLE_USG_PCT because it has 1.0000 correlation with USG_PCT
-        #       (redundant - model can't distinguish them). Instead, we'll let the model learn
-        #       the relationship between USG_PCT and DEPENDENCE_SCORE directly.
-        features_to_add = []
-        
-        if 'DEPENDENCE_SCORE' not in features:
-            features_to_add.append('DEPENDENCE_SCORE')
-            logger.info("Added DEPENDENCE_SCORE to feature set (Project Sloan - System Merchant detection)")
-        
-        # Add DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE interaction term
-        # This catches "low dependence + high inefficiency = False Positive" pattern (D'Angelo Russell)
-        dep_ineff_interaction = 'DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE'
-        if dep_ineff_interaction not in features:
-            features_to_add.append(dep_ineff_interaction)
-            logger.info(f"Added {dep_ineff_interaction} to feature set (Project Sloan - False Positive detection)")
-        
-        # Add INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE interaction term
-        # This is HIGH for low-dependence + high-inefficiency cases (stronger signal than direct interaction)
-        # Catches D'Angelo Russell pattern: low dependence (22.61%) + high inefficiency = False Positive
-        inverse_dep_ineff_interaction = 'INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE'
-        if inverse_dep_ineff_interaction not in features:
-            features_to_add.append(inverse_dep_ineff_interaction)
-            logger.info(f"Added {inverse_dep_ineff_interaction} to feature set (Project Sloan - Low-Dep + High-Ineff detection)")
-        
-        # Add new features, removing lowest importance features if at limit
-        for new_feat in features_to_add:
-            if len(features) >= n_features:
-                # Remove lowest importance feature (will be reordered by model)
-                features = features[:n_features-1]
-            features.append(new_feat)
+        if add_dependence_feats:
+            features_to_add = []
+            if 'DEPENDENCE_SCORE' not in features:
+                features_to_add.append('DEPENDENCE_SCORE')
+                logger.info("Added DEPENDENCE_SCORE to feature set (Dependence modeling)")
+            dep_ineff_interaction = 'DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE'
+            if dep_ineff_interaction not in features:
+                features_to_add.append(dep_ineff_interaction)
+                logger.info(f"Added {dep_ineff_interaction} to feature set (False Positive detection)")
+            inverse_dep_ineff_interaction = 'INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE'
+            if inverse_dep_ineff_interaction not in features:
+                features_to_add.append(inverse_dep_ineff_interaction)
+                logger.info(f"Added {inverse_dep_ineff_interaction} to feature set (Low-Dep + High-Ineff detection)")
+            # Add and trim if necessary
+            for new_feat in features_to_add:
+                if len(features) >= n_features:
+                    features = features[:n_features-1]
+                features.append(new_feat)
         
         logger.info(f"Loaded {len(features)} RFE-selected features (including force-included features):")
         for i, feat in enumerate(features, 1):
@@ -272,7 +250,7 @@ class RFEModelTrainer:
         
         return df_merged
 
-    def prepare_features(self, df, rfe_features):
+    def prepare_features(self, df, rfe_features, add_dependence_feats=True):
         """
         Prepare feature set using only RFE-selected features.
         
@@ -447,31 +425,19 @@ class RFEModelTrainer:
                         logger.debug(f"Created interaction term {interaction_name} from transformed values")
             
             # ENHANCEMENT (Dec 10, 2025): Create USG_PCT_X_INEFFICIENT_VOLUME_SCORE interaction term
-            # This explicitly encodes "high usage × high inefficiency = bad" as a single feature
-            # Force include this feature even if RFE doesn't select it (see load_rfe_features)
             interaction_name = 'USG_PCT_X_INEFFICIENT_VOLUME_SCORE'
             if 'USG_PCT' in df.columns and 'INEFFICIENT_VOLUME_SCORE' in df.columns:
                 df[interaction_name] = (df['USG_PCT'].fillna(0) * df['INEFFICIENT_VOLUME_SCORE'].fillna(0))
-                logger.info(f"Created interaction term {interaction_name} (force-included for False Positive detection)")
+                logger.info(f"Created interaction term {interaction_name} (False Positive detection)")
             
-            # PROJECT SLOAN FIX (Dec 10, 2025): Create DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE interaction term
-            # This explicitly encodes "low dependence + high inefficiency = False Positive" (D'Angelo Russell pattern)
-            # Catches players who are portable (low dependence) but inefficient (high inefficiency)
-            # Force include this feature even if RFE doesn't select it
-            dep_ineff_interaction = 'DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE'
-            if 'DEPENDENCE_SCORE' in df.columns and 'INEFFICIENT_VOLUME_SCORE' in df.columns:
-                df[dep_ineff_interaction] = (df['DEPENDENCE_SCORE'].fillna(0) * df['INEFFICIENT_VOLUME_SCORE'].fillna(0))
-                logger.info(f"Created interaction term {dep_ineff_interaction} (Project Sloan - False Positive detection)")
-                
-                # PROJECT SLOAN FIX (Dec 10, 2025): Create INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE interaction term
-                # This explicitly encodes "(1 - DEPENDENCE_SCORE) × INEFFICIENT_VOLUME_SCORE"
-                # HIGH for low-dependence + high-inefficiency cases (D'Angelo Russell pattern)
-                # The inverse term is stronger for low-dependence players than the direct interaction
+            if add_dependence_feats:
+                dep_ineff_interaction = 'DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE'
                 inverse_dep_ineff_interaction = 'INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE'
-                # Clip DEPENDENCE_SCORE to [0, 1] before calculating inverse
-                dep_score_clipped = df['DEPENDENCE_SCORE'].fillna(0).clip(0, 1.0)
-                df[inverse_dep_ineff_interaction] = ((1.0 - dep_score_clipped) * df['INEFFICIENT_VOLUME_SCORE'].fillna(0))
-                logger.info(f"Created inverse interaction term {inverse_dep_ineff_interaction} (Project Sloan - Low-Dep + High-Ineff detection)")
+                if 'DEPENDENCE_SCORE' in df.columns and 'INEFFICIENT_VOLUME_SCORE' in df.columns:
+                    dep_score_clipped = df['DEPENDENCE_SCORE'].fillna(0).clip(0, 1.0)
+                    df[dep_ineff_interaction] = (dep_score_clipped * df['INEFFICIENT_VOLUME_SCORE'].fillna(0))
+                    df[inverse_dep_ineff_interaction] = ((1.0 - dep_score_clipped) * df['INEFFICIENT_VOLUME_SCORE'].fillna(0))
+                    logger.info(f"Created interaction terms {dep_ineff_interaction} and {inverse_dep_ineff_interaction}")
         
         # Filter to only RFE-selected features
         existing_features = [f for f in rfe_features if f in df.columns]
@@ -506,21 +472,22 @@ class RFEModelTrainer:
         
         return X, existing_features
 
-    def train(self, n_features=10):
-        """Train the XGBoost Model with RFE-selected features."""
+    def train(self, n_features=10, add_dependence_feats=True):
+        """Train the XGBoost Model with RFE-selected features and a dependence regressor."""
         logger.info("=" * 80)
         logger.info(f"Training Model with RFE-Selected Top {n_features} Features")
         logger.info("=" * 80)
         
         # Load RFE-selected features
-        rfe_features = self.load_rfe_features(n_features=n_features)
+        rfe_features = self.load_rfe_features(n_features=n_features, add_dependence_feats=add_dependence_feats)
         
         # Load and merge data
         df = self.load_and_merge_data()
         
         # Prepare features
-        X, feature_names = self.prepare_features(df, rfe_features)
+        X, feature_names = self.prepare_features(df, rfe_features, add_dependence_feats=add_dependence_feats)
         y = df['ARCHETYPE']
+        y_dep = df.get('DEPENDENCE_SCORE')
         
         # Encode Labels
         le = LabelEncoder()
@@ -556,6 +523,11 @@ class RFEModelTrainer:
         X_test = X.loc[test_indices]
         y_train = y_encoded[train_indices]
         y_test = y_encoded[test_indices]
+        # Dependence splits (keep temporal split, drop NaNs later)
+        X_dep_train = X.loc[train_indices]
+        X_dep_test = X.loc[test_indices]
+        y_dep_train = y_dep.loc[train_indices] if y_dep is not None else None
+        y_dep_test = y_dep.loc[test_indices] if y_dep is not None else None
         
         train_seasons = df.loc[train_mask, 'SEASON'].unique()
         test_seasons = df.loc[test_mask, 'SEASON'].unique()
@@ -638,11 +610,63 @@ class RFEModelTrainer:
         logger.info("Training model with asymmetric loss (sample weighting)...")
         model.fit(X_train, y_train, sample_weight=sample_weights.values)
         
+        # === Train Dependence Regressor (gate-free) ===
+        dep_model = None
+        dep_low = 0.40
+        dep_high = 0.55
+        if y_dep is not None:
+            dep_notna_train = y_dep_train.notna()
+            dep_notna_test = y_dep_test.notna()
+            X_dep_train = X_dep_train.loc[dep_notna_train]
+            y_dep_train = y_dep_train.loc[dep_notna_train]
+            X_dep_test = X_dep_test.loc[dep_notna_test]
+            y_dep_test = y_dep_test.loc[dep_notna_test]
+
+            if not y_dep_train.empty:
+                dep_model = xgb.XGBRegressor(
+                    objective='reg:squarederror',
+                    n_estimators=200,
+                    max_depth=4,
+                    learning_rate=0.08,
+                    subsample=0.9,
+                    colsample_bytree=0.9,
+                    random_state=42
+                )
+                # Align sample weights if shapes match; else default to None
+                try:
+                    sw_dep = sample_weights.loc[X_dep_train.index] if len(sample_weights) == len(X) else None
+                except Exception:
+                    sw_dep = None
+
+                logger.info("Training dependence regressor...")
+                dep_model.fit(X_dep_train, y_dep_train, sample_weight=sw_dep.values if sw_dep is not None else None)
+
+                # Evaluate dependence regressor
+                dep_pred = dep_model.predict(X_dep_test)
+                from sklearn.metrics import mean_squared_error, r2_score
+                dep_mse = mean_squared_error(y_dep_test, dep_pred)
+                dep_r2 = r2_score(y_dep_test, dep_pred)
+                logger.info(f"Dependence Regressor - MSE: {dep_mse:.4f}, R2: {dep_r2:.4f}")
+
+                # Calibrate dependence thresholds on creators (USG >= 20%) using predicted values
+                usg_series = df.loc[X_dep_test.index, 'USG_PCT']
+                if usg_series.max() > 1.0:
+                    usg_series = usg_series / 100.0
+                creator_mask = usg_series >= 0.20
+                dep_pred_series = pd.Series(dep_pred, index=X_dep_test.index)
+                dep_pred_creators = dep_pred_series.loc[creator_mask]
+                if not dep_pred_creators.empty:
+                    dep_low = float(dep_pred_creators.quantile(0.33))
+                    dep_high = float(dep_pred_creators.quantile(0.66))
+                logger.info(f"Dependence thresholds (predicted, creators): low={dep_low:.4f}, high={dep_high:.4f}")
+
         # Save Model Bundle (Dictionary)
         model_bundle = {
             'model': model,
             'label_encoder': le,
-            'selected_features': feature_names
+            'selected_features': feature_names,
+            'dependence_model': dep_model,
+            'dependence_thresholds': {'low': dep_low, 'high': dep_high}
         }
         
         if n_features == 15: # Specific override for Project Phoenix

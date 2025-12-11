@@ -53,10 +53,14 @@ class ConditionalArchetypePredictor:
         self.data_dir = Path("data")
         self.db_path = self.data_dir / "nba_stats.db"
         self.use_rfe_model = use_rfe_model
+        self.dep_model = None
+        self.dep_thresholds = {}
         
         # Load model and encoder
         if use_rfe_model:
-            model_path = self.models_dir / "resilience_xgb_rfe_10.pkl"
+            # Prefer Phoenix (15-feature) bundle when available to ensure selected_features are present
+            phoenix_path = self.models_dir / "resilience_xgb_rfe_phoenix.pkl"
+            model_path = phoenix_path if phoenix_path.exists() else self.models_dir / "resilience_xgb_rfe_10.pkl"
             
             if not model_path.exists():
                 logger.warning(f"RFE model not found at {model_path}, falling back to full model")
@@ -68,13 +72,17 @@ class ConditionalArchetypePredictor:
                 model_data = joblib.load(model_path)
                 
                 if isinstance(model_data, dict) and 'model' in model_data:
-                    self.model = model_data['model']
-                    self.label_encoder = model_data['label_encoder']
-                    self.selected_features = model_data['selected_features']
+                    self.model = model_data.get('model')
+                    self.dep_model = model_data.get('dependence_model')
+                    self.dep_thresholds = model_data.get('dependence_thresholds', {})
+                    self.label_encoder = model_data.get('label_encoder')
+                    self.selected_features = model_data.get('selected_features')
                     logger.info(f"Successfully loaded RFE model bundle from {model_path}")
                 else:
                     # Legacy: File is just the model object
                     self.model = model_data
+                    self.dep_model = None
+                    self.dep_thresholds = {}
                     # Try to load separate encoder file
                     encoder_path = self.models_dir / "archetype_encoder_rfe_10.pkl"
                     if encoder_path.exists():
@@ -87,7 +95,9 @@ class ConditionalArchetypePredictor:
 
                 if self.selected_features:
                     logger.info(f"Model configured with {len(self.selected_features)} features.")
-                
+                else:
+                    logger.error("Loaded model bundle is missing selected_features; predictions will fail without them.")
+                    raise ValueError("selected_features not found in model bundle")
             except Exception as e:
                 logger.error(f"Error loading RFE model from {model_path}: {e}")
                 raise
@@ -100,6 +110,8 @@ class ConditionalArchetypePredictor:
                 raise FileNotFoundError(f"Full model not found at {model_path}")
 
             self.model = joblib.load(model_path)
+            self.dep_model = None
+            self.dep_thresholds = {}
             # Full model might not have encoder/features bundled, handle this gracefully
             self.label_encoder = None
             self.selected_features = None
@@ -259,16 +271,108 @@ class ConditionalArchetypePredictor:
                 self.dist['star_pressure_appetite_40th'] = star_df['RS_PRESSURE_APPETITE'].quantile(0.40)
                 logger.info(f"RS_PRESSURE_APPETITE 40th percentile (STARS, USG > 20%): {self.dist['star_pressure_appetite_40th']:.4f}")
 
-        # TWO DOORS TO STARDOM: Calculate percentiles for router
-        # Door #1: Physicality (Rim Appetite)
-        if 'RS_RIM_APPETITE' in qualified_df.columns:
-            self.dist['rim_appetite_p'] = {p: qualified_df['RS_RIM_APPETITE'].quantile(p/100) for p in range(10, 100, 10)}
-            logger.info("Calculated RS_RIM_APPETITE percentiles for 'Two Doors' router.")
-        
-        # Door #2: Skill (Creation Tax)
-        if 'CREATION_TAX' in qualified_df.columns:
-            self.dist['creation_tax_p'] = {p: qualified_df['CREATION_TAX'].quantile(p/100) for p in range(10, 100, 10)}
-            logger.info("Calculated CREATION_TAX percentiles for 'Two Doors' router.")
+        # TWO DOORS TO STARDOM: Creator-only percentiles (USG >= 20%) for routing
+        creator_df = self.full_dataset[self.full_dataset.get('USG_PCT', 0) >= 0.20]
+        if not creator_df.empty:
+            if 'RS_RIM_APPETITE' in creator_df.columns:
+                self.dist['rim_appetite_60th'] = creator_df['RS_RIM_APPETITE'].quantile(0.60)
+                self.dist['rim_appetite_70th'] = creator_df['RS_RIM_APPETITE'].quantile(0.70)
+                self.dist['rim_appetite_80th'] = creator_df['RS_RIM_APPETITE'].quantile(0.80)
+                logger.info(f"Calculated RS_RIM_APPETITE 60/70/80 percentiles for Router (creators): {self.dist['rim_appetite_60th']:.4f} / {self.dist['rim_appetite_70th']:.4f} / {self.dist['rim_appetite_80th']:.4f}")
+            if 'CREATION_TAX' in creator_df.columns:
+                self.dist['creation_tax_75th'] = creator_df['CREATION_TAX'].quantile(0.75)
+                logger.info(f"Calculated CREATION_TAX 75th percentile for Router (creators): {self.dist['creation_tax_75th']:.4f}")
+            if 'EFG_ISO_WEIGHTED' in creator_df.columns:
+                self.dist['efg_iso_35th'] = creator_df['EFG_ISO_WEIGHTED'].quantile(0.35)
+                self.dist['efg_iso_15th'] = creator_df['EFG_ISO_WEIGHTED'].quantile(0.15)
+                logger.info(f"Calculated EFG_ISO 35th/15th percentiles for path gates: {self.dist['efg_iso_35th']:.4f} / {self.dist['efg_iso_15th']:.4f}")
+
+    def _determine_validation_path(self, player_data: pd.Series) -> str:
+        """
+        Route player through Physicality or Skill path using creator percentiles.
+        """
+        rim_threshold = self.dist.get('rim_appetite_60th', 0.28)  # fallback ~60th creators
+        tax_threshold = self.dist.get('creation_tax_75th', -0.05)  # fallback ~75th creators
+
+        rim_appetite = player_data.get('RS_RIM_APPETITE', 0)
+        creation_tax = player_data.get('CREATION_TAX', 0)
+
+        if pd.notna(rim_appetite) and rim_appetite > rim_threshold:
+            logger.info(f"  Validation Path: PHYSICALITY (rim {rim_appetite:.4f} > {rim_threshold:.4f})")
+            return "Physicality"
+
+        if pd.notna(creation_tax) and creation_tax > tax_threshold:
+            logger.info(f"  Validation Path: SKILL (creation_tax {creation_tax:.4f} > {tax_threshold:.4f})")
+            return "Skill"
+
+        logger.info("  Validation Path: DEFAULT")
+        return "Default"
+
+    def _apply_path_specific_gates(self, player_data: pd.Series, final_probs: Dict, path: str) -> Tuple[Dict, List[str]]:
+        """
+        Apply gates specific to the routed path.
+        """
+        flags: List[str] = []
+
+        if path == "Physicality":
+            # Relaxed inefficiency floor for uncut gems
+            efg_iso = player_data.get('EFG_ISO_WEIGHTED', 0)
+            relaxed_floor = self.dist.get('efg_iso_15th', 0.35)
+            if pd.notna(efg_iso) and efg_iso < relaxed_floor:
+                king_prob = final_probs.pop('King (Resilient Star)', 0)
+                if king_prob:
+                    final_probs['Bulldozer (Fragile Star)'] = final_probs.get('Bulldozer (Fragile Star)', 0) + king_prob
+                    flags.append(f"PHYSICALITY GATE: Inefficiency (EFG {efg_iso:.3f} < {relaxed_floor:.3f}) -> King->Bulldozer")
+
+            # Stricter passivity for uncut gems
+            leverage_usg_delta = player_data.get('LEVERAGE_USG_DELTA', 0)
+            strict_passivity_threshold = -0.02
+            if pd.notna(leverage_usg_delta) and leverage_usg_delta < strict_passivity_threshold:
+                star_prob = final_probs.pop('King (Resilient Star)', 0) + final_probs.pop('Bulldozer (Fragile Star)', 0)
+                if star_prob > 0:
+                    sniper = final_probs.get('Sniper (Resilient Role)', 0)
+                    victim = final_probs.get('Victim (Fragile Role)', 0)
+                    total = sniper + victim
+                    if total > 0:
+                        final_probs['Sniper (Resilient Role)'] = sniper + star_prob * (sniper / total)
+                        final_probs['Victim (Fragile Role)'] = victim + star_prob * (victim / total)
+                    else:
+                        final_probs['Victim (Fragile Role)'] = star_prob
+                    flags.append(f"PHYSICALITY GATE: Passivity (Leverage USG Delta {leverage_usg_delta:.3f} < {strict_passivity_threshold}) -> Star->Sniper/Victim")
+
+        elif path == "Skill":
+            # Stricter inefficiency floor for polished diamonds
+            efg_iso = player_data.get('EFG_ISO_WEIGHTED', 0)
+            strict_floor = self.dist.get('efg_iso_35th', 0.45)
+            if pd.notna(efg_iso) and efg_iso < strict_floor:
+                king_prob = final_probs.pop('King (Resilient Star)', 0)
+                if king_prob:
+                    final_probs['Bulldozer (Fragile Star)'] = final_probs.get('Bulldozer (Fragile Star)', 0) + king_prob
+                    flags.append(f"SKILL GATE: Inefficiency (EFG {efg_iso:.3f} < {strict_floor:.3f}) -> King->Bulldozer")
+
+        else:
+            # Default fragility gate (legacy)
+            is_fragile = player_data.get('RS_RIM_APPETITE', 1.0) < self.dist.get('rim_appetite_20th', 0.20)
+            if is_fragile and ('King (Resilient Star)' in final_probs or 'Bulldozer (Fragile Star)' in final_probs):
+                logger.info("  FRAGILITY GATE TRIGGERED: Capping at Sniper/Victim (low rim appetite)")
+                star_prob = final_probs.pop('King (Resilient Star)', 0) + final_probs.pop('Bulldozer (Fragile Star)', 0)
+                sniper = final_probs.get('Sniper (Resilient Role)', 0)
+                victim = final_probs.get('Victim (Fragile Role)', 0)
+                total = sniper + victim
+                if total > 0:
+                    final_probs['Sniper (Resilient Role)'] = sniper + star_prob * (sniper / total)
+                    final_probs['Victim (Fragile Role)'] = victim + star_prob * (victim / total)
+                else:
+                    final_probs['Victim (Fragile Role)'] = star_prob / 2
+                    final_probs['Sniper (Resilient Role)'] = star_prob / 2
+                flags.append("FRAGILITY GATE: Capped at Sniper/Victim")
+
+        # Re-normalize probabilities if they drift
+        total_prob = sum(final_probs.values())
+        if total_prob > 0 and abs(total_prob - 1.0) > 0.001:
+            final_probs = {k: v / total_prob for k, v in final_probs.items()}
+
+        return final_probs, flags
             
     def _check_dependence_score_coverage(self):
         """Check for DEPENDENCE_SCORE coverage in the loaded dataset."""
@@ -554,7 +658,7 @@ class ConditionalArchetypePredictor:
         player_data: Dict, 
         target_usage: float, 
         apply_phase3_fixes: bool = True,
-        apply_hard_gates: bool = True
+        apply_hard_gates: bool = False
     ) -> Dict:
         """
         Predict a player's archetype at a specified usage level.
@@ -593,29 +697,17 @@ class ConditionalArchetypePredictor:
         confidence_flags = []
         
         if apply_hard_gates:
-            # Gate 1: Bag Check Gate (caps at Bulldozer)
-            final_probs, bag_check_flags = self._apply_bag_check_gate(pd.Series(player_data), final_probs)
-            confidence_flags.extend(bag_check_flags)
-            
-            # Gate 2: Fragility Gate (cannot be King/Bulldozer if fragile)
-            is_fragile = player_data.get('RS_RIM_APPETITE', 1.0) < self.dist.get('rim_appetite_20th', 0.20)
-            if is_fragile:
-                if 'King (Resilient Star)' in final_probs or 'Bulldozer (Fragile Star)' in final_probs:
-                    logger.info("  FRAGILITY GATE TRIGGERED: Capping at Sniper/Victim (low rim appetite)")
-                    
-                    star_prob = final_probs.pop('King (Resilient Star)', 0) + final_probs.pop('Bulldozer (Fragile Star)', 0)
-                    
-                    # Re-distribute to Sniper/Victim based on their existing ratio
-                    sniper_vic_total = final_probs.get('Sniper (Resilient Role)', 0) + final_probs.get('Victim (Fragile Role)', 0)
-                    if sniper_vic_total > 0:
-                        final_probs['Sniper (Resilient Role)'] += star_prob * (final_probs['Sniper (Resilient Role)'] / sniper_vic_total)
-                        final_probs['Victim (Fragile Role)'] += star_prob * (final_probs['Victim (Fragile Role)'] / sniper_vic_total)
-                    else:
-                        # If both are 0, split it evenly
-                        final_probs['Victim (Fragile Role)'] = star_prob / 2
-                        final_probs['Sniper (Resilient Role)'] = star_prob / 2
+            # Determine path first for gate ordering
+            validation_path = self._determine_validation_path(pd.Series(player_data))
 
-                    confidence_flags.append("FRAGILITY GATE: Capped at Sniper/Victim")
+            # Gate 1: Bag Check Gate (caps at Bulldozer) — skip for Physicality path (big/uncut gems)
+            if validation_path != "Physicality":
+                final_probs, bag_check_flags = self._apply_bag_check_gate(pd.Series(player_data), final_probs)
+                confidence_flags.extend(bag_check_flags)
+            
+            # Gate 2: Path-Specific Gates
+            final_probs, path_flags = self._apply_path_specific_gates(pd.Series(player_data), final_probs, validation_path)
+            confidence_flags.extend(path_flags)
 
         # Determine final archetype from potentially modified probabilities
         predicted_archetype = max(final_probs, key=final_probs.get)
@@ -638,7 +730,7 @@ class ConditionalArchetypePredictor:
         player_data: Dict, 
         target_usage: float, 
         apply_phase3_fixes: bool = True,
-        apply_hard_gates: bool = True
+        apply_hard_gates: bool = False
     ) -> Dict:
         """
         Predicts player archetype and maps it to the 2D Risk Matrix.
@@ -663,20 +755,35 @@ class ConditionalArchetypePredictor:
         probs = performance_result.get('probabilities', {})
         performance_score = probs.get('King (Resilient Star)', 0) + probs.get('Bulldozer (Fragile Star)', 0)
         
-        # Step 3: Get the Dependence Score (X-axis)
-        dependence_score = player_data.get('DEPENDENCE_SCORE')
-        
-        # Step 4: Determine Risk Category based on thresholds
+        # Step 3: Get the Dependence Score (X-axis) via model prediction if available
+        dependence_score = None
+        if hasattr(self, 'dep_model') and self.dep_model is not None:
+            try:
+                dep_pred = float(self.dep_model.predict(self.prepare_features_for_prediction(player_data, target_usage, apply_phase3_fixes))[0])
+                dependence_score = dep_pred
+            except Exception as e:
+                logger.warning(f"Dependence prediction failed; falling back to player_data: {e}")
+                dependence_score = player_data.get('DEPENDENCE_SCORE')
+        else:
+            dependence_score = player_data.get('DEPENDENCE_SCORE')
+
+        # Step 4: Determine Risk Category based on calibrated thresholds
+        thresholds = self.dep_thresholds if hasattr(self, 'dep_thresholds') else {}
+        low_cut = thresholds.get('low', 0.40)
+        high_cut = thresholds.get('high', 0.55)
+
         risk_category = "Unknown"
         if dependence_score is not None and pd.notna(dependence_score):
-            if performance_score >= 0.65 and dependence_score < 0.50:
+            if performance_score >= 0.65 and dependence_score < low_cut:
                 risk_category = "Franchise Cornerstone"
-            elif performance_score >= 0.65 and dependence_score >= 0.50:
+            elif performance_score >= 0.65 and dependence_score >= high_cut:
                 risk_category = "Luxury Component"
-            elif performance_score < 0.65 and dependence_score < 0.50:
+            elif performance_score < 0.65 and dependence_score < low_cut:
                 risk_category = "Depth Piece"
-            elif performance_score < 0.65 and dependence_score >= 0.50:
+            elif performance_score < 0.65 and dependence_score >= high_cut:
                 risk_category = "Avoid"
+            else:
+                risk_category = "Depth Piece"
         else:
             # Fallback for players without dependence score
             if performance_score >= 0.65:

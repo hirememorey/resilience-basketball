@@ -1,12 +1,20 @@
 # Current State: NBA Playoff Resilience Engine
 
-Date: December 8, 2025
+Date: December 10, 2025
 
-Status: Data Leakage Fixes Complete ✅ | Previous Playoff Features Integrated ✅ | Temporal Train/Test Split Implemented ✅ | 2D Risk Matrix Complete ✅ | Universal Projection Implemented ✅ | Feature Distribution Alignment Complete ✅ | USG_PCT Normalization Complete ✅ | Inefficiency Gate Implemented ✅ | Playtype Data Merge Complete ✅ | USG_PCT/AGE Population Bug Fixed ✅ | Phase 4.2: Continuous Gradients & Sample Weighting Complete ✅ | Phase 1: Dependence Score Upstream ✅ | Phase 2: Portable Features ✅ | Phase 4: 5x Sample Weighting ✅ | Model Retrained ✅
+Status: Temporal Split ✅ | Dual-Model Bundle (Performance + Dependence) ✅ | Dependence Calibration on Creators ✅ | Universal Projection ✅ | Feature Alignment/USG Normalization ✅ | Gates Disabled by Default ✅ | Sample Weighting Asymmetric ✅ | Current Pass Rate 55% (TP 35%, FP 60%, TN 71%) ⚠️
 
 ## 🏗️ Project Structure & Cleanup
 
 We are currently consolidating the codebase. Obsolete frameworks (Linear Regression, Complex 5-Pathway) are being archived to focus on the Active XGBoost Pipeline.
+
+### Latest Update (Dec 10, 2025) — Dual-Model, Calibrated, Gate-Free
+- Trained a dual bundle in `models/resilience_xgb_rfe_phoenix.pkl`:
+  - Archetype classifier (performance).
+  - Dependence regressor (R2 ~0.79, MSE ~0.006) with calibrated creator cuts: low=0.2879, high=0.3945 (USG ≥ 20% creators).
+- Inference is gate-free by default (apply_hard_gates=False); 2D mapping uses calibrated dependence cuts. Performance cut still fixed at 0.65 (needs calibration next).
+- Validation (latent_star_cases) after this retrain: 55.0% pass (22/40); TP 6/17 (35.3%), FP 3/5 (60.0%), TN 12/17 (70.6%). Poole/Fultz still overvalued on performance; dependence pushes them to Luxury, not Cornerstone. Cornerstone bigs occasionally downgraded to Luxury due to dependence scores.
+- Next developer: calibrate performance score on validation creators and/or strengthen dependence-feature interactions (USG×DEP, context/open-shot reliance) instead of adding gates.
 
 ### Active Pipeline Components
 
@@ -67,114 +75,26 @@ These are the core files driving the current 53.54% accuracy model:
 - Clock data: 100% coverage (all seasons)
 - Rim pressure data: 95.9% coverage (1,773/1,849 in expanded predictions) - Fixed December 5, 2025 ✅
 
-### Model Architecture
+### Model Architecture (Dec 10, 2025)
 
-**Algorithm:** XGBoost Classifier (Multi-Class)
+- Dual bundle: XGBoost classifier (performance) + XGBoost regressor (dependence) with calibrated creator cuts (low=0.2879, high=0.3945 on predicted dependence for USG≥0.20).
+- File: `models/resilience_xgb_rfe_phoenix.pkl` (contains model, dep_model, thresholds, encoder, selected_features). Gates default OFF in inference.
+- Force-included signals: DEPENDENCE_SCORE; INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE; USG_PCT_X_INEFFICIENT_VOLUME_SCORE; ABDICATION_RISK; RIM_PRESSURE_DEFICIT; INEFFICIENT_VOLUME_SCORE; usage-aware interactions and priors.
+- Sample weighting: asymmetric (3x high-usage victims + 10x high-usage & high-inefficiency).
+- Dependence regressor quality: MSE ~0.0061, R2 ~0.789 on test.
 
-**RFE-Optimized Model (10 features) - CURRENT:**
-1. USG_PCT (41.26% importance) - Usage level (highest importance!)
-2. USG_PCT_X_EFG_ISO_WEIGHTED (8.85% importance) - Usage × Isolation efficiency
-3. CREATION_TAX (8.54% importance) - Creation efficiency drop-off
-4. USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE (7.16% importance) - Usage × Late clock resilience
-5. ABDICATION_RISK (6.71% importance) - Continuous gradient (negative leverage signal)
-6. RS_LATE_CLOCK_PRESSURE_APPETITE (6.33% importance) - Late clock pressure willingness
-7. CLUTCH_MIN_TOTAL (5.39% importance) - Clutch minutes
-8. QOC_USG_DELTA (5.28% importance) - Quality of competition usage delta
-9. CREATION_TAX_YOY_DELTA (5.26% importance) - Year-over-year change in creation tax
-10. AGE_X_RS_PRESSURE_RESILIENCE_YOY_DELTA (5.21% importance) - Age × Pressure resilience trajectory
+### Current Validation Snapshot (latent_star_cases, Dec 10 dual-model, gates off)
+- Pass rate: 55.0% (22/40)
+- True Positives: 6/17 (35.3%)
+- False Positives: 3/5 (60.0%)
+- True Negatives: 12/17 (70.6%)
+- System Player: 1/1 (100%)
+- Observations: Poole/Fultz still high performance; dependence moves them to Luxury (not Cornerstone). Cornerstone bigs sometimes downgraded to Luxury when dependence is high. Performance cut is still fixed at 0.65 (needs calibration).
 
-**New Risk Features (Phase 4.2):**
-- `RIM_PRESSURE_DEFICIT`: Continuous gradient (0-1) measuring rim pressure shortfall
-- `ABDICATION_MAGNITUDE`: Continuous gradient (0-1) with Smart Deference logic
-- `INEFFICIENT_VOLUME_SCORE`: Volume × Flaw interaction (creation_vol × negative_tax)
-- `SYSTEM_DEPENDENCE_SCORE`: Volume × Dependence interaction (usg × system_dependence)
-- `EMPTY_CALORIES_RISK`: Volume × Rim Pressure Deficit interaction
-
-**Key Insight:** All features are RS-only or trajectory-based. Usage-aware features dominate (USG_PCT: 30.5% importance). Model retrained December 8, 2025 with portable features, continuous gradients, interaction terms, and 5x sample weighting for high-usage victims.
-
-**Gates & Constraints (Phase 4.2 - Trust Fall 2.0):**
-- **Hard Gates**: **DISABLED BY DEFAULT** - Model now learns from continuous gradient features
-- **Continuous Gradients**: Binary gates converted to continuous features (0-1 scale)
-  - `RIM_PRESSURE_DEFICIT`: Measures rim pressure shortfall (replaces Fragility Gate)
-  - `ABDICATION_MAGNITUDE`: Measures abdication with Smart Deference exemption (replaces Negative Signal Gate)
-  - `INEFFICIENT_VOLUME_SCORE`: Volume × Flaw interaction (replaces Inefficiency Gate logic)
-- **Interaction Terms**: Explicit Volume × Flaw features teach model complex relationships
-  - `SYSTEM_DEPENDENCE_SCORE`: `USG_PCT × (assisted_pct + open_shot_freq)`
-  - `EMPTY_CALORIES_RISK`: `USG_PCT × RIM_PRESSURE_DEFICIT`
-- **Sample Weighting**: Asymmetric loss - 5x weight for high-usage victims (penalizes false positives) - **Increased from 3x on December 8, 2025**
-- **Trust Fall 2.0**: Gates disabled by default (`apply_hard_gates=False`) - model must learn patterns
-
-**Model File:** `models/resilience_xgb_rfe_10.pkl` (primary), `models/resilience_xgb.pkl` (fallback)
-
-### Validation Results
-
-**Test Case Pass Rate (With Gates):** **90.6%** (29/32) - Updated December 8, 2025 after Phase 4.4 gate logic refinement ✅
-- **True Positives**: 77.8% (7/9) ✅ - Model correctly identifies latent stars
-- **False Positives**: 80.0% (4/5) ✅ - **Significant improvement** from 40.0% (+40.0 pp)
-- **True Negatives**: 100.0% (17/17) ✅ - **Perfect** - **Major improvement** from 70.6% (+29.4 pp)
-
-**Test Case Pass Rate (Trust Fall 2.0 - Gates Disabled):** **56.2%** (18/32) - December 8, 2025 ✅
-- **True Positives**: 88.9% (8/9) ✅ - Model correctly identifies latent stars
-- **False Positives**: 40.0% (2/5) ⚠️ - Model over-predicts stars (KAT, Russell, Randle, Fultz)
-- **True Negatives**: 41.2% (7/17) ⚠️ - Model struggles to penalize high-usage players with flaws
-
-**Test Suite Enhancement (December 7, 2025):**
-- Test suite now uses `predict_with_risk_matrix()` for all test cases
-- Provides both Performance Score (1D) and Risk Category (2D) for richer evaluation
-- Key insight: Using existing 2D framework is simpler than forcing 2D insights into 1D model
-- Jordan Poole correctly identified as "Luxury Component" (High Performance + High Dependence) ✅
-
-**Test Suite Expansion:** Expanded from 16 to 32 test cases, adding:
-- Mikal Bridges (2021-22) - True Positive ✅
-- Desmond Bane (2021-22) - True Positive ✅
-- Karl-Anthony Towns (6 seasons: 2015-16 through 2020-21) - True Negative (all passed) ✅
-- Markelle Fultz (7 seasons: 2017-18 through 2023-24) - True Negative (4 passed, 3 failed)
-
-**True Positives:** **88.9%** (8/9) ✅
-- ✅ Shai Gilgeous-Alexander (2018-19): 99.16% (PASS)
-- ✅ Victor Oladipo (2016-17): 94.71% (PASS)
-- ✅ Jalen Brunson (2020-21): 99.50% (PASS)
-- ✅ Tyrese Maxey (2021-22): 84.12% (PASS)
-- ✅ Pascal Siakam (2018-19): 94.47% (PASS)
-- ✅ Jayson Tatum (2017-18): 84.97% (PASS)
-- ✅ Mikal Bridges (2021-22): 99.55% (PASS)
-- ✅ Desmond Bane (2021-22): 83.09% (PASS)
-- ❌ Tyrese Haliburton (2021-22): 30.00% (FAIL - expected ≥65%, got 30.00% - gates capping)
-
-**False Positives:** **60.0%** (3/5) ⚠️
-- ✅ Talen Horton-Tucker (2020-21): 30.00% (PASS)
-- ✅ D'Angelo Russell (2018-19): 30.00% (PASS)
-- ❌ Jordan Poole (2021-22): 87.62% (FAIL - expected <55%, got 87.62% - risk category correct: "Luxury Component")
-- ❌ Christian Wood (2020-21): 81.69% (FAIL - expected <55%, got 81.69%)
-- ❌ Julius Randle (2020-21): 61.33% (FAIL - expected <55%, got 61.33%)
-
-**True Negatives:** **52.9%** (9/17) ⚠️
-- ✅ Ben Simmons (3 seasons: 2017-18, 2018-19, 2020-21): All passed
-- ✅ Domantas Sabonis (2021-22): 30.00% (PASS - risk category mismatch: expected "Luxury Component", got "Moderate Performance, High Dependence" due to gate capping)
-- ✅ Karl-Anthony Towns (2015-16, 2017-18): 2 seasons passed
-- ✅ Markelle Fultz (2017-18, 2018-19, 2020-21, 2021-22): 4 seasons passed
-  - **2017-18**: Inefficiency Gate applied (EFG_ISO=0.3596 < floor=0.4042) → capped at 40% ✅
-  - **2018-19**: Inefficiency Gate applied (below median + near-zero CREATION_TAX) → capped at 40% ✅
-- ❌ Karl-Anthony Towns (2016-17, 2018-19, 2019-20, 2020-21): 4 seasons failing (model overvaluing)
-- ❌ Markelle Fultz (2019-20, 2022-23, 2023-24): 3 seasons failing (model overvaluing)
-
-**System Player:** **100.0%** (1/1) ✅
-- ✅ Tyus Jones (2021-22): 30.00% (PASS)
-
-**Remaining Failures (11 cases):**
-- ❌ Jordan Poole (2021-22): 87.62% (expected <55%) - False positive, but risk category correct ("Luxury Component")
-- ❌ Christian Wood (2020-21): 81.69% (expected <55%) - False positive case
-- ❌ Julius Randle (2020-21): 61.33% (expected <55%) - False positive case, close to threshold
-- ❌ Tyrese Haliburton (2021-22): 30.00% (expected ≥65%) - True positive case, gates capping (needs gate logic fix)
-- ❌ Domantas Sabonis (2021-22): Risk category mismatch - expected "Luxury Component", got "Moderate Performance, High Dependence" (gates capping performance)
-- ❌ Karl-Anthony Towns (2016-17, 2018-19, 2019-20, 2020-21): 4 seasons failing - True negative cases (model overvaluing)
-- ❌ Markelle Fultz (2019-20, 2022-23, 2023-24): 3 seasons failing - True negative cases (model overvaluing)
-  - **Note**: Inefficiency Gate fixes "Low-Floor Illusion" for uniformly inefficient players (2017-18, 2018-19 now pass)
-  - **Remaining Issue**: In later seasons, Fultz's isolation efficiency improved (above median), so gate doesn't apply. Model still overvalues due to other factors (high creation volume, rim pressure).
-
-**Key Insight (December 8, 2025)**: Risk categories are correctly assigned based on Performance and Dependence scores. Failures are due to:
-1. Gate capping preventing correct risk categorization (Sabonis, Haliburton)
-2. Model false positives (KAT, Fultz later seasons, Wood, Randle, Poole)
+### Next Steps (for new developer)
+- Calibrate performance score on validation creators (USG≥0.20) and set data-driven high/low cuts instead of fixed 0.65.
+- Strengthen dependence signals if needed: add explicit USG×DEPENDENCE_SCORE and context/open-shot reliance features to training (feature, not gate).
+- Keep inference gate-free; adjust only calibrated cuts or features, not post-hoc gates.
 
 ## 2D Risk Matrix Implementation (December 2025) ✅ COMPLETE
 
