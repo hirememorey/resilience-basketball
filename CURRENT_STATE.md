@@ -1,20 +1,19 @@
 # Current State: NBA Playoff Resilience Engine
 
-Date: December 10, 2025
+Date: December 11, 2025
 
-Status: Temporal Split ✅ | Dual-Model Bundle (Performance + Dependence) ✅ | Dependence Calibration on Creators ✅ | Universal Projection ✅ | Feature Alignment/USG Normalization ✅ | Gates Disabled by Default ✅ | Sample Weighting Asymmetric ✅ | Current Pass Rate 55% (TP 35%, FP 60%, TN 71%) ⚠️
+Status: Temporal Split ✅ | Dual-Model Bundle (Performance + Dependence) ✅ | Universal Projection ✅ | Feature Alignment/USG Normalization ✅ | Gates Disabled by Default ✅ | Single Brake (clutch-floor) ✅ | Latest Pass Rate 52.5% (TP 47.1%, FP 40.0%, TN 58.8%) 🔄 Plateau
 
 ## 🏗️ Project Structure & Cleanup
 
 We are currently consolidating the codebase. Obsolete frameworks (Linear Regression, Complex 5-Pathway) are being archived to focus on the Active XGBoost Pipeline.
 
-### Latest Update (Dec 10, 2025) — Dual-Model, Calibrated, Gate-Free
-- Trained a dual bundle in `models/resilience_xgb_rfe_phoenix.pkl`:
-  - Archetype classifier (performance).
-  - Dependence regressor (R2 ~0.79, MSE ~0.006) with calibrated creator cuts: low=0.2879, high=0.3945 (USG ≥ 20% creators).
-- Inference is gate-free by default (apply_hard_gates=False); 2D mapping uses calibrated dependence cuts. Performance cut still fixed at 0.65 (needs calibration next).
-- Validation (latent_star_cases) after this retrain: 55.0% pass (22/40); TP 6/17 (35.3%), FP 3/5 (60.0%), TN 12/17 (70.6%). Poole/Fultz still overvalued on performance; dependence pushes them to Luxury, not Cornerstone. Cornerstone bigs occasionally downgraded to Luxury due to dependence scores.
-- Next developer: calibrate performance score on validation creators and/or strengthen dependence-feature interactions (USG×DEP, context/open-shot reliance) instead of adding gates.
+### Latest Update (Dec 11, 2025) — Plateau at 52.5% (gates on)
+- Data refreshed: shot quality/clock, shot charts (rerun with lower concurrency), rim pressure, dependence, gate features; predictive_dataset rebuilt.
+- Model: 15-feature XGB, single brake (clutch-floor) at 0.02 / 4.0, fixed performance cut 0.74–0.78, floor/clutch interactions added (CLUTCH_X_TS_FLOOR_GAP, USG_PCT_X_TS_PCT_VS_USAGE_BAND_EXPECTATION), class weighting Victim 1.5, deeper config (200 trees, depth 5). RFE 20-feature variant also trained (`models/resilience_xgb_rfe_20.pkl`).
+- Validation (latent_star_cases, gates on): 52.5% pass (TP 47.1%, FP 40.0%, TN 58.8%, System 100%). No improvement across iterations; penalties/feature tweaks stalled.
+- Remaining FPs: Jordan Poole 21-22, Julius Randle 20-21 (others resolved). SHAP shows clutch/floor signals not dominating star classes.
+- Next: consider model-architecture change (e.g., different loss/model family or pure class weighting without layered penalties) rather than further penalty tuning.
 
 ### Active Pipeline Components
 
@@ -75,13 +74,11 @@ These are the core files driving the current 53.54% accuracy model:
 - Clock data: 100% coverage (all seasons)
 - Rim pressure data: 95.9% coverage (1,773/1,849 in expanded predictions) - Fixed December 5, 2025 ✅
 
-### Model Architecture (Dec 10, 2025)
+### Model Architecture (Dec 11, 2025)
 
-- Dual bundle: XGBoost classifier (performance) + XGBoost regressor (dependence) with calibrated creator cuts (low=0.2879, high=0.3945 on predicted dependence for USG≥0.20).
-- File: `models/resilience_xgb_rfe_phoenix.pkl` (contains model, dep_model, thresholds, encoder, selected_features). Gates default OFF in inference.
-- Force-included signals: DEPENDENCE_SCORE; INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE; USG_PCT_X_INEFFICIENT_VOLUME_SCORE; ABDICATION_RISK; RIM_PRESSURE_DEFICIT; INEFFICIENT_VOLUME_SCORE; usage-aware interactions and priors.
-- Sample weighting: asymmetric (3x high-usage victims + 10x high-usage & high-inefficiency).
-- Dependence regressor quality: MSE ~0.0061, R2 ~0.789 on test.
+- File: `models/resilience_xgb_rfe_phoenix.pkl` (15 features), single brake (clutch-floor weight 4.0), class weight Victim 1.5; performance cut calibrated to 0.78 (creators 60th pct, clipped 0.74–0.78); monotone constraints on floor/clutch interactions.
+- File: `models/resilience_xgb_rfe_20.pkl` (20-feature RFE variant) similar performance.
+- Dependence regressor: MSE ~0.006, R2 ~0.79; calibrated creator cuts low=0.2879, high=0.3945.
 
 ### Current Validation Snapshot (latent_star_cases, Dec 10 dual-model, gates off)
 - Pass rate: 55.0% (22/40)

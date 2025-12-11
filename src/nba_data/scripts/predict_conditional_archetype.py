@@ -55,6 +55,7 @@ class ConditionalArchetypePredictor:
         self.use_rfe_model = use_rfe_model
         self.dep_model = None
         self.dep_thresholds = {}
+        self.performance_thresholds = {}
         
         # Load model and encoder
         if use_rfe_model:
@@ -75,6 +76,7 @@ class ConditionalArchetypePredictor:
                     self.model = model_data.get('model')
                     self.dep_model = model_data.get('dependence_model')
                     self.dep_thresholds = model_data.get('dependence_thresholds', {})
+                    self.performance_thresholds = model_data.get('performance_thresholds', {})
                     self.label_encoder = model_data.get('label_encoder')
                     self.selected_features = model_data.get('selected_features')
                     logger.info(f"Successfully loaded RFE model bundle from {model_path}")
@@ -324,9 +326,29 @@ class ConditionalArchetypePredictor:
                     final_probs['Bulldozer (Fragile Star)'] = final_probs.get('Bulldozer (Fragile Star)', 0) + king_prob
                     flags.append(f"PHYSICALITY GATE: Inefficiency (EFG {efg_iso:.3f} < {relaxed_floor:.3f}) -> King->Bulldozer")
 
-            # Stricter passivity for uncut gems
+            # Stricter passivity for uncut gems, with tightly scoped exemptions
             leverage_usg_delta = player_data.get('LEVERAGE_USG_DELTA', 0)
+            rim_appetite = player_data.get('RS_RIM_APPETITE', 0)
+            efg_iso = player_data.get('EFG_ISO_WEIGHTED', 0)
+            leverage_ts_delta = player_data.get('LEVERAGE_TS_DELTA', 0)
+            age = player_data.get('AGE', 99)
+            dep_score = player_data.get('DEPENDENCE_SCORE', 0.5)
+
+            rim_60 = self.dist.get('rim_appetite_60th', 0.28)
+            rim_70 = self.dist.get('rim_appetite_70th', 0.32)
+            efg_35 = self.dist.get('efg_iso_35th', 0.45)
+
+            strong_rim = pd.notna(rim_appetite) and rim_appetite > rim_70
+            good_efg = pd.notna(efg_iso) and efg_iso > efg_35
+            young = pd.notna(age) and age < 23
+            low_dep = pd.notna(dep_score) and dep_score < 0.35
+            positive_leverage_ts = pd.notna(leverage_ts_delta) and leverage_ts_delta > 0
+
             strict_passivity_threshold = -0.02
+            # Relax only when rim is strong, leverage TS is positive, and the player is either young, low-dep, or also has solid efficiency.
+            if strong_rim and positive_leverage_ts and (young or low_dep or good_efg):
+                strict_passivity_threshold = -0.08
+
             if pd.notna(leverage_usg_delta) and leverage_usg_delta < strict_passivity_threshold:
                 star_prob = final_probs.pop('King (Resilient Star)', 0) + final_probs.pop('Bulldozer (Fragile Star)', 0)
                 if star_prob > 0:
@@ -636,6 +658,30 @@ class ConditionalArchetypePredictor:
                 interaction_name = f'{feat1}_X_{feat2}'
                 player_series[interaction_name] = player_series[feat1] * player_series[feat2]
 
+        # Additional interactions used in training (inefficiency and floor emphasis)
+        if 'USG_PCT' in player_series and 'INEFFICIENT_VOLUME_SCORE' in player_series:
+            player_series['USG_PCT_X_INEFFICIENT_VOLUME_SCORE'] = player_series['USG_PCT'] * player_series['INEFFICIENT_VOLUME_SCORE']
+
+        if 'USG_PCT' in player_series and 'TS_FLOOR_GAP' in player_series:
+            player_series['USG_PCT_X_TS_FLOOR_GAP'] = player_series['USG_PCT'] * player_series['TS_FLOOR_GAP']
+
+        # Clutch-floor interaction (mirrors training): normalized clutch minutes × floor gap
+        if 'CLUTCH_MIN_TOTAL' in player_series and 'TS_FLOOR_GAP' in player_series:
+            clutch_norm = player_series['CLUTCH_MIN_TOTAL'] / 60.0  # tighter scale to amplify signal
+            player_series['CLUTCH_X_TS_FLOOR_GAP'] = clutch_norm * player_series['TS_FLOOR_GAP']
+
+        # Usage-weighted TS expectation gap
+        if 'USG_PCT' in player_series and 'TS_PCT_VS_USAGE_BAND_EXPECTATION' in player_series:
+            player_series['USG_PCT_X_TS_PCT_VS_USAGE_BAND_EXPECTATION'] = (
+                player_series['USG_PCT'] * player_series['TS_PCT_VS_USAGE_BAND_EXPECTATION']
+            )
+
+        if 'DEPENDENCE_SCORE' in player_series and 'INEFFICIENT_VOLUME_SCORE' in player_series:
+            dep_score_clipped = float(np.clip(player_series['DEPENDENCE_SCORE'], 0.0, 1.0))
+            ineff_val = float(player_series['INEFFICIENT_VOLUME_SCORE']) if pd.notna(player_series['INEFFICIENT_VOLUME_SCORE']) else 0.0
+            player_series['DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE'] = dep_score_clipped * ineff_val
+            player_series['INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE'] = (1.0 - dep_score_clipped) * ineff_val
+
         # --- FINAL PREPARATION ---
         # Select the features the model was trained on
         if not self.selected_features:
@@ -771,22 +817,23 @@ class ConditionalArchetypePredictor:
         thresholds = self.dep_thresholds if hasattr(self, 'dep_thresholds') else {}
         low_cut = thresholds.get('low', 0.40)
         high_cut = thresholds.get('high', 0.55)
+        performance_cut = (self.performance_thresholds or {}).get('cut', 0.76)
 
         risk_category = "Unknown"
         if dependence_score is not None and pd.notna(dependence_score):
-            if performance_score >= 0.65 and dependence_score < low_cut:
+            if performance_score >= performance_cut and dependence_score < low_cut:
                 risk_category = "Franchise Cornerstone"
-            elif performance_score >= 0.65 and dependence_score >= high_cut:
+            elif performance_score >= performance_cut and dependence_score >= high_cut:
                 risk_category = "Luxury Component"
-            elif performance_score < 0.65 and dependence_score < low_cut:
+            elif performance_score < performance_cut and dependence_score < low_cut:
                 risk_category = "Depth Piece"
-            elif performance_score < 0.65 and dependence_score >= high_cut:
+            elif performance_score < performance_cut and dependence_score >= high_cut:
                 risk_category = "Avoid"
             else:
                 risk_category = "Depth Piece"
         else:
             # Fallback for players without dependence score
-            if performance_score >= 0.65:
+            if performance_score >= performance_cut:
                 risk_category = "High Performance (Dependence Unknown)"
             else:
                 risk_category = "Low Performance (Dependence Unknown)"

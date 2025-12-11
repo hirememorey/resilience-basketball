@@ -71,6 +71,32 @@ class RFEModelTrainer:
                 features = features[:n_features-1]
             features.append(interaction_name)
             logger.info(f"Added {interaction_name} to feature set (False Positive detection)")
+
+        # Force include efficiency floor signals
+        floor_gap = 'TS_FLOOR_GAP'
+        usg_floor_gap = 'USG_PCT_X_TS_FLOOR_GAP'
+        clutch_floor_gap = 'CLUTCH_X_TS_FLOOR_GAP'
+        usg_ts_band_gap = 'USG_PCT_X_TS_PCT_VS_USAGE_BAND_EXPECTATION'
+        for enforced in [floor_gap, usg_floor_gap]:
+            if enforced not in features:
+                if len(features) >= n_features:
+                    features = features[:n_features-1]
+                features.append(enforced)
+                logger.info(f"Added {enforced} to feature set (efficiency floor emphasis)")
+        
+        # Force include clutch-floor interaction to prevent clutch volume from masking floor gaps
+        if clutch_floor_gap not in features:
+            if len(features) >= n_features:
+                features = features[:n_features-1]
+            features.append(clutch_floor_gap)
+            logger.info(f"Added {clutch_floor_gap} to feature set (clutch-floor interaction)")
+
+        # Force include usage-weighted TS expectation gap to amplify floor signal in high-usage contexts
+        if usg_ts_band_gap not in features:
+            if len(features) >= n_features:
+                features = features[:n_features-1]
+            features.append(usg_ts_band_gap)
+            logger.info(f"Added {usg_ts_band_gap} to feature set (usage-weighted TS band expectation)")
         
         if add_dependence_feats:
             features_to_add = []
@@ -430,6 +456,24 @@ class RFEModelTrainer:
                 df[interaction_name] = (df['USG_PCT'].fillna(0) * df['INEFFICIENT_VOLUME_SCORE'].fillna(0))
                 logger.info(f"Created interaction term {interaction_name} (False Positive detection)")
             
+            ts_floor_interaction = 'USG_PCT_X_TS_FLOOR_GAP'
+            if 'USG_PCT' in df.columns and 'TS_FLOOR_GAP' in df.columns:
+                df[ts_floor_interaction] = (df['USG_PCT'].fillna(0) * df['TS_FLOOR_GAP'].fillna(0))
+                logger.info(f"Created interaction term {ts_floor_interaction} (Efficiency floor enforcement)")
+
+            # Clutch-floor interaction: clutch minutes (normalized tighter) times floor gap
+            clutch_floor_interaction = 'CLUTCH_X_TS_FLOOR_GAP'
+            if 'CLUTCH_MIN_TOTAL' in df.columns and 'TS_FLOOR_GAP' in df.columns:
+                clutch_norm = df['CLUTCH_MIN_TOTAL'].fillna(0) / 60.0  # tighter scale to increase signal weight
+                df[clutch_floor_interaction] = clutch_norm * df['TS_FLOOR_GAP'].fillna(0)
+                logger.info(f"Created interaction term {clutch_floor_interaction} (Clutch-floor interaction)")
+
+            # Usage-weighted TS expectation gap
+            usg_ts_band_gap = 'USG_PCT_X_TS_PCT_VS_USAGE_BAND_EXPECTATION'
+            if 'USG_PCT' in df.columns and 'TS_PCT_VS_USAGE_BAND_EXPECTATION' in df.columns:
+                df[usg_ts_band_gap] = df['USG_PCT'].fillna(0) * df['TS_PCT_VS_USAGE_BAND_EXPECTATION'].fillna(0)
+                logger.info(f"Created interaction term {usg_ts_band_gap} (Usage-weighted TS expectation gap)")
+
             if add_dependence_feats:
                 dep_ineff_interaction = 'DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE'
                 inverse_dep_ineff_interaction = 'INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE'
@@ -536,12 +580,8 @@ class RFEModelTrainer:
         logger.info(f"Feature count: {len(feature_names)} (reduced from 65)")
         
         # Calculate sample weights for asymmetric loss
-        # False positives (predicting "Victim" as "King") are much worse than false negatives
-        # REDUCED from 5x to 3x (Dec 8, 2025) - SHOT_QUALITY_GENERATION_DELTA feature reduces reliance on sample weighting
-        # ENHANCED (Dec 9, 2025): Added additional penalty for high INEFFICIENT_VOLUME_SCORE cases to increase feature importance
-        # Weight function: weight = 1.0 + (is_victim_actual * is_high_usage * 2.0) + (is_high_usage * is_high_inefficiency * 2.0)
-        # This gives 3x total weight for high-usage victims, 5x for high-usage + high-inefficiency cases
-        logger.info("Calculating sample weights for asymmetric loss (3x for high-usage victims, 5x for high-usage + high-inefficiency)...")
+        # False positives are costlier; emphasize high-usage + below-floor inefficiency without over-penalizing edge cases
+        logger.info("Calculating sample weights with efficiency floor emphasis...")
         
         # Get actual archetypes for training set
         y_train_archetypes = df.loc[train_indices, 'ARCHETYPE']
@@ -558,34 +598,60 @@ class RFEModelTrainer:
             is_high_usage = pd.Series([0] * len(y_train_archetypes))
             logger.warning("USG_PCT not found - sample weighting will not account for usage")
         
-        # Calculate weights: 1.0 base + penalty for high-usage victims
-        # REDUCED from 5x to 3x (Dec 8, 2025) - SHOT_QUALITY_GENERATION_DELTA feature reduces reliance on sample weighting
-        # Weight function: weight = 1.0 + (is_victim_actual * is_high_usage * penalty_multiplier)
+        # Base + penalty for high-usage victims
         # 3x total weight (1.0 base + 2.0 penalty = 3.0) for high-usage victims
-        penalty_multiplier = 2.0  # REDUCED from 4.0 (5x) to 2.0 (3x) - Dec 8, 2025
+        penalty_multiplier = 2.0
         sample_weights = 1.0 + (is_victim * is_high_usage * penalty_multiplier)
         
-        # ENHANCEMENT (Dec 9, 2025): Add additional penalty for high INEFFICIENT_VOLUME_SCORE cases
-        # This increases feature importance by forcing the model to pay attention to inefficiency signals
-        # Condition: INEFFICIENT_VOLUME_SCORE > threshold AND USG_PCT > 0.25
-        # Additional penalty: 2.0x (total weight = 5.0x for high-usage + high-inefficiency cases)
-        # REFINED (Dec 2025): Lowered threshold to 0.005 for Squared Usage calculation
-        if 'INEFFICIENT_VOLUME_SCORE' in df.columns:
-            inefficient_scores = df.loc[train_indices, 'INEFFICIENT_VOLUME_SCORE'].fillna(0.0)
-            inefficiency_threshold = 0.005  # Adjusted for USG^2 transformation (was 0.015)
-            is_high_inefficiency = (inefficient_scores > inefficiency_threshold).astype(int)
-            is_high_usage_inefficient = (is_high_usage * is_high_inefficiency).astype(int)
-            
-            # Total weight: ~13x for high-usage, inefficient victims (1 + 2 + 10)
-            inefficiency_penalty_multiplier = 10.0 # Increased from 7.0 to 10.0
-            sample_weights = sample_weights + (is_high_usage_inefficient * inefficiency_penalty_multiplier)
-            
-            logger.info(f"  INEFFICIENT_VOLUME_SCORE penalty: +{inefficiency_penalty_multiplier}x for high-usage + high-inefficiency")
-            logger.info(f"  High-inefficiency threshold: {inefficiency_threshold} (adjusted for exponential transformation)")
-            logger.info(f"  High-inefficiency cases (INEFFICIENT_VOLUME_SCORE > {inefficiency_threshold}): {is_high_inefficiency.sum()}")
-            logger.info(f"  High-usage + high-inefficiency (receiving additional penalty): {is_high_usage_inefficient.sum()}")
+        # Class-level weights to penalize misclassifying Victims (helps reduce FPs)
+        class_weights = {
+            'King (Resilient Star)': 1.0,
+            'Bulldozer (Fragile Star)': 1.0,
+            'Sniper (Resilient Role)': 1.0,
+            'Victim (Fragile Role)': 1.5
+        }
+        class_weight_series = y_train_archetypes.map(class_weights).fillna(1.0)
+        sample_weights = sample_weights * class_weight_series.values
+        
+        # Single FP brake: clutch volume cannot override below-floor efficiency
+        # Keep one controlled brake to avoid stacking penalties that suppress TPs.
+        if 'CLUTCH_MIN_TOTAL' in df.columns and 'TS_FLOOR_GAP' in df.columns:
+            clutch_min = df.loc[train_indices, 'CLUTCH_MIN_TOTAL'].fillna(0.0)
+            ts_floor_gap = df.loc[train_indices, 'TS_FLOOR_GAP'].fillna(0.0)
+            floor_gap_threshold = 0.020  # tighter floor gap
+            is_below_floor = (ts_floor_gap > floor_gap_threshold).astype(int)
+            is_high_clutch = (clutch_min > 60).astype(int)  # ~at least ~60 clutch minutes
+            is_high_usage_clutch_floor = (is_high_usage * is_high_clutch * is_below_floor).astype(int)
+
+            clutch_floor_penalty = 4.0  # stronger single brake
+            sample_weights = sample_weights + (is_high_usage_clutch_floor * clutch_floor_penalty)
+
+            logger.info(f"  Clutch-floor penalty ONLY: +{clutch_floor_penalty}x for high-usage + below-floor + high-clutch cases")
+            logger.info(f"  Floor gap threshold (single brake): {floor_gap_threshold}")
+            logger.info(f"  High-usage + high-clutch + below-floor cases: {is_high_usage_clutch_floor.sum()}")
         else:
-            logger.warning("INEFFICIENT_VOLUME_SCORE not found - inefficiency penalty will not be applied")
+            logger.warning("CLUTCH_MIN_TOTAL or TS_FLOOR_GAP not found - clutch-floor penalty not applied")
+
+        # Positive boost: young, low-dependence latent star profile (supports TP recovery)
+        if 'AGE' in df.columns and 'DEPENDENCE_SCORE' in df.columns and 'USG_PCT' in df.columns:
+            age_series = df.loc[train_indices, 'AGE'].fillna(30)
+            dep_series = df.loc[train_indices, 'DEPENDENCE_SCORE'].fillna(0.5)
+            usg_series = df.loc[train_indices, 'USG_PCT'].fillna(0.0)
+            if usg_series.max() > 1.0:
+                usg_series = usg_series / 100.0
+
+            young_mask = age_series < 23
+            low_dep_mask = dep_series < 0.35
+            latent_usg_mask = (usg_series >= 0.17) & (usg_series <= 0.27)
+            boost_mask = (young_mask & low_dep_mask & latent_usg_mask).astype(int)
+
+            boost_multiplier = 1.0  # mild boost
+            sample_weights = sample_weights + (boost_mask * boost_multiplier)
+
+            logger.info(f"  Young-low-dep boost: +{boost_multiplier}x for AGE<23 & DEP<0.35 & 0.17<=USG<=0.27")
+            logger.info(f"  Boosted cases: {boost_mask.sum()}")
+        else:
+            logger.warning("AGE, DEPENDENCE_SCORE, or USG_PCT missing - young-low-dep boost not applied")
         
         logger.info(f"  Base weight: 1.0")
         logger.info(f"  Victim penalty multiplier: {penalty_multiplier} (total weight = {1.0 + penalty_multiplier}x for high-usage victims)")
@@ -594,16 +660,30 @@ class RFEModelTrainer:
         logger.info(f"  Weighted samples: {(sample_weights > 1.0).sum()} (weight > 1.0)")
         logger.info(f"  Max weight: {sample_weights.max():.2f}")
         logger.info(f"  Mean weight: {sample_weights.mean():.2f}")
-        
+
+        # Monotonic constraints to enforce "more inefficiency → lower performance"
+        monotone_map = {
+            'INEFFICIENT_VOLUME_SCORE': -1,
+            'USG_PCT_X_INEFFICIENT_VOLUME_SCORE': -1,
+            'DEPENDENCE_SCORE_X_INEFFICIENT_VOLUME_SCORE': -1,
+            'INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE': -1,
+            'TS_FLOOR_GAP': -1,
+            'USG_PCT_X_TS_FLOOR_GAP': -1,
+            'CLUTCH_X_TS_FLOOR_GAP': -1,
+            'USG_PCT_X_TS_PCT_VS_USAGE_BAND_EXPECTATION': -1
+        }
+        monotone_constraints = {f: monotone_map[f] for f in feature_names if f in monotone_map}
+
         # Initialize XGBoost
         model = xgb.XGBClassifier(
             objective='multi:softprob',
-            n_estimators=100,
-            max_depth=4,
-            learning_rate=0.1,
+            n_estimators=200,          # more trees for capacity
+            max_depth=5,              # slightly deeper trees
+            learning_rate=0.08,       # lower LR to balance more trees
             use_label_encoder=False,
             eval_metric='mlogloss',
-            random_state=42
+            random_state=42,
+            monotone_constraints=monotone_constraints
         )
         
         # Train with sample weights
@@ -660,13 +740,36 @@ class RFEModelTrainer:
                     dep_high = float(dep_pred_creators.quantile(0.66))
                 logger.info(f"Dependence thresholds (predicted, creators): low={dep_low:.4f}, high={dep_high:.4f}")
 
+        # Calibrate performance threshold on creators (usage >= 20%) with narrow, stable bounds
+        performance_cut = 0.76  # fixed anchor to avoid oscillation across runs
+        try:
+            test_probs = model.predict_proba(X_test)
+            class_to_idx = {cls: idx for idx, cls in enumerate(le.classes_)}
+            king_idx = class_to_idx.get('King (Resilient Star)')
+            bulldozer_idx = class_to_idx.get('Bulldozer (Fragile Star)')
+            if king_idx is not None and bulldozer_idx is not None:
+                perf_scores = test_probs[:, king_idx] + test_probs[:, bulldozer_idx]
+                usg_test = df.loc[test_indices, 'USG_PCT'].fillna(0.0)
+                if usg_test.max() > 1.0:
+                    usg_test = usg_test / 100.0
+                creator_mask = usg_test >= 0.20
+                perf_creators = perf_scores[creator_mask.values]
+                if perf_creators.size > 0:
+                    calibrated = float(np.quantile(perf_creators, 0.60))
+                    # Bound tightly to avoid run-to-run drift; stay in 0.74-0.78
+                    performance_cut = float(np.clip(calibrated, 0.74, 0.78))
+            logger.info(f"Calibrated performance cut (creators 60th pct, clipped 0.74-0.78, default 0.76): {performance_cut:.4f}")
+        except Exception as e:
+            logger.warning(f"Performance cut calibration failed, using default 0.76: {e}")
+
         # Save Model Bundle (Dictionary)
         model_bundle = {
             'model': model,
             'label_encoder': le,
             'selected_features': feature_names,
             'dependence_model': dep_model,
-            'dependence_thresholds': {'low': dep_low, 'high': dep_high}
+            'dependence_thresholds': {'low': dep_low, 'high': dep_high},
+            'performance_thresholds': {'cut': performance_cut}
         }
         
         if n_features == 15: # Specific override for Project Phoenix

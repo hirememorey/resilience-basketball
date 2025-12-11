@@ -1,6 +1,6 @@
 {
   "n_features": 15,
-  "accuracy": 0.48615384615384616,
+  "accuracy": 0.48923076923076925,
   "features": [
     "CLUTCH_MIN_TOTAL",
     "QOC_USG_DELTA",
@@ -21,63 +21,63 @@
   "feature_importance": [
     {
       "Feature": "USG_PCT",
-      "Importance": 0.19482466578483582
+      "Importance": 0.2487410306930542
     },
     {
       "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.10812482982873917
+      "Importance": 0.09035162627696991
     },
     {
       "Feature": "USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE",
-      "Importance": 0.07948040217161179
-    },
-    {
-      "Feature": "PREV_EFG_ISO_WEIGHTED",
-      "Importance": 0.07260707020759583
-    },
-    {
-      "Feature": "INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE",
-      "Importance": 0.06958639621734619
-    },
-    {
-      "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
-      "Importance": 0.0679309219121933
+      "Importance": 0.0628892108798027
     },
     {
       "Feature": "RS_LATE_CLOCK_PRESSURE_APPETITE",
-      "Importance": 0.06237633526325226
-    },
-    {
-      "Feature": "EFG_ISO_WEIGHTED_YOY_DELTA",
-      "Importance": 0.058124322444200516
-    },
-    {
-      "Feature": "PREV_RS_RIM_APPETITE",
-      "Importance": 0.057033296674489975
-    },
-    {
-      "Feature": "QOC_USG_DELTA",
-      "Importance": 0.04970180243253708
+      "Importance": 0.062149208039045334
     },
     {
       "Feature": "TS_PCT_VS_USAGE_BAND_EXPECTATION",
-      "Importance": 0.04246629402041435
+      "Importance": 0.05780975893139839
     },
     {
-      "Feature": "PREV_LEVERAGE_TS_DELTA",
-      "Importance": 0.038017310202121735
+      "Feature": "PREV_EFG_ISO_WEIGHTED",
+      "Importance": 0.056892622262239456
+    },
+    {
+      "Feature": "EFG_ISO_WEIGHTED_YOY_DELTA",
+      "Importance": 0.05523012578487396
+    },
+    {
+      "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
+      "Importance": 0.05184680223464966
+    },
+    {
+      "Feature": "INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE",
+      "Importance": 0.050916336476802826
     },
     {
       "Feature": "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
-      "Importance": 0.03744296729564667
+      "Importance": 0.050529997795820236
     },
     {
-      "Feature": "CLUTCH_MIN_TOTAL",
-      "Importance": 0.03709566593170166
+      "Feature": "PREV_LEVERAGE_TS_DELTA",
+      "Importance": 0.050082989037036896
     },
     {
       "Feature": "SKILL_MATURITY_INDEX",
-      "Importance": 0.02518770657479763
+      "Importance": 0.0481845997273922
+    },
+    {
+      "Feature": "PREV_RS_RIM_APPETITE",
+      "Importance": 0.041656244546175
+    },
+    {
+      "Feature": "QOC_USG_DELTA",
+      "Importance": 0.03914898261427879
+    },
+    {
+      "Feature": "CLUTCH_MIN_TOTAL",
+      "Importance": 0.0335705429315567
     }
   ]
 }

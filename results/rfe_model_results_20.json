@@ -1,0 +1,108 @@
+{
+  "n_features": 20,
+  "accuracy": 0.49230769230769234,
+  "features": [
+    "CLUTCH_MIN_TOTAL",
+    "QOC_USG_DELTA",
+    "RS_LATE_CLOCK_PRESSURE_APPETITE",
+    "VERSATILITY_THREAT_SCORE",
+    "TS_PCT_VS_USAGE_BAND_EXPECTATION",
+    "USG_PCT",
+    "USG_PCT_X_RS_PRESSURE_APPETITE",
+    "USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE",
+    "USG_PCT_X_EFG_ISO_WEIGHTED",
+    "CREATION_TAX_YOY_DELTA",
+    "LEVERAGE_USG_DELTA_YOY_DELTA",
+    "EFG_ISO_WEIGHTED_YOY_DELTA",
+    "PREV_LEVERAGE_TS_DELTA",
+    "PREV_RS_PRESSURE_RESILIENCE",
+    "PREV_RS_RIM_APPETITE",
+    "PREV_EFG_ISO_WEIGHTED",
+    "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
+    "SYSTEM_DEPENDENCE_SCORE",
+    "SKILL_MATURITY_INDEX",
+    "INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE"
+  ],
+  "feature_importance": [
+    {
+      "Feature": "USG_PCT",
+      "Importance": 0.22817589342594147
+    },
+    {
+      "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
+      "Importance": 0.07429829984903336
+    },
+    {
+      "Feature": "CREATION_TAX_YOY_DELTA",
+      "Importance": 0.05384083464741707
+    },
+    {
+      "Feature": "RS_LATE_CLOCK_PRESSURE_APPETITE",
+      "Importance": 0.049315258860588074
+    },
+    {
+      "Feature": "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
+      "Importance": 0.047505371272563934
+    },
+    {
+      "Feature": "INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE",
+      "Importance": 0.04704542085528374
+    },
+    {
+      "Feature": "PREV_EFG_ISO_WEIGHTED",
+      "Importance": 0.04570172727108002
+    },
+    {
+      "Feature": "TS_PCT_VS_USAGE_BAND_EXPECTATION",
+      "Importance": 0.04516417533159256
+    },
+    {
+      "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
+      "Importance": 0.044811639934778214
+    },
+    {
+      "Feature": "EFG_ISO_WEIGHTED_YOY_DELTA",
+      "Importance": 0.038184650242328644
+    },
+    {
+      "Feature": "USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE",
+      "Importance": 0.03739302605390549
+    },
+    {
+      "Feature": "LEVERAGE_USG_DELTA_YOY_DELTA",
+      "Importance": 0.037372514605522156
+    },
+    {
+      "Feature": "PREV_LEVERAGE_TS_DELTA",
+      "Importance": 0.03732973337173462
+    },
+    {
+      "Feature": "VERSATILITY_THREAT_SCORE",
+      "Importance": 0.03497149050235748
+    },
+    {
+      "Feature": "PREV_RS_RIM_APPETITE",
+      "Importance": 0.03434392809867859
+    },
+    {
+      "Feature": "PREV_RS_PRESSURE_RESILIENCE",
+      "Importance": 0.034233491867780685
+    },
+    {
+      "Feature": "SYSTEM_DEPENDENCE_SCORE",
+      "Importance": 0.03272376209497452
+    },
+    {
+      "Feature": "SKILL_MATURITY_INDEX",
+      "Importance": 0.03180849179625511
+    },
+    {
+      "Feature": "CLUTCH_MIN_TOTAL",
+      "Importance": 0.022914202883839607
+    },
+    {
+      "Feature": "QOC_USG_DELTA",
+      "Importance": 0.022866053506731987
+    }
+  ]
+}

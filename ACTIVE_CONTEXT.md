@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 10, 2025
-**Status**: ✅ Project Phoenix Complete - Ground-truth data secured, context-aware features implemented, RFE-optimized model trained. Trust Fall pass rate at 50.0%. "Fool's Gold" problem identified as next critical challenge.
+**Last Updated**: December 11, 2025
+**Status**: 🔄 Stalled at 52.5% trust-fall after multiple iterations (brake, feature interactions, class weighting, data regeneration). "Fool's Gold" remains unsolved; next step likely requires a different modeling approach (beyond penalty tweaks).
 
 ---
 
@@ -11,9 +11,9 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ---
 
-## Current Phase: Project Phoenix Complete - Ground-Truth Data Secured
+## Current Phase: Plateau after Phoenix Iterations
 
-**Model Status**: RFE-optimized XGBoost Classifier with Phoenix features (15 features). Ground-truth "0 Dribble" shooting data fully available. Context-aware feature dyad implemented.
+**Model Status**: XGBoost classifier (15 features) with ground-truth data, floor/clutch interactions, single brake (clutch-floor), fixed performance cut (0.74–0.78). Recent attempts: stronger brake, usage-weighted TS expectation interaction, rescaled clutch-floor interaction, class weighting (Victim 1.5), deeper model. RFE 20-feature trial also tested. No pass-rate gain.
 
 **Key Achievement**: Project Phoenix successfully established ground-truth pipeline and implemented context-aware features. RFE selected TS_PCT_VS_USAGE_BAND_EXPECTATION as top feature, validating "efficiency vs. expectation" as critical missing signal. Identified "Fool's Gold" problem where high-usage, low-efficiency players are over-predicted due to clutch metrics.
 
@@ -30,16 +30,15 @@ Identify players who consistently perform better than expected in the playoffs a
 ## Scoreboard (Current Metrics)
 
 ### Model Performance
-- **Accuracy**: `48.62%` (Phoenix RFE model, 15 features, ground-truth features, retrained Dec 10, 2025)
-- **True Predictive Power**: RS-only features, temporal split (2015-2020 train, 2021-2024 test)
+- **Accuracy**: ~49% (latest 15-feature model; 20-feature RFE variant similar)
+- **True Predictive Power**: RS-only features, temporal split
 
-### Test Suite Performance (40 cases)
-- **Overall Pass Rate (With Gates)**: `50.0%` (20/40) - **Phoenix Baseline**
-- **Overall Pass Rate (Without Gates)**: `50.0%` (20/40) 📊 - **Trust Fall Achieved**
-  - **True Positives**: `70.6%` (12/17) ✅
-  - **False Positives**: `40.0%` (2/5) ⚠️
-  - **True Negatives**: `29.4%` (5/17) ⚠️
-  - **System Players**: `100.0%` (1/1) ✅
+### Test Suite Performance (latent_star_cases, gates ON)
+- **Overall Pass Rate**: `52.5%` (21/40) — unchanged across recent iterations
+  - **True Positives**: `47.1%` (8/17)
+  - **False Positives**: `40.0%` (2/5)
+  - **True Negatives**: `58.8%` (10/17)
+  - **System Players**: `100.0%` (1/1)
 
 ### Project Phoenix Impact
 - **Ground-Truth Data**: "0 Dribble" shooting data confirmed available for all seasons
@@ -52,39 +51,24 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ## Next Developer: Start Here
 
-**Current State**: ✅ Project Phoenix Complete. Ground-truth data secured, context-aware features implemented, model retrained with 48.62% accuracy. Trust Fall at 50.0% pass rate. "Fool's Gold" problem identified as critical next challenge.
+**Current State**: Plateau at 52.5% trust-fall despite multiple iterations (brake strength up to 4.0; clutch-floor + usage×TS expectation interactions; rescaled clutch-floor feature; class weighting; deeper model; RFE 20-feature variant). Data pipelines refreshed (shot quality, shot charts, rim pressure, gate features, dependence scores recomputed). "Fool's Gold" persists.
 
-**Project Phoenix Achievements**:
-- ✅ **Ground-Truth Data Pipeline**: NBA API "0 Dribble" data available for all seasons (2015-2025)
-- ✅ **Context-Aware Features**: SPECIALIST_EFFICIENCY_SCORE and VERSATILITY_THREAT_SCORE implemented
-- ✅ **RFE Validation**: TS_PCT_VS_USAGE_BAND_EXPECTATION selected as top feature (8.6% importance)
-- ✅ **Model Improvement**: Accuracy +1.85 percentage points, Trust Fall achieved at 50.0%
-- 📊 **Critical Finding**: "Fool's Gold" problem - high-usage, low-efficiency players over-predicted due to clutch metrics
+**Key Attempts (all failed to lift pass rate):**
+- Single brake tuning (floor gap 0.02, multipliers 2.5 → 4.0) and rescaled clutch-floor feature.
+- Added USG_PCT_X_TS_PCT_VS_USAGE_BAND_EXPECTATION; rescaled CLUTCH_X_TS_FLOOR_GAP; usage-weighted TS gap monotone-negative.
+- Class-weighting Victim (1.5x) + deeper XGB (200 trees, depth 5, lr 0.08).
+- RFE 20-feature model: no improvement.
+- Data regeneration: shot quality/clock, shot charts (lower concurrency), rim pressure, dependence, gate features; predictive_dataset rebuilt.
 
-**The Next Challenge**: Solve the "Fool's Gold" problem to achieve 70%+ trust fall performance. The issue is that players with high usage and positive clutch metrics (like D'Angelo Russell) are over-predicted despite negative efficiency signals.
+**Remaining Issues:**
+- False positives remain (40% in suite); overall pass stuck at 52.5%.
+- Penalty/weight tweaks and feature interactions no longer move metrics; likely need different modeling approach (e.g., alternate model family, calibrated stacking, or rethinking loss/targets).
 
-**Key Documents to Read**:
-1. **`docs/TWO_DOORS_TO_STARDOM.md`**: Current gate architecture and two-path validation
-2. **`KEY_INSIGHTS.md`**: Review recent insights on efficiency floors and continuous gradients
-3. **`results/latent_star_test_cases_report_trust_fall.md`**: Trust Fall results showing remaining failures
-4. **`src/nba_data/scripts/diagnose_failures.py`**: Use this tool to analyze individual player failures
+**Where to Focus Next:**
+- Consider a different architecture rather than further penalty tweaks.
+- Revisit class-weight vs. sample-penalty strategy holistically (maybe simplify to class weights only, or new model).
+- Use `diagnose_failures.py` on remaining FPs (Jordan Poole 21-22, Julius Randle 20-21) with fresh data to see dominant signals; check SHAP to ensure efficiency/floor signals surface.
 
-**Your Task**: Focus on the "Fool's Gold" problem. The model correctly learns patterns but needs stronger signals to distinguish between true stars and high-usage players with clutch stats but poor efficiency. Consider:
-- Enforcing efficiency floors regardless of clutch performance
-- Strengthening the role of TS_PCT_VS_USAGE_BAND_EXPECTATION
-- Investigating whether sample weighting needs adjustment
-
-**Current Understanding**:
-1. **✅ Phoenix Infrastructure**: Ground-truth pipeline established and working
-2. **✅ Scientific Method**: RFE correctly prioritizes "efficiency vs. expectation" over raw efficiency
-3. **✅ Trust Fall Achieved**: 50.0% pass rate without gates represents meaningful progress
-4. **📊 Critical Issue**: "Fool's Gold" problem prevents breakthrough to 70%+ performance
-5. **🎯 Key Insight**: Efficiency floors must be enforced regardless of clutch metrics
-
-**Recommended**: The infrastructure is now pure and robust. Focus on solving the "Fool's Gold" problem through efficiency floor enforcement and feature strengthening.
-
-**Architecture Notes**:
-- Model includes ground-truth "0 Dribble" features and context-aware dyad
-- TS_PCT_VS_USAGE_BAND_EXPECTATION is the breakthrough signal from Project Phoenix
-- Trust Fall experiment shows model can learn (50% pass rate) but needs stronger efficiency constraints
-- Use `diagnose_failures.py` to analyze individual "Fool's Gold" cases like D'Angelo Russell
+**Artifacts:**
+- Latest models: `models/resilience_xgb_rfe_phoenix.pkl` (15 features, brake 4.0, class weight Victim 1.5), `models/resilience_xgb_rfe_20.pkl` (20-feature RFE variant).
+- Latest suite results: `results/latent_star_test_cases_report.md` (pass 52.5%).

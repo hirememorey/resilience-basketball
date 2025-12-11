@@ -312,6 +312,20 @@ class GateFeatureGenerator:
             df['INEFFICIENT_VOLUME_SCORE'] = 0.0
             logger.warning("CREATION_VOLUME_RATIO or CREATION_TAX not found - INEFFICIENT_VOLUME_SCORE set to 0.0")
         
+        # 3b. TS_FLOOR_GAP: Distance below usage-band expectation (Phoenix signal)
+        ts_band_gap = df.get('TS_PCT_VS_USAGE_BAND_EXPECTATION', pd.Series([0.0] * len(df))).fillna(0.0)
+        df['TS_FLOOR_GAP'] = np.maximum(0.0, -ts_band_gap)
+
+        # 3c. USG_PCT_X_TS_FLOOR_GAP: Volume-scaled floor gap to punish high-usage inefficiency
+        if 'USG_PCT' in df.columns:
+            usg_pct = df['USG_PCT'].fillna(0.0)
+            if usg_pct.max() > 1.0:
+                usg_pct = usg_pct / 100.0
+            df['USG_PCT_X_TS_FLOOR_GAP'] = usg_pct * df['TS_FLOOR_GAP']
+        else:
+            df['USG_PCT_X_TS_FLOOR_GAP'] = 0.0
+            logger.warning("USG_PCT not found - USG_PCT_X_TS_FLOOR_GAP set to 0.0")
+
         # 4. SYSTEM_DEPENDENCE_SCORE: Interaction of Usage × (Assisted% + Open Shot%)
         # Formula: USG_PCT × (ASSISTED_FGM_PCT + OPEN_SHOT_FREQUENCY)
         # Result: High usage players who rely on system/gravity get penalized
@@ -610,6 +624,8 @@ class GateFeatureGenerator:
             'RIM_PRESSURE_DEFICIT',
             'ABDICATION_MAGNITUDE',
             'INEFFICIENT_VOLUME_SCORE',
+            'TS_FLOOR_GAP',
+            'USG_PCT_X_TS_FLOOR_GAP',
             'SYSTEM_DEPENDENCE_SCORE',
             'EMPTY_CALORIES_RISK',
             # Portable volume features (Phase 2: Upstream Dependence)

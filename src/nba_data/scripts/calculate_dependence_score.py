@@ -39,6 +39,9 @@ def calculate_dependence_score(player_data: pd.Series) -> dict:
         - self_created_usage_ratio: Percentage of offense that is self-created (0-1)
         - components: Breakdown of each component's contribution
     """
+    # Ensure Series input (test cases may pass dict)
+    if isinstance(player_data, dict):
+        player_data = pd.Series(player_data)
     # Component 1: Assisted FGM Percentage
     # Proxy: catch_shoot_field_goals_made / total_field_goals_made
     # Catch-and-shoot shots are typically assisted
