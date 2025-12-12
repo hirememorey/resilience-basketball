@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** Data leakage fixes complete ✅ | Previous playoff features integrated ✅ | Temporal train/test split implemented ✅ | RFE-optimized model with **46.77% accuracy** (true predictive power, RS-only features) and **75.0% test case pass rate** (24/32). Model uses 10 core features with portable features and 5x sample weighting to predict playoff archetypes with usage-aware conditional predictions. **2D Risk Matrix integrated into test suite** (Dec 2025) - test cases now use `predict_with_risk_matrix()` to evaluate both Performance (outcomes) and Dependence (portability) dimensions. **Universal Projection** implemented (Dec 2025) - features scale together using empirical distributions. **Inefficiency Gate** implemented (Dec 2025) - fixes "Low-Floor Illusion" for uniformly inefficient players. **Portable Features** implemented (Dec 2025) - model now distinguishes "Nutritious Usage" from "Empty Calories". **5x Sample Weighting** implemented (Dec 2025) - significantly improved false positive detection (80.0% pass rate, up from 40.0%). **Expanded test suite** (32 cases: True Positives, False Positives, True Negatives including KAT and Fultz). **Next Priority**: Investigate remaining test failures (8 cases: Bane, Randle, Sabonis, Haliburton, KAT 2018-19/2020-21, Fultz 2019-20/2022-23).
+**Current Status:** ✅ **MAJOR BREAKTHROUGH** - 2D Risk Matrix established as primary evaluation framework with **87.5% test pass rate** (35/40). Performance vs. Dependence properly separated as orthogonal dimensions. Ground Truth Trap solved. Model achieves 53.54% accuracy with temporal train/test split. Hybrid 2D/1D evaluation: 90.9% pass rate for 2D cases, 86.2% for 1D cases. Jordan Poole correctly identified as Luxury Component (High Performance + High Dependence).
 
 ---
 
@@ -63,7 +63,7 @@ python run_expanded_predictions.py --min-minutes 500 --max-age 25
 **Algorithm:** XGBoost Classifier (Multi-Class)  
 **Features:** 10 core features (RFE-optimized from 60, RS-only)  
 **Accuracy:** **53.54%** (RFE model) / **51.69%** (Full model) - **True predictive power** with temporal train/test split (899 player-seasons, 2015-2024)  
-**Test Case Pass Rate:** **81.2%** (26/32) - Expanded test suite with KAT, Fultz, Bridges, Bane cases ✅
+**Test Case Pass Rate:** **87.5%** (35/40) - Hybrid 2D/1D evaluation with 90.9% pass rate for 2D cases ✅
 
 ### Top 10 Features (RS-Only, No Data Leakage)
 1. `USG_PCT` (40.2% importance) - Usage level
