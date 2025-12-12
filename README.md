@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** ✅ **MAJOR BREAKTHROUGH** - 2D Risk Matrix established as primary evaluation framework with **87.5% test pass rate** (35/40). Performance vs. Dependence properly separated as orthogonal dimensions. Ground Truth Trap solved. Model achieves 53.54% accuracy with temporal train/test split. Hybrid 2D/1D evaluation: 90.9% pass rate for 2D cases, 86.2% for 1D cases. Jordan Poole correctly identified as Luxury Component (High Performance + High Dependence).
+**Current Status:** ✅ **MAJOR BREAKTHROUGH** - 2D Risk Matrix established as primary evaluation framework with **87.5% test pass rate** (35/40). Performance vs. Dependence properly separated as orthogonal dimensions. Ground Truth Trap solved. Model achieves 53.54% accuracy with temporal train/test split. Hybrid 2D/1D evaluation: 90.9% pass rate for 2D cases, 86.2% for 1D cases. **Interactive Streamlit App** deployed with comprehensive 2D analysis for all 5,312 players. Jordan Poole correctly identified as Luxury Component (High Performance + High Dependence).
 
 ---
 
@@ -12,6 +12,7 @@
 - **`LUKA_SIMMONS_PARADOX.md`** - **START HERE** - Theoretical foundation (why we built this)
 - **`CURRENT_STATE.md`** - What exists, current metrics, what works
 - **`2D_RISK_MATRIX_IMPLEMENTATION.md`** - ✅ **COMPLETE** - 2D framework implementation
+- **`src/streamlit_app/README.md`** - Interactive app documentation
 - **`NEXT_STEPS.md`** - Current priorities and completed work
 - **`KEY_INSIGHTS.md`** - Critical lessons to avoid mistakes (see Insight #37: Trust Fall & Ground Truth Trap)
 
@@ -54,6 +55,47 @@ python test_latent_star_cases.py
 
 # Run expanded dataset predictions (optional)
 python run_expanded_predictions.py --min-minutes 500 --max-age 25
+```
+
+### 5. Launch Interactive App
+```bash
+# Generate 2D data for all players (one-time setup)
+python scripts/generate_2d_data_for_all.py
+
+# Launch the Streamlit app
+python scripts/run_streamlit_app.py
+```
+
+**App Features:**
+- **2D Risk Matrix**: Interactive scatter plot with Performance vs Dependence quadrants
+- **Stress Vector Profiles**: Radar charts showing percentile rankings across 5 dimensions
+- **Usage Simulations**: "What-if" scenarios at different usage levels
+- **Complete Coverage**: 5,312 players with 2D risk assessments
+
+---
+
+## Interactive Streamlit App
+
+The project now includes a fully functional web application for exploring the 2D Risk Matrix:
+
+### Key Capabilities
+- **Player Analysis**: Select any player from 2015-2025 seasons
+- **Risk Assessment**: View Performance vs Dependence scores with proper categorization
+- **Stress Profiles**: Radar charts showing percentile rankings for Creation, Leverage, Pressure, Physicality, Plasticity
+- **Usage Projections**: Simulate archetype changes at different usage levels using Universal Projection
+
+### Data Coverage
+- **5,312 Players**: Complete dataset from 2015-2025
+- **2D Risk Matrix**: Performance + Dependence scores for all players
+- **Stress Vectors**: Creation (100%), Leverage (60%), Pressure (85%), Physicality (100%), Plasticity (17%)
+- **Interactive Features**: Real-time usage simulations and comparisons
+
+### Risk Categories
+```
+Franchise Cornerstone: High Performance + Low Dependence (22.9%)
+Luxury Component: High Performance + High Dependence (2.1%)
+Depth: Low Performance + Low Dependence (52.1%)
+Avoid: Low Performance + High Dependence (22.9%)
 ```
 
 ---
