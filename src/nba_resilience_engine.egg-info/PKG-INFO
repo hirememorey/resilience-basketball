@@ -1,0 +1,27 @@
+Metadata-Version: 2.4
+Name: nba_resilience_engine
+Version: 2.0.0
+Summary: A first principles approach to predicting NBA playoff performance
+Author: NBA Playoff Resilience Engine Team
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.8
+Requires-Dist: pandas>=1.3.0
+Requires-Dist: requests>=2.26.0
+Requires-Dist: tqdm>=4.60.0
+Requires-Dist: tenacity>=8.0.0
+Requires-Dist: pydantic>=1.8.0
+Dynamic: author
+Dynamic: classifier
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

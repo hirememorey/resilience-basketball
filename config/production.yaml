@@ -1,0 +1,24 @@
+# Production Environment Configuration
+# Overrides for production deployment
+
+app:
+  debug: false
+  log_level: "WARNING"
+
+data:
+  collection:
+    workers: 12  # More workers for production
+    # All seasons for comprehensive analysis
+
+model:
+  xgboost:
+    n_estimators: 200  # More trees for better accuracy
+
+output:
+  formats:
+    plots: true
+
+development:
+  enable_debug_logging: false
+  save_intermediate_results: false
+  profile_performance: false

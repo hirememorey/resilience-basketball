@@ -1,0 +1,153 @@
+# NBA Playoff Resilience Engine - Default Configuration
+# This file contains all default settings. Environment-specific configs override these.
+
+# Application settings
+app:
+  name: "NBA Playoff Resilience Engine"
+  version: "2.0.0"
+  debug: false
+  log_level: "INFO"
+
+# Data collection settings
+data:
+  nba_api:
+    base_url: "https://stats.nba.com/stats"
+    timeout: 30
+    max_retries: 3
+    backoff_factor: 2.0
+    rate_limit_delay: 1.0
+
+  collection:
+    workers: 8
+    seasons:
+      - "2015-16"
+      - "2016-17"
+      - "2017-18"
+      - "2018-19"
+      - "2019-20"
+      - "2020-21"
+      - "2021-22"
+      - "2022-23"
+      - "2023-24"
+    include_shot_charts: true
+    include_playbyplay: false
+    cache_raw_data: true
+
+  storage:
+    raw_dir: "data/raw"
+    interim_dir: "data/interim"
+    processed_dir: "data/processed"
+    cache_dir: "data/cache"
+
+# Feature engineering settings
+features:
+  resilience:
+    min_games_threshold: 20
+    min_minutes_threshold: 10.0
+    abdication_tax_threshold: -0.05
+
+  creation:
+    iso_frequency_threshold: 0.10
+    pnr_frequency_threshold: 0.15
+    volume_exemption_threshold: 0.60
+    efficiency_exemption_threshold: -0.05
+
+  leverage:
+    clutch_minutes_threshold: 15
+    ts_delta_threshold: 0.05
+
+  pressure:
+    late_clock_range: [7, 18]  # seconds remaining
+    early_clock_range: [22, 7]  # seconds remaining
+
+  plasticity:
+    zone_similarity_threshold: 0.8
+    temporal_stability_threshold: 0.7
+
+  projection:
+    usage_buckets:
+      "15-20%": { creation_volume_ratio: 0.25, leverage_usg_delta: -0.02 }
+      "20-25%": { creation_volume_ratio: 0.42, leverage_usg_delta: 0.01 }
+      "25-30%": { creation_volume_ratio: 0.61, leverage_usg_delta: 0.03 }
+      "30-35%": { creation_volume_ratio: 0.70, leverage_usg_delta: 0.05 }
+
+# Model training settings
+model:
+  algorithm: "xgboost"
+  rfe_n_features: 15
+  random_state: 42
+
+  xgboost:
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    objective: "multi:softprob"
+    num_class: 4
+    eval_metric: "mlogloss"
+
+  training:
+    test_size: 0.2
+    cv_folds: 5
+    early_stopping_rounds: 10
+
+  sample_weighting:
+    victim_weight: 3.0
+    enable_asymmetric_loss: true
+
+# Model evaluation settings
+evaluation:
+  metrics:
+    - "accuracy"
+    - "f1_score"
+    - "precision"
+    - "recall"
+  cross_validation: true
+  confusion_matrix: true
+  feature_importance: true
+
+# 2D Risk Matrix settings
+risk_matrix:
+  dependence:
+    low_threshold: 0.33  # 33rd percentile
+    high_threshold: 0.66  # 66th percentile
+  performance:
+    star_threshold: 0.65
+    role_threshold: 0.30
+
+  categories:
+    franchise_cornerstone: { performance: "high", dependence: "low" }
+    luxury_component: { performance: "high", dependence: "high" }
+    depth_piece: { performance: "low", dependence: "low" }
+    avoid: { performance: "low", dependence: "high" }
+
+# Validation settings
+validation:
+  latent_star_cases: 32
+  pass_threshold: 0.75
+  temporal_split: true
+
+  gates:
+    data_completeness_threshold: 0.67
+    sample_size_threshold: 50
+    leverage_data_required: true
+    physicality_floor_enabled: true
+    creation_bag_check_enabled: true
+
+# Output settings
+output:
+  results_dir: "results"
+  models_dir: "models"
+  logs_dir: "logs"
+
+  formats:
+    csv: true
+    json: true
+    plots: true
+
+# Development settings
+development:
+  enable_debug_logging: false
+  save_intermediate_results: false
+  profile_performance: false

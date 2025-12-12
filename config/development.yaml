@@ -1,0 +1,26 @@
+# Development Environment Configuration
+# Overrides for development/testing environment
+
+app:
+  debug: true
+  log_level: "DEBUG"
+
+data:
+  collection:
+    workers: 2  # Reduce workers for development
+    seasons:
+      - "2022-23"
+      - "2023-24"  # Only recent seasons for faster testing
+
+model:
+  xgboost:
+    n_estimators: 50  # Fewer trees for faster training
+
+output:
+  formats:
+    plots: false  # Skip plots in development
+
+development:
+  enable_debug_logging: true
+  save_intermediate_results: true
+  profile_performance: true

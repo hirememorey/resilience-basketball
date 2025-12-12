@@ -1,0 +1,55 @@
+{
+  "registry_version": "1.0.0",
+  "last_updated": "2025-01-01T00:00:00Z",
+  "models": {
+    "resilience_xgb_rfe_10": {
+      "name": "RFE XGBoost (10 features)",
+      "version": "1.0.0",
+      "algorithm": "XGBoost",
+      "n_features": 10,
+      "accuracy": 0.465,
+      "f1_score": 0.42,
+      "training_date": "2024-12-01",
+      "status": "production",
+      "path": "models/production/resilience_xgb_rfe_10.pkl",
+      "encoder_path": "models/production/archetype_encoder_rfe_10.pkl",
+      "metadata_path": "models/production/model_metadata.json",
+      "description": "Primary production model with RFE feature selection",
+      "feature_importance": {
+        "usg_pct": 0.402,
+        "shot_quality_generation_delta": 0.086,
+        "ts_pct_vs_usage_band_expectation": 0.086
+      }
+    },
+    "resilience_xgb_full": {
+      "name": "Full XGBoost (65 features)",
+      "version": "1.0.0",
+      "algorithm": "XGBoost",
+      "n_features": 65,
+      "accuracy": 0.461,
+      "f1_score": 0.41,
+      "training_date": "2024-11-15",
+      "status": "staging",
+      "path": "models/staging/resilience_xgb_full.pkl",
+      "encoder_path": "models/staging/archetype_encoder_full.pkl",
+      "description": "Full feature model for comparison",
+      "notes": "Higher feature count but similar performance to RFE model"
+    }
+  },
+  "active_production_model": "resilience_xgb_rfe_10",
+  "schema": {
+    "name": "string",
+    "version": "string",
+    "algorithm": "string",
+    "n_features": "integer",
+    "accuracy": "float",
+    "f1_score": "float",
+    "training_date": "string",
+    "status": "enum(production,staging,archive)",
+    "path": "string",
+    "encoder_path": "string",
+    "metadata_path": "string",
+    "description": "string",
+    "feature_importance": "object"
+  }
+}
