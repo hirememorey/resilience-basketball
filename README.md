@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** ✅ **CRITICAL DATA INTEGRITY RESOLVED** - 2024-25 season opponent quality data fully restored with tank commander detection. 2D Risk Matrix framework stable with **87.5% test pass rate** (35/40). Performance vs. Dependence properly separated as orthogonal dimensions. Ground Truth Trap solved. Interactive Streamlit App deployed with comprehensive 2D analysis for all 5,312 players. All classifications now account for opponent context and prevent inflated evaluations.
+**Current Status:** ✅ **CRITICAL DATA INTEGRITY RESOLVED** - 2024-25 season opponent quality data fully restored. 2D Risk Matrix framework stable with **87.5% test pass rate** (35/40). Performance vs. Dependence properly separated as orthogonal dimensions. Ground Truth Trap solved. Interactive Streamlit App deployed with comprehensive 2D analysis for all 5,312 players. All classifications now account for teammate context to prevent inflated evaluations.
 
 ---
 

@@ -23,9 +23,42 @@
 
 ---
 
-## Current Priorities (Post-2D Breakthrough)
+## Recent Changes (December 2025)
 
-### 1. Investigate Remaining 2D Failure (Domantas Sabonis)
+### Tank Commander Penalty Removal ✅ **COMPLETED**
+**Status**: ✅ **IMPLEMENTED** - Opponent quality assessment replaced with teammate quality approach
+
+**Change**: Removed tank commander detection that penalized players >22% usage with unknown opponent data (+0.25 dependence penalty).
+
+**Rationale**: From first principles analysis, opponent defensive quality doesn't separate tank commanders from true stars. Players on bad teams get inflated stats, but this doesn't distinguish between bad players benefiting from opportunity vs. good players succeeding despite poor team context.
+
+**New Direction**: Shift to teammate quality assessment - players on bad teams have to create their own opportunities, making their individual skills more impressive than those on good teams.
+
+---
+
+## Current Priorities (Post-Tank Commander Removal)
+
+### 1. Implement Teammate Quality Assessment 🎯 **HIGH PRIORITY**
+**Status**: 🔄 **READY FOR NEXT DEVELOPER**
+
+**Goal**: Replace opponent quality assessment with teammate quality metrics to properly distinguish tank commanders from true stars.
+
+**Key Metrics to Implement**:
+- **Usage Distribution**: Gini coefficient of team usage (concentrated vs. distributed)
+- **Spacing Quality**: Quality of teammates' shooting/passing efficiency
+- **Defensive Load Sharing**: How much defensive responsibility teammates take
+
+**Physics Principle**: Players on bad teams have to create their own opportunities, making individual skills more impressive. Bad teammates = more individual burden = greater individual skill demonstration.
+
+**Implementation Plan**:
+1. **Data Collection**: Calculate team-level metrics for each player-season
+2. **Feature Engineering**: Create teammate quality features in dependence calculation
+3. **Model Integration**: Add teammate quality as dependence modifier
+4. **Validation**: Test on 2015-16 tanking team cases (Okafor, Wroten, etc.)
+
+**Expected Impact**: Correct classification of tanking team players (Sixers, etc.) and DeMar DeRozan playoff meltdowns.
+
+### 2. Investigate Remaining 2D Failure (Domantas Sabonis)
 **Status**: 🔍 **LOW PRIORITY INVESTIGATION**
 
 **Issue**: Domantas Sabonis expected "Luxury Component" but predicted "Franchise Cornerstone (Moderate Dependence)" due to rim pressure override.

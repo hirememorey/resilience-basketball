@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
 **Last Updated**: December 12, 2025
-**Status**: ✅ **CRITICAL DATA INTEGRITY ISSUE RESOLVED** - 2024-25 season opponent quality data fully restored. Tank commander detection implemented. Interactive Streamlit app updated with corrected classifications. All 5,312 players now have complete 2D Risk Matrix analysis with accurate opponent context adjustments.
+**Status**: ✅ **CRITICAL DATA INTEGRITY ISSUE RESOLVED** - 2024-25 season opponent quality data fully restored. Interactive Streamlit app updated with corrected classifications. All 5,312 players now have complete 2D Risk Matrix analysis with accurate opponent context adjustments.
 
 ---
 
@@ -60,7 +60,6 @@ Identify players who consistently perform better than expected in the playoffs a
 - Fixed OPPONENT_TEAM_ID mapping in game logs for all seasons
 - Manually collected missing game log data for traded players (Kevin Porter Jr., Ty Jerome, Jonathan Kuminga)
 - Calculated opponent defensive context scores (DCS) for all 2024-25 players
-- Implemented "Tank Commander Detection": +0.25 dependence penalty for players >22% usage with unknown opponent data
 
 **Result**: Opponent quality data now available for 208/562 players (37%). Jonathan Kuminga correctly reclassified from Franchise Cornerstone to Luxury Component.
 
@@ -75,6 +74,7 @@ Identify players who consistently perform better than expected in the playoffs a
 - ✅ **Universal Stress Vectors**: Radar charts with percentile rankings for all players
 - ✅ **Plasticity Data Pipeline**: Fixed historical data gaps, 1,304 players with plasticity scores (24.5% coverage)
 - ✅ **N/A Data Handling**: Radar charts properly show "N/A" for missing data instead of misleading 50% defaults
+- ✅ **Tank Commander Penalty Removed**: Opponent quality approach replaced with teammate quality assessment (first principles shift)
 
 ---
 
@@ -115,7 +115,7 @@ Identify players who consistently perform better than expected in the playoffs a
 
 **Recent Progress**:
 - ✅ Opponent quality data restored for 2024-25 season (208/562 players with DCS scores)
-- ✅ Tank commander detection implemented (penalizes high-usage players with unknown opponents)
+- ✅ Tank commander penalty removed (shifting to teammate quality assessment approach)
 - ✅ Jonathan Kuminga correctly reclassified from Franchise Cornerstone to Luxury Component
 - ✅ All 5,312 players have complete 2D analysis with opponent context adjustments
 
@@ -145,6 +145,6 @@ python -c "from src.streamlit_app.components.stress_vectors_radar import create_
 # Check opponent quality data completeness
 python -c "import pandas as pd; df = pd.read_csv('results/predictive_dataset.csv'); season_2024 = df[df['SEASON'] == '2024-25']; opp_count = season_2024['AVG_OPPONENT_DCS'].notna().sum(); print(f'2024-25 opponent data: {opp_count}/{len(season_2024)} players ({opp_count/len(season_2024)*100:.1f}%)')"
 
-# Test tank commander detection
-python -c "import pandas as pd; df = pd.read_csv('results/2d_risk_matrix_all_players.csv'); tank_commanders = df[(df['SEASON'] == '2024-25') & (df['CURRENT_USAGE'] > 0.22) & (df['AVG_OPPONENT_DCS'].isna())]; print(f'Tank commanders detected: {len(tank_commanders)} players')"
+# Verify opponent quality data coverage
+python -c "import pandas as pd; df = pd.read_csv('results/predictive_dataset.csv'); season_2024 = df[df['SEASON'] == '2024-25']; opp_count = season_2024['AVG_OPPONENT_DCS'].notna().sum(); print(f'2024-25 opponent data: {opp_count}/{len(season_2024)} players ({opp_count/len(season_2024)*100:.1f}%)')"
 ```

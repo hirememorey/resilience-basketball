@@ -65,6 +65,8 @@
 50. **Hierarchy of Constraints: Fatal Flaws > Elite Traits** 🎯 CRITICAL - Fatal flaw gates execute first, cannot be overridden
 51. **The "Two Doors to Stardom" Principle** 🎯 CRITICAL - NBA stardom has multiple valid pathways requiring differentiated validation
 52. **Project Phoenix: Ground-Truth Data Acquisition** 🎯 CRITICAL - No proxies for critical signals - acquire ground-truth data directly
+53. **Tank Commander Penalty Removal** 🎯 CRITICAL - Opponent quality assessment replaced with teammate quality assessment (first principles correction)
+53. **Tank Commander Penalty Removal** 🎯 CRITICAL - Opponent quality assessment replaced with teammate quality assessment (first principles correction)
 
 ### Quick Reference
 - **Quick Reference Checklist** - Implementation checklist for new features
@@ -770,6 +772,7 @@ When implementing new features, ask:
 - [ ] Am I filtering negative signals? (Abdication Tax: LEVERAGE_USG_DELTA < -0.05 indicates passivity) (Fix #2 - Phase 3.9) ✅
 - [ ] Am I checking data completeness? (Require 67% of critical features for reliable predictions) (Fix #3 - Phase 3.9) ✅
 - [ ] Am I filtering small sample size noise? (Perfect efficiency on tiny samples is not predictive) (Fix #4 - Phase 3.9) ✅
+- [ ] Am I assessing teammate quality instead of opponent quality? (Tank commander penalty removed - bad teammates = more impressive individual performance) (Fix #53)
 
 ---
 
@@ -1525,6 +1528,31 @@ else:
 **Implementation**: `src/nba_data/scripts/evaluate_plasticity_potential.py` - Project Phoenix pipeline integrated into core feature engineering.
 
 **See**: `ACTIVE_CONTEXT.md` for current Project Phoenix status and next steps.
+
+---
+
+## 53. Tank Commander Penalty Removal - First Principles Correction 🎯 CRITICAL (December 2025)
+
+**The Problem**: Tank Commander Detection penalized players >22% usage with unknown opponent data (+0.25 dependence penalty), assuming weak opponents inflated their stats.
+
+**The Flawed Premise**: Opponent defensive quality doesn't separate tank commanders from true stars. Players on bad teams get inflated stats, but this doesn't distinguish between:
+- **True tank commanders** (bad players benefiting from opportunity inflation)
+- **Hidden gems** (good players succeeding despite poor team context)
+
+**The Correct Approach**: Teammate quality assessment - players on bad teams have to create their own opportunities, making their individual skills more impressive than those on good teams.
+
+**The Evidence**: 2015-16 Sixers (Jahlil Okafor, Tony Wroten) had inflated usage on tanking teams but were classified as Franchise Cornerstones. DeMar DeRozan (Toronto) was penalized for Raptors' good defense rather than his own playoff meltdowns.
+
+**The Solution**: Remove opponent-based penalties. Shift to teammate quality metrics:
+- **Usage Distribution**: Gini coefficient of team usage (concentrated vs. distributed)
+- **Spacing Quality**: Quality of teammates' shooting/passing
+- **Defensive Load**: How much defensive responsibility teammates take
+
+**Key Principle**: **Value is relative to reference class**. A player who dominates on a bad team demonstrates greater individual skill than one who performs similarly on a good team. Bad teammates = more individual burden = greater individual skill demonstration.
+
+**Implementation**: Tank commander penalty removed. Teammate quality features to be implemented by next developer.
+
+**See**: `ACTIVE_CONTEXT.md` for current status and next steps.
 
 ---
 
