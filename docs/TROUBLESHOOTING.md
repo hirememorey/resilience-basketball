@@ -45,7 +45,40 @@ python scripts/collect_data.sh
 
 **Root Causes & Solutions:**
 
-1. **Player not in dataset:**
+1. **Missing Opponent Quality Data (2024-25 Season):**
+   **Symptoms:** Players show inflated performance scores, incorrect risk classifications
+   **Cause:** Game log collection gaps for traded players, missing OPPONENT_TEAM_ID mappings
+   **Solution:**
+   ```bash
+   # Fix opponent team ID mappings
+   python -c "
+   import pandas as pd
+   logs_df = pd.read_csv('data/rs_game_logs_2024-25.csv')
+   def parse_opponent_team_abbrev(matchup, player_team_abbrev):
+       if pd.isna(matchup): return None
+       if ' vs. ' in matchup:
+           parts = matchup.split(' vs. ')
+       elif ' @ ' in matchup:
+           parts = matchup.split(' @ ')
+       else: return None
+       parts = [p.strip() for p in parts]
+       if parts[0] == player_team_abbrev:
+           opp_abbrev = parts[1]
+       else:
+           opp_abbrev = parts[0]
+       return opp_abbrev
+   logs_df['OPPONENT_TEAM_ABBREV'] = logs_df.apply(lambda row: parse_opponent_team_abbrev(row['MATCHUP'], row['TEAM_ABBREVIATION']), axis=1)
+   from src.nba_data.constants import ABBREV_TO_ID
+   logs_df['OPPONENT_TEAM_ID'] = logs_df['OPPONENT_TEAM_ABBREV'].map(ABBREV_TO_ID)
+   logs_df.to_csv('data/rs_game_logs_2024-25.csv', index=False)
+   "
+
+   # Regenerate opponent quality data
+   python src/nba_data/scripts/evaluate_plasticity_potential.py --seasons 2024-25
+   python scripts/generate_2d_data_for_all.py
+   ```
+
+2. **Player not in dataset:**
    ```bash
    # Check if player exists
    python scripts/debug.py --player "Player Name" --season "2023-24"

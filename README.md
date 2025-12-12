@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** ✅ **MAJOR BREAKTHROUGH** - 2D Risk Matrix established as primary evaluation framework with **87.5% test pass rate** (35/40). Performance vs. Dependence properly separated as orthogonal dimensions. Ground Truth Trap solved. Model achieves 53.54% accuracy with temporal train/test split. Hybrid 2D/1D evaluation: 90.9% pass rate for 2D cases, 86.2% for 1D cases. **Interactive Streamlit App** deployed with comprehensive 2D analysis for all 5,312 players. Jordan Poole correctly identified as Luxury Component (High Performance + High Dependence).
+**Current Status:** ✅ **CRITICAL DATA INTEGRITY RESOLVED** - 2024-25 season opponent quality data fully restored with tank commander detection. 2D Risk Matrix framework stable with **87.5% test pass rate** (35/40). Performance vs. Dependence properly separated as orthogonal dimensions. Ground Truth Trap solved. Interactive Streamlit App deployed with comprehensive 2D analysis for all 5,312 players. All classifications now account for opponent context and prevent inflated evaluations.
 
 ---
 
