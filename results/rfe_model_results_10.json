@@ -1,58 +1,53 @@
 {
   "n_features": 10,
-  "accuracy": 0.5323076923076923,
+  "accuracy": 0.5138461538461538,
   "features": [
-    "CLUTCH_MIN_TOTAL",
+    "TS_PCT_VS_USAGE_BAND_EXPECTATION",
     "USG_PCT",
+    "USG_PCT_X_RS_PRESSURE_APPETITE",
     "USG_PCT_X_EFG_ISO_WEIGHTED",
-    "PREV_CREATION_VOLUME_RATIO",
+    "PREV_LEVERAGE_TS_DELTA",
+    "PREV_RS_RIM_APPETITE",
     "PREV_EFG_ISO_WEIGHTED",
     "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
-    "SKILL_MATURITY_INDEX",
-    "PHYSICAL_DOMINANCE_RATIO",
-    "ABDICATION_RISK",
-    "INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE"
+    "SKILL_MATURITY_INDEX"
   ],
   "feature_importance": [
     {
       "Feature": "USG_PCT",
-      "Importance": 0.24864056706428528
+      "Importance": 0.32808640599250793
     },
     {
       "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.16800709068775177
+      "Importance": 0.14204317331314087
     },
     {
-      "Feature": "PHYSICAL_DOMINANCE_RATIO",
-      "Importance": 0.13278059661388397
-    },
-    {
-      "Feature": "INVERSE_DEPENDENCE_X_INEFFICIENT_VOLUME_SCORE",
-      "Importance": 0.09073731303215027
-    },
-    {
-      "Feature": "PREV_EFG_ISO_WEIGHTED",
-      "Importance": 0.07491566240787506
-    },
-    {
-      "Feature": "SKILL_MATURITY_INDEX",
-      "Importance": 0.07423022389411926
+      "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
+      "Importance": 0.08293405175209045
     },
     {
       "Feature": "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
-      "Importance": 0.07250109314918518
+      "Importance": 0.0822373703122139
     },
     {
-      "Feature": "ABDICATION_RISK",
-      "Importance": 0.04730283468961716
+      "Feature": "SKILL_MATURITY_INDEX",
+      "Importance": 0.07962600886821747
     },
     {
-      "Feature": "PREV_CREATION_VOLUME_RATIO",
-      "Importance": 0.04650358855724335
+      "Feature": "PREV_LEVERAGE_TS_DELTA",
+      "Importance": 0.07565024495124817
     },
     {
-      "Feature": "CLUTCH_MIN_TOTAL",
-      "Importance": 0.04438110068440437
+      "Feature": "TS_PCT_VS_USAGE_BAND_EXPECTATION",
+      "Importance": 0.07385575771331787
+    },
+    {
+      "Feature": "PREV_EFG_ISO_WEIGHTED",
+      "Importance": 0.06793984770774841
+    },
+    {
+      "Feature": "PREV_RS_RIM_APPETITE",
+      "Importance": 0.06762712448835373
     }
   ]
 }
