@@ -1453,6 +1453,55 @@ A universal filter optimized for one path incorrectly rejects valid stars from t
 
 ---
 
+## 53. Plasticity Data Pipeline Dependencies 🎯 CRITICAL (December 2025)
+
+**The Problem**: Plasticity data appears missing when it's actually a pipeline dependency issue. Individual season files exist but combined file has empty values.
+
+**The Root Cause**: Plasticity requires playoff shot charts, so data only exists after playoffs end. Historical seasons used older script versions without RESILIENCE_SCORE column.
+
+**The Solution**: Create systematic data combination script:
+```python
+# combine_plasticity_scores.py - Merges individual season files
+def combine_plasticity_scores():
+    plasticity_files = list(Path("results").glob("plasticity_scores_*.csv"))
+    combined_data = []
+
+    for file_path in plasticity_files:
+        df = pd.read_csv(file_path)
+        if 'RESILIENCE_SCORE' in df.columns:
+            combined_data.append(df)
+
+    final_df = pd.concat(combined_data, ignore_index=True)
+    final_df.to_csv('results/plasticity_scores.csv', index=False)
+```
+
+**Key Principle**: **Data pipelines need explicit combination steps**. Individual files ≠ combined dataset. Always create merge scripts for multi-season data.
+
+---
+
+## 54. N/A Data Handling in Visualizations 🎯 CRITICAL (December 2025)
+
+**The Problem**: Missing data defaults to 50th percentile, appearing as valid scores but misleading users.
+
+**The Solution**: Return None for missing data and handle in visualization:
+```python
+# In data preparation
+if pd.isna(player_value):
+    percentiles.append(None)  # Indicate missing data
+
+# In visualization
+if val is None:
+    hover_text.append(f"{cat}: N/A")
+    # Add special marker for missing data
+else:
+    plot_values.append(val)
+    plot_categories.append(cat)
+```
+
+**Key Principle**: **Missing data should be visually distinct, not statistically imputed**. Use None/NaN and handle gracefully in UI rather than default values that look legitimate.
+
+---
+
 ## 52. Project Phoenix: Ground-Truth Data Acquisition 🎯 CRITICAL (December 2025)
 
 **The Problem**: Model performance plateaued due to signal integrity issues. Critical features were built on proxies rather than ground-truth data, limiting the model's ability to learn true patterns.

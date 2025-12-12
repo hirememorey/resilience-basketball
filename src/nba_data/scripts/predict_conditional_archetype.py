@@ -2052,7 +2052,8 @@ class ConditionalArchetypePredictor:
         low_performance = performance_score < 0.30
         high_dependence = dependence_score >= high_dep_threshold  # ≥ 0.4482 (66th percentile)
         low_dependence = dependence_score < low_dep_threshold  # < 0.3570 (33rd percentile)
-        
+
+        # Primary 4 categories (corners of the 2D matrix)
         if high_performance and low_dependence:
             return "Franchise Cornerstone"
         elif high_performance and high_dependence:
@@ -2062,32 +2063,33 @@ class ConditionalArchetypePredictor:
         elif low_performance and high_dependence:
             return "Avoid"
         else:
-            # Moderate scores - use more nuanced categorization with data-driven thresholds
+            # Handle moderate cases - acknowledge the continuum while maintaining 4 primary categories
+            # These represent players who don't fit cleanly in the extreme quadrants
+
             if performance_score >= 0.70:
-                # High performance, moderate dependence
-                if dependence_score >= high_dep_threshold:
-                    return "Luxury Component (Moderate Dependence)"
-                else:
-                    return "Franchise Cornerstone (Moderate Dependence)"
+                # High performance with moderate dependence
+                # These are valuable players but with some system reliance
+                return "Franchise Cornerstone"  # Default to cornerstone for high performers
             elif performance_score < 0.30:
-                # Low performance, moderate dependence
-                if dependence_score >= high_dep_threshold:
-                    return "Avoid (Moderate Dependence)"
-                else:
-                    return "Depth (Moderate Dependence)"
+                # Low performance with moderate dependence
+                # These are limited players with moderate system needs
+                return "Depth"  # Default to depth for low performers
             else:
                 # Moderate performance (30% <= performance < 70%)
-                # PHASE 4.4 FIX: Allow "Luxury Component" for moderate performance + high dependence
-                # Principle: A player with 30% performance + 60% dependence is a high-value dependent piece (system merchant),
-                # not "moderate performance". This is correct 2D thinking: Performance and Dependence are orthogonal.
+                # These players have mixed potential and moderate system dependence
+
                 if dependence_score >= high_dep_threshold:
-                    # High dependence + moderate performance = Luxury Component (system merchant who performs well)
-                    # Example: Sabonis (30% performance, 60% dependence) = Luxury Component
+                    # Moderate performance + high dependence = system-dependent contributor
+                    # This is close to "Luxury Component" territory - valuable but risky
                     return "Luxury Component"
                 elif dependence_score < low_dep_threshold:
-                    return "Moderate Performance, Low Dependence"
+                    # Moderate performance + low dependence = portable contributor
+                    # This is close to "Franchise Cornerstone" territory - valuable and portable
+                    return "Franchise Cornerstone"
                 else:
-                    return "Moderate Performance, Moderate Dependence"
+                    # Moderate performance + moderate dependence = balanced contributor
+                    # Default to Depth category for moderate players (most common case)
+                    return "Depth"
 
 
 if __name__ == "__main__":

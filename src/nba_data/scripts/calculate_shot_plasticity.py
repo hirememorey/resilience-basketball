@@ -87,6 +87,21 @@ class PlasticityEngine:
                 else:
                     eFG_further = np.nan # Not enough shots to measure
 
+                # Calculate a plasticity resilience score based on adaptability
+                # Lower distance delta = better (maintaining shot selection)
+                # Lower variance delta = better (maintaining spatial consistency)
+                # Higher eFG beyond RS median = better (maintaining efficiency)
+                distance_resilience = max(0, 1 - abs(dist_delta) / 10)  # Normalize distance changes
+                variance_resilience = max(0, 1 - abs(variance_delta) / 50)  # Normalize variance changes
+                efficiency_resilience = eFG_further if not pd.isna(eFG_further) else 0.5
+
+                # Combined resilience score (weighted average)
+                resilience_score = (
+                    distance_resilience * 0.3 +
+                    variance_resilience * 0.3 +
+                    efficiency_resilience * 0.4
+                )
+
                 plasticity_results.append({
                     'PLAYER_ID': player_id,
                     'SEASON': self.season,
@@ -98,7 +113,8 @@ class PlasticityEngine:
                     'SPATIAL_VARIANCE_DELTA': variance_delta,
                     'PO_EFG_BEYOND_RS_MEDIAN': eFG_further,
                     'RS_SHOTS': rs_metrics['total_shots'],
-                    'PO_SHOTS': po_metrics['total_shots']
+                    'PO_SHOTS': po_metrics['total_shots'],
+                    'RESILIENCE_SCORE': resilience_score
                 })
         
         if plasticity_results:

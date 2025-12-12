@@ -20,7 +20,7 @@ def create_stress_vectors_radar(
 
     Args:
         categories: List of category names
-        player_percentiles: Player's percentile scores (0-100)
+        player_percentiles: Player's percentile scores (0-100) or None for missing data
         width: Chart width
         height: Chart height
 
@@ -31,27 +31,63 @@ def create_stress_vectors_radar(
     # Create radar chart
     fig = go.Figure()
 
-    # Add player data
-    fig.add_trace(go.Scatterpolar(
-        r=player_percentiles,
-        theta=categories,
-        fill='toself',
-        name='Selected Player',
-        line=dict(color='red', width=3),
-        fillcolor='rgba(255, 0, 0, 0.1)',
-        hovertemplate='%{theta}: %{r:.1f}th percentile<extra></extra>'
-    ))
+    # Handle None values - create custom hover text
+    hover_text = []
+    plot_values = []
+    plot_categories = []
+    na_categories = []
 
-    # Add league average reference (50th percentile)
-    league_avg = [50.0] * len(categories)
-    fig.add_trace(go.Scatterpolar(
-        r=league_avg,
-        theta=categories,
-        mode='lines',
-        name='League Average',
-        line=dict(color='grey', width=2, dash='dash'),
-        hovertemplate='%{theta}: League Average (50th)<extra></extra>'
-    ))
+    for cat, val in zip(categories, player_percentiles):
+        if val is None:
+            hover_text.append(f"{cat}: N/A")
+            na_categories.append(cat)
+        else:
+            hover_text.append(f"{cat}: {val:.1f}th percentile")
+            plot_values.append(val)
+            plot_categories.append(cat)
+
+    # Add player data (only for non-None values)
+    if plot_values:
+        fig.add_trace(go.Scatterpolar(
+            r=plot_values,
+            theta=plot_categories,
+            fill='toself',
+            name='Selected Player',
+            line=dict(color='red', width=3),
+            fillcolor='rgba(255, 0, 0, 0.1)',
+            hovertemplate='%{text}<extra></extra>',
+            text=[text for cat, text in zip(categories, hover_text) if cat in plot_categories]
+        ))
+
+        # Add markers for N/A categories (at center with special styling)
+        if na_categories:
+            fig.add_trace(go.Scatterpolar(
+                r=[0] * len(na_categories),  # Place at center
+                theta=na_categories,
+                mode='markers',
+                name='Data Unavailable',
+                marker=dict(
+                    color='gray',
+                    size=8,
+                    symbol='x',
+                    line=dict(color='black', width=1)
+                ),
+                hovertemplate='%{text}<extra></extra>',
+                text=[text for cat, text in zip(categories, hover_text) if cat in na_categories],
+                showlegend=True
+            ))
+
+    # Add league average reference (50th percentile) - only for categories with data
+    league_avg = [50.0] * len(plot_categories)
+    if plot_categories:
+        fig.add_trace(go.Scatterpolar(
+            r=league_avg,
+            theta=plot_categories,
+            mode='lines',
+            name='League Average',
+            line=dict(color='grey', width=2, dash='dash'),
+            hovertemplate='%{theta}: League Average (50th)<extra></extra>'
+        ))
 
     # Update layout
     fig.update_layout(
@@ -97,8 +133,8 @@ def create_stress_vectors_comparison(
 
     Args:
         categories: List of category names
-        player_percentiles: First player's percentile scores
-        comparison_percentiles: Second player's percentile scores
+        player_percentiles: First player's percentile scores (can include None for missing data)
+        comparison_percentiles: Second player's percentile scores (can include None for missing data)
         comparison_name: Name for comparison player
         width: Chart width
         height: Chart height
@@ -109,27 +145,53 @@ def create_stress_vectors_comparison(
 
     fig = go.Figure()
 
-    # Add first player
-    fig.add_trace(go.Scatterpolar(
-        r=player_percentiles,
-        theta=categories,
-        fill='toself',
-        name='Selected Player',
-        line=dict(color='red', width=3),
-        fillcolor='rgba(255, 0, 0, 0.1)',
-        hovertemplate='%{theta}: %{r:.1f}th percentile<extra></extra>'
-    ))
+    # Helper function to create hover text and filter None values
+    def prepare_player_data(percentiles, player_name):
+        hover_text = []
+        plot_values = []
+        plot_categories = []
 
-    # Add comparison player
-    fig.add_trace(go.Scatterpolar(
-        r=comparison_percentiles,
-        theta=categories,
-        fill='toself',
-        name=comparison_name,
-        line=dict(color='blue', width=3),
-        fillcolor='rgba(0, 0, 255, 0.1)',
-        hovertemplate='%{theta}: %{r:.1f}th percentile<extra></extra>'
-    ))
+        for cat, val in zip(categories, percentiles):
+            if val is None:
+                hover_text.append(f"{cat}: N/A")
+            else:
+                hover_text.append(f"{cat}: {val:.1f}th percentile")
+                plot_values.append(val)
+                plot_categories.append(cat)
+
+        return hover_text, plot_values, plot_categories
+
+    # Prepare first player data
+    player_hover, player_values, player_cats = prepare_player_data(player_percentiles, 'Selected Player')
+
+    # Prepare comparison player data
+    comp_hover, comp_values, comp_cats = prepare_player_data(comparison_percentiles, comparison_name)
+
+    # Add first player (only for non-None values)
+    if player_values:
+        fig.add_trace(go.Scatterpolar(
+            r=player_values,
+            theta=player_cats,
+            fill='toself',
+            name='Selected Player',
+            line=dict(color='red', width=3),
+            fillcolor='rgba(255, 0, 0, 0.1)',
+            hovertemplate='%{text}<extra></extra>',
+            text=[text for cat, text in zip(categories, player_hover) if cat in player_cats]
+        ))
+
+    # Add comparison player (only for non-None values)
+    if comp_values:
+        fig.add_trace(go.Scatterpolar(
+            r=comp_values,
+            theta=comp_cats,
+            fill='toself',
+            name=comparison_name,
+            line=dict(color='blue', width=3),
+            fillcolor='rgba(0, 0, 255, 0.1)',
+            hovertemplate='%{text}<extra></extra>',
+            text=[text for cat, text in zip(categories, comp_hover) if cat in comp_cats]
+        ))
 
     # Update layout
     fig.update_layout(
@@ -181,6 +243,7 @@ def get_stress_vector_explanation() -> str:
     **Interpretation:**
     - Values shown as percentiles (0-100) compared to league average
     - Higher percentiles indicate stronger performance in that area
+    - "N/A" indicates missing data (player didn't qualify or data unavailable)
     - The filled area represents the player's overall profile
     """
 

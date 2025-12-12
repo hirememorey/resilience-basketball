@@ -100,23 +100,84 @@ def main():
     with st.sidebar:
         st.header("🎯 Player Selection")
 
-        # Season selector
-        seasons = get_season_options(df_master)
+        # Season selector - show all seasons, but note which have plasticity data
+        all_seasons = get_season_options(df_master)
+
+        # Check if RESILIENCE_SCORE column exists
+        if 'RESILIENCE_SCORE' in df_master.columns:
+            seasons_with_plasticity = df_master[df_master['RESILIENCE_SCORE'].notna()]['SEASON'].unique()
+            seasons_with_plasticity = sorted(seasons_with_plasticity)
+        else:
+            seasons_with_plasticity = []
+            st.error("❌ **Error**: Plasticity data could not be loaded. Radar charts will show default values.")
+
         selected_season = st.selectbox(
             "Select Season",
-            seasons,
-            index=0,
+            all_seasons,
+            index=len(all_seasons)-1,  # Default to most recent season
             help="Choose the season to analyze"
         )
 
+        # Check if selected season has plasticity data
+        if 'RESILIENCE_SCORE' not in df_master.columns:
+            st.warning(f"⚠️ **Note**: Plasticity data is not available. All radar charts will show default values.")
+        elif selected_season not in seasons_with_plasticity:
+            st.warning(f"⚠️ **Note**: The {selected_season} season doesn't have plasticity data yet. Radar charts will show default values. Plasticity analysis requires playoff data.")
+        else:
+            st.info(f"✅ **Note**: The {selected_season} season has complete plasticity data available.")
+
         # Player selector (filtered by season)
         df_season = get_players_for_season(df_master, selected_season)
-        player_options = sorted(df_season['PLAYER_NAME'].unique())
+
+        # Add dependence range filter
+        st.subheader("🔍 Filter Options")
+
+        # Dependence range filter
+        dep_min, dep_max = st.slider(
+            "Dependence Score Range",
+            min_value=0.0,
+            max_value=1.0,
+            value=(0.0, 1.0),
+            step=0.05,
+            format="%.0f%%",
+            help="Filter players by system dependence level (0% = completely independent, 100% = highly system-dependent)"
+        )
+
+        # Performance range filter
+        perf_min, perf_max = st.slider(
+            "Performance Score Range",
+            min_value=0.0,
+            max_value=1.0,
+            value=(0.0, 1.0),
+            step=0.05,
+            format="%.0f%%",
+            help="Filter players by star-level potential (0% = limited, 100% = elite)"
+        )
+
+        # Apply filters to season data (outside sidebar for global scope)
+        df_filtered = df_season.copy()
+
+        # Filter by dependence score if available
+        if 'DEPENDENCE_SCORE' in df_filtered.columns:
+            df_filtered = df_filtered[
+                (df_filtered['DEPENDENCE_SCORE'].isna()) |
+                ((df_filtered['DEPENDENCE_SCORE'] >= dep_min) & (df_filtered['DEPENDENCE_SCORE'] <= dep_max))
+            ]
+
+        # Filter by performance score if available
+        if 'PERFORMANCE_SCORE' in df_filtered.columns:
+            df_filtered = df_filtered[
+                (df_filtered['PERFORMANCE_SCORE'].isna()) |
+                ((df_filtered['PERFORMANCE_SCORE'] >= perf_min) & (df_filtered['PERFORMANCE_SCORE'] <= perf_max))
+            ]
+
+        # Update player options based on filters
+        player_options = sorted(df_filtered['PLAYER_NAME'].unique())
 
         selected_player_name = st.selectbox(
             "Select Player",
             player_options,
-            help="Choose a player to analyze"
+            help="Choose a player to analyze (filtered by your criteria above)"
         )
 
         # Get player data
@@ -126,9 +187,26 @@ def main():
             st.error("❌ Player data not found")
             st.stop()
 
+        # Show filter summary
+        st.markdown("---")
+        st.subheader("📊 Current Filters")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Dependence Range", f"{dep_min:.0%} - {dep_max:.0%}")
+        with col2:
+            st.metric("Performance Range", f"{perf_min:.0%} - {perf_max:.0%}")
+
+        filtered_count = len(df_filtered)
+        total_count = len(df_season)
+        st.caption(f"Showing {filtered_count} of {total_count} players in {selected_season}")
+
+    # Main content area (moved outside sidebar block)
+    if player_data is not None:
+        display_player_analysis(player_data, df_season, df_filtered, model, encoder, usage_buckets, percentiles)
+
     # Main content area
     if player_data is not None:
-        display_player_analysis(player_data, df_season, model, encoder, usage_buckets, percentiles)
+        display_player_analysis(player_data, df_season, df_filtered, model, encoder, usage_buckets, percentiles)
 
 
 def load_model_and_encoder():
@@ -144,7 +222,7 @@ def load_model_and_encoder():
         st.stop()
 
 
-def display_player_analysis(player_data, df_season, model, encoder, usage_buckets, percentiles):
+def display_player_analysis(player_data, df_season, df_filtered, model, encoder, usage_buckets, percentiles):
     """Display the main player analysis interface."""
 
     # Player header
@@ -196,16 +274,16 @@ def display_player_analysis(player_data, df_season, model, encoder, usage_bucket
     tab1, tab2, tab3 = st.tabs(["📊 Risk Matrix", "🎯 Stress Profile", "🔮 What-If Simulator"])
 
     with tab1:
-        display_risk_matrix_tab(player_data, df_season)
+        display_risk_matrix_tab(player_data, df_season, df_filtered)
 
     with tab2:
-        display_stress_profile_tab(player_data, df_season)
+        display_stress_profile_tab(player_data, df_filtered)
 
     with tab3:
         display_usage_simulator_tab(player_data, df_season, model, encoder, usage_buckets, percentiles)
 
 
-def display_risk_matrix_tab(player_data, df_season):
+def display_risk_matrix_tab(player_data, df_season, df_filtered):
     """Display the 2D Risk Matrix tab."""
 
     st.header("📊 2D Risk Matrix: Performance vs Dependence")
@@ -213,14 +291,14 @@ def display_risk_matrix_tab(player_data, df_season):
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        # Create and display the risk matrix plot
-        fig = create_risk_matrix_plot(df_season, player_data)
-        st.plotly_chart(fig, use_container_width=True)
+        # Create and display the risk matrix plot with filtered data
+        fig = create_risk_matrix_plot(df_filtered, player_data)
+        st.plotly_chart(fig, use_container_width=True, key="risk_matrix_plot_main")
 
     with col2:
         st.subheader("📈 Archetype Distribution")
-        summary_fig = create_archetype_summary_chart(df_season)
-        st.plotly_chart(summary_fig, use_container_width=True)
+        summary_fig = create_archetype_summary_chart(df_filtered)
+        st.plotly_chart(summary_fig, use_container_width=True, key="archetype_summary_chart_main")
 
         st.subheader("🎯 Quadrant Guide")
         st.markdown("""
@@ -241,6 +319,18 @@ def display_risk_matrix_tab(player_data, df_season):
         - Empty calories
         """)
 
+        # Add dependence continuum explanation
+        st.markdown("---")
+        st.subheader("🌈 Dependence Continuum")
+        st.markdown("""
+        **Color Scale**: Blue = Low Dependence (portable) → Red = High Dependence (system-reliant)
+
+        Use the sidebar filters to explore players within specific dependence ranges:
+        - **0-30%**: Highly portable talents
+        - **30-70%**: Moderate system dependence
+        - **70-100%**: Heavy system reliance
+        """)
+
 
 def display_stress_profile_tab(player_data, df_season):
     """Display the stress vectors profile tab."""
@@ -255,27 +345,32 @@ def display_stress_profile_tab(player_data, df_season):
     with col1:
         # Create and display radar chart
         radar_fig = create_stress_vectors_radar(categories, percentiles)
-        st.plotly_chart(radar_fig, use_container_width=True)
+        st.plotly_chart(radar_fig, use_container_width=True, key="stress_vectors_radar_main")
 
     with col2:
         st.subheader("📊 Profile Summary")
 
         # Show percentile scores
         for cat, pct in zip(categories, percentiles):
-            if pct >= 75:
-                icon = "🟢"
-                desc = "Elite"
-            elif pct >= 50:
-                icon = "🟡"
-                desc = "Above Avg"
-            elif pct >= 25:
-                icon = "🟠"
-                desc = "Below Avg"
+            if pct is None:
+                icon = "⚪"
+                desc = "Data N/A"
+                st.write(f"{icon} **{cat}**: N/A ({desc})")
             else:
-                icon = "🔴"
-                desc = "Weak"
+                if pct >= 75:
+                    icon = "🟢"
+                    desc = "Elite"
+                elif pct >= 50:
+                    icon = "🟡"
+                    desc = "Above Avg"
+                elif pct >= 25:
+                    icon = "🟠"
+                    desc = "Below Avg"
+                else:
+                    icon = "🔴"
+                    desc = "Weak"
 
-            st.write(f"{icon} **{cat}**: {pct:.1f}th percentile ({desc})")
+                st.write(f"{icon} **{cat}**: {pct:.1f}th percentile ({desc})")
 
         st.markdown("---")
         st.markdown(get_stress_vector_explanation())
@@ -356,7 +451,7 @@ def display_usage_simulator_tab(player_data, df_season, model, encoder, usage_bu
         st.subheader("📊 Projected Stress Profile")
         categories, new_percentiles = prepare_radar_chart_data(df_season, projected_data)
         radar_fig = create_stress_vectors_radar(categories, new_percentiles)
-        st.plotly_chart(radar_fig, use_container_width=True)
+        st.plotly_chart(radar_fig, use_container_width=True, key="projected_stress_radar_main")
 
         # Show probability breakdown
         st.subheader("🎲 Archetype Probabilities")

@@ -38,6 +38,10 @@ python src/nba_data/scripts/calculate_physicality_features.py
 python src/nba_data/scripts/collect_shot_quality_with_clock.py --seasons 2015-16 2016-17 2017-18 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24 2024-25 --workers 8
 python src/nba_data/scripts/calculate_shot_difficulty_features.py
 
+# 3.5. Generate Plasticity Features (requires playoff shot charts)
+python src/nba_data/scripts/calculate_shot_plasticity.py --seasons 2015-16 2016-17 2017-18 2018-19 2019-20 2020-21 2021-22 2022-23 2023-24 2024-25
+python src/nba_data/scripts/combine_plasticity_scores.py
+
 # 4. Train the Predictive Model (RFE-optimized, recommended)
 python src/nba_data/scripts/train_rfe_model.py
 ```
@@ -48,7 +52,15 @@ python src/nba_data/scripts/train_rfe_model.py
 - `results/pressure_features.csv`: Pressure vector features
 - `models/resilience_xgb_rfe_10.pkl`: **CURRENT MODEL** (10 features, 53.54% accuracy, RS-only, temporal split)
 
-### 4. Run Validation Tests
+### 3.5. Combine Plasticity Data (if recalculating plasticity)
+```bash
+# If you recalculated plasticity scores, combine them into the comprehensive dataset
+python src/nba_data/scripts/combine_plasticity_scores.py
+# Or use the convenience script:
+./scripts/combine_plasticity.sh
+```
+
+# 4. Run Validation Tests
 ```bash
 # Run test suite
 python test_latent_star_cases.py

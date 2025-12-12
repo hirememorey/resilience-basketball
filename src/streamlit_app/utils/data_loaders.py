@@ -213,15 +213,32 @@ def merge_stress_vector_features(df_base: pd.DataFrame) -> pd.DataFrame:
     # Merge plasticity features
     try:
         df_plasticity = pd.read_csv('results/plasticity_scores.csv')
-        plasticity_cols_to_keep = [
-            'PLAYER_ID', 'PLAYER_NAME', 'SEASON',
-            'RESILIENCE_SCORE',      # For radar chart "Plasticity"
-            'PRODUCTION_RESILIENCE', # Additional plasticity data
-            'ADJ_COUNTER_PUNCH'
-        ]
-        df_plasticity_clean = df_plasticity[plasticity_cols_to_keep].copy()
 
-        merge_keys = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON']
+        # Aggregate plasticity scores since there are multiple per player
+        # Only aggregate columns that exist in the data
+        agg_dict = {}
+        cols_to_keep = ['PLAYER_ID', 'SEASON']
+
+        # Always include RESILIENCE_SCORE if it exists
+        if 'RESILIENCE_SCORE' in df_plasticity.columns:
+            agg_dict['RESILIENCE_SCORE'] = 'mean'
+            cols_to_keep.append('RESILIENCE_SCORE')
+
+        # Add other columns if they exist
+        for col in ['PRODUCTION_RESILIENCE', 'ADJ_COUNTER_PUNCH']:
+            if col in df_plasticity.columns:
+                agg_dict[col] = 'first'
+                cols_to_keep.append(col)
+
+        if agg_dict:  # Only aggregate if we have columns to aggregate
+            plasticity_agg = df_plasticity.groupby(['PLAYER_ID', 'SEASON']).agg(agg_dict).reset_index()
+        else:
+            # If no valid columns to aggregate, skip plasticity merging
+            logger.warning("No valid plasticity columns found for aggregation")
+            return df_master
+        df_plasticity_clean = plasticity_agg[cols_to_keep].copy()
+
+        merge_keys = ['PLAYER_ID', 'SEASON']
         df_master = pd.merge(df_master, df_plasticity_clean, on=merge_keys, how='left')
         logger.info(f"Merged plasticity features: {df_plasticity_clean['RESILIENCE_SCORE'].notna().sum()} players with plasticity data")
 
@@ -348,8 +365,8 @@ def prepare_radar_chart_data(df_season: pd.DataFrame, player_data: pd.Series) ->
 
                 percentiles.append(percentile)
             else:
-                percentiles.append(50.0)  # Default to median
+                percentiles.append(None)  # Indicate missing data
         else:
-            percentiles.append(50.0)  # Default to median
+            percentiles.append(None)  # Indicate missing data
 
     return categories, percentiles
