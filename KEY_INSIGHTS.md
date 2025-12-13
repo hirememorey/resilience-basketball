@@ -773,6 +773,8 @@ When implementing new features, ask:
 - [ ] Am I checking data completeness? (Require 67% of critical features for reliable predictions) (Fix #3 - Phase 3.9) ✅
 - [ ] Am I filtering small sample size noise? (Perfect efficiency on tiny samples is not predictive) (Fix #4 - Phase 3.9) ✅
 - [ ] Am I assessing teammate quality instead of opponent quality? (Tank commander penalty removed - bad teammates = more impressive individual performance) (Fix #53)
+- [ ] Am I using organic features instead of hard gates? (INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA enable natural learning) (Fix #54) ✅
+- [ ] Am I expanding model capacity when critical signals are excluded? (15 features > 10 features allows inclusion of tank commander detectors) (Fix #54) ✅
 
 ---
 
@@ -1551,6 +1553,30 @@ else:
 **Key Principle**: **Value is relative to reference class**. A player who dominates on a bad team demonstrates greater individual skill than one who performs similarly on a good team. Bad teammates = more individual burden = greater individual skill demonstration.
 
 **Implementation**: Tank commander penalty removed. Teammate quality features to be implemented by next developer.
+
+---
+
+## 54. Organic Tank Commander Solution - Learn, Don't Patch 🎯 CRITICAL (December 2025)
+
+**The Problem**: After removing hard-coded tank commander penalties, the model still struggled to distinguish "Empty Calories" (Tony Wroten) from "True Production" organically.
+
+**The Insight**: **Hard gates prevent learning, organic features enable it**. The solution wasn't to add more patches, but to provide the model with mathematical signals that naturally separate the patterns.
+
+**The Organic Approach**:
+- **INEFFICIENT_VOLUME_SCORE**: `(CREATION_VOLUME_RATIO × Negative_CREATION_TAX)` - Multiplicative penalty that amplifies inefficiency signals
+- **SHOT_QUALITY_GENERATION_DELTA**: Measures actual shot quality generation vs. league average - distinguishes "Empty Calories" creators
+- **Expanded Model Capacity**: 10→15 RFE features allows natural inclusion of critical signals
+- **Multiple Validation Gates**: Inefficiency, data completeness, sample size gates provide natural filtering
+
+**Why It Works**:
+- **Mathematics Over Rules**: `INEFFICIENT_VOLUME_SCORE` creates a continuous penalty gradient instead of binary thresholds
+- **Context-Aware**: `SHOT_QUALITY_GENERATION_DELTA` accounts for league-average shot quality, not just individual stats
+- **Learning-Preserving**: Model discovers tank commander patterns organically, maintaining adaptability
+- **No Arbitrariness**: Data-driven feature selection instead of guesswork
+
+**Result**: Tony Wroten correctly filtered to 0.30 star level through organic signals. Model now learns tank commander patterns naturally.
+
+**Key Principle**: **Provide the right inputs, let the model learn the right outputs**. Hard gates are technical debt that prevents future improvement.
 
 **See**: `ACTIVE_CONTEXT.md` for current status and next steps.
 

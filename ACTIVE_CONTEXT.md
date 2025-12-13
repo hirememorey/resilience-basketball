@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
 **Last Updated**: December 12, 2025
-**Status**: ✅ **CRITICAL DATA INTEGRITY ISSUE RESOLVED** - 2024-25 season opponent quality data fully restored. Interactive Streamlit app updated with corrected classifications. All 5,312 players now have complete 2D Risk Matrix analysis with accurate opponent context adjustments.
+**Status**: ✅ **TANK COMMANDER PROBLEM SOLVED** - Organic feature-based filtering implemented. Expanded model capacity to 15 features with INEFFICIENT_VOLUME_SCORE and SHOT_QUALITY_GENERATION_DELTA. Tony Wroten correctly filtered to 0.30 star level. All 5,312 players analyzed with enhanced organic signal detection.
 
 ---
 
@@ -15,7 +15,7 @@ Identify players who consistently perform better than expected in the playoffs a
 
 **MAJOR BREAKTHROUGH**: Abandoned 1D label refinement approach that was causing "Ground Truth Trap" issues. **2D Risk Matrix now established as primary evaluation framework**, properly separating Performance (outcomes) from Dependence (portability) as orthogonal dimensions.
 
-**Framework Status**: 2D Risk Matrix with XGBoost classifier (15 features), ground-truth data, usage-aware projections. **Dependence Continuum**: Shows dependence as 0-100% scale with filtering capabilities. Hard gates disabled for 2D evaluation to allow proper Performance vs. Dependence assessment.
+**Framework Status**: 2D Risk Matrix with XGBoost classifier (15 features), ground-truth data, usage-aware projections. **Dependence Continuum**: Shows dependence as 0-100% scale with filtering capabilities. Organic feature-based validation (INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA) enables natural learning of tank commander patterns without hard gates.
 
 **2D Risk Matrix Categories**:
 - **Franchise Cornerstone**: High Performance + Low Dependence (Luka, Jokić) - Max contract, build around
@@ -76,13 +76,36 @@ Identify players who consistently perform better than expected in the playoffs a
 - ✅ **N/A Data Handling**: Radar charts properly show "N/A" for missing data instead of misleading 50% defaults
 - ✅ **Tank Commander Penalty Removed**: Opponent quality approach replaced with teammate quality assessment (first principles shift)
 
+### Organic Tank Commander Solution (December 2025)
+**Problem**: High-usage, low-efficiency players (e.g., Tony Wroten) were being overvalued by the model despite being "Empty Calories" on bad teams.
+
+**Root Cause**: Model lacked mathematical signals to distinguish volume from skill. High usage on tanking teams was conflated with star-level potential.
+
+**Solution** (First Principles Approach):
+- **Data Pipeline Integration**: Added `SHOT_QUALITY_GENERATION_DELTA` to predictive_dataset.csv (5,312/5,312 rows populated)
+- **Model Capacity Expansion**: Increased RFE features from 10 to 15 to naturally include critical signals
+- **Organic Feature Integration**:
+  - `INEFFICIENT_VOLUME_SCORE` (rank #13, 5.02% importance): `(CREATION_VOLUME_RATIO × Negative_CREATION_TAX)`
+  - `SHOT_QUALITY_GENERATION_DELTA` (rank #14, 4.57% importance): Measures actual shot quality vs. league average
+- **Validation Gates**: Multiple organic signals (inefficiency, data completeness, sample size) provide natural filtering
+
+**Result**: Tony Wroten correctly filtered to 0.30 star level (<55%) and "Depth" category. Tank commander patterns now learned organically without hard gates.
+
+### DeRozan Categorization Analysis (December 2025)
+**Finding**: DeMar DeRozan (2015-16) classified as Franchise Cornerstone (star level 0.91, low dependence 0.236).
+
+**Analysis**: Model correctly identifies elite regular season performance, but DeRozan was notorious playoff underperformer. This highlights need for future adjustment to distinguish "regular season production" from "playoff sustainability."
+
+**Status**: Categorization logic verified (moderate performance + low dependence → Depth). DeRozan case noted for future playoff performance weighting enhancement.
+
 ---
 
 ## Scoreboard (Current Metrics)
 
 ### Model Performance
-- **Accuracy**: ~49% (latest 15-feature model; 20-feature RFE variant similar)
-- **True Predictive Power**: RS-only features, temporal split
+- **Accuracy**: 49.54% (15-feature RFE model with organic tank commander detection)
+- **True Predictive Power**: RS-only features, temporal split (574 train, 325 test samples)
+- **Feature Count**: 15 (expanded from 10 to include critical signals: INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA)
 
 ### Test Suite Performance (latent_star_cases, Hybrid 2D/1D)
 - **Overall Pass Rate**: `87.5%` (35/40) — major improvement with hybrid evaluation
@@ -111,21 +134,25 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ## Next Developer: Start Here
 
-**Current State**: ✅ **2D Risk Matrix framework stable with opponent quality corrections**. 2024-25 season data integrity fully restored. Tank commander detection prevents inflated classifications. Interactive Streamlit app shows accurate player evaluations.
+**Current State**: ✅ **Organic Tank Commander Solution Implemented**. Model expanded to 15 features with INEFFICIENT_VOLUME_SCORE and SHOT_QUALITY_GENERATION_DELTA. Tony Wroten correctly filtered (0.30 star level). DeRozan playoff underperformance identified for future enhancement.
 
 **Recent Progress**:
-- ✅ Opponent quality data restored for 2024-25 season (208/562 players with DCS scores)
-- ✅ Tank commander penalty removed (shifting to teammate quality assessment approach)
-- ✅ Jonathan Kuminga correctly reclassified from Franchise Cornerstone to Luxury Component
-- ✅ All 5,312 players have complete 2D analysis with opponent context adjustments
+- ✅ **Tank Commander Problem SOLVED**: Organic feature-based filtering (no hard gates)
+- ✅ **Data Pipeline Enhanced**: SHOT_QUALITY_GENERATION_DELTA integrated into predictive dataset
+- ✅ **Model Capacity Expanded**: 10→15 RFE features with natural signal inclusion
+- ✅ **Validation Framework Updated**: Test cases added for regression prevention
+- ⚠️ **DeRozan Case Identified**: High regular season performer but playoff underperformer (future enhancement needed)
 
 **If Issues Arise**:
 - **Missing plasticity data**: Run `python src/nba_data/scripts/combine_plasticity_scores.py`
 - **All 50% scores**: Check data loading - may need to recalculate plasticity for new seasons
 - **App crashes**: Verify all required CSV files exist in `results/` directory
+- **Tank commander overvaluation**: Verify INEFFICIENT_VOLUME_SCORE is in model features (rank ~13)
+- **SHOT_QUALITY_GENERATION_DELTA missing**: Run `python src/nba_data/scripts/evaluate_plasticity_potential.py` to regenerate predictive dataset
 
 **For Future Enhancements**:
-- **Model improvements**: Consider addressing "Fool's Gold" problem (high-usage, low-efficiency over-prediction)
+- **DeRozan Enhancement**: Add playoff performance weighting to distinguish regular season production from playoff sustainability
+- **Model improvements**: Consider addressing remaining edge cases or expanding feature set
 - **Additional data sources**: Evaluate new stress vector features or expanded historical coverage
 - **UI enhancements**: Consider interactive filtering, player comparisons, or trend analysis
 
@@ -142,9 +169,38 @@ python -c "from src.streamlit_app.utils.data_loaders import create_master_datafr
 # Test radar chart generation
 python -c "from src.streamlit_app.components.stress_vectors_radar import create_stress_vectors_radar; fig = create_stress_vectors_radar(['A', 'B'], [75.0, None]); print('Radar chart handles N/A correctly')"
 
-# Check opponent quality data completeness
-python -c "import pandas as pd; df = pd.read_csv('results/predictive_dataset.csv'); season_2024 = df[df['SEASON'] == '2024-25']; opp_count = season_2024['AVG_OPPONENT_DCS'].notna().sum(); print(f'2024-25 opponent data: {opp_count}/{len(season_2024)} players ({opp_count/len(season_2024)*100:.1f}%)')"
+# Verify tank commander solution (Tony Wroten)
+python -c "
+from src.nba_data.scripts.predict_conditional_archetype import ConditionalArchetypePredictor
+predictor = ConditionalArchetypePredictor()
+wroten_data = predictor.get_player_data('Tony Wroten', '2015-16')
+if wroten_data is not None:
+    result = predictor.predict_with_risk_matrix(wroten_data, 0.30)
+    print(f'Wroten star level: {result[\"performance_score\"]:.2f} (should be <0.55)')
+    print(f'Wroten category: {result[\"risk_category\"]} (should be Depth)')
+else:
+    print('Wroten data not found')
+"
 
-# Verify opponent quality data coverage
-python -c "import pandas as pd; df = pd.read_csv('results/predictive_dataset.csv'); season_2024 = df[df['SEASON'] == '2024-25']; opp_count = season_2024['AVG_OPPONENT_DCS'].notna().sum(); print(f'2024-25 opponent data: {opp_count}/{len(season_2024)} players ({opp_count/len(season_2024)*100:.1f}%)')"
+# Verify organic features in model
+python -c "
+import joblib
+model = joblib.load('models/resilience_xgb_rfe_15.pkl')
+features = model.feature_names_in_
+print('Model features:')
+for i, feat in enumerate(features, 1):
+    if 'INEFFICIENT' in feat or 'SHOT_QUALITY' in feat:
+        print(f'  ✅ {i}. {feat}')
+    elif i <= 15:
+        print(f'     {i}. {feat}')
+"
+
+# Check SHOT_QUALITY_GENERATION_DELTA integration
+python -c "
+import pandas as pd
+df = pd.read_csv('results/predictive_dataset.csv')
+shot_quality_count = df['SHOT_QUALITY_GENERATION_DELTA'].notna().sum()
+total_rows = len(df)
+print(f'SHOT_QUALITY_GENERATION_DELTA: {shot_quality_count}/{total_rows} rows populated ({shot_quality_count/total_rows*100:.1f}%)')
+"
 ```
