@@ -96,7 +96,7 @@ def create_master_dataframe() -> pd.DataFrame:
         )
 
         # Handle duplicate columns - prioritize 2D results over original features
-        duplicate_columns = ['DEPENDENCE_SCORE', 'ASSISTED_FGM_PCT', 'OPEN_SHOT_FREQUENCY', 'SELF_CREATED_USAGE_RATIO']
+        duplicate_columns = ['DEPENDENCE_SCORE', 'ASSISTED_FGM_PCT', 'OPEN_SHOT_FREQUENCY', 'SELF_CREATED_USAGE_RATIO', 'PERFORMANCE_SCORE', 'RISK_CATEGORY']
         for col in duplicate_columns:
             if f'{col}_y' in df_master.columns:
                 # Use the 2D result (suffix _y), fallback to original (suffix _x)

@@ -81,12 +81,16 @@ def predict_performance_for_all(df_players: pd.DataFrame) -> pd.DataFrame:
             if current_usage > 1.0:  # Convert percentage if needed
                 current_usage = current_usage / 100.0
 
+            # Create a copy of row data and normalize USG_PCT
+            player_data = row.copy()
+            player_data['USG_PCT'] = current_usage
+
             # Get prediction result
             prediction = predictor.predict_archetype_at_usage(
-                player_data=row,
+                player_data=player_data,
                 usage_level=current_usage,
                 apply_phase3_fixes=True,
-                apply_hard_gates=False  # Use continuous predictions for 2D matrix
+                apply_hard_gates=True  # Apply Alpha Threshold and other physics gates
             )
 
             result = {
@@ -209,13 +213,15 @@ def determine_risk_categories(df_combined: pd.DataFrame) -> pd.DataFrame:
 
     # Calculate thresholds from the data distribution
     # High performance: Top 25% of performance scores
-    perf_threshold = df_valid['PERFORMANCE_SCORE'].quantile(0.75)
+    # Use same thresholds as main predictor for consistency
+    # High performance: >= 70% (elite level)
+    perf_threshold = 0.70
 
-    # High dependence: Top 25% of dependence scores
-    dep_threshold = df_valid['DEPENDENCE_SCORE'].quantile(0.75)
+    # High dependence: 66th percentile (same as predictor)
+    dep_threshold = df_valid['DEPENDENCE_SCORE'].quantile(0.66)
 
-    logger.info(f"Performance threshold (75th percentile): {perf_threshold:.1f}")
-    logger.info(f"Dependence threshold (75th percentile): {dep_threshold:.1f}")
+    logger.info(f"Performance threshold (fixed): {perf_threshold:.1f}")
+    logger.info(f"Dependence threshold (66th percentile): {dep_threshold:.3f}")
     def categorize_risk(row):
         perf = row['PERFORMANCE_SCORE']
         dep = row['DEPENDENCE_SCORE']

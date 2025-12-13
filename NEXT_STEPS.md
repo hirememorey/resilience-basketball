@@ -154,7 +154,7 @@
 - `docs/2D_RISK_MATRIX_IMPLEMENTATION.md` - 2D framework implementation details
 
 **Test Suite**:
-- `test_latent_star_cases.py` - Critical case suite (hybrid 2D/1D evaluation)
+- `tests/validation/test_latent_star_cases.py` - Critical case suite (hybrid 2D/1D evaluation)
 - `results/latent_star_test_cases_results.csv` - Latest test results
 - `results/latent_star_test_cases_report.md` - Latest test report
 

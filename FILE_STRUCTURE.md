@@ -58,6 +58,7 @@ project_root/
 │       │   └── detect_latent_stars_v2.py           # Latent Star Detection Logic
 │       │
 │       ├── validation/           # Test Suites & Quality Checks
+│       ├── validation/
 │       │   ├── test_latent_star_cases.py           # Critical Case Studies
 │       │   ├── test_2d_risk_matrix.py              # Risk Matrix Validation
 │       │   └── analyze_model_misses.py             # Diagnostic Tools

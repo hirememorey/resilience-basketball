@@ -63,7 +63,7 @@ python src/nba_data/scripts/combine_plasticity_scores.py
 # 4. Run Validation Tests
 ```bash
 # Run test suite
-python test_latent_star_cases.py
+python tests/validation/test_latent_star_cases.py
 
 # Run expanded dataset predictions (optional)
 python run_expanded_predictions.py --min-minutes 500 --max-age 25
