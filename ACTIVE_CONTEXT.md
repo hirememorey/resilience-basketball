@@ -134,13 +134,20 @@ Identify players who consistently perform better than expected in the playoffs a
 - **True Predictive Power**: RS-only features, temporal split (574 train, 325 test samples)
 - **Feature Count**: 15 (expanded from 10 to include critical signals: INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA)
 
-### Test Suite Performance (latent_star_cases, Hybrid 2D/1D)
-- **Overall Pass Rate**: `82.5%` (33/40) — comprehensive validation across 40 critical cases
+### Test Suite Performance
+- **Latent Star Detection**: `82.5%` (33/40) — tests star potential at elevated usage levels
   - **True Positive** (Latent Stars): `64.7%` (11/17) — identifies legitimate star potential
   - **False Positive** (Mirage Breakouts): `100%` (5/5) — perfect at avoiding false alarms
   - **True Negative** (Draft Busts): `94.1%` (16/17) — excellent at identifying non-stars
   - **System Player**: `100%` (1/1) — proper ceiling recognition
   - **Key Success**: All 2015-2025 seasons properly normalized, 18 Franchise Cornerstones identified in 2015-16
+
+- **Overall Star Prediction**: `52.6%` (10/19) — tests Franchise Cornerstone classification at current usage
+  - **Confirmed Franchise Cornerstones**: `30.0%` (3/10) — struggles with elite player dependence scores
+  - **Not Franchise Cornerstones**: `75.0%` (3/4) — good at identifying non-elite players
+  - **Role Players**: `100%` (2/2) — excellent at depth player classification
+  - **Diagnostic Output**: 97-column comprehensive analysis available for all test cases
+  - **Key Finding**: Model shows bias toward high dependence scores (30% threshold too strict for elite players)
 
 ### Comprehensive 2D Coverage
 - **Total Players Analyzed**: 5,312 (100% of dataset, 2015-2025 seasons)
@@ -165,6 +172,8 @@ Identify players who consistently perform better than expected in the playoffs a
 **Current State**: ✅ **FULLY OPERATIONAL SYSTEM** - All major bugs resolved. 2D Risk Matrix working across all historical seasons (2015-2025). 82.5% test suite pass rate. Streamlit app functional.
 
 **Recent Progress**:
+- ✅ **Overall Star Prediction Test Suite**: Created comprehensive validation for Franchise Cornerstone classification at current usage levels
+- ✅ **Diagnostic Pipeline**: Combined CSV output with 97 columns of detailed analysis from `player_season_analyzer.py`
 - ✅ **USG_PCT Normalization FIXED**: Triple conversion bug resolved, 2015-16 shows proper star distribution
 - ✅ **Data Gates Optimized**: Completeness and sample size gates made lenient for historical seasons
 - ✅ **Streamlit Data Loading FIXED**: Duplicate column merging resolved, PERFORMANCE_SCORE/RISK_CATEGORY properly consolidated

@@ -62,8 +62,11 @@ python src/nba_data/scripts/combine_plasticity_scores.py
 
 # 4. Run Validation Tests
 ```bash
-# Run test suite
+# Run latent star detection test suite (elevated usage projections)
 python tests/validation/test_latent_star_cases.py
+
+# Run overall star prediction test suite (current usage, Franchise Cornerstone classification)
+python -m tests.validation.test_overall_star_prediction
 
 # Run expanded dataset predictions (optional)
 python run_expanded_predictions.py --min-minutes 500 --max-age 25
@@ -114,10 +117,13 @@ Avoid: Low Performance + High Dependence (22.9%)
 
 ## Current Model
 
-**Algorithm:** XGBoost Classifier (Multi-Class)  
-**Features:** 10 core features (RFE-optimized from 60, RS-only)  
-**Accuracy:** **53.54%** (RFE model) / **51.69%** (Full model) - **True predictive power** with temporal train/test split (899 player-seasons, 2015-2024)  
-**Test Case Pass Rate:** **87.5%** (35/40) - Hybrid 2D/1D evaluation with 90.9% pass rate for 2D cases ✅
+**Algorithm:** XGBoost Classifier (Multi-Class)
+**Features:** 15 core features (RFE-optimized from 65, RS-only)
+**Accuracy:** **49.54%** (15-feature RFE model with organic tank commander detection)
+**Test Suite Performance:**
+- **Latent Star Detection:** 82.5% (33/40) - Tests star potential at elevated usage levels
+- **Overall Star Prediction:** 52.6% (10/19) - Tests Franchise Cornerstone classification at current usage
+- **Comprehensive Diagnostics:** 97-column analysis available for detailed model mistake investigation
 
 ### Top 10 Features (RS-Only, No Data Leakage)
 1. `USG_PCT` (40.2% importance) - Usage level
@@ -188,7 +194,8 @@ The model can predict at **any usage level**, enabling two use cases:
 - `src/nba_data/scripts/train_rfe_model.py` - Train RFE-optimized model
 
 ### Test Scripts
-- `test_latent_star_cases.py` - Validation test suite (32 critical cases, **now uses 2D Risk Matrix**)
+- `test_latent_star_cases.py` - Latent star detection validation (elevated usage projections)
+- `test_overall_star_prediction.py` - Overall star prediction validation (Franchise Cornerstone classification at current usage)
 - `test_2d_risk_matrix.py` - 2D Risk Matrix validation suite
 - `run_expanded_predictions.py` - Run model on expanded dataset (Age ≤ 25, Min minutes)
 - `analyze_model_misses.py` - Diagnostic script to analyze specific model misses
@@ -222,7 +229,9 @@ The model can predict at **any usage level**, enabling two use cases:
 - **`KEY_INSIGHTS.md`** - Hard-won lessons (42+ principles, see #37: Trust Fall & Ground Truth Trap, #42: Static Avatar Fallacy)
 - **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation
 - **`results/latent_star_test_cases_report_trust_fall.md`** - Trust Fall experiment results
-- **`results/latent_star_test_cases_report.md`** - Latest validation results (with gates)
+- **`results/latent_star_test_cases_report.md`** - Latest latent star validation results
+- **`results/overall_star_prediction_test_report.md`** - Overall star prediction validation results
+- **`results/overall_star_prediction_diagnostics.csv`** - Comprehensive diagnostic data (97 columns) for all test cases
 - **`results/universal_projection_validation.md`** - Universal projection validation results
 - **`results/rfe_model_comparison.md`** - RFE model analysis
 - **`results/expanded_predictions.csv`** - Expanded dataset predictions (1,849 player-seasons)
