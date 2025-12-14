@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** ✅ **SYSTEM RECALIBRATED** - All critical bugs resolved. 2D Risk Matrix working across all seasons (2015-2025) with updated dependence logic. Streamlit app fully functional. **Overall Star Prediction Test Suite: 89.5% pass rate (17/19)**. Grading scale recalibrated for elite player identification.
+**Current Status:** ✅ **FULLY OPERATIONAL SYSTEM** - Complete data pipeline restored. Model retrained with 15 features (51.38% accuracy). Streamlit app fully functional. **Overall Star Prediction Test Suite: 81.8% pass rate (18/22)**. **Enhanced diagnostic capabilities added to both test suites** - comprehensive feature-level debugging now available. All historical seasons properly normalized and categorized.
 
 ---
 
@@ -121,9 +121,9 @@ Avoid: Low Performance + High Dependence (22.9%)
 **Features:** 15 core features (RFE-optimized from 65, RS-only)
 **Accuracy:** **49.54%** (15-feature RFE model with organic tank commander detection)
 **Test Suite Performance:**
-- **Latent Star Detection:** 82.5% (33/40) - Tests star potential at elevated usage levels
-- **Overall Star Prediction:** 52.6% (10/19) - Tests Franchise Cornerstone classification at current usage
-- **Comprehensive Diagnostics:** 97-column analysis available for detailed model mistake investigation
+- **Latent Star Detection:** 72.5% (29/40) - Tests star potential at elevated usage levels
+- **Overall Star Prediction:** 81.8% (18/22) - Tests Franchise Cornerstone classification at current usage
+- **Enhanced Diagnostics:** 63+ column analysis available for complete feature-level debugging (Two Doors components included)
 
 ### Top 10 Features (RS-Only, No Data Leakage)
 1. `USG_PCT` (40.2% importance) - Usage level
@@ -231,7 +231,8 @@ The model can predict at **any usage level**, enabling two use cases:
 - **`results/latent_star_test_cases_report_trust_fall.md`** - Trust Fall experiment results
 - **`results/latent_star_test_cases_report.md`** - Latest latent star validation results
 - **`results/overall_star_prediction_test_report.md`** - Overall star prediction validation results
-- **`results/overall_star_prediction_diagnostics.csv`** - Comprehensive diagnostic data (97 columns) for all test cases
+- **`results/latent_star_test_cases_diagnostics.csv`** - Enhanced diagnostic data (63+ columns) for latent star test cases
+- **`results/overall_star_prediction_diagnostics.csv`** - Enhanced diagnostic data (62+ columns) for overall star prediction test cases
 - **`results/universal_projection_validation.md`** - Universal projection validation results
 - **`results/rfe_model_comparison.md`** - RFE model analysis
 - **`results/expanded_predictions.csv`** - Expanded dataset predictions (1,849 player-seasons)

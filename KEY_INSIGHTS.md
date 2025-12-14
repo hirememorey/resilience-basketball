@@ -68,6 +68,7 @@
 53. **Tank Commander Penalty Removal** 🎯 CRITICAL - Opponent quality assessment replaced with teammate quality assessment (first principles correction)
 53. **Tank Commander Penalty Removal** 🎯 CRITICAL - Opponent quality assessment replaced with teammate quality assessment (first principles correction)
 54. **Two Doors Dependence Framework** 🎯 CRITICAL - NBA stardom requires mastery of either physical dominance (Force) or mathematical advantage (Craft), but not both
+55. **Comprehensive Diagnostics Enable Mechanistic Debugging** 🎯 CRITICAL - Model predictions must be fully traceable from raw stats through all intermediate calculations to final outputs
 
 ### Quick Reference
 - **Quick Reference Checklist** - Implementation checklist for new features
@@ -776,6 +777,7 @@ When implementing new features, ask:
 - [ ] Am I assessing teammate quality instead of opponent quality? (Tank commander penalty removed - bad teammates = more impressive individual performance) (Fix #53)
 - [ ] Am I using organic features instead of hard gates? (INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA enable natural learning) (Fix #54) ✅
 - [ ] Am I expanding model capacity when critical signals are excluded? (15 features > 10 features allows inclusion of tank commander detectors) (Fix #54) ✅
+- [ ] Am I collecting comprehensive diagnostics for debugging? (Raw stats → Features → Interactions → Framework components → Final predictions) (Fix #55)
 
 ---
 
@@ -1626,6 +1628,49 @@ else:
 **Implementation**: Updated `tests/validation/test_overall_star_prediction.py` and `src/nba_data/scripts/calculate_dependence_score.py`.
 
 ---
+
+## 55. Comprehensive Diagnostics Enable Mechanistic Debugging 🎯 CRITICAL (December 2025)
+
+**The Problem**: Test suites produced binary pass/fail results without insight into WHY models made specific predictions. This made debugging model issues nearly impossible, turning development into trial-and-error rather than systematic improvement.
+
+**The Insight**: **Mechanistic ML requires complete transparency**. Every prediction must be fully traceable from raw NBA stats through all feature engineering, intermediate calculations, and framework components to final outputs. Without this, you're building blind.
+
+**The Solution**: Implement comprehensive diagnostic CSV outputs that capture:
+- **Raw Statistics**: Basic NBA stats (PTS, AST, REB, etc.)
+- **Feature Calculations**: All engineered features fed to the model
+- **USG Interactions**: Usage-scaled feature interactions (critical for projection)
+- **Two Doors Components**: Physicality score, skill score, and constraint applications
+- **Model Probabilities**: Archetype probabilities and final predictions
+- **Framework Metadata**: All thresholds, percentiles, and gate applications
+
+**Example Implementation**:
+```python
+diagnostic_data = {
+    'raw_stats': {'pts': 28.5, 'ast': 7.2, 'usage_pct': 0.32},
+    'feature_calculations': {'creation_volume_ratio': 0.73, 'leverage_usg_delta': 0.12},
+    'usg_interactions': {'usg_x_creation_volume': 0.23, 'usg_x_leverage': 0.04},
+    'two_doors_components': {
+        'physicality_score': 0.78,
+        'skill_score': 0.92,
+        'sabonis_constraint_applied': False
+    },
+    'model_predictions': {
+        'predicted_archetype': 'King (Resilient Star)',
+        'performance_score': 0.95,
+        'dependence_score': 0.08
+    }
+}
+```
+
+**Key Benefits**:
+- **Debug False Positives**: Trace exactly which features caused over-prediction
+- **Validate Feature Engineering**: Confirm all calculations are working correctly
+- **Understand Model Behavior**: See how different input combinations affect predictions
+- **Accelerate Development**: Systematic debugging instead of guesswork
+
+**Result**: Test suite diagnostics now output 63+ columns of comprehensive data, enabling complete transparency into model decision-making. This transforms debugging from "try random changes" to "analyze feature contributions systematically."
+
+**Key Principle**: **Transparency enables iteration**. Without comprehensive diagnostics, you're not building ML systems - you're building black boxes that can't be improved.
 
 **See Also**:
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation

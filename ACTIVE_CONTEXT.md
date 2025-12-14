@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 13, 2025
-**Status**: ✅ **FULLY OPERATIONAL SYSTEM** - Complete data pipeline restored. SHOT_QUALITY_GENERATION_DELTA calculated for all 5,312 players. Model retrained with complete 15 features (51.38% accuracy). Streamlit app fully functional with duplicate element bug fixed. **Overall Star Prediction Test Suite: 81.8% pass rate (18/22)**. All historical seasons properly normalized and categorized.
+**Last Updated**: December 14, 2025
+**Status**: ✅ **FULLY OPERATIONAL SYSTEM** - Complete data pipeline restored. SHOT_QUALITY_GENERATION_DELTA calculated for all 5,312 players. Model retrained with complete 15 features (51.38% accuracy). Streamlit app fully functional with duplicate element bug fixed. **Overall Star Prediction Test Suite: 81.8% pass rate (18/22)**. **Enhanced diagnostic capabilities added to both test suites** - comprehensive feature-level debugging now available. All historical seasons properly normalized and categorized.
 
 ---
 
@@ -90,6 +90,18 @@ Identify players who consistently perform better than expected in the playoffs a
 - **Validation Gates**: Multiple organic signals (inefficiency, data completeness, sample size) provide natural filtering
 
 **Result**: Tony Wroten correctly filtered to 0.30 star level (<55%) and "Depth" category. Tank commander patterns now learned organically without hard gates.
+
+### Enhanced Test Suite Diagnostics (December 2025)
+**Problem**: Test suite CSV outputs lacked comprehensive diagnostic information for debugging model performance and understanding feature-level contributions to predictions.
+
+**Solution** (Complete Transparency Implementation):
+- **Two Doors Framework Integration**: Added complete Two Doors dependence framework components to diagnostic outputs
+- **Physicality Score Breakdown**: `doors_physicality_score`, `doors_norm_rim_appetite`, `doors_norm_ftr`, `doors_sabonis_constraint_applied`
+- **Skill Score Breakdown**: `doors_skill_score`, `doors_sq_delta_raw`, `doors_creation_tax_raw`, `doors_efg_iso_raw`, `doors_empty_calories_constraint_applied`
+- **Comprehensive Feature Audit**: All 15 RFE model features plus intermediate calculations now tracked
+- **Enhanced Debugging**: Raw stats → Feature calculations → USG interactions → Two Doors components → Final predictions
+
+**Result**: Both test suites now output comprehensive diagnostic CSV files (63+ columns each) enabling complete transparency into model decision-making. Developers can now trace any prediction from raw NBA stats through all intermediate calculations to final risk matrix categorization.
 
 ### DeRozan Categorization Analysis (December 2025)
 **Finding**: DeMar DeRozan (2015-16) classified as Franchise Cornerstone (star level 0.91, low dependence 0.236).
@@ -286,5 +298,38 @@ for i, feat in enumerate(features, 1):
     print(f'  {marker} {i}. {feat}')
 organic_features = [f for f in features if 'INEFFICIENT' in f or 'SHOT_QUALITY' in f]
 print(f'\\nOrganic tank commander features: {len(organic_features)}')
+"
+
+# Verify enhanced diagnostic capabilities (Two Doors components)
+python -c "
+import pandas as pd
+df = pd.read_csv('results/latent_star_test_cases_diagnostics.csv')
+doors_cols = [col for col in df.columns if col.startswith('doors_')]
+print(f'Enhanced diagnostics: {len(doors_cols)} Two Doors columns found')
+if doors_cols:
+    print('Two Doors components:', doors_cols[:5], '...')
+    # Check if components are populated
+    sample_row = df.iloc[0]
+    physicality = sample_row.get('doors_physicality_score')
+    skill = sample_row.get('doors_skill_score')
+    print(f'Sample Two Doors scores - Physicality: {physicality:.3f}, Skill: {skill:.3f}')
+else:
+    print('ERROR: Two Doors components not found in diagnostics')
+"
+
+# Compare diagnostic file sizes (should be comprehensive now)
+python -c "
+import os
+latent_diag = 'results/latent_star_test_cases_diagnostics.csv'
+overall_diag = 'results/overall_star_prediction_diagnostics.csv'
+
+for file in [latent_diag, overall_diag]:
+    if os.path.exists(file):
+        size_mb = os.path.getsize(file) / (1024 * 1024)
+        with open(file, 'r') as f:
+            cols = len(f.readline().split(','))
+        print(f'{file}: {size_mb:.2f} MB, {cols} columns')
+    else:
+        print(f'{file}: NOT FOUND')
 "
 ```

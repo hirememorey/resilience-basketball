@@ -36,9 +36,194 @@ project_root = Path(__file__).parent.parent.parent  # Go up from tests/validatio
 sys.path.append(str(project_root))
 
 from src.nba_data.scripts.predict_conditional_archetype import ConditionalArchetypePredictor
+from typing import Any
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+
+def collect_comprehensive_diagnostics(predictor, player_name: str, season: str, test_usage: float):
+    """Collect comprehensive diagnostic data including all raw metrics and calculations."""
+
+    try:
+        # Get player data
+        player_data = predictor.get_player_data(player_name, season)
+        if player_data is None:
+            return {'error': 'No data found'}
+
+        # Get the prediction result to access intermediate calculations
+        prediction_result = predictor.predict_with_risk_matrix(
+            player_data=player_data,
+            usage_level=test_usage,
+            apply_phase3_fixes=True,
+            apply_hard_gates=False  # Get raw predictions for diagnostics
+        )
+
+        # Collect raw stats
+        raw_stats = {
+            'player_name': player_name,
+            'season': season,
+            'test_usage': test_usage,
+            'current_usage_pct': player_data.get('USG_PCT', 0) * 100,
+            'age': player_data.get('AGE', None),
+            'games_played': player_data.get('GP', None),
+            'minutes_per_game': player_data.get('MIN', None),
+        }
+
+        # Add basic stats
+        stat_fields = ['PTS', 'AST', 'REB', 'FG_PCT', 'FG3_PCT', 'FT_PCT', 'TS_PCT', 'USG_PCT',
+                      'AST_PCT', 'REB_PCT', 'EFG_PCT', 'EFG_ISO_WEIGHTED']
+        for field in stat_fields:
+            if field in player_data.index:
+                raw_stats[f'raw_{field.lower()}'] = player_data[field]
+
+        # Collect feature calculations (what goes into the model)
+        feature_calculations = {}
+
+        # Stress vectors (from evaluate_plasticity_potential.py)
+        stress_vector_fields = [
+            'CREATION_VOLUME_RATIO', 'LEVERAGE_USG_DELTA', 'RS_PRESSURE_APPETITE',
+            'RS_LATE_CLOCK_PRESSURE_RESILIENCE', 'RS_RIM_APPETITE', 'EFG_ISO_WEIGHTED',
+            'EFG_PCT_0_DRIBBLE', 'LEVERAGE_TS_DELTA', 'USG_PCT', 'PREV_RS_RIM_APPETITE',
+            'PREV_EFG_ISO_WEIGHTED', 'EFG_ISO_WEIGHTED_YOY_DELTA', 'AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA',
+            'INEFFICIENT_VOLUME_SCORE', 'ABDICATION_RISK', 'SHOT_QUALITY_GENERATION_DELTA'
+        ]
+
+        for field in stress_vector_fields:
+            if field in player_data.index:
+                feature_calculations[field.lower()] = player_data[field]
+
+        # Add USG interaction terms (calculated by the model)
+        usg_pct = player_data.get('USG_PCT', 0)
+        for field in ['EFG_ISO_WEIGHTED', 'RS_PRESSURE_APPETITE', 'RS_LATE_CLOCK_PRESSURE_RESILIENCE',
+                     'CREATION_VOLUME_RATIO', 'LEVERAGE_USG_DELTA', 'RS_RIM_APPETITE']:
+            if field in player_data.index:
+                interaction_term = f'usg_x_{field.lower()}'
+                feature_calculations[interaction_term] = usg_pct * player_data[field]
+
+        # Add trajectory features if available
+        trajectory_fields = ['PREV_RS_RIM_APPETITE', 'PREV_EFG_ISO_WEIGHTED', 'EFG_ISO_WEIGHTED_YOY_DELTA',
+                           'AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA']
+        for field in trajectory_fields:
+            if field in player_data.index:
+                feature_calculations[field.lower()] = player_data[field]
+
+        # Add dependence calculation components
+        dependence_components = {
+            'creation_volume_ratio': player_data.get('CREATION_VOLUME_RATIO', None),
+            'creation_tax': player_data.get('CREATION_TAX', None),
+            'rs_rim_appetite': player_data.get('RS_RIM_APPETITE', None),
+            'ftr': player_data.get('RS_FTr', None),
+            'shot_quality_generation_delta': player_data.get('SHOT_QUALITY_GENERATION_DELTA', None),
+            'efg_iso_weighted': player_data.get('EFG_ISO_WEIGHTED', None),
+            'pressure_resilience': player_data.get('RS_PRESSURE_RESILIENCE', None),
+            'rs_early_clock_pressure_resilience': player_data.get('RS_EARLY_CLOCK_PRESSURE_RESILIENCE', None),
+        }
+
+        # Add Two Doors framework intermediate calculations
+        from src.nba_data.scripts.calculate_dependence_score import _calculate_physicality_score, _calculate_skill_score
+
+        try:
+            physicality_score = _calculate_physicality_score(player_data)
+            skill_score = _calculate_skill_score(player_data)
+
+            # Physicality components
+            rim_appetite = float(player_data.get('RS_RIM_APPETITE', 0.0))
+            ftr = float(player_data.get('RS_FTr', 0.0))
+            creation_vol_ratio = float(player_data.get('CREATION_VOLUME_RATIO', 0.0))
+
+            # Skill components
+            sq_delta = float(player_data.get('SHOT_QUALITY_GENERATION_DELTA', 0.0))
+            creation_tax = float(player_data.get('CREATION_TAX', -0.20))
+            efg_iso = float(player_data.get('EFG_ISO_WEIGHTED', 0.40))
+
+            two_doors_components = {
+                'physicality_score': physicality_score,
+                'skill_score': skill_score,
+                'norm_rim_appetite': min(rim_appetite / 0.40, 1.0) if not np.isnan(rim_appetite) else 0.0,
+                'norm_ftr': min(ftr / 0.50, 1.0) if not np.isnan(ftr) else 0.0,
+                'sabonis_constraint_applied': creation_vol_ratio < 0.15,
+                'sq_delta_raw': sq_delta,
+                'creation_tax_raw': creation_tax,
+                'efg_iso_raw': efg_iso,
+                'empty_calories_constraint_applied': sq_delta < 0.0,
+            }
+        except Exception as e:
+            logger.warning(f"Could not calculate Two Doors components for {player_name} {season}: {e}")
+            two_doors_components = {
+                'physicality_score': None,
+                'skill_score': None,
+                'norm_rim_appetite': None,
+                'norm_ftr': None,
+                'sabonis_constraint_applied': None,
+                'sq_delta_raw': None,
+                'creation_tax_raw': None,
+                'efg_iso_raw': None,
+                'empty_calories_constraint_applied': None,
+            }
+
+        # Model predictions and metadata
+        model_predictions = {
+            'predicted_archetype': prediction_result.get('archetype', None),
+            'performance_score': prediction_result.get('performance_score', None),
+            'dependence_score': prediction_result.get('dependence_score', None),
+            'risk_category': prediction_result.get('risk_category', None),
+        }
+
+        # Add probabilities if available
+        if 'probabilities' in prediction_result:
+            model_predictions['prob_king'] = prediction_result['probabilities'].get('King (Resilient Star)', None)
+            model_predictions['prob_bulldozer'] = prediction_result['probabilities'].get('Bulldozer (Fragile Star)', None)
+            model_predictions['prob_sniper'] = prediction_result['probabilities'].get('Sniper (Resilient Role)', None)
+            model_predictions['prob_victim'] = prediction_result['probabilities'].get('Victim (Fragile Role)', None)
+
+        # Combine all diagnostic data
+        diagnostic_data = {
+            'raw_stats': raw_stats,
+            'feature_calculations': feature_calculations,
+            'dependence_components': dependence_components,
+            'two_doors_components': two_doors_components,
+            'model_predictions': model_predictions,
+        }
+
+        return diagnostic_data
+
+    except Exception as e:
+        logger.warning(f"Could not collect diagnostic data for {player_name} {season}: {e}")
+        return {'error': str(e)}
+
+
+def flatten_diagnostic_data(diagnostic_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Flatten nested diagnostic data into a single-level dictionary for CSV output."""
+
+    flattened = {}
+
+    # Flatten raw stats
+    if 'raw_stats' in diagnostic_data:
+        for key, value in diagnostic_data['raw_stats'].items():
+            flattened[f"raw_{key}"] = value
+
+    # Flatten feature calculations
+    if 'feature_calculations' in diagnostic_data:
+        for key, value in diagnostic_data['feature_calculations'].items():
+            flattened[f"calc_{key}"] = value
+
+    # Flatten dependence components
+    if 'dependence_components' in diagnostic_data:
+        for key, value in diagnostic_data['dependence_components'].items():
+            flattened[f"dep_{key}"] = value
+
+    # Flatten Two Doors components
+    if 'two_doors_components' in diagnostic_data:
+        for key, value in diagnostic_data['two_doors_components'].items():
+            flattened[f"doors_{key}"] = value
+
+    # Flatten model predictions
+    if 'model_predictions' in diagnostic_data:
+        for key, value in diagnostic_data['model_predictions'].items():
+            flattened[f"pred_{key}"] = value
+
+    return flattened
 
 class LatentStarTestCase:
     """Represents a single test case for latent star detection."""
@@ -615,6 +800,7 @@ def run_test_suite(apply_hard_gates: bool = True):
     test_cases = get_test_cases()
 
     results = []
+    diagnostic_rows = []
     summary_stats = {
         'total': len(test_cases),
         'found': 0,
@@ -780,6 +966,27 @@ def run_test_suite(apply_hard_gates: bool = True):
             'confidence_flags': ', '.join(confidence_flags) if confidence_flags else 'None'
         })
 
+        # Collect comprehensive diagnostic data
+        logger.info(f"  Collecting diagnostic data...")
+        diagnostic_data = collect_comprehensive_diagnostics(predictor, test_case.name, test_case.season, test_case.test_usage)
+        flattened_diagnostic = flatten_diagnostic_data(diagnostic_data)
+
+        # Add test case info to diagnostic row
+        flattened_diagnostic.update({
+            'test_number': i,
+            'test_category': test_case.category,
+            'expected_outcome': test_case.expected_outcome,
+            'expected_star_level': test_case.expected_star_level,
+            'expected_risk_category': test_case.expected_risk_category,
+            'predicted_archetype': predicted_archetype,
+            'performance_score': performance_score,
+            'dependence_score': dependence_score,
+            'risk_category': risk_category,
+            'overall_pass': evaluation['overall_pass']
+        })
+
+        diagnostic_rows.append(flattened_diagnostic)
+
     # Generate summary report
     logger.info(f"\n{'='*100}")
     logger.info("SUMMARY REPORT")
@@ -801,11 +1008,19 @@ def run_test_suite(apply_hard_gates: bool = True):
     df_results.to_csv(output_path, index=False)
     logger.info(f"\nDetailed results saved to: {output_path}")
 
+    # Save comprehensive diagnostic CSV
+    df_diagnostics = pd.DataFrame(diagnostic_rows)
+    diagnostics_path = Path("results") / "latent_star_test_cases_diagnostics.csv"
+    df_diagnostics.to_csv(diagnostics_path, index=False)
+    logger.info(f"Comprehensive diagnostics saved to: {diagnostics_path}")
+    logger.info(f"Total diagnostic columns: {len(df_diagnostics.columns)}")
+    logger.info(f"Total diagnostic rows: {len(df_diagnostics)}")
+
     # Generate markdown report
     report_filename = "latent_star_test_cases_report_trust_fall.md" if not apply_hard_gates else "latent_star_test_cases_report.md"
     generate_markdown_report(df_results, summary_stats, output_path.parent / report_filename, apply_hard_gates)
 
-    return df_results, summary_stats
+    return df_results, df_diagnostics, summary_stats
 
 def generate_markdown_report(df_results: pd.DataFrame, summary_stats: Dict, output_path: Path, apply_hard_gates: bool = True):
     """Generate a markdown report of test results."""
@@ -886,4 +1101,4 @@ if __name__ == "__main__":
         apply_hard_gates = False
         logger.info("🔬 TRUST FALL EXPERIMENT: Running with hard gates DISABLED")
     
-    results, stats = run_test_suite(apply_hard_gates=apply_hard_gates)
+    results, diagnostics, stats = run_test_suite(apply_hard_gates=apply_hard_gates)
