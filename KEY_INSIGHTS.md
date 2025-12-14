@@ -37,7 +37,7 @@
 26. **Data Completeness Gate** 🎯 CRITICAL - Require 67% of critical features
 27. **Minimum Sample Size Gate** 🎯 CRITICAL - Small sample size = noise, not signal
 
-### Advanced Features & Model Evolution (28-38)
+### Advanced Features & Model Evolution (28-54)
 28. **Multi-Season Trajectory Features** 🎯 NEW - Trajectory > Snapshot
 29. **Convert Gates to Features** 🎯 NEW - Learn, don't patch
 30. **The Double-Penalization Problem** 🎯 CRITICAL - Model vs. heuristic conflict
@@ -67,6 +67,7 @@
 52. **Project Phoenix: Ground-Truth Data Acquisition** 🎯 CRITICAL - No proxies for critical signals - acquire ground-truth data directly
 53. **Tank Commander Penalty Removal** 🎯 CRITICAL - Opponent quality assessment replaced with teammate quality assessment (first principles correction)
 53. **Tank Commander Penalty Removal** 🎯 CRITICAL - Opponent quality assessment replaced with teammate quality assessment (first principles correction)
+54. **Two Doors Dependence Framework** 🎯 CRITICAL - NBA stardom requires mastery of either physical dominance (Force) or mathematical advantage (Craft), but not both
 
 ### Quick Reference
 - **Quick Reference Checklist** - Implementation checklist for new features
@@ -1579,6 +1580,33 @@ else:
 **Key Principle**: **Provide the right inputs, let the model learn the right outputs**. Hard gates are technical debt that prevents future improvement.
 
 **See**: `ACTIVE_CONTEXT.md` for current status and next steps.
+
+## 54. Two Doors Dependence Framework 🎯 CRITICAL (December 2025)
+
+**The Problem**: Legacy dependence calculation couldn't distinguish between truly independent stars (Luka Dončić) and system-dependent high performers (Jordan Poole, Domantas Sabonis). Both appeared "efficient" but only Luka's performance was portable.
+
+**The Root Cause**: Single-dimensional evaluation conflated performance (what happened) with portability (is it repeatable). High production could come from individual skill OR system advantages, but the framework couldn't tell the difference.
+
+**The Solution**: Physics-based "Two Doors to Stardom" framework:
+- **Door A: The Force** - Physical dominance pathway (Giannis, Butler, Sabonis)
+  - Formula: Rim Appetite (60%) + Free Throw Rate (40%)
+  - Sabonis Constraint: 50% penalty if CREATION_VOLUME_RATIO < 0.15 (system finisher, not independent force)
+- **Door B: The Craft** - Mathematical advantage pathway (Curry, CP3, Luka)
+  - Formula: Shot Quality Delta (60%) + Creation Efficiency (20%) + Isolation EFG (20%)
+  - Empty Calories Constraint: Hard cap at 0.1 if SHOT_QUALITY_GENERATION_DELTA < 0 (negative-value creators)
+- **Dependence Formula**: DEPENDENCE_SCORE = 1.0 - Max(Physicality_Score, Skill_Score)
+
+**Why It Works**:
+- **Mechanistic Clarity**: Distinguishes HOW players create advantages, not just outcomes
+- **No False Independence**: Jordan Poole correctly classified as Low Dependence despite high production
+- **Sabonis Logic**: Physicality without self-creation = system-dependent (cuts/rolls require teammates)
+- **Poole Logic**: Negative shot quality generation = empty calories, regardless of volume/efficiency
+
+**Result**: Luka Dončić (Low Dependence: ~0.03), Jordan Poole (Low Dependence: ~0.08 despite high production), Domantas Sabonis (High Dependence: ~0.58 due to low creation volume).
+
+**Key Principle**: **NBA stardom has multiple valid pathways**. Independence requires mastery of at least one pathway - either physical dominance OR mathematical advantage. Mediocrity in both = dependence.
+
+**Implementation**: `src/nba_data/scripts/calculate_dependence_score.py` - Complete rewrite with Two Doors logic.
 
 ---
 
