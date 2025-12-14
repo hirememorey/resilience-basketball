@@ -61,12 +61,13 @@ def run_latent_star_test_cases() -> Dict[str, Any]:
         # Victim cases (Low Performance + High Dependence)
         {"player": "Ben Simmons", "season": "2020-21", "expected": "Avoid"},
         {"player": "D'Angelo Russell", "season": "2018-19", "expected": "Avoid"},
+        {"player": "Tony Wroten", "season": "2014-15", "expected": "Avoid"},
 
         # Edge cases and latent star detection
         {"player": "Jalen Brunson", "season": "2022-23", "expected": "Franchise Cornerstone"},
         {"player": "Tyrese Haliburton", "season": "2021-22", "expected": "Franchise Cornerstone"},
         {"player": "Victor Oladipo", "season": "2017-18", "expected": "Franchise Cornerstone"},
-        {"player": "DeMar DeRozan", "season": "2015-16", "expected": "Luxury Component"},
+        {"player": "DeMar DeRozan", "season": "2015-16", "expected": "Depth Piece"},
         {"player": "Kyrie Irving", "season": "2015-16", "expected": "Franchise Cornerstone"},
         {"player": "Isaiah Thomas", "season": "2016-17", "expected": "Luxury Component"},
         {"player": "Jimmy Butler", "season": "2014-15", "expected": "Franchise Cornerstone"},

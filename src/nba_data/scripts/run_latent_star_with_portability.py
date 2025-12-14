@@ -27,9 +27,10 @@ from predict_conditional_archetype import ConditionalArchetypePredictor  # noqa:
 
 # Import test cases via absolute path to avoid module resolution issues
 REPO_ROOT = Path(__file__).resolve().parents[3]
-TEST_PATH = REPO_ROOT / "test_latent_star_cases.py"
+TEST_PATH = REPO_ROOT / "tests" / "validation" / "test_latent_star_cases.py"
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(REPO_ROOT / "tests" / "validation"))
 from test_latent_star_cases import get_test_cases  # type: ignore  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

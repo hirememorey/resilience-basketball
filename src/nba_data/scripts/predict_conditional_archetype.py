@@ -53,8 +53,8 @@ class ConditionalArchetypePredictor:
         
         # Load model and encoder
         if use_rfe_model:
-            model_path = self.models_dir / "resilience_xgb_rfe_10.pkl"
-            encoder_path = self.models_dir / "archetype_encoder_rfe_10.pkl"
+            model_path = self.models_dir / "resilience_xgb_rfe_15.pkl"
+            encoder_path = self.models_dir / "archetype_encoder_rfe_15.pkl"
             
             if not model_path.exists():
                 logger.warning(f"RFE model not found at {model_path}, falling back to full model")
@@ -577,6 +577,13 @@ class ConditionalArchetypePredictor:
             current_usage = usage_level
         
         # Phase 3.5 Fix #2: Calculate projection factor for volume features
+        # Calculate dependence penalty factor for projections
+        # Two Doors Fix: System-dependent players don't scale efficiency as well
+        dependence_result = self.calculate_system_dependence(player_data)
+        dependence_penalty_factor = dependence_result.get('dependence_score', 0.5)
+        if dependence_penalty_factor is None:
+            dependence_penalty_factor = 0.5  # Default moderate penalty
+
         # Principle: Tree models make decisions based on splits. Simulate the result, don't just weight the input.
         projection_factor = 1.0
         use_projection = False
@@ -1013,7 +1020,7 @@ class ConditionalArchetypePredictor:
                             # Project volume feature: simulate what it would be at higher usage
                             # Note: val is already taxed at this point
                             val = val * projection_factor
-                            
+
                             # Phase 3.7 Fix #1: Legacy playoff volume tax (now handled by multi-signal tax)
                             # Keep for backward compatibility but multi-signal tax takes precedence
                             if feature_name == 'CREATION_VOLUME_RATIO' and playoff_volume_tax_applied:
@@ -1115,56 +1122,42 @@ class ConditionalArchetypePredictor:
         # Calculate star-level potential (King + Bulldozer)
         star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
         
-        # Inefficiency Gate: Absolute Efficiency Floor (Fixes "Low-Floor Illusion")
-        # Principle: Uniformly inefficient ≠ resilient. CREATION_TAX = 0.00 can mean "no drop" 
-        # (resilient) OR "equally bad at everything" (Fultz pattern). Need absolute floor.
-        # Two conditions:
-        # 1. EFG_ISO_WEIGHTED < 25th percentile (uniformly bad)
-        # 2. EFG_ISO_WEIGHTED < median AND CREATION_TAX near 0.00 (uniformly mediocre)
-        # Applies BEFORE other gates since it's a hard physics constraint.
-        inefficiency_gate_applied = False
-        if apply_phase3_fixes and apply_hard_gates and 'EFG_ISO_WEIGHTED' in player_data.index:
-            efg_iso = player_data.get('EFG_ISO_WEIGHTED', None)
-            creation_tax = player_data.get('CREATION_TAX', None)
-            
-            if pd.notna(efg_iso) and self.efg_iso_floor is not None:
-                # Condition 1: Below 25th percentile (uniformly bad)
-                below_floor = efg_iso < self.efg_iso_floor
-                
-                # Condition 2: Below median AND near-zero CREATION_TAX (uniformly mediocre)
-                # CREATION_TAX near 0.00 (-0.05 to +0.05) means no efficiency drop, which could be
-                # resilient (elite at both) OR uniformly mediocre (bad at both)
-                uniformly_mediocre = False
-                if pd.notna(creation_tax) and self.efg_iso_median is not None:
-                    near_zero_tax = abs(creation_tax) <= 0.05  # Within ±0.05 of zero
-                    below_median = efg_iso < self.efg_iso_median
-                    uniformly_mediocre = near_zero_tax and below_median
-                
-                if below_floor or uniformly_mediocre:
-                    original_star_level = star_level_potential
-                    # Cap at 40% (allows for "Bulldozer" - inefficient volume scorer)
-                    star_level_potential = min(star_level_potential, 0.40)
-                    inefficiency_gate_applied = True
-                    
-                    # Force downgrade: Can't be "King" (resilient star) if uniformly inefficient
-                    if star_level_potential <= 0.30:
-                        # Below 30% = "Victim" (fragile role)
-                        prob_dict['Victim'] = max(prob_dict.get('Victim', 0), 1.0 - prob_dict.get('Sniper', 0))
-                        prob_dict['Sniper'] = min(prob_dict.get('Sniper', 0), 0.30)
-                        prob_dict['King'] = 0.0
-                        prob_dict['Bulldozer'] = 0.0
-                        if pred_archetype in ['King (Resilient Star)', 'Bulldozer (Fragile Star)']:
-                            pred_archetype = 'Victim (Fragile Role)' if prob_dict['Victim'] > prob_dict['Sniper'] else 'Sniper (Resilient Role)'
-                    else:
-                        # 30-40% = "Bulldozer" (inefficient volume scorer, not resilient star)
-                        prob_dict['Bulldozer'] = star_level_potential
-                        prob_dict['King'] = 0.0
-                        prob_dict['Victim'] = max(0.0, 1.0 - star_level_potential - prob_dict.get('Sniper', 0))
-                        if pred_archetype == 'King (Resilient Star)':
-                            pred_archetype = 'Bulldozer (Fragile Star)'
-                    
-                    reason = "below 25th percentile" if below_floor else "below median with near-zero CREATION_TAX (uniformly mediocre)"
-                    logger.info(f"Inefficiency Gate applied: EFG_ISO_WEIGHTED={efg_iso:.4f} ({reason}) → star-level capped from {original_star_level:.2%} to {star_level_potential:.2%} (uniformly inefficient, not resilient)")
+        # --- ALPHA THRESHOLD (Usage-Adjusted Efficiency Gate) ---
+        # Principle: Usage is a debt. You must pay it back with efficiency.
+        # A 30% usage player must be MORE efficient than a 20% usage player to be a Cornerstone.
+        alpha_threshold_applied = False
+        if apply_phase3_fixes and apply_hard_gates:
+            usg = player_data.get('USG_PCT', 0)
+            efg_iso = player_data.get('EFG_ISO_WEIGHTED', 0)
+
+            # 1. Define the Baseline (Role Player Efficiency)
+            base_efficiency_floor = 0.42
+
+            # 2. Calculate Usage Surplus (Amount above standard starter load)
+            usage_surplus = max(0, usg - 0.20)
+
+            # 3. Calculate Required Efficiency (The Alpha Threshold)
+            # For every 1% usage above 20%, require 0.2% more efficiency (much more lenient)
+            required_efg = base_efficiency_floor + (0.2 * usage_surplus)
+
+            # 4. Check Compliance
+            if pd.notna(efg_iso) and efg_iso < required_efg:
+                logger.info(f"Alpha Threshold Failed: USG {usg:.2f} requires EFG {required_efg:.3f}, got {efg_iso:.3f}")
+
+                # Cap Star Level (Demote to 'Bulldozer' or 'Depth')
+                original_star_level = star_level_potential
+                star_level_potential = min(star_level_potential, 0.50)
+                alpha_threshold_applied = True
+
+                # Force archetype redistribution (drain probability from King)
+                prob_dict['King'] = 0.0
+                # Redistribute remaining probability to Bulldozer (inefficient volume scorer)
+                prob_dict['Bulldozer'] = star_level_potential
+                # Adjust Victim probability
+                prob_dict['Victim'] = max(0.0, 1.0 - star_level_potential - prob_dict.get('Sniper', 0))
+
+                if pred_archetype == 'King (Resilient Star)':
+                    pred_archetype = 'Bulldozer (Fragile Star)'
         
         # Phase 3.5 Fix #1: Fragility Gate - Use RS_RIM_APPETITE (absolute volume) instead of ratio
         # Cap star-level if RS_RIM_APPETITE is bottom 20th percentile
@@ -1499,23 +1492,40 @@ class ConditionalArchetypePredictor:
                 logger.info(f"Multiple negative signals detected ({len(negative_signals)}): {', '.join(negative_signals)}, star-level capped from {original_star_level:.2%} to {star_level_potential:.2%}")
         
         # Fix #4: Data Completeness Gate (Priority: Medium)
-        # Require at least 4 of 6 critical features present (67% completeness)
+        # Require at least 67% of available critical features present
         data_completeness_gate_applied = False
         if apply_phase3_fixes and apply_hard_gates:
-            critical_features = [
+            # Base critical features that should always be available
+            base_critical_features = [
                 'CREATION_VOLUME_RATIO',
                 'CREATION_TAX',
                 'LEVERAGE_USG_DELTA',
                 'LEVERAGE_TS_DELTA',
+            ]
+
+            # Pressure features that may not be available for historical seasons
+            pressure_features = [
                 'RS_PRESSURE_APPETITE',
                 'RS_PRESSURE_RESILIENCE',
             ]
-            
-            present_features = sum(1 for f in critical_features if pd.notna(player_data.get(f, None)))
-            completeness = present_features / len(critical_features) if len(critical_features) > 0 else 0.0
-            
-            # Require at least 4 of 6 critical features (67% completeness)
-            if completeness < 0.67:
+
+            # Use all features that are actually available for this player
+            critical_features = base_critical_features + [
+                f for f in pressure_features
+                if pd.notna(player_data.get(f, None))
+            ]
+
+            if len(critical_features) == 0:
+                # If no features are available, skip the gate
+                present_features = 0
+                completeness = 0.0
+            else:
+                present_features = sum(1 for f in critical_features if pd.notna(player_data.get(f, None)))
+                completeness = present_features / len(critical_features) if len(critical_features) > 0 else 0.0
+
+            # Require at least 67% completeness of available features
+            min_required = max(1, int(len(critical_features) * 0.67))  # At least 1 feature, or 67% rounded up
+            if present_features < min_required:
                 original_star_level = star_level_potential
                 # Cap at 30% (Sniper ceiling) - insufficient data for reliable prediction
                 star_level_potential = min(star_level_potential, 0.30)
@@ -1539,9 +1549,11 @@ class ConditionalArchetypePredictor:
         sample_size_gate_applied = False
         if apply_phase3_fixes and apply_hard_gates:
             # Check pressure shots (need minimum 50 for reliable pressure resilience)
-            pressure_shots = player_data.get('RS_TOTAL_VOLUME', 0)
-            insufficient_pressure = pd.isna(pressure_shots) or pressure_shots < 50
-            
+            # Only apply this check if pressure data is actually available for this player/season
+            pressure_shots = player_data.get('RS_TOTAL_VOLUME', None)
+            has_pressure_data = pd.notna(pressure_shots)
+            insufficient_pressure = has_pressure_data and pressure_shots < 50
+
             # Check clutch minutes (need minimum 15 for reliable leverage data)
             clutch_min = player_data.get('CLUTCH_MIN_TOTAL', 0)
             insufficient_clutch = pd.isna(clutch_min) or clutch_min < 15
@@ -1878,6 +1890,10 @@ class ConditionalArchetypePredictor:
         if volume_creator_inefficiency_gate_applied:
             phase3_flags.append("Volume Creator Inefficiency Gate applied (high creation volume + negative creation tax)")
         
+        # RESTORED: No dependence-based projection penalties
+        # Performance and Dependence must remain orthogonal
+        # Dependence is handled on Y-axis, not by penalizing X-axis projections
+
         return {
             'predicted_archetype': pred_archetype,
             'probabilities': prob_dict,
@@ -1973,9 +1989,15 @@ class ConditionalArchetypePredictor:
             - probabilities: Archetype probabilities
             - metadata: Full prediction and dependence details
         """
+        # Normalize USG_PCT from percentage to decimal if needed
+        player_data = player_data.copy()
+        if 'USG_PCT' in player_data.index and pd.notna(player_data['USG_PCT']):
+            if player_data['USG_PCT'] > 1.0:  # It's in percentage format
+                player_data['USG_PCT'] = player_data['USG_PCT'] / 100.0
+
         # Dimension 1: Performance (existing model)
         performance_result = self.predict_archetype_at_usage(
-            player_data, 
+            player_data,
             usage_level,
             apply_phase3_fixes=apply_phase3_fixes,
             apply_hard_gates=apply_hard_gates
@@ -2083,9 +2105,10 @@ class ConditionalArchetypePredictor:
                     # This is close to "Luxury Component" territory - valuable but risky
                     return "Luxury Component"
                 elif dependence_score < low_dep_threshold:
-                    # Moderate performance + low dependence = portable contributor
-                    # This is close to "Franchise Cornerstone" territory - valuable and portable
-                    return "Franchise Cornerstone"
+                    # Moderate performance + low dependence = Independent but not Elite
+                    # OLD LOGIC: return "Franchise Cornerstone" (The DeRozan Bug)
+                    # NEW LOGIC: Demote to Depth (or "Starter") - Independent Mediocrity is not a Cornerstone
+                    return "Depth"
                 else:
                     # Moderate performance + moderate dependence = balanced contributor
                     # Default to Depth category for moderate players (most common case)

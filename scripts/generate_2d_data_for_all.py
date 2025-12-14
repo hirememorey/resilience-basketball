@@ -128,7 +128,7 @@ def calculate_dependence_for_all(df_players: pd.DataFrame) -> pd.DataFrame:
     """
     Calculate dependence scores for all players.
 
-    Uses the available columns in the predictive dataset directly.
+    Uses the new calculate_dependence_score logic (Two Doors).
     """
     results = []
 
@@ -139,41 +139,30 @@ def calculate_dependence_for_all(df_players: pd.DataFrame) -> pd.DataFrame:
         season = row['SEASON']
 
         try:
-            # Get values directly from the dataset
-            assisted_fgm_pct = row.get('ASSISTED_FGM_PCT')
-            open_shot_freq = row.get('OPEN_SHOT_FREQUENCY')
-            self_created_ratio = row.get('SELF_CREATED_USAGE_RATIO')
+            # Use the robust Two Doors calculation
+            result = calculate_dependence_score(row)
+            
+            dependence_score = result['dependence_score']
+            assisted_fgm_pct = result['assisted_fgm_pct']
+            open_shot_freq = result['open_shot_frequency']
+            self_created_ratio = result['self_created_usage_ratio']
+            physicality_score = result['physicality_score']
+            skill_score = result['skill_score']
 
-            # Calculate dependence score if we have the required components
-            dependence_score = None
-            if pd.notna(assisted_fgm_pct) and pd.notna(self_created_ratio):
-                # Use the same formula as in calculate_dependence_score.py
-                # DEPENDENCE_SCORE = (ASSISTED_FGM_PCT * 0.40) + (OPEN_SHOT_FREQUENCY * 0.35) + ((1 - SELF_CREATED_USAGE_RATIO) * 0.25)
-
-                # Handle missing open_shot_freq (use 0 as conservative estimate)
-                open_freq = open_shot_freq if pd.notna(open_shot_freq) else 0.0
-
-                dependence_score = (
-                    assisted_fgm_pct * 0.40 +           # 40% weight - shots created by others
-                    open_freq * 0.35 +                   # 35% weight - wide open shots
-                    (1 - self_created_ratio) * 0.25      # 25% weight - can't create own offense
-                )
-
-                # Ensure score is between 0 and 1
-                dependence_score = max(0.0, min(1.0, dependence_score))
-
-            result = {
+            res_dict = {
                 'PLAYER_NAME': player_name,
                 'SEASON': season,
                 'PLAYER_ID': row.get('PLAYER_ID'),
                 'DEPENDENCE_SCORE': dependence_score,
+                'PHYSICALITY_SCORE': physicality_score,
+                'SKILL_SCORE': skill_score,
                 'ASSISTED_FGM_PCT': assisted_fgm_pct,
                 'OPEN_SHOT_FREQUENCY': open_shot_freq,
                 'SELF_CREATED_USAGE_RATIO': self_created_ratio,
                 'dependence_success': dependence_score is not None
             }
 
-            results.append(result)
+            results.append(res_dict)
 
         except Exception as e:
             logger.warning(f"Failed to calculate dependence for {player_name} ({season}): {e}")
@@ -182,6 +171,8 @@ def calculate_dependence_for_all(df_players: pd.DataFrame) -> pd.DataFrame:
                 'SEASON': season,
                 'PLAYER_ID': row.get('PLAYER_ID'),
                 'DEPENDENCE_SCORE': None,
+                'PHYSICALITY_SCORE': None,
+                'SKILL_SCORE': None,
                 'ASSISTED_FGM_PCT': None,
                 'OPEN_SHOT_FREQUENCY': None,
                 'SELF_CREATED_USAGE_RATIO': None,
@@ -217,11 +208,23 @@ def determine_risk_categories(df_combined: pd.DataFrame) -> pd.DataFrame:
     # High performance: >= 70% (elite level)
     perf_threshold = 0.70
 
-    # High dependence: 66th percentile (same as predictor)
-    dep_threshold = df_valid['DEPENDENCE_SCORE'].quantile(0.66)
+    # High dependence: 33rd percentile as the new threshold for low dependence
+    # Recalibrate based on new Two Doors distribution
+    if len(df_valid) > 0:
+        dep_percentiles = df_valid['DEPENDENCE_SCORE'].quantile([0.33, 0.50, 0.66]).to_dict()
+        logger.info(f"Dependence Score Distribution:")
+        logger.info(f"  33rd Percentile (Low Dep Cutoff): {dep_percentiles[0.33]:.3f}")
+        logger.info(f"  50th Percentile (Median):        {dep_percentiles[0.50]:.3f}")
+        logger.info(f"  66th Percentile (High Dep):      {dep_percentiles[0.66]:.3f}")
+        
+        dep_threshold = dep_percentiles[0.33]
+        # Round to nearest 0.005 for cleaner threshold
+        dep_threshold = round(dep_threshold * 200) / 200
+    else:
+        dep_threshold = 0.40 # Fallback
 
     logger.info(f"Performance threshold (fixed): {perf_threshold:.1f}")
-    logger.info(f"Dependence threshold (66th percentile): {dep_threshold:.3f}")
+    logger.info(f"Dependence threshold (Dynamic 33rd Percentile): {dep_threshold:.3f}")
     def categorize_risk(row):
         perf = row['PERFORMANCE_SCORE']
         dep = row['DEPENDENCE_SCORE']

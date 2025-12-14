@@ -31,10 +31,9 @@ import logging
 from typing import Dict, List, Optional
 import joblib
 
-# Add scripts directory to path for imports (relative to project root)
+# Add project root to sys.path to allow absolute imports when running script directly
 project_root = Path(__file__).parent.parent.parent  # Go up from tests/validation to project root
-sys.path.insert(0, str(project_root / "src" / "nba_data" / "scripts"))
-sys.path.insert(0, str(project_root / "src"))
+sys.path.append(str(project_root))
 
 from src.nba_data.scripts.predict_conditional_archetype import ConditionalArchetypePredictor
 

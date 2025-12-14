@@ -40,7 +40,7 @@ class RFEModelTrainer:
         self.models_dir = Path("models")
         self.models_dir.mkdir(parents=True, exist_ok=True)
         
-    def load_rfe_features(self, n_features=10):
+    def load_rfe_features(self, n_features=15):
         """Load RFE-selected features from comparison CSV."""
         rfe_path = self.results_dir / "rfe_feature_count_comparison.csv"
         if not rfe_path.exists():
@@ -56,7 +56,21 @@ class RFEModelTrainer:
         features_str = row.iloc[0]['features']
         features = ast.literal_eval(features_str)
         
-        # Force include SHOT_QUALITY_GENERATION_DELTA if available (Dec 8, 2025)
+        # [NEW] FORCE INCLUSION: The "Truth Tellers" (Dec 12, 2025)
+        # These features are critical for distinguishing Empty Calories from True Stars
+        # INEFFICIENT_VOLUME_SCORE: (CREATION_VOLUME_RATIO * Negative_CREATION_TAX) - massive negative signal for Tank Commanders
+        # SHOT_QUALITY_GENERATION_DELTA: Measures if player generates easy shots or just hard shots - exposes Empty Calorie creators
+        critical_features = ['INEFFICIENT_VOLUME_SCORE', 'SHOT_QUALITY_GENERATION_DELTA']
+
+        for feat in critical_features:
+            if feat not in features:
+                # Replace the last (least important) feature to maintain count, or just append
+                if len(features) >= n_features:
+                    features.pop()
+                features.append(feat)
+                logger.info(f"Force-included critical feature: {feat}")
+
+        # Legacy: Force include SHOT_QUALITY_GENERATION_DELTA if available (Dec 8, 2025)
         # This feature reduces reliance on sample weighting and should always be included
         if 'SHOT_QUALITY_GENERATION_DELTA' not in features:
             # Remove lowest importance feature if we're at the limit
@@ -432,7 +446,7 @@ class RFEModelTrainer:
         
         return X, existing_features
 
-    def train(self, n_features=10):
+    def train(self, n_features=15):
         """Train the XGBoost Model with RFE-selected features."""
         logger.info("=" * 80)
         logger.info(f"Training Model with RFE-Selected Top {n_features} Features")
@@ -607,7 +621,7 @@ if __name__ == "__main__":
     trainer = RFEModelTrainer()
     
     # Train with top 10 features
-    model, le, accuracy, importance = trainer.train(n_features=10)
+    model, le, accuracy, importance = trainer.train(n_features=15)
     
     logger.info(f"\n✅ Model trained with 10 features")
     logger.info(f"✅ Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")

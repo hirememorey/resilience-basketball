@@ -857,9 +857,27 @@ class StressVectorEngine:
             final_df['PHYSICAL_DOMINANCE_RATIO'] = np.nan
             logger.warning("RS_PRESSURE_APPETITE or EFG_ISO_WEIGHTED not found - PHYSICAL_DOMINANCE_RATIO set to NaN")
 
+        # PHASE 1.5: Integrate SHOT_QUALITY_GENERATION_DELTA (Empty Calories Detector)
+        logger.info("Integrating SHOT_QUALITY_GENERATION_DELTA feature...")
+        shot_quality_path = self.results_dir / "shot_quality_generation_delta.csv"
+        if shot_quality_path.exists():
+            df_shot_quality = pd.read_csv(shot_quality_path)
+
+            final_df = pd.merge(
+                final_df,
+                df_shot_quality[['PLAYER_ID', 'SEASON', 'SHOT_QUALITY_GENERATION_DELTA']],
+                on=['PLAYER_ID', 'SEASON'],
+                how='left'
+            )
+            shot_quality_count = final_df['SHOT_QUALITY_GENERATION_DELTA'].notna().sum()
+            logger.info(f"Merged SHOT_QUALITY_GENERATION_DELTA: {shot_quality_count}/{len(final_df)} rows have the feature")
+        else:
+            logger.warning(f"SHOT_QUALITY_GENERATION_DELTA file not found at {shot_quality_path}")
+            final_df['SHOT_QUALITY_GENERATION_DELTA'] = np.nan
+
         # Clean up columns
         phoenix_cols = [
-            'SPECIALIST_EFFICIENCY_SCORE', 
+            'SPECIALIST_EFFICIENCY_SCORE',
             'VERSATILITY_THREAT_SCORE',
             'ZERO_DRIBBLE_SCORING_VALUE_ADDED',
             'ZERO_DRIBBLE_SHOT_PROPORTION',
@@ -875,7 +893,7 @@ class StressVectorEngine:
                         'USG_PCT', 'AGE',
                         'ISO_FREQUENCY', 'PNR_HANDLER_FREQUENCY', 'POST_TOUCH_FREQUENCY',  # DATA COMPLETENESS FIX: Added playtype frequencies
                         'DEPENDENCE_SCORE', 'ASSISTED_FGM_PCT', 'OPEN_SHOT_FREQUENCY', 'SELF_CREATED_USAGE_RATIO',  # PHASE 1: Added dependence score columns
-                        'SKILL_MATURITY_INDEX', 'PHYSICAL_DOMINANCE_RATIO'] + phoenix_cols  # PHASE 1: Development stage features
+                        'SKILL_MATURITY_INDEX', 'PHYSICAL_DOMINANCE_RATIO', 'SHOT_QUALITY_GENERATION_DELTA'] + phoenix_cols  # PHASE 1.5: Added Empty Calories detector
         
         # Only keep columns that actually exist
         existing_cols = [c for c in cols_to_keep if c in final_df.columns]
