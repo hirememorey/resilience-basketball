@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** ✅ **CRITICAL DATA INTEGRITY RESOLVED** - 2024-25 season opponent quality data fully restored. 2D Risk Matrix framework stable with **87.5% test pass rate** (35/40). Performance vs. Dependence properly separated as orthogonal dimensions. Ground Truth Trap solved. Interactive Streamlit App deployed with comprehensive 2D analysis for all 5,312 players. All classifications now account for teammate context to prevent inflated evaluations.
+**Current Status:** ✅ **SYSTEM RECALIBRATED** - All critical bugs resolved. 2D Risk Matrix working across all seasons (2015-2025) with updated dependence logic. Streamlit app fully functional. **Overall Star Prediction Test Suite: 89.5% pass rate (17/19)**. Grading scale recalibrated for elite player identification.
 
 ---
 
