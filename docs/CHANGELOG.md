@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Complete Data Pipeline Restoration**: Fixed critical SHOT_QUALITY_GENERATION_DELTA data gap
+  - Collected raw shot quality data for all 10 seasons (2015-2025) using 6 parallel workers
+  - Calculated SHOT_QUALITY_GENERATION_DELTA for all 5,312 player-seasons
+  - Added historical star test cases (Harden, Wall, LeBron James 2015-16) to overall star prediction tests
+- **Streamlit App Bug Fix**: Resolved duplicate element key preventing proper app loading
 - **Project restructure**: Complete reorganization for developer experience
   - New modular `src/` structure (`data/`, `features/`, `model/`, `utils/`)
   - Clear entry points in `scripts/` directory
@@ -16,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive test organization in `tests/`
 
 ### Changed
+- **Model Performance**: Improved accuracy from 48.62% to 51.38% with complete 15 features
+- **SHOT_QUALITY_GENERATION_DELTA**: Now rank #4 (5.9% importance) in RFE model for organic tank commander detection
+- **Test Suite Coverage**: Expanded to 23 test cases with 81.8% accuracy on Franchise Cornerstone classification
 - **Documentation consolidation**: Reduced from 35+ scattered files to 6 comprehensive docs
 - **Model registry**: Organized models by lifecycle (production/staging/archive)
 - **Data organization**: Clear separation of raw/interim/processed/external data

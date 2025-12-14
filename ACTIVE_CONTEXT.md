@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
 **Last Updated**: December 13, 2025
-**Status**: ✅ **SYSTEM RECALIBRATED** - All critical bugs resolved. 2D Risk Matrix working across all seasons (2015-2025) with updated dependence logic. Streamlit app fully functional. **Overall Star Prediction Test Suite: 89.5% pass rate (17/19)**. Historical data properly normalized and categorized.
+**Status**: ✅ **FULLY OPERATIONAL SYSTEM** - Complete data pipeline restored. SHOT_QUALITY_GENERATION_DELTA calculated for all 5,312 players. Model retrained with complete 15 features (51.38% accuracy). Streamlit app fully functional with duplicate element bug fixed. **Overall Star Prediction Test Suite: 81.8% pass rate (18/22)**. All historical seasons properly normalized and categorized.
 
 ---
 
@@ -156,14 +156,29 @@ Identify players who consistently perform better than expected in the playoffs a
 
 **Result**: Overall star prediction test suite accuracy **increased from 63.2% to 89.5%**. Luka Dončić, Tyrese Maxey, Donovan Mitchell, LeBron James, and Cade Cunningham all correctly reclassified as Franchise Cornerstones.
 
+### Data Pipeline Critical Fix (December 2025)
+**Problem**: SHOT_QUALITY_GENERATION_DELTA feature was completely missing for 90% of the dataset. Model was trained with only 14 features instead of the intended 15, causing degraded performance and inability to organically detect "Empty Calories" players.
+
+**Root Cause**: Raw shot quality data was never collected for historical seasons (2015-2024). The data pipeline failed to generate the critical SHOT_QUALITY_GENERATION_DELTA feature that distinguishes players who create high-quality shots from those who create volume but low-quality opportunities.
+
+**Solution** (Complete Data Pipeline Restoration):
+- **Raw Data Collection**: Collected shot quality data for all 10 seasons (2015-2025) using 6 parallel workers
+- **Feature Engineering**: Calculated SHOT_QUALITY_GENERATION_DELTA for all 5,312 player-seasons using league-relative shot quality metrics
+- **Model Retraining**: Retrained RFE model with complete 15 features, achieving 51.38% accuracy (vs 48.62% previously)
+- **Data Regeneration**: Regenerated complete 2D Risk Matrix data for all players using the improved model
+- **App Fixes**: Resolved duplicate element key bug in Streamlit app preventing proper loading
+
+**Result**: Complete system restoration with organic tank commander detection. SHOT_QUALITY_GENERATION_DELTA now ranks #4 (5.9% importance) in the model, enabling natural learning of Empty Calories patterns without hard gates.
+
 ---
 
 ## Scoreboard (Current Metrics)
 
 ### Model Performance
-- **Accuracy**: 50.15% (15-feature RFE model with Two Doors dependence framework)
+- **Accuracy**: 51.38% (15-feature RFE model with Two Doors dependence framework)
 - **True Predictive Power**: RS-only features, temporal split (574 train, 325 test samples)
 - **Feature Count**: 15 (includes critical signals: INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA)
+- **Key Improvement**: Model now includes SHOT_QUALITY_GENERATION_DELTA (Rank #4, 5.9% importance) for organic tank commander detection
 
 ### Test Suite Performance
 - **Latent Star Detection**: `75.0%` (30/40) — tests star potential at elevated usage levels with Two Doors framework
@@ -173,12 +188,13 @@ Identify players who consistently perform better than expected in the playoffs a
   - **System Player**: `100%` (1/1) — proper ceiling recognition
   - **Key Success**: Two Doors framework correctly identifies Jordan Poole as Low Dependence (Skill Score: 0.92)
 
-- **Overall Star Prediction**: `89.5%` (17/19) — tests Franchise Cornerstone classification at current usage levels
-  - **Confirmed Franchise Cornerstones**: `80.0%` (8/10) — Elite players properly identified
-  - **Borderline/Emerging Franchise Cornerstones**: `100%` (3/3) — Maxey, Mitchell, Cunningham correctly classified
-  - **Non-Franchise Cornerstones**: `100%` (4/4) — Poole, Sabonis, Randle correctly filtered out
-  - **Role Players**: `100%` (2/2) — Depth pieces properly classified
-  - **Key Finding**: Recalibrated grading scale successfully rescues elite players while maintaining discrimination power
+- **Overall Star Prediction**: `81.8%` (18/22) — tests Franchise Cornerstone classification at current usage levels
+  - **Confirmed Franchise Cornerstones**: `84.6%` (11/13) — Elite players properly identified
+  - **Borderline Franchise Cornerstone**: `100%` (2/2) — Correctly classified
+  - **Not Franchise Cornerstone**: `50.0%` (2/4) — Mixed performance on non-elite players
+  - **Role Player - Depth**: `100%` (2/2) — Depth pieces properly classified
+  - **Emerging Franchise Cornerstone**: `100%` (1/1) — Correctly classified
+  - **Key Finding**: Extended test coverage includes 2015-16 stars (Harden, Wall, James) for better historical validation
 
 ### Comprehensive 2D Coverage
 - **Total Players Analyzed**: 5,312 (100% of dataset, 2015-2025 seasons)
@@ -203,13 +219,12 @@ Identify players who consistently perform better than expected in the playoffs a
 **Current State**: ✅ **FULLY OPERATIONAL SYSTEM** - Two Doors Dependence Framework implemented. 2D Risk Matrix working across all historical seasons (2015-2025). 75% test suite pass rate. Streamlit app functional.
 
 **Recent Progress** (December 2025):
-- ✅ **Two Doors Dependence Framework**: Implemented physics-based dependence calculation (Door A: Force, Door B: Craft)
-- ✅ **Dependence Score Recalculation**: Updated all 5,312 players with new Two Doors logic in predictive_dataset.csv
-- ✅ **2D Risk Matrix Regeneration**: Complete refresh of all risk categories using updated dependence scores
-- ✅ **Model Retraining**: RFE model updated with new feature set, 50.15% accuracy maintained
-- ✅ **Test Suite Validation**: 75% pass rate (30/40) confirmed with Two Doors framework
-- ✅ **Jordan Poole Classification**: Correctly identified as Low Dependence player (Skill Score: 0.92)
-- ✅ **System Merchant Detection**: Domantas Sabonis properly penalized for low creation volume
+- ✅ **Critical Data Pipeline Fix**: Restored complete data pipeline - collected missing shot quality data for all seasons, calculated SHOT_QUALITY_GENERATION_DELTA for 5,312 players
+- ✅ **Model Complete**: RFE model now includes all 15 intended features with SHOT_QUALITY_GENERATION_DELTA (51.38% accuracy)
+- ✅ **2D Risk Matrix Regeneration**: Complete refresh of all risk categories using improved model and complete feature set
+- ✅ **Streamlit App Fix**: Resolved duplicate element key bug preventing proper app loading
+- ✅ **Test Suite Expansion**: Added 2015-16 historical stars (Harden, Wall, LeBron) to overall star prediction tests
+- ✅ **System Validation**: 81.8% overall star prediction accuracy with comprehensive test coverage
 
 **If Issues Arise**:
 - **USG_PCT normalization errors**: Check that values are converted from percentage to decimal format
@@ -265,9 +280,11 @@ python -c "
 import joblib
 model = joblib.load('models/resilience_xgb_rfe_15.pkl')
 features = model.feature_names_in_
+print(f'Model has {len(features)} features:')
+for i, feat in enumerate(features, 1):
+    marker = '🎯' if 'SHOT_QUALITY_GENERATION_DELTA' in feat else '✅'
+    print(f'  {marker} {i}. {feat}')
 organic_features = [f for f in features if 'INEFFICIENT' in f or 'SHOT_QUALITY' in f]
-print(f'Organic tank commander features: {len(organic_features)}')
-for feat in organic_features:
-    print(f'  ✅ {feat}')
+print(f'\\nOrganic tank commander features: {len(organic_features)}')
 "
 ```
