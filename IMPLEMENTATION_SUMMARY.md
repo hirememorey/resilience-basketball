@@ -7,9 +7,10 @@
 - Regenerated 2D Risk Matrix with updated framework
 - Retrained RFE model with new feature set
 
-## Current metrics (latent_star_cases, Two Doors framework)
-- Pass rate: 75.0% (30/40)
-  - TP 58.8% (10/17), FP 60.0% (3/5), TN 94.1% (16/17), System 100%.
+## Current metrics (December 14, 2025)
+- **Overall Star Prediction**: 73.5% accuracy (25/34) - Franchise Cornerstone classification
+- **Latent Star Detection**: 69.0% pass rate (29/42) - Star potential at elevated usage
+  - TP 47.1% (8/17), FP 80.0% (4/5), TN 94.1% (16/17), System 100%.
 - Two Doors framework successfully distinguishes independent stars from system merchants
 
 ## Key achievements

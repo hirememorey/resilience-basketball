@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
 **Last Updated**: December 14, 2025
-**Status**: ✅ **FULLY OPERATIONAL SYSTEM** - Complete data pipeline restored. SHOT_QUALITY_GENERATION_DELTA calculated for all 5,312 players. Model retrained with complete 15 features (51.38% accuracy). Streamlit app fully functional with duplicate element bug fixed. **Overall Star Prediction Test Suite: 81.8% pass rate (18/22)**. **Enhanced diagnostic capabilities added to both test suites** - comprehensive feature-level debugging now available. All historical seasons properly normalized and categorized.
+**Status**: ✅ **FULLY OPERATIONAL SYSTEM** - Complete data pipeline restored. SHOT_QUALITY_GENERATION_DELTA calculated for all 5,312 players. Model retrained with complete 15 features (51.38% accuracy). Streamlit app fully functional with duplicate element bug fixed. **Overall Star Prediction Test Suite: 73.5% accuracy (25/34)**. **Latent Star Detection: 69.0% pass rate (29/42)**. **Enhanced diagnostic capabilities added to both test suites** - comprehensive feature-level debugging now available. All historical seasons properly normalized and categorized.
 
 ---
 
@@ -193,17 +193,18 @@ Identify players who consistently perform better than expected in the playoffs a
 - **Key Improvement**: Model now includes SHOT_QUALITY_GENERATION_DELTA (Rank #4, 5.9% importance) for organic tank commander detection
 
 ### Test Suite Performance
-- **Latent Star Detection**: `75.0%` (30/40) — tests star potential at elevated usage levels with Two Doors framework
-  - **True Positive** (Latent Stars): `58.8%` (10/17) — identifies legitimate star potential
-  - **False Positive** (Mirage Breakouts): `60.0%` (3/5) — good at avoiding false alarms
+- **Latent Star Detection**: `69.0%` (29/42) — tests star potential at elevated usage levels with Two Doors framework
+  - **True Positive** (Latent Stars): `47.1%` (8/17) — identifies legitimate star potential
+  - **False Positive** (Mirage Breakouts): `80.0%` (4/5) — good at avoiding false alarms
   - **True Negative** (Draft Busts): `94.1%` (16/17) — excellent at identifying non-stars
   - **System Player**: `100%` (1/1) — proper ceiling recognition
+  - **Not Franchise Cornerstone**: `0.0%` (0/2) — challenging edge cases
   - **Key Success**: Two Doors framework correctly identifies Jordan Poole as Low Dependence (Skill Score: 0.92)
 
-- **Overall Star Prediction**: `81.8%` (18/22) — tests Franchise Cornerstone classification at current usage levels
-  - **Confirmed Franchise Cornerstones**: `84.6%` (11/13) — Elite players properly identified
+- **Overall Star Prediction**: `73.5%` (25/34) — tests Franchise Cornerstone classification at current usage levels
+  - **Confirmed Franchise Cornerstones**: `82.4%` (14/17) — Elite players properly identified
   - **Borderline Franchise Cornerstone**: `100%` (2/2) — Correctly classified
-  - **Not Franchise Cornerstone**: `50.0%` (2/4) — Mixed performance on non-elite players
+  - **Not Franchise Cornerstone**: `50.0%` (6/12) — Mixed performance on non-elite players
   - **Role Player - Depth**: `100%` (2/2) — Depth pieces properly classified
   - **Emerging Franchise Cornerstone**: `100%` (1/1) — Correctly classified
   - **Key Finding**: Extended test coverage includes 2015-16 stars (Harden, Wall, James) for better historical validation
@@ -228,7 +229,7 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ## Next Developer: Start Here
 
-**Current State**: ✅ **FULLY OPERATIONAL SYSTEM** - Two Doors Dependence Framework implemented. 2D Risk Matrix working across all historical seasons (2015-2025). 75% test suite pass rate. Streamlit app functional.
+**Current State**: ✅ **FULLY OPERATIONAL SYSTEM** - Two Doors Dependence Framework implemented. 2D Risk Matrix working across all historical seasons (2015-2025). Overall Star Prediction: 73.5% accuracy. Latent Star Detection: 69.0% pass rate. Streamlit app functional.
 
 **Recent Progress** (December 2025):
 - ✅ **Critical Data Pipeline Fix**: Restored complete data pipeline - collected missing shot quality data for all seasons, calculated SHOT_QUALITY_GENERATION_DELTA for 5,312 players
@@ -236,7 +237,7 @@ Identify players who consistently perform better than expected in the playoffs a
 - ✅ **2D Risk Matrix Regeneration**: Complete refresh of all risk categories using improved model and complete feature set
 - ✅ **Streamlit App Fix**: Resolved duplicate element key bug preventing proper app loading
 - ✅ **Test Suite Expansion**: Added 2015-16 historical stars (Harden, Wall, LeBron) to overall star prediction tests
-- ✅ **System Validation**: 81.8% overall star prediction accuracy with comprehensive test coverage
+- ✅ **System Validation**: 73.5% overall star prediction accuracy (25/34) and 69.0% latent star detection pass rate (29/42) with comprehensive test coverage
 
 **If Issues Arise**:
 - **USG_PCT normalization errors**: Check that values are converted from percentage to decimal format

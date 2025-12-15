@@ -2,7 +2,7 @@
 
 Date: December 13, 2025
 
-Status: ✅ **FULLY OPERATIONAL SYSTEM** - All critical bugs resolved. 2D Risk Matrix working across all seasons (2015-2025). Streamlit app fully functional. Test suite: 82.5% pass rate. Historical data properly normalized and categorized.
+Status: ✅ **FULLY OPERATIONAL SYSTEM** - All critical bugs resolved. 2D Risk Matrix working across all seasons (2015-2025). Streamlit app fully functional. Overall Star Prediction: 73.5% accuracy (25/34). Latent Star Detection: 69.0% pass rate (29/42). Historical data properly normalized and categorized.
 
 ## 🏗️ Project Structure & Status
 
@@ -85,10 +85,10 @@ These are the core files driving the current 53.54% accuracy model:
 - File: `models/resilience_xgb_rfe_10.pkl` (10-feature RFE model)
 - Evaluation: Hybrid 2D/1D framework - 2D Risk Matrix for cases with explicit expectations, 1D compatibility for legacy cases
 
-### Current Validation Snapshot (latent_star_cases, hybrid 2D/1D evaluation)
-- **Overall Pass Rate**: 87.5% (35/40) - **Major breakthrough**
-- **2D Cases**: 90.9% (10/11) - Excellent performance for modern evaluation
-- **1D Cases**: 86.2% (25/29) - Maintained backward compatibility
+### Current Validation Snapshot (December 14, 2025)
+- **Overall Star Prediction**: 73.5% accuracy (25/34) - Franchise Cornerstone classification
+- **Latent Star Detection**: 69.0% pass rate (29/42) - Star potential at elevated usage
+- **Enhanced Diagnostics**: 63+ columns of comprehensive feature-level debugging available
 - **Key Success**: Jordan Poole correctly identified as Luxury Component
 - **Framework**: 2D Risk Matrix properly separates Performance from Dependence
 
