@@ -1,6 +1,6 @@
 # Overall Star Prediction: Franchise Cornerstone Classification Test Report
 
-**Date**: 2025-12-13 21:51:03
+**Date**: 2025-12-14 22:55:36
 
 ## Executive Summary
 
@@ -8,19 +8,19 @@
 
 **Framework**: 2D Risk Matrix - Franchise Cornerstones require High Performance (≥70%) + Low Dependence (<30%).
 
-- **Total Test Cases**: 20
-- **Data Found**: 19
-- **Correct Classifications**: 17
-- **Incorrect Classifications**: 2
-- **Accuracy**: 89.5%
+- **Total Test Cases**: 35
+- **Data Found**: 34
+- **Correct Classifications**: 25
+- **Incorrect Classifications**: 9
+- **Accuracy**: 73.5%
 
 ## Results by Category
 
 ### Confirmed Franchise Cornerstone
-- **Total**: 10
-- **Correct**: 8
-- **Incorrect**: 2
-- **Accuracy**: 80.0%
+- **Total**: 17
+- **Correct**: 14
+- **Incorrect**: 3
+- **Accuracy**: 82.4%
 
 ### Borderline Franchise Cornerstone
 - **Total**: 2
@@ -29,10 +29,10 @@
 - **Accuracy**: 100.0%
 
 ### Not Franchise Cornerstone
-- **Total**: 4
-- **Correct**: 4
-- **Incorrect**: 0
-- **Accuracy**: 100.0%
+- **Total**: 12
+- **Correct**: 6
+- **Incorrect**: 6
+- **Accuracy**: 50.0%
 
 ### Role Player
 - **Total**: 2
@@ -50,26 +50,41 @@
 
 | Test | Player | Season | Category | Expected FC | Predicted FC | Performance | Dependence | Risk Category | Correct |
 |------|--------|--------|----------|-------------|---------------|-------------|------------|---------------|---------|
-| 1 | Nikola Jokić | 2023-24 | Confirmed Franchise Cornerstone | Yes | Yes | 80.51% | 29.32% | Franchise Cornerstone | ✅ Correct |
-| 2 | Luka Dončić | 2023-24 | Confirmed Franchise Cornerstone | Yes | Yes | 98.62% | 39.66% | Franchise Cornerstone | ✅ Correct |
-| 3 | Giannis Antetokounmpo | 2023-24 | Confirmed Franchise Cornerstone | Yes | Yes | 98.50% | 0.00% | Franchise Cornerstone | ✅ Correct |
-| 4 | Joel Embiid | 2023-24 | Confirmed Franchise Cornerstone | Yes | No | 98.45% | 71.09% | Luxury Component | ❌ Incorrect |
-| 5 | Shai Gilgeous-Alexander | 2023-24 | Borderline Franchise Cornerstone | Yes | Yes | 99.18% | 16.94% | Franchise Cornerstone | ✅ Correct |
-| 6 | Tyrese Maxey | 2023-24 | Borderline Franchise Cornerstone | Yes | Yes | 82.08% | 40.45% | Franchise Cornerstone | ✅ Correct |
-| 7 | Jordan Poole | 2023-24 | Not Franchise Cornerstone | No | No | 17.00% | 57.57% | Avoid | ✅ Correct |
-| 8 | Domantas Sabonis | 2023-24 | Not Franchise Cornerstone | No | No | 13.39% | 12.92% | Depth | ✅ Correct |
-| 9 | Julius Randle | 2023-24 | Not Franchise Cornerstone | No | No | 88.78% | 68.06% | Luxury Component | ✅ Correct |
-| 10 | Aaron Gordon | 2023-24 | Role Player - Depth | No | No | 3.46% | 14.69% | Depth | ✅ Correct |
-| 11 | Brook Lopez | 2023-24 | Role Player - Depth | No | No | 0.36% | 74.74% | Avoid | ✅ Correct |
-| 12 | Chris Paul | 2015-16 | Confirmed Franchise Cornerstone | Yes | No | 69.87% | 50.94% | Luxury Component | ❌ Incorrect |
-| 13 | Jimmy Butler III | 2015-16 | Confirmed Franchise Cornerstone | Yes | Yes | 74.97% | 10.57% | Franchise Cornerstone | ✅ Correct |
-| 14 | James Harden | 2015-16 | Confirmed Franchise Cornerstone | Yes | Yes | 99.27% | 11.80% | Franchise Cornerstone | ✅ Correct |
-| 15 | Eric Bledsoe | 2015-16 | Not Franchise Cornerstone | No | No | 92.62% | 65.29% | Luxury Component | ✅ Correct |
-| 16 | Giannis Antetokounmpo | 2024-25 | Confirmed Franchise Cornerstone | Yes | Yes | 99.12% | 0.00% | Franchise Cornerstone | ✅ Correct |
-| 17 | Donovan Mitchell | 2024-25 | Confirmed Franchise Cornerstone | Yes | Yes | 96.84% | 48.08% | Luxury Component | ✅ Correct |
-| 18 | LeBron James | 2024-25 | Confirmed Franchise Cornerstone | Yes | Yes | 94.84% | 38.45% | Franchise Cornerstone | ✅ Correct |
-| 19 | Cade Cunningham | 2024-25 | Emerging Franchise Cornerstone | Yes | Yes | 99.12% | 44.44% | Franchise Cornerstone | ✅ Correct |
-| 20 | Kevin Porter Jr | 2024-25 | Not Franchise Cornerstone | No | N/A | N/A | N/A | N/A | ❌ No Data |
+| 1 | Nikola Jokić | 2023-24 | Confirmed Franchise Cornerstone | Yes | Yes | 91.47% | 0.00% | Franchise Cornerstone | ✅ Correct |
+| 2 | Luka Dončić | 2023-24 | Confirmed Franchise Cornerstone | Yes | Yes | 98.32% | 0.00% | Franchise Cornerstone | ✅ Correct |
+| 3 | Giannis Antetokounmpo | 2023-24 | Confirmed Franchise Cornerstone | Yes | Yes | 98.64% | 0.00% | Franchise Cornerstone | ✅ Correct |
+| 4 | Joel Embiid | 2023-24 | Confirmed Franchise Cornerstone | Yes | Yes | 98.07% | 0.00% | Franchise Cornerstone | ✅ Correct |
+| 5 | Joel Embiid | 2018-19 | Confirmed Franchise Cornerstone | Yes | No | 14.52% | 0.30% | Depth | ❌ Incorrect |
+| 6 | Shai Gilgeous-Alexander | 2023-24 | Borderline Franchise Cornerstone | Yes | Yes | 99.02% | 0.00% | Franchise Cornerstone | ✅ Correct |
+| 7 | Tyrese Maxey | 2023-24 | Borderline Franchise Cornerstone | Yes | Yes | 75.72% | 11.97% | Franchise Cornerstone | ✅ Correct |
+| 8 | Jordan Poole | 2023-24 | Not Franchise Cornerstone | No | No | 18.33% | 57.57% | Depth | ✅ Correct |
+| 9 | Jordan Poole | 2021-22 | Not Franchise Cornerstone | No | Yes | 84.05% | 0.00% | Franchise Cornerstone | ❌ Incorrect |
+| 10 | Domantas Sabonis | 2023-24 | Not Franchise Cornerstone | No | No | 14.06% | 0.00% | Depth | ✅ Correct |
+| 11 | Julius Randle | 2023-24 | Not Franchise Cornerstone | No | Yes | 88.46% | 49.86% | Franchise Cornerstone | ❌ Incorrect |
+| 12 | DeMar DeRozan | 2015-16 | Not Franchise Cornerstone | No | No | 46.18% | 15.75% | Depth | ✅ Correct |
+| 13 | DeMar DeRozan | 2016-17 | Not Franchise Cornerstone | No | Yes | 99.50% | 2.21% | Franchise Cornerstone | ❌ Incorrect |
+| 14 | Karl-Anthony Towns | 2021-22 | Not Franchise Cornerstone | No | Yes | 88.32% | 0.00% | Franchise Cornerstone | ❌ Incorrect |
+| 15 | Karl-Anthony Towns | 2022-23 | Not Franchise Cornerstone | No | No | 51.53% | 61.93% | Depth | ✅ Correct |
+| 16 | Karl-Anthony Towns | 2023-24 | Not Franchise Cornerstone | No | Yes | 94.01% | 0.00% | Franchise Cornerstone | ❌ Incorrect |
+| 17 | Ben Simmons | 2018-19 | Not Franchise Cornerstone | No | No | 7.53% | 0.00% | Depth | ✅ Correct |
+| 18 | Ben Simmons | 2020-21 | Not Franchise Cornerstone | No | No | 5.81% | 0.00% | Depth | ✅ Correct |
+| 19 | Aaron Gordon | 2023-24 | Role Player - Depth | No | No | 2.43% | 13.37% | Depth | ✅ Correct |
+| 20 | Brook Lopez | 2023-24 | Role Player - Depth | No | No | 0.42% | 58.06% | Depth | ✅ Correct |
+| 21 | Chris Paul | 2015-16 | Confirmed Franchise Cornerstone | Yes | No | 66.64% | 0.00% | Depth | ❌ Incorrect |
+| 22 | Chris Paul | 2016-17 | Confirmed Franchise Cornerstone | Yes | Yes | 92.45% | 0.00% | Franchise Cornerstone | ✅ Correct |
+| 23 | Chris Paul | 2017-18 | Confirmed Franchise Cornerstone | Yes | Yes | 72.73% | 0.00% | Franchise Cornerstone | ✅ Correct |
+| 24 | Jimmy Butler III | 2015-16 | Confirmed Franchise Cornerstone | Yes | Yes | 71.93% | 10.57% | Franchise Cornerstone | ✅ Correct |
+| 25 | James Harden | 2015-16 | Confirmed Franchise Cornerstone | Yes | Yes | 99.53% | 3.70% | Franchise Cornerstone | ✅ Correct |
+| 26 | Eric Bledsoe | 2015-16 | Not Franchise Cornerstone | No | Yes | 93.36% | 0.00% | Franchise Cornerstone | ❌ Incorrect |
+| 27 | James Harden | 2015-16 | Confirmed Franchise Cornerstone | Yes | Yes | 99.53% | 3.70% | Franchise Cornerstone | ✅ Correct |
+| 28 | John Wall | 2015-16 | Confirmed Franchise Cornerstone | Yes | No | 49.07% | 38.53% | Depth | ❌ Incorrect |
+| 29 | LeBron James | 2015-16 | Confirmed Franchise Cornerstone | Yes | Yes | 99.16% | 0.25% | Franchise Cornerstone | ✅ Correct |
+| 30 | Kawhi Leonard | 2015-16 | Confirmed Franchise Cornerstone | Yes | Yes | 79.84% | 0.00% | Franchise Cornerstone | ✅ Correct |
+| 31 | Giannis Antetokounmpo | 2024-25 | Confirmed Franchise Cornerstone | Yes | Yes | 99.12% | 0.00% | Franchise Cornerstone | ✅ Correct |
+| 32 | Donovan Mitchell | 2024-25 | Confirmed Franchise Cornerstone | Yes | Yes | 96.87% | 4.08% | Franchise Cornerstone | ✅ Correct |
+| 33 | LeBron James | 2024-25 | Confirmed Franchise Cornerstone | Yes | Yes | 93.47% | 0.00% | Franchise Cornerstone | ✅ Correct |
+| 34 | Cade Cunningham | 2024-25 | Emerging Franchise Cornerstone | Yes | Yes | 99.28% | 43.62% | Franchise Cornerstone | ✅ Correct |
+| 35 | Kevin Porter Jr | 2024-25 | Not Franchise Cornerstone | No | N/A | N/A | N/A | N/A | ❌ No Data |
 
 ## Diagnostic Data
 
@@ -91,21 +106,77 @@ This CSV contains all raw statistics, feature calculations, and predictions from
 
 ## Incorrect Classifications Analysis
 
-### Joel Embiid (2023-24)
+### Joel Embiid (2018-19)
 - **Expected**: Franchise Cornerstone
 - **Predicted**: Not Franchise Cornerstone
-- **Performance**: 98.45%
-- **Dependence**: 71.09%
-- **Risk Category**: Luxury Component
-- **Notes**: Dependence too high (71.09% >= 30%); False Negative: Should be Franchise Cornerstone
+- **Performance**: 14.52%
+- **Dependence**: 0.30%
+- **Risk Category**: Depth
+- **Notes**: Performance too low (14.52% < 70%); False Negative: Should be Franchise Cornerstone
+
+### Jordan Poole (2021-22)
+- **Expected**: Not Franchise Cornerstone
+- **Predicted**: Franchise Cornerstone
+- **Performance**: 84.05%
+- **Dependence**: 0.00%
+- **Risk Category**: Franchise Cornerstone
+- **Notes**: False Positive: Should not be Franchise Cornerstone
+
+### Julius Randle (2023-24)
+- **Expected**: Not Franchise Cornerstone
+- **Predicted**: Franchise Cornerstone
+- **Performance**: 88.46%
+- **Dependence**: 49.86%
+- **Risk Category**: Franchise Cornerstone
+- **Notes**: False Positive: Should not be Franchise Cornerstone
+
+### DeMar DeRozan (2016-17)
+- **Expected**: Not Franchise Cornerstone
+- **Predicted**: Franchise Cornerstone
+- **Performance**: 99.50%
+- **Dependence**: 2.21%
+- **Risk Category**: Franchise Cornerstone
+- **Notes**: False Positive: Should not be Franchise Cornerstone
+
+### Karl-Anthony Towns (2021-22)
+- **Expected**: Not Franchise Cornerstone
+- **Predicted**: Franchise Cornerstone
+- **Performance**: 88.32%
+- **Dependence**: 0.00%
+- **Risk Category**: Franchise Cornerstone
+- **Notes**: False Positive: Should not be Franchise Cornerstone
+
+### Karl-Anthony Towns (2023-24)
+- **Expected**: Not Franchise Cornerstone
+- **Predicted**: Franchise Cornerstone
+- **Performance**: 94.01%
+- **Dependence**: 0.00%
+- **Risk Category**: Franchise Cornerstone
+- **Notes**: False Positive: Should not be Franchise Cornerstone
 
 ### Chris Paul (2015-16)
 - **Expected**: Franchise Cornerstone
 - **Predicted**: Not Franchise Cornerstone
-- **Performance**: 69.87%
-- **Dependence**: 50.94%
-- **Risk Category**: Luxury Component
-- **Notes**: Performance too low (69.87% < 70%); Dependence too high (50.94% >= 30%); False Negative: Should be Franchise Cornerstone
+- **Performance**: 66.64%
+- **Dependence**: 0.00%
+- **Risk Category**: Depth
+- **Notes**: Performance too low (66.64% < 70%); False Negative: Should be Franchise Cornerstone
+
+### Eric Bledsoe (2015-16)
+- **Expected**: Not Franchise Cornerstone
+- **Predicted**: Franchise Cornerstone
+- **Performance**: 93.36%
+- **Dependence**: 0.00%
+- **Risk Category**: Franchise Cornerstone
+- **Notes**: False Positive: Should not be Franchise Cornerstone
+
+### John Wall (2015-16)
+- **Expected**: Franchise Cornerstone
+- **Predicted**: Not Franchise Cornerstone
+- **Performance**: 49.07%
+- **Dependence**: 38.53%
+- **Risk Category**: Depth
+- **Notes**: Performance too low (49.07% < 70%); Dependence too high (38.53% >= 30%); False Negative: Should be Franchise Cornerstone
 
 ## Missing Data
 

@@ -1,11 +1,5 @@
 {
-  "low_threshold": 0.35696390352377527,
-  "high_threshold": 0.448248917323221,
-  "percentile_33": 0.35696390352377527,
-  "percentile_66": 0.448248917323221,
-  "mean": 0.4308958256126455,
-  "median": 0.396243008090776,
-  "std": 0.12524988862901154,
-  "n_star_players": 547,
-  "n_total_players": 5312
+    "low_threshold": 0.50,
+    "high_threshold": 0.65,
+    "description": "Recalibrated dependence thresholds after system recalibration. Low threshold (< 0.50) defines Franchise Cornerstone eligibility. High threshold (> 0.65) defines clear Luxury Component territory."
 }

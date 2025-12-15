@@ -41,31 +41,101 @@ logger = logging.getLogger(__name__)
 
 
 def load_shot_quality_data(season: str) -> Optional[pd.DataFrame]:
-    """Load shot quality aggregates for a season."""
-    data_dir = Path("data")
-    file_path = data_dir / f"shot_quality_aggregates_{season}.csv"
+    """Load shot quality aggregates for a season and pivot to wide format."""
+    data_dir = Path("data/shot_quality")
+    file_path = data_dir / f"shot_quality_{season}.csv"
     
+    # Fallback to old location
     if not file_path.exists():
-        logger.warning(f"Shot quality data not found for {season}: {file_path}")
-        return None
+        old_path = Path("data") / f"shot_quality_aggregates_{season}.csv"
+        if old_path.exists():
+            file_path = old_path
+        else:
+            logger.warning(f"Shot quality data not found for {season}: {file_path}")
+            return None
     
     df = pd.read_csv(file_path)
+    
+    # Check if it's already in wide format (old aggregates file)
+    if 'EFG_0_2' in df.columns:
+        logger.info(f"Loaded {len(df)} records for {season} (already wide format)")
+        return df
+        
+    # Pivot from long to wide if loaded from new collection script
+    if 'SHOT_QUALITY' in df.columns and 'EFG_PCT' in df.columns:
+        logger.info(f"Pivoting {len(df)} records from long to wide format...")
+        
+        # Mapping for column suffixes
+        quality_map = {
+            "VeryTight": "0_2",
+            "Tight": "2_4",
+            "Open": "4_6",
+            "WideOpen": "6_PLUS"
+        }
+        
+        pivoted_dfs = []
+        base_cols = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON', 'SEASON_TYPE']
+        
+        # Get base player list (unique players)
+        # Note: PLAYER_ID alone might not be unique if player played multiple teams? 
+        # But aggregate data usually merges. The collection script output raw totals per player.
+        # It's safest to distinct on PLAYER_ID and SEASON_TYPE
+        players = df[base_cols].drop_duplicates(subset=['PLAYER_ID', 'SEASON_TYPE'])
+        
+        for q_label, suffix in quality_map.items():
+            # Filter for this quality
+            subset = df[df['SHOT_QUALITY'] == q_label].copy()
+            if subset.empty:
+                continue
+                
+            # Rename columns
+            subset = subset.rename(columns={
+                'EFG_PCT': f'EFG_{suffix}',
+                'FGA': f'FGA_{suffix}'
+            })
+            
+            # Keep only ID and the new value columns
+            cols_to_keep = ['PLAYER_ID', 'SEASON_TYPE'] + [f'EFG_{suffix}', f'FGA_{suffix}']
+            subset = subset[cols_to_keep]
+            
+            pivoted_dfs.append(subset)
+            
+        if not pivoted_dfs:
+            return None
+            
+        # Merge all back to players
+        result = players.copy()
+        for sub in pivoted_dfs:
+            result = pd.merge(result, sub, on=['PLAYER_ID', 'SEASON_TYPE'], how='left')
+            
+        logger.info(f"Pivoted to {len(result)} wide records")
+        return result
+
     logger.info(f"Loaded {len(df)} records for {season}")
     return df
 
 
 def load_predictive_features(season: str) -> Optional[pd.DataFrame]:
     """Load predictive features for a season (contains creation metrics)."""
+    # Try main predictive dataset first (Source of Truth)
+    main_dataset_path = Path("results/predictive_dataset.csv")
+    if main_dataset_path.exists():
+        df_all = pd.read_csv(main_dataset_path)
+        df_season = df_all[df_all['SEASON'] == season].copy()
+        if not df_season.empty:
+            logger.info(f"Loaded {len(df_season)} predictive feature records for {season} from main dataset")
+            return df_season
+
     data_dir = Path("data")
     file_path = data_dir / f"predictive_features_{season}.csv"
     
-    if not file_path.exists():
-        logger.warning(f"Predictive features not found for {season}: {file_path}")
-        return None
-    
-    df = pd.read_csv(file_path)
-    logger.info(f"Loaded {len(df)} predictive feature records for {season}")
-    return df
+    if file_path.exists():
+        df = pd.read_csv(file_path)
+        logger.info(f"Loaded {len(df)} predictive feature records for {season} from data dir")
+        return df
+        
+    logger.warning(f"Predictive features not found for {season}")
+    return None
 
 
 def calculate_league_average_shot_quality(

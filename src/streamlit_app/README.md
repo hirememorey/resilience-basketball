@@ -39,8 +39,8 @@ ls results/
 # - resilience_archetypes.csv
 
 ls models/
-# - resilience_xgb_rfe_10.pkl
-# - archetype_encoder_rfe_10.pkl
+# - resilience_xgb_rfe_15.pkl
+# - archetype_encoder_rfe_15.pkl
 ```
 
 ### Run the App

@@ -92,13 +92,13 @@ def create_risk_matrix_plot(
         with open(thresholds_path, 'r') as f:
             thresholds = json.load(f)
         perf_threshold = 0.70  # High performance (fixed)
-        dep_threshold = thresholds.get('low_threshold', 0.3570)  # Low dependence threshold
-        high_dep_threshold = thresholds.get('high_threshold', 0.4482)  # High dependence threshold
+        dep_threshold = thresholds.get('low_threshold', 0.50)  # Low dependence threshold (recalibrated)
+        high_dep_threshold = thresholds.get('high_threshold', 0.65)  # High dependence threshold (recalibrated)
     except (FileNotFoundError, json.JSONDecodeError):
-        # Fallback to default values
+        # Fallback to default values (recalibrated thresholds)
         perf_threshold = 0.70
-        dep_threshold = 0.3570
-        high_dep_threshold = 0.4482
+        dep_threshold = 0.50
+        high_dep_threshold = 0.65
 
     # Add quadrant lines with data-driven thresholds
     fig.add_hline(
@@ -129,11 +129,11 @@ def create_risk_matrix_plot(
     )
 
     fig.add_vline(
-        x=0.30,
+        x=0.50,
         line_dash="dash",
         line_color="black",
         opacity=0.5,
-        annotation_text="Low Performance (<30%)",
+        annotation_text="Low Dependence (<50%)",
         annotation_position="bottom left"
     )
 

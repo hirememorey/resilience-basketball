@@ -1,6 +1,6 @@
 {
   "n_features": 15,
-  "accuracy": 0.48615384615384616,
+  "accuracy": 0.5138461538461538,
   "features": [
     "EFG_PCT_0_DRIBBLE",
     "RS_EARLY_CLOCK_PRESSURE_RESILIENCE",
@@ -15,64 +15,69 @@
     "PREV_EFG_ISO_WEIGHTED",
     "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
     "INEFFICIENT_VOLUME_SCORE",
-    "ABDICATION_RISK"
+    "ABDICATION_RISK",
+    "SHOT_QUALITY_GENERATION_DELTA"
   ],
   "feature_importance": [
     {
       "Feature": "USG_PCT",
-      "Importance": 0.24890342354774475
+      "Importance": 0.22617526352405548
     },
     {
       "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.12515249848365784
+      "Importance": 0.11334304511547089
     },
     {
       "Feature": "ABDICATION_RISK",
-      "Importance": 0.06748116761445999
+      "Importance": 0.059511542320251465
     },
     {
-      "Feature": "RS_EARLY_CLOCK_PRESSURE_RESILIENCE",
-      "Importance": 0.058881741017103195
-    },
-    {
-      "Feature": "INEFFICIENT_VOLUME_SCORE",
-      "Importance": 0.05574217811226845
-    },
-    {
-      "Feature": "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
-      "Importance": 0.05445438250899315
-    },
-    {
-      "Feature": "PREV_EFG_ISO_WEIGHTED",
-      "Importance": 0.05390237271785736
-    },
-    {
-      "Feature": "USG_PCT_X_LEVERAGE_USG_DELTA",
-      "Importance": 0.0531935840845108
-    },
-    {
-      "Feature": "USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE",
-      "Importance": 0.05149628967046738
-    },
-    {
-      "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
-      "Importance": 0.05112812668085098
-    },
-    {
-      "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
-      "Importance": 0.049460381269454956
-    },
-    {
-      "Feature": "PREV_RS_RIM_APPETITE",
-      "Importance": 0.0458715483546257
+      "Feature": "SHOT_QUALITY_GENERATION_DELTA",
+      "Importance": 0.059290964156389236
     },
     {
       "Feature": "EFG_ISO_WEIGHTED_YOY_DELTA",
-      "Importance": 0.04518016800284386
+      "Importance": 0.05837412551045418
+    },
+    {
+      "Feature": "INEFFICIENT_VOLUME_SCORE",
+      "Importance": 0.053081899881362915
+    },
+    {
+      "Feature": "PREV_EFG_ISO_WEIGHTED",
+      "Importance": 0.0518915019929409
+    },
+    {
+      "Feature": "AGE_X_LEVERAGE_USG_DELTA_YOY_DELTA",
+      "Importance": 0.05153079703450203
+    },
+    {
+      "Feature": "USG_PCT_X_RS_PRESSURE_APPETITE",
+      "Importance": 0.051275741308927536
+    },
+    {
+      "Feature": "USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE",
+      "Importance": 0.050846852362155914
+    },
+    {
+      "Feature": "RS_EARLY_CLOCK_PRESSURE_RESILIENCE",
+      "Importance": 0.04941987618803978
+    },
+    {
+      "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
+      "Importance": 0.04779397323727608
+    },
+    {
+      "Feature": "USG_PCT_X_LEVERAGE_USG_DELTA",
+      "Importance": 0.04765494167804718
+    },
+    {
+      "Feature": "PREV_RS_RIM_APPETITE",
+      "Importance": 0.044521160423755646
     },
     {
       "Feature": "EFG_PCT_0_DRIBBLE",
-      "Importance": 0.039152052253484726
+      "Importance": 0.035288259387016296
     }
   ]
 }

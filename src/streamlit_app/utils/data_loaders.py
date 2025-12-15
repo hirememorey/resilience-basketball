@@ -57,9 +57,9 @@ def load_trained_model() -> Tuple[object, object]:
         Tuple of (model, encoder)
     """
     try:
-        model = joblib.load('models/resilience_xgb_rfe_10.pkl')
-        encoder = joblib.load('models/archetype_encoder_rfe_10.pkl')
-        logger.info("Loaded trained model and encoder")
+        model = joblib.load('models/resilience_xgb_rfe_15.pkl')
+        encoder = joblib.load('models/archetype_encoder_rfe_15.pkl')
+        logger.info(f"Loaded trained model: {model} and encoder: archetype_encoder_rfe_15.pkl")
         return model, encoder
     except FileNotFoundError:
         st.error("❌ Model files not found. Please train the model first.")

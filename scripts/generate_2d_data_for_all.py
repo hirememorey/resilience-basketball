@@ -85,13 +85,20 @@ def predict_performance_for_all(df_players: pd.DataFrame) -> pd.DataFrame:
             player_data = row.copy()
             player_data['USG_PCT'] = current_usage
 
-            # Get prediction result
-            prediction = predictor.predict_archetype_at_usage(
+            # Get prediction result using 2D Risk Matrix approach (no hard gates)
+            prediction_2d = predictor.predict_with_risk_matrix(
                 player_data=player_data,
                 usage_level=current_usage,
                 apply_phase3_fixes=True,
-                apply_hard_gates=True  # Apply Alpha Threshold and other physics gates
+                apply_hard_gates=False  # Use 2D evaluation without hard gates
             )
+
+            # Extract performance score from 2D result
+            prediction = {
+                'star_level_potential': prediction_2d['performance_score'],
+                'predicted_archetype': prediction_2d['archetype'],
+                'probabilities': prediction_2d['probabilities']
+            }
 
             result = {
                 'PLAYER_NAME': player_name,
@@ -141,11 +148,8 @@ def calculate_dependence_for_all(df_players: pd.DataFrame) -> pd.DataFrame:
         try:
             # Use the robust Two Doors calculation
             result = calculate_dependence_score(row)
-            
+
             dependence_score = result['dependence_score']
-            assisted_fgm_pct = result['assisted_fgm_pct']
-            open_shot_freq = result['open_shot_frequency']
-            self_created_ratio = result['self_created_usage_ratio']
             physicality_score = result['physicality_score']
             skill_score = result['skill_score']
 
@@ -156,9 +160,6 @@ def calculate_dependence_for_all(df_players: pd.DataFrame) -> pd.DataFrame:
                 'DEPENDENCE_SCORE': dependence_score,
                 'PHYSICALITY_SCORE': physicality_score,
                 'SKILL_SCORE': skill_score,
-                'ASSISTED_FGM_PCT': assisted_fgm_pct,
-                'OPEN_SHOT_FREQUENCY': open_shot_freq,
-                'SELF_CREATED_USAGE_RATIO': self_created_ratio,
                 'dependence_success': dependence_score is not None
             }
 
@@ -173,9 +174,6 @@ def calculate_dependence_for_all(df_players: pd.DataFrame) -> pd.DataFrame:
                 'DEPENDENCE_SCORE': None,
                 'PHYSICALITY_SCORE': None,
                 'SKILL_SCORE': None,
-                'ASSISTED_FGM_PCT': None,
-                'OPEN_SHOT_FREQUENCY': None,
-                'SELF_CREATED_USAGE_RATIO': None,
                 'dependence_success': False,
                 'error': str(e)
             })

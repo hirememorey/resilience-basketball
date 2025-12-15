@@ -7,6 +7,7 @@ from pathlib import Path
 import argparse
 import time
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
 
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
@@ -46,17 +47,6 @@ def fetch_shot_quality_data(client, season, season_type):
     for q_range, q_label in quality_ranges:
         try:
             logger.info(f"Fetching {q_label} shots for {season} {season_type}...")
-            
-            # The client method 'get_league_player_playoff_shot_stats' maps to 'leaguedashplayerptshot'.
-            # We can reuse it but need to pass the 'CloseDefDistRange' param.
-            # I'll use the generic _make_request to be flexible or add a dedicated method if needed.
-            # Actually, let's use the client properly. I'll update the client to support generic params if needed
-            # or just use the existing method and pass the CloseDefDistRange in the kwargs if supported?
-            # The current method hardcodes params. I should update the client first to be more flexible
-            # or just use the method I added and modify it to accept the range.
-            
-            # Checking client... I added get_league_player_playoff_shot_stats but it hardcodes params.
-            # I will fix the client in a separate step, but for now I'll simulate the call structure.
             
             endpoint = "leaguedashplayerptshot"
             params = {
@@ -123,18 +113,17 @@ def fetch_shot_quality_data(client, season, season_type):
         
     return pd.concat(dfs, ignore_index=True)
 
-def main():
-    parser = argparse.ArgumentParser(description='Collect Shot Quality Data')
-    parser.add_argument('--seasons', nargs='+', help='Seasons to collect (e.g. 2023-24)', required=True)
-    args = parser.parse_args()
+def process_season(season):
+    """
+    Process a single season: collect RS and PO data and save to CSV.
+    Creates a new client instance for thread safety.
+    """
+    logger.info(f"Starting processing for {season}...")
     
-    Path("data/shot_quality").mkdir(parents=True, exist_ok=True)
-    
+    # Create a new client for this thread to avoid race conditions
     client = NBAStatsClient()
     
-    for season in args.seasons:
-        logger.info(f"Processing {season}...")
-        
+    try:
         # RS
         rs_df = fetch_shot_quality_data(client, season, "Regular Season")
         # Playoffs
@@ -148,24 +137,40 @@ def main():
             logger.info(f"Saved {len(full_df)} records to {output_path}")
         else:
             logger.warning(f"No data found for {season}")
+            
+    except Exception as e:
+        logger.error(f"Error processing season {season}: {e}")
+
+def main():
+    parser = argparse.ArgumentParser(description='Collect Shot Quality Data')
+    parser.add_argument('--seasons', nargs='+', help='Seasons to collect (e.g. 2023-24)', required=True)
+    parser.add_argument('--workers', type=int, default=1, help='Number of worker threads (default: 1)')
+    args = parser.parse_args()
+    
+    Path("data/shot_quality").mkdir(parents=True, exist_ok=True)
+    
+    if args.workers > 1:
+        logger.info(f"Processing {len(args.seasons)} seasons with {args.workers} workers...")
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            executor.map(process_season, args.seasons)
+    else:
+        logger.info(f"Processing {len(args.seasons)} seasons sequentially...")
+        client = NBAStatsClient()
+        for season in args.seasons:
+            logger.info(f"Processing {season}...")
+            # RS
+            rs_df = fetch_shot_quality_data(client, season, "Regular Season")
+            # Playoffs
+            po_df = fetch_shot_quality_data(client, season, "Playoffs")
+            
+            full_df = pd.concat([rs_df, po_df], ignore_index=True)
+            
+            if not full_df.empty:
+                output_path = f"data/shot_quality/shot_quality_{season}.csv"
+                full_df.to_csv(output_path, index=False)
+                logger.info(f"Saved {len(full_df)} records to {output_path}")
+            else:
+                logger.warning(f"No data found for {season}")
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

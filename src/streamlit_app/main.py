@@ -200,10 +200,6 @@ def main():
         total_count = len(df_season)
         st.caption(f"Showing {filtered_count} of {total_count} players in {selected_season}")
 
-    # Main content area (moved outside sidebar block)
-    if player_data is not None:
-        display_player_analysis(player_data, df_season, df_filtered, model, encoder, usage_buckets, percentiles)
-
     # Main content area
     if player_data is not None:
         display_player_analysis(player_data, df_season, df_filtered, model, encoder, usage_buckets, percentiles)
@@ -213,8 +209,8 @@ def load_model_and_encoder():
     """Load the trained model and encoder."""
     try:
         import joblib
-        model = joblib.load('models/resilience_xgb_rfe_10.pkl')
-        encoder = joblib.load('models/archetype_encoder_rfe_10.pkl')
+        model = joblib.load('models/resilience_xgb_rfe_15.pkl')
+        encoder = joblib.load('models/archetype_encoder_rfe_15.pkl')
         return model, encoder
     except FileNotFoundError as e:
         st.error(f"❌ Model files not found: {e}")

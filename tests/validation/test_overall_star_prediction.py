@@ -282,6 +282,14 @@ def get_test_cases() -> List[OverallStarTestCase]:
             context="Age 30. MVP, All-Star, elite rim protection and scoring. Current usage 33.7%.",
             mechanism="Should show High Performance + Low Dependence despite injury history."
         ),
+        OverallStarTestCase(
+            name="Joel Embiid",
+            season="2018-19",
+            category="Confirmed Franchise Cornerstone",
+            expected_franchise_cornerstone=True,
+            context="Age 24. MVP candidate, elite rim pressure and scoring. First-team All-NBA despite limited games.",
+            mechanism="Should show High Performance + Low Dependence (self-created offense despite injury limitations)."
+        ),
 
         # ========== Category 2: Borderline/Questionable Cases ==========
         # These players might be Franchise Cornerstones but could be misclassified
@@ -313,6 +321,14 @@ def get_test_cases() -> List[OverallStarTestCase]:
             mechanism="Should show High Performance but High Dependence (system merchant)."
         ),
         OverallStarTestCase(
+            name="Jordan Poole",
+            season="2021-22",
+            category="Not Franchise Cornerstone",
+            expected_franchise_cornerstone=False,
+            context="Age 23. High usage breakout but system merchant. Reliant on Curry gravity for efficiency.",
+            mechanism="Should show High Performance but High Dependence (system merchant despite high usage)."
+        ),
+        OverallStarTestCase(
             name="Domantas Sabonis",
             season="2023-24",
             category="Not Franchise Cornerstone",
@@ -327,6 +343,62 @@ def get_test_cases() -> List[OverallStarTestCase]:
             expected_franchise_cornerstone=False,
             context="Age 29. Good scorer but playoff struggles. Current usage 27.6%.",
             mechanism="Should show Moderate Performance + Moderate/High Dependence."
+        ),
+        OverallStarTestCase(
+            name="DeMar DeRozan",
+            season="2015-16",
+            category="Not Franchise Cornerstone",
+            expected_franchise_cornerstone=False,
+            context="Age 26. All-Star, reliable scorer but not franchise cornerstone. High individual performance but lacks elite portability.",
+            mechanism="Should show High Performance but Moderate/High Dependence (not truly portable at franchise level)."
+        ),
+        OverallStarTestCase(
+            name="DeMar DeRozan",
+            season="2016-17",
+            category="Not Franchise Cornerstone",
+            expected_franchise_cornerstone=False,
+            context="Age 27. All-Star, consistent scorer but not franchise cornerstone. Good but not elite in terms of franchise impact.",
+            mechanism="Should show High Performance but Moderate/High Dependence (solid contributor but not transformative)."
+        ),
+        OverallStarTestCase(
+            name="Karl-Anthony Towns",
+            season="2021-22",
+            category="Not Franchise Cornerstone",
+            expected_franchise_cornerstone=False,
+            context="Age 26. Elite regular season stats but playoff struggles. High volume scorer but lacks creation volume and resilience.",
+            mechanism="Should show Moderate Performance with lack of stress vectors needed for playoff success."
+        ),
+        OverallStarTestCase(
+            name="Karl-Anthony Towns",
+            season="2022-23",
+            category="Not Franchise Cornerstone",
+            expected_franchise_cornerstone=False,
+            context="Age 27. Elite regular season stats but playoff fragility persists. High volume scorer but inconsistent creation.",
+            mechanism="Should show Moderate Performance with persistent lack of playoff resilience and creation volume."
+        ),
+        OverallStarTestCase(
+            name="Karl-Anthony Towns",
+            season="2023-24",
+            category="Not Franchise Cornerstone",
+            expected_franchise_cornerstone=False,
+            context="Age 28. High usage scorer but playoff performance gap remains. Lacks true franchise cornerstone creation volume.",
+            mechanism="Should show Moderate Performance with continued lack of stress vectors needed for playoff success."
+        ),
+        OverallStarTestCase(
+            name="Ben Simmons",
+            season="2018-19",
+            category="Not Franchise Cornerstone",
+            expected_franchise_cornerstone=False,
+            context="Age 22. Rookie All-Star, elite passer and rebounder but shooting deficiency. Abdication Tax should trigger.",
+            mechanism="Should show Low Performance due to creation tax viability (shooting) and leverage issues (passivity)."
+        ),
+        OverallStarTestCase(
+            name="Ben Simmons",
+            season="2020-21",
+            category="Not Franchise Cornerstone",
+            expected_franchise_cornerstone=False,
+            context="Age 24. Continued struggles with shooting and creation. Hawks series collapse. Fear of free throws.",
+            mechanism="Should show Low Performance with persistent creation tax issues and Abdication Tax (negative leverage)."
         ),
 
         # ========== Category 4: Role Players (Depth/Avoid) ==========
@@ -356,6 +428,22 @@ def get_test_cases() -> List[OverallStarTestCase]:
             category="Confirmed Franchise Cornerstone",
             expected_franchise_cornerstone=True,
             context="Age 30. MVP, elite playmaker and defender. Multiple All-Star.",
+            mechanism="Should show High Performance + Low Dependence (primary facilitator)."
+        ),
+        OverallStarTestCase(
+            name="Chris Paul",
+            season="2016-17",
+            category="Confirmed Franchise Cornerstone",
+            expected_franchise_cornerstone=True,
+            context="Age 31. MVP candidate, elite playmaker and defender. All-Star, consistent excellence.",
+            mechanism="Should show High Performance + Low Dependence (primary facilitator)."
+        ),
+        OverallStarTestCase(
+            name="Chris Paul",
+            season="2017-18",
+            category="Confirmed Franchise Cornerstone",
+            expected_franchise_cornerstone=True,
+            context="Age 32. MVP candidate, elite playmaker and defender. All-Star, peak performance.",
             mechanism="Should show High Performance + Low Dependence (primary facilitator)."
         ),
         OverallStarTestCase(
@@ -405,6 +493,14 @@ def get_test_cases() -> List[OverallStarTestCase]:
             expected_franchise_cornerstone=True,
             context="Age 31. MVP, dominant all-around player. Elite in every category.",
             mechanism="Should show High Performance + Low Dependence (versatile superstar)."
+        ),
+        OverallStarTestCase(
+            name="Kawhi Leonard",
+            season="2015-16",
+            category="Confirmed Franchise Cornerstone",
+            expected_franchise_cornerstone=True,
+            context="Age 24. Finals MVP, elite two-way player. Defensive player of the year.",
+            mechanism="Should show High Performance + Low Dependence (versatile forward with elite defense)."
         ),
 
         # 2024-25 Season Cases
