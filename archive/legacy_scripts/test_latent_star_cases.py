@@ -31,12 +31,9 @@ import logging
 from typing import Dict, List, Optional
 import joblib
 
-# Add scripts directory to path for imports (relative to project root)
-project_root = Path(__file__).parent.parent  # Go up from archive/legacy_scripts to project root
-sys.path.insert(0, str(project_root / "src" / "nba_data" / "scripts"))
-sys.path.insert(0, str(project_root / "src"))
-
-from src.nba_data.scripts.predict_conditional_archetype import ConditionalArchetypePredictor
+# Add scripts directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent / "src" / "nba_data" / "scripts"))
+from predict_conditional_archetype import ConditionalArchetypePredictor
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
