@@ -808,26 +808,59 @@ class StressVectorEngine:
             logger.warning(f"Pressure features file not found at {pressure_path}")
             logger.warning("Dependence Score calculation may have limited coverage without RS_OPEN_SHOT_FREQUENCY")
         
-        # PHASE 1: Calculate Dependence Scores for all historical data
-        # Drop any existing NaN columns from previous failed attempts (they'll be recalculated)
-        cols_to_drop = ['DEPENDENCE_SCORE', 'ASSISTED_FGM_PCT', 'OPEN_SHOT_FREQUENCY', 'SELF_CREATED_USAGE_RATIO']
-        for col in cols_to_drop:
-            if col in final_df.columns:
-                final_df = final_df.drop(columns=[col])
+
+        # PHASE 1.5: Integrate SHOT_QUALITY_GENERATION_DELTA (Empty Calories Detector)
+        # THIS IS NOW THE SINGLE SOURCE OF TRUTH.
+        # It is merged *before* the dependence calculation.
+        logger.info("Integrating SHOT_QUALITY_GENERATION_DELTA feature...")
+        shot_quality_path = self.results_dir / "shot_quality_generation_delta.csv"
+        if shot_quality_path.exists():
+            df_shot_quality = pd.read_csv(shot_quality_path)
+
+            # Drop the column if it already exists to avoid merge errors
+            if 'SHOT_QUALITY_GENERATION_DELTA' in final_df.columns:
+                final_df = final_df.drop(columns=['SHOT_QUALITY_GENERATION_DELTA'])
+
+            final_df = pd.merge(
+                final_df,
+                df_shot_quality[['PLAYER_ID', 'SEASON', 'SHOT_QUALITY_GENERATION_DELTA']],
+                on=['PLAYER_ID', 'SEASON'],
+                how='left'
+            )
+            shot_quality_count = final_df['SHOT_QUALITY_GENERATION_DELTA'].notna().sum()
+            logger.info(f"Merged SHOT_QUALITY_GENERATION_DELTA: {shot_quality_count}/{len(final_df)} rows have the feature")
+        else:
+            logger.warning(f"SHOT_QUALITY_GENERATION_DELTA file not found at {shot_quality_path}")
+            final_df['SHOT_QUALITY_GENERATION_DELTA'] = np.nan
+
+        # DEBUG: Verify Poole's data before dependence calc
+        poole_check = final_df[
+            (final_df['PLAYER_NAME'] == 'Jordan Poole') & 
+            (final_df['SEASON'] == '2021-22')
+        ]
+        if not poole_check.empty:
+            val = poole_check.iloc[0]['SHOT_QUALITY_GENERATION_DELTA']
+            logger.info(f"DEBUG CHECK: Poole 2021-22 SHOT_QUALITY_DELTA entering dependence calc: {val}")
+            # Expectation: Should be approx -0.047
         
+        # This is now the single source of truth and is called *after* SHOT_QUALITY_GENERATION_DELTA is merged.
         logger.info("Calculating Dependence Scores for all player-seasons...")
         try:
+            # Drop any existing dependence score columns to ensure they are recalculated
+            dep_cols_to_drop = ['DEPENDENCE_SCORE', 'PHYSICALITY_SCORE', 'SKILL_SCORE']
+            for col in dep_cols_to_drop:
+                if col in final_df.columns:
+                    final_df = final_df.drop(columns=[col])
+
             final_df = calculate_dependence_scores_batch(final_df)
             logger.info(f"Successfully calculated Dependence Scores for {final_df['DEPENDENCE_SCORE'].notna().sum()}/{len(final_df)} player-seasons")
         except Exception as e:
             logger.error(f"Error calculating Dependence Scores: {e}", exc_info=True)
             logger.warning("Continuing without Dependence Scores - will be calculated during inference")
-            # Add empty columns to maintain structure (only if calculation completely fails)
             final_df['DEPENDENCE_SCORE'] = np.nan
-            final_df['ASSISTED_FGM_PCT'] = np.nan
-            final_df['OPEN_SHOT_FREQUENCY'] = np.nan
-            final_df['SELF_CREATED_USAGE_RATIO'] = np.nan
-
+            final_df['PHYSICALITY_SCORE'] = np.nan
+            final_df['SKILL_SCORE'] = np.nan
+            
         # PHASE 1: DEVELOPMENT STAGE FEATURES
         # These teach the model that different player archetypes require different evaluation rigor
 
@@ -857,23 +890,6 @@ class StressVectorEngine:
             final_df['PHYSICAL_DOMINANCE_RATIO'] = np.nan
             logger.warning("RS_PRESSURE_APPETITE or EFG_ISO_WEIGHTED not found - PHYSICAL_DOMINANCE_RATIO set to NaN")
 
-        # PHASE 1.5: Integrate SHOT_QUALITY_GENERATION_DELTA (Empty Calories Detector)
-        logger.info("Integrating SHOT_QUALITY_GENERATION_DELTA feature...")
-        shot_quality_path = self.results_dir / "shot_quality_generation_delta.csv"
-        if shot_quality_path.exists():
-            df_shot_quality = pd.read_csv(shot_quality_path)
-
-            final_df = pd.merge(
-                final_df,
-                df_shot_quality[['PLAYER_ID', 'SEASON', 'SHOT_QUALITY_GENERATION_DELTA']],
-                on=['PLAYER_ID', 'SEASON'],
-                how='left'
-            )
-            shot_quality_count = final_df['SHOT_QUALITY_GENERATION_DELTA'].notna().sum()
-            logger.info(f"Merged SHOT_QUALITY_GENERATION_DELTA: {shot_quality_count}/{len(final_df)} rows have the feature")
-        else:
-            logger.warning(f"SHOT_QUALITY_GENERATION_DELTA file not found at {shot_quality_path}")
-            final_df['SHOT_QUALITY_GENERATION_DELTA'] = np.nan
 
         # Clean up columns
         phoenix_cols = [

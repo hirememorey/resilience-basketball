@@ -25,6 +25,11 @@ def calculate_dependence_scores_batch(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
 
+    # CRITICAL: Enforce Single Source of Truth
+    # The dataframe MUST already contain SHOT_QUALITY_GENERATION_DELTA from the upstream pipeline.
+    if 'SHOT_QUALITY_GENERATION_DELTA' not in df.columns:
+        raise ValueError("Critical Feature Missing: SHOT_QUALITY_GENERATION_DELTA must be present in input DataFrame before calculating dependence.")
+
     # We need to compute PHYSICALITY_SCORE and SKILL_SCORE for each row
     # We can use apply() for simplicity and readability, as this matches the row-based logic
     
@@ -118,16 +123,12 @@ def _calculate_skill_score(row: pd.Series) -> float:
     if np.isnan(creation_tax): creation_tax = -0.20
     if np.isnan(efg_iso): efg_iso = 0.40
     
-    # The Empty Calories Constraint:
-    # If SHOT_QUALITY_GENERATION_DELTA < 0.0 (Negative), SKILL_SCORE is Hard Capped at 0.1
-    if sq_delta < 0.0:
-        return 0.1
-        
+    # The Empty Calories Constraint is applied *after* the initial calculation.
+    
     # Normalize Inputs
     
     # Elite SQ Delta: 0.06 (Normalize 0-0.06)
-    norm_sq = min(sq_delta / ELITE_SQ_DELTA, 1.0)
-    if norm_sq < 0: norm_sq = 0.0 # Should be covered by constraint but safety first
+    norm_sq = min(sq_delta / ELITE_SQ_DELTA, 1.0) if sq_delta > 0 else 0.0
     
     # Elite Creation Tax: 0.0 (Neutral or better)
     # Map from [MIN_CREATION_TAX, ELITE_CREATION_TAX] to [0, 1]
@@ -146,12 +147,19 @@ def _calculate_skill_score(row: pd.Series) -> float:
         norm_efg = (efg_iso - MIN_EFG_ISO) / (ELITE_EFG_ISO - MIN_EFG_ISO)
         norm_efg = max(0.0, min(1.0, norm_efg))
     
-    # Weights: SQ Delta (60%) + Creation Tax (20%) + EFG (20%)
-    score = (norm_sq * 0.60) + (norm_tax * 0.20) + (norm_efg * 0.20)
+    # Weights: Creation Tax (60%) + SQ Delta (20%) + EFG (20%)
+    # PHYSICS CORRECTION: Prioritize Resilience (Tax) over Production (Delta)
+    skill_score = (norm_tax * 0.60) + (norm_sq * 0.20) + (norm_efg * 0.20)
 
-    # Elite Delta Bonus: If SQ Delta is elite, give a massive boost
+    # Elite Delta Bonus: If SQ Delta is elite, give a boost
+    # Reduced impact to prevent overriding resilience failures
     if sq_delta > 0.04:
-        score += 0.2
+        skill_score += 0.1
     
-    
-    return max(0.0, min(1.0, score))
+    # The Empty Calories Constraint:
+    # If SHOT_QUALITY_GENERATION_DELTA < 0.0 (Negative), SKILL_SCORE is Hard Capped at 0.1
+    # This forces Dependence Score to be at least 0.90 (High Dependence)
+    if sq_delta < 0.0:
+        skill_score = min(skill_score, 0.10)
+        
+    return max(0.0, min(1.0, skill_score))

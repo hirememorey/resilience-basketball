@@ -160,6 +160,7 @@ def calculate_dependence_for_all(df_players: pd.DataFrame) -> pd.DataFrame:
                 'DEPENDENCE_SCORE': dependence_score,
                 'PHYSICALITY_SCORE': physicality_score,
                 'SKILL_SCORE': skill_score,
+                'SHOT_QUALITY_GENERATION_DELTA': row.get('SHOT_QUALITY_GENERATION_DELTA'), # Pass through for debugging
                 'dependence_success': dependence_score is not None
             }
 

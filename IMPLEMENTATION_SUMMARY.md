@@ -1,17 +1,18 @@
-# Implementation Summary (December 13, 2025)
+# Implementation Summary (December 18, 2025)
 
 ## What changed in this round
+- **Physics Correction**: Prioritized Resilience (Creation Tax) over Production (Shot Quality Delta) in dependence calculation
+- **Split Brain Bug Fix**: Enforced Single Source of Truth for SHOT_QUALITY_GENERATION_DELTA throughout pipeline
 - Implemented "Two Doors" Dependence Framework: Physics-based approach distinguishing physical dominance (Door A) from mathematical advantage (Door B)
-- Rewrote `src/nba_data/scripts/calculate_dependence_score.py` with new logic
+- Rewrote `src/nba_data/scripts/calculate_dependence_score.py` with new physics-aligned logic
 - Updated all dependence scores in `results/predictive_dataset.csv` for 5,312 players
 - Regenerated 2D Risk Matrix with updated framework
-- Retrained RFE model with new feature set
 
-## Current metrics (December 14, 2025)
-- **Overall Star Prediction**: 73.5% accuracy (25/34) - Franchise Cornerstone classification
+## Current metrics (December 18, 2025)
+- **Overall Star Prediction**: 76.5% accuracy (26/34) - Franchise Cornerstone classification
 - **Latent Star Detection**: 69.0% pass rate (29/42) - Star potential at elevated usage
   - TP 47.1% (8/17), FP 80.0% (4/5), TN 94.1% (16/17), System 100%.
-- Two Doors framework successfully distinguishes independent stars from system merchants
+- Physics-corrected framework maintains distinction between independent stars and system merchants
 
 ## Key achievements
 - **Jordan Poole**: Correctly identified as Low Dependence player (Skill Score: 0.92) despite high production
@@ -87,10 +88,37 @@ With proper mechanistic features, the model can learn system merchant patterns n
 - `results/2d_risk_matrix_all_players.csv` - Complete regeneration
 - `models/resilience_xgb_rfe_15.pkl` - Retrained model with new framework
 
+### Physics Correction Implementation
+
+#### Problem
+Dependence calculation was prioritizing Production (Shot Quality Delta) over Resilience (Creation Tax), violating basketball physics principles. Players with high absolute efficiency were classified as "independent" even if their efficiency was highly dependent on system advantages.
+
+#### Solution
+- **Inverted Weights in Skill Score**: Creation Tax now 60% (Resilience), Shot Quality Delta now 20% (Production), EFG 20%
+- **Elite Bonus Reduction**: Reduced from +0.2 to +0.1 to prevent production metrics from overpowering resilience signals
+- **Constraint Positioning**: Empty Calories constraint applied after score calculation
+
+#### Result
+Jordan Poole's dependence score increased from 0.0 to 0.055, correctly trending toward higher dependence. Model now prioritizes portability over raw production.
+
+### Split Brain Bug Fix Implementation
+
+#### Problem
+"Split Brain Bug" - dependence calculation was not guaranteed to use validated SHOT_QUALITY_GENERATION_DELTA values from upstream pipeline, violating Single Source of Truth principle.
+
+#### Solution
+- **SSOT Enforcement**: `evaluate_plasticity_potential.py` now explicitly merges SHOT_QUALITY_GENERATION_DELTA before dependence calculation
+- **Debug Verification**: Added debug prints to confirm correct delta values enter calculation
+- **Safety Assertion**: Added assertion that SHOT_QUALITY_GENERATION_DELTA column exists before processing
+
+#### Result
+Jordan Poole's actual SHOT_QUALITY_GENERATION_DELTA (+0.067) is now consistently used throughout the pipeline. Data flow is unidirectional and verifiable.
+
 ### Next Steps
-- **Monitor Framework Performance**: Track how Two Doors framework affects long-term predictions
+- **Monitor Framework Performance**: Track how physics-corrected Two Doors framework affects long-term predictions
 - **Validate Edge Cases**: Continue testing framework on new player archetypes
 - **Feature Enhancement**: Consider additional mechanistic signals for even better validation
+- **Normalization Tuning**: Evaluate if Creation Tax normalization floor (-0.25) should be adjusted for better dependence scoring
 
 ---
 

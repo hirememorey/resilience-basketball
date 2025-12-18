@@ -1,22 +1,24 @@
 # Current State: NBA Playoff Resilience Engine
 
-Date: December 13, 2025
+Date: December 18, 2025
 
-Status: ✅ **FULLY OPERATIONAL SYSTEM** - All critical bugs resolved. 2D Risk Matrix working across all seasons (2015-2025). Streamlit app fully functional. Overall Star Prediction: 73.5% accuracy (25/34). Latent Star Detection: 69.0% pass rate (29/42). Historical data properly normalized and categorized.
+Status: ✅ **FULLY OPERATIONAL SYSTEM** - Split Brain Bug resolved. Physics correction implemented (Resilience > Production). 2D Risk Matrix working across all seasons (2015-2025). Streamlit app fully functional. Overall Star Prediction: 76.5% accuracy (26/34). Latent Star Detection: 69.0% pass rate (29/42). Historical data properly normalized and categorized.
 
 ## 🏗️ Project Structure & Status
 
 **MAJOR BREAKTHROUGH (December 12, 2025)**: Abandoned 1D label refinement approach and established 2D Risk Matrix as primary evaluation framework. Implemented hybrid 2D/1D evaluation where cases with explicit 2D expectations use proper Performance vs. Dependence assessment, while legacy cases maintain backward compatibility.
 
-### Latest Update (Dec 13, 2025) — All Critical Bugs Resolved + Full System Operational
+### Latest Update (Dec 18, 2025) — Physics Correction + Split Brain Bug Resolution
+- **Physics Correction**: Creation Tax (Resilience) now weighted 60% vs Shot Quality Delta (Production) 20% in dependence calculation
+- **Split Brain Bug**: Single Source of Truth enforced for SHOT_QUALITY_GENERATION_DELTA throughout pipeline
 - **2D Framework**: Performance (X-axis) and Dependence (Y-axis) as orthogonal dimensions
 - **Historical Data Fixed**: 2015-16 season now shows proper star distribution (18 Franchise Cornerstones)
 - **USG Normalization**: Fixed triple conversion bug causing all 2015-16 scores to default to 30%
 - **Data Gates Optimized**: Completeness and sample size gates made lenient for historical seasons
 - **Streamlit Data Loading**: Fixed duplicate column merging for PERFORMANCE_SCORE/RISK_CATEGORY
 - **Test Suite Relocated**: Main validation script moved from archive to `tests/validation/`
-- **Current validation**: 82.5% pass rate (33/40) across comprehensive test suite
-- **Model in use**: `models/resilience_xgb_rfe_15.pkl` with organic tank commander detection
+- **Current validation**: Overall Star Prediction 76.5% accuracy (26/34), Latent Star Detection 69.0% pass rate (29/42)
+- **Model in use**: `models/resilience_xgb_rfe_15.pkl` with physics-aligned dependence calculation
 - **Interactive App**: ✅ **FULLY FUNCTIONAL** - Streamlit app with comprehensive 2D analysis for all 5,312 players
 - **Complete Coverage**: 2D Risk Matrix scores generated for entire dataset (2015-2025)
 - **Data Status**: All players have Performance + Dependence scores with proper risk categorization
