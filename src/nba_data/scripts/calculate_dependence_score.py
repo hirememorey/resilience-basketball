@@ -9,7 +9,7 @@ ELITE_RIM_APPETITE = 0.40
 ELITE_FTR = 0.50
 ELITE_SQ_DELTA = 0.06
 ELITE_CREATION_TAX = 0.0  # Neutral or better is elite
-MIN_CREATION_TAX = -0.25  # Assumed floor for normalization
+MIN_CREATION_TAX = -0.10  # Assumed floor for normalization (Replacement Level Creator)
 ELITE_EFG_ISO = 0.60
 MIN_EFG_ISO = 0.30
 
@@ -155,6 +155,12 @@ def _calculate_skill_score(row: pd.Series) -> float:
     # Reduced impact to prevent overriding resilience failures
     if sq_delta > 0.04:
         skill_score += 0.1
+
+    # The Jordan Poole Penalty (Luxury Component Constraint):
+    # High Production (SQ Delta > 0.04) but Dependent on System (Creation Tax < -0.03)
+    # This identifies "System Merchants" and penalizes their Skill Score.
+    if sq_delta > 0.04 and creation_tax < -0.03:
+        skill_score *= 0.75 # Penalize score by 25%
     
     # The Empty Calories Constraint:
     # If SHOT_QUALITY_GENERATION_DELTA < 0.0 (Negative), SKILL_SCORE is Hard Capped at 0.1

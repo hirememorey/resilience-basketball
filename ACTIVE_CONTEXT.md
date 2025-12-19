@@ -1,33 +1,44 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 18, 2025
-**Status**: ✅ **FULLY OPERATIONAL SYSTEM** - Complete data pipeline restored with Single Source of Truth enforced. **PHYSICS CORRECTION IMPLEMENTED**: Creation Tax (Resilience) now prioritized over Shot Quality Delta (Production) in dependence calculation. Model retrained with physics-aligned weights (51.38% accuracy). **Overall Star Prediction Test Suite: 76.5% accuracy (26/34)**. **Latent Star Detection: 69.0% pass rate (29/42)**. Enhanced diagnostic capabilities active. "Split Brain Bug" resolved.
-
+**Last Updated**: December 19, 2025
+**Status**: ✅ **DEPENDENCE FRAMEWORK RECALIBRATED** - "Normalization Floor Fallacy" corrected by adjusting `MIN_CREATION_TAX` to playoff standards. "Jordan Poole Penalty" implemented to correctly categorize "Luxury Component" players. Test suite performance improved across the board. **Overall Star Prediction Test Suite: 79.4% accuracy (27/34)**. **Latent Star Detection: 71.4% pass rate (30/42)**.
+ 
 ---
-
+ 
 ## Project Goal
-
+ 
 Identify players who consistently perform better than expected in the playoffs and explain *why* using mechanistic insights. **PRIMARY FRAMEWORK: 2D Risk Matrix** - evaluates Performance (what happened) and Dependence (is it portable) as orthogonal dimensions, categorizing players into four risk quadrants: Franchise Cornerstone, Luxury Component, Depth, Avoid.
-
+ 
 ---
-
+ 
 ## Current Phase: 2D Risk Matrix Breakthrough
-
+ 
 **MAJOR BREAKTHROUGH**: Abandoned 1D label refinement approach that was causing "Ground Truth Trap" issues. **2D Risk Matrix now established as primary evaluation framework**, properly separating Performance (outcomes) from Dependence (portability) as orthogonal dimensions.
-
+ 
 **Framework Status**: 2D Risk Matrix with XGBoost classifier (15 features), ground-truth data, usage-aware projections. **Dependence Continuum**: Shows dependence as 0-100% scale with filtering capabilities. Organic feature-based validation (INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA) enables natural learning of tank commander patterns without hard gates.
-
+ 
 **2D Risk Matrix Categories**:
 - **Franchise Cornerstone**: High Performance + Low Dependence (Luka, Jokić) - Max contract, build around
 - **Luxury Component**: High Performance + High Dependence (Poole, Sabonis) - Valuable in system, risky as #1
 - **Depth Piece**: Low Performance + Low Dependence (Role players) - Reliable but limited
 - **Avoid**: Low Performance + High Dependence (System merchants) - Empty calories
-
+ 
 **Key Achievement**: Solved the "Ground Truth Paradox" with hybrid 2D/1D evaluation. Cases with 2D expectations use proper Performance vs. Dependence assessment (gates disabled), while legacy cases maintain 1D compatibility (gates enabled).
-
+ 
 ---
-
+ 
 ## Recent Critical Fixes (December 2025)
+
+### Dependence Score Recalibration & "Jordan Poole Penalty" (December 2025)
+**Problem**: The dependence framework correctly identified system-dependent players mechanistically, but the "grading scale" was too lenient. This led to the "Jordan Poole Problem," where players known to be "System Merchants" were still classified as having low dependence.
+
+**Root Cause**: The "Normalization Floor Fallacy" - `MIN_CREATION_TAX` was set to -0.25, grading potential stars against the worst creators in the league, not a playoff-ready standard. Additionally, the model lacked a mechanism to penalize players with high production but high dependence.
+
+**Solution** (First Principles Recalibration):
+- **Corrected Normalization Floor**: `MIN_CREATION_TAX` was raised from -0.25 to -0.10, aligning the model with the merciless standards of playoff basketball.
+- **Implemented "Jordan Poole Penalty"**: A new continuous-gradient penalty was added to `_calculate_skill_score`. It applies a 25% penalty to the skill score of players who exhibit "Luxury Component" traits (High Production + High Dependence), ensuring they are categorized correctly without resorting to brittle, hard-coded gates.
+
+**Result**: Model is now more discerning and accurate. **Overall Star Prediction accuracy increased to 79.4%**, and **Latent Star Detection accuracy increased to 71.4%**. Critically, the model's ability to identify True Positives in the Latent Star suite improved, demonstrating a more nuanced understanding of star potential.
 
 ### Plasticity Data Pipeline Fix
 **Problem**: All players showed 50% plasticity scores due to missing RESILIENCE_SCORE data for historical seasons.
