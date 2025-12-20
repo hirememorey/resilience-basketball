@@ -44,43 +44,48 @@ class RFEModelTrainer:
         """Load RFE-selected features from comparison CSV."""
         rfe_path = self.results_dir / "rfe_feature_count_comparison.csv"
         if not rfe_path.exists():
-            raise FileNotFoundError(f"RFE results not found at {rfe_path}")
+            # If RFE results don't exist, we might need to rely on a default list or fail
+            # For now, let's assume we can proceed if we force our critical features
+            logger.warning(f"RFE results not found at {rfe_path}. Using empty base list.")
+            features = []
+        else:
+            df_rfe = pd.read_csv(rfe_path)
+            row = df_rfe[df_rfe['n_features'] == n_features]
+            
+            if row.empty:
+                # Fallback to nearest feature count or defaults
+                logger.warning(f"No RFE results found for {n_features} features. Using best available.")
+                if not df_rfe.empty:
+                    features_str = df_rfe.iloc[0]['features']
+                    features = ast.literal_eval(features_str)
+                else:
+                    features = []
+            else:
+                # Parse the features list from string
+                features_str = row.iloc[0]['features']
+                features = ast.literal_eval(features_str)
         
-        df_rfe = pd.read_csv(rfe_path)
-        row = df_rfe[df_rfe['n_features'] == n_features]
+        # [NEW] FORCE INCLUSION: The "Physics-Based Truth Tellers" (Dec 21, 2025)
+        # These features are direct simulations of playoff reality, not proxies.
+        # We force their inclusion because they represent our core causal hypothesis.
+        # CRITICAL: Added friction coefficients to the list of features to include
+        critical_features = [
+            'PROJECTED_PLAYOFF_OUTPUT', # The "Remainder" after applying playoff friction.
+            'PROJECTED_PLAYOFF_PPS',    # The projected efficiency component of the Remainder.
+            'FRICTION_COEFF_ISO',       # The friction coefficient for isolation
+            'FRICTION_COEFF_0_DRIBBLE', # The friction coefficient for off-ball
+            'SHOT_QUALITY_GENERATION_DELTA' # Existing critical feature - keep.
+        ]
         
-        if row.empty:
-            raise ValueError(f"No RFE results found for {n_features} features")
-        
-        # Parse the features list from string
-        features_str = row.iloc[0]['features']
-        features = ast.literal_eval(features_str)
-        
-        # [NEW] FORCE INCLUSION: The "Truth Tellers" (Dec 12, 2025)
-        # These features are critical for distinguishing Empty Calories from True Stars
-        # INEFFICIENT_VOLUME_SCORE: (CREATION_VOLUME_RATIO * Negative_CREATION_TAX) - massive negative signal for Tank Commanders
-        # SHOT_QUALITY_GENERATION_DELTA: Measures if player generates easy shots or just hard shots - exposes Empty Calorie creators
-        critical_features = ['INEFFICIENT_VOLUME_SCORE', 'SHOT_QUALITY_GENERATION_DELTA']
-
         for feat in critical_features:
             if feat not in features:
-                # Replace the last (least important) feature to maintain count, or just append
-                if len(features) >= n_features:
-                    features.pop()
                 features.append(feat)
                 logger.info(f"Force-included critical feature: {feat}")
 
-        # Legacy: Force include SHOT_QUALITY_GENERATION_DELTA if available (Dec 8, 2025)
-        # This feature reduces reliance on sample weighting and should always be included
-        if 'SHOT_QUALITY_GENERATION_DELTA' not in features:
-            # Remove lowest importance feature if we're at the limit
-            if len(features) >= n_features:
-                # Keep top n_features-1, add SHOT_QUALITY_GENERATION_DELTA
-                features = features[:n_features-1]
-            features.append('SHOT_QUALITY_GENERATION_DELTA')
-            logger.info(f"Added SHOT_QUALITY_GENERATION_DELTA to feature set (reduces reliance on sample weighting)")
+        # De-duplicate in case RFE already found them
+        features = sorted(list(set(features)))
         
-        logger.info(f"Loaded {len(features)} RFE-selected features (including SHOT_QUALITY_GENERATION_DELTA):")
+        logger.info(f"Loaded {len(features)} RFE-selected features (including Critical Features):")
         for i, feat in enumerate(features, 1):
             logger.info(f"  {i}. {feat}")
         
@@ -88,13 +93,21 @@ class RFEModelTrainer:
     
     def load_and_merge_data(self):
         """Load features and labels, merge them into a training set (same as train_predictive_model.py)."""
-        logger.info("Loading datasets...")
-        
-        # Features
-        feature_path = self.results_dir / "predictive_dataset.csv"
+        # [NEW] Physics-Based Features (Dec 21, 2025)
+        # We are moving from a collection of proxy CSVs to a single, unified source of truth.
+        feature_path = self.results_dir / "predictive_dataset_with_friction.csv"
         if not feature_path.exists():
-            raise FileNotFoundError(f"Features file not found at {feature_path}")
+            # Fallback to the old file if the new one doesn't exist yet (for CI/CD or partial runs)
+            old_feature_path = self.results_dir / "predictive_dataset.csv"
+            logger.warning(f"Unified features file with friction not found at {feature_path}.")
+            if old_feature_path.exists():
+                logger.warning(f"Falling back to {old_feature_path}. Friction features will be missing.")
+                feature_path = old_feature_path
+            else:
+                raise FileNotFoundError(f"No features file found. Please run 'evaluate_plasticity_potential.py' first.")
+                
         df_features = pd.read_csv(feature_path)
+        logger.info(f"Loaded Unified Features from {feature_path}: {len(df_features)} rows.")
         
         # Targets
         target_path = self.results_dir / "resilience_archetypes.csv"
@@ -102,52 +115,7 @@ class RFEModelTrainer:
             raise FileNotFoundError(f"Target labels not found at {target_path}")
         df_targets = pd.read_csv(target_path)
         
-        # Pressure Features
-        pressure_path = self.results_dir / "pressure_features.csv"
-        if pressure_path.exists():
-            df_pressure = pd.read_csv(pressure_path)
-            logger.info(f"Loaded Pressure Features: {len(df_pressure)} rows.")
-        else:
-            df_pressure = pd.DataFrame()
-            logger.warning("No pressure features file found.")
-
-        # Physicality Features
-        physicality_path = self.results_dir / "physicality_features.csv"
-        if physicality_path.exists():
-            df_physicality = pd.read_csv(physicality_path)
-            logger.info(f"Loaded Physicality Features: {len(df_physicality)} rows.")
-        else:
-            df_physicality = pd.DataFrame()
-            logger.warning("No physicality features file found.")
-        
-        # Rim Pressure Features
-        rim_path = self.results_dir / "rim_pressure_features.csv"
-        if rim_path.exists():
-            df_rim = pd.read_csv(rim_path)
-            logger.info(f"Loaded Rim Pressure Features: {len(df_rim)} rows.")
-        else:
-            df_rim = pd.DataFrame()
-            logger.warning("No rim pressure features file found.")
-        
-        # Trajectory Features
-        trajectory_path = self.results_dir / "trajectory_features.csv"
-        if trajectory_path.exists():
-            df_trajectory = pd.read_csv(trajectory_path)
-            logger.info(f"Loaded Trajectory Features: {len(df_trajectory)} rows.")
-        else:
-            df_trajectory = pd.DataFrame()
-            logger.warning("No trajectory features file found.")
-        
-        # Gate Features
-        gate_path = self.results_dir / "gate_features.csv"
-        if gate_path.exists():
-            df_gate = pd.read_csv(gate_path)
-            logger.info(f"Loaded Gate Features: {len(df_gate)} rows.")
-        else:
-            df_gate = pd.DataFrame()
-            logger.warning("No gate features file found.")
-        
-        # Merge
+        # Merge targets into the unified feature set
         df_targets.columns = [c.upper() for c in df_targets.columns]
         
         df_merged = pd.merge(
@@ -156,84 +124,6 @@ class RFEModelTrainer:
             on=['PLAYER_NAME', 'SEASON'],
             how='inner'
         )
-
-        # Merge with pressure features
-        if not df_pressure.empty:
-            df_merged = pd.merge(
-                df_merged,
-                df_pressure,
-                on=['PLAYER_ID', 'SEASON'],
-                how='left',
-                suffixes=('', '_pressure')
-            )
-            cols_to_drop = [c for c in df_merged.columns if '_pressure' in c]
-            df_merged = df_merged.drop(columns=cols_to_drop)
-            
-        # Merge with physicality features
-        if not df_physicality.empty:
-            df_merged = pd.merge(
-                df_merged,
-                df_physicality,
-                on=['PLAYER_NAME', 'SEASON'],
-                how='left',
-                suffixes=('', '_phys')
-            )
-            cols_to_drop = [c for c in df_merged.columns if '_phys' in c]
-            df_merged = df_merged.drop(columns=cols_to_drop)
-            
-        # Merge with rim pressure features
-        if not df_rim.empty:
-            df_merged = pd.merge(
-                df_merged,
-                df_rim,
-                on=['PLAYER_NAME', 'SEASON'],
-                how='left',
-                suffixes=('', '_rim')
-            )
-            cols_to_drop = [c for c in df_merged.columns if '_rim' in c]
-            df_merged = df_merged.drop(columns=cols_to_drop)
-            
-        # Merge with trajectory features
-        if not df_trajectory.empty:
-            df_merged = pd.merge(
-                df_merged,
-                df_trajectory,
-                on=['PLAYER_ID', 'SEASON'],
-                how='left',
-                suffixes=('', '_traj')
-            )
-            cols_to_drop = [c for c in df_merged.columns if '_traj' in c]
-            df_merged = df_merged.drop(columns=cols_to_drop)
-            
-        # Merge with gate features
-        if not df_gate.empty:
-            df_merged = pd.merge(
-                df_merged,
-                df_gate,
-                on=['PLAYER_ID', 'SEASON'],
-                how='left',
-                suffixes=('', '_gate')
-            )
-            cols_to_drop = [c for c in df_merged.columns if '_gate' in c]
-            df_merged = df_merged.drop(columns=cols_to_drop)
-        
-        # Merge with previous playoff features
-        prev_po_path = self.results_dir / "previous_playoff_features.csv"
-        if prev_po_path.exists():
-            df_prev_po = pd.read_csv(prev_po_path)
-            logger.info(f"Loaded Previous Playoff Features: {len(df_prev_po)} rows.")
-            
-            df_merged = pd.merge(
-                df_merged,
-                df_prev_po,
-                on=['PLAYER_ID', 'PLAYER_NAME', 'SEASON'],
-                how='left',
-                suffixes=('', '_prev_po')
-            )
-            cols_to_drop = [c for c in df_merged.columns if '_prev_po' in c]
-            df_merged = df_merged.drop(columns=cols_to_drop)
-        else:
-            logger.warning("No previous playoff features file found.")
         
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")
         
@@ -440,6 +330,9 @@ class RFEModelTrainer:
                     X[col] = X[col].fillna(0)
                 elif col in ['ABDICATION_RISK', 'PHYSICALITY_FLOOR', 'SELF_CREATED_FREQ', 'NEGATIVE_SIGNAL_COUNT']:
                     X[col] = X[col].fillna(0)
+                elif col == 'PROJECTED_USAGE_PPS' or col == 'PROJECTED_PLAYOFF_OUTPUT' or col == 'PROJECTED_PLAYOFF_PPS':
+                    # PROJECTED_USAGE_PPS and variants are critical features, 0 is a safe floor (meaning no contribution)
+                    X[col] = X[col].fillna(0)
                 else:
                     median_val = X[col].median()
                     X[col] = X[col].fillna(median_val)
@@ -620,10 +513,9 @@ class RFEModelTrainer:
 if __name__ == "__main__":
     trainer = RFEModelTrainer()
     
-    # Train with top 10 features
+    # Train with top 10 features (will actually be ~16 with force-included features)
     model, le, accuracy, importance = trainer.train(n_features=15)
     
-    logger.info(f"\n✅ Model trained with 10 features")
+    logger.info(f"\n✅ Model trained with features")
     logger.info(f"✅ Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
-    logger.info(f"✅ Model saved to: models/resilience_xgb_rfe_10.pkl")
-
+    logger.info(f"✅ Model saved to: models/resilience_xgb_rfe_15.pkl")

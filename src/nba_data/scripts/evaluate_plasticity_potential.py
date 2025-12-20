@@ -15,6 +15,8 @@ import logging
 import sys
 from pathlib import Path
 import time
+from concurrent.futures import ThreadPoolExecutor
+import argparse
 
 # Add project root to path
 sys.path.append(str(Path(__file__).resolve().parents[3]))
@@ -49,7 +51,7 @@ class StressVectorEngine:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.results_dir.mkdir(parents=True, exist_ok=True)
         
-    def fetch_zero_dribble_stats(self, season: str) -> pd.DataFrame:
+    def fetch_zero_dribble_stats(self, season: str, season_type: str = "Regular Season") -> pd.DataFrame:
         """
         Fetches and processes shooting statistics for '0 Dribble' attempts for a given season.
 
@@ -59,22 +61,23 @@ class StressVectorEngine:
 
         Args:
             season (str): The season to fetch data for (e.g., "2023-24").
+            season_type (str): "Regular Season" or "Playoffs"
 
         Returns:
             pd.DataFrame: A DataFrame containing zero-dribble shooting stats with columns
                           [PLAYER_ID, PLAYER_NAME, EFG_PCT_0_DRIBBLE, FGA_0_DRIBBLE].
                           Returns an empty DataFrame if the API call fails or returns no data.
         """
-        logger.info(f"  - Executing Phoenix Pipeline: Fetching 0 Dribble ground truth for {season}...")
+        logger.info(f"  - Executing Phoenix Pipeline: Fetching 0 Dribble ground truth for {season} ({season_type})...")
         try:
             zero_dribbles_data = self.client.get_league_player_shooting_stats(
                 season=season, 
                 dribble_range="0 Dribbles",
-                season_type="Regular Season"
+                season_type=season_type
             )
             
             if not zero_dribbles_data or 'resultSets' not in zero_dribbles_data or not zero_dribbles_data['resultSets']:
-                logger.warning(f"    -> No result sets found for 0 Dribble data in {season}.")
+                logger.warning(f"    -> No result sets found for 0 Dribble data in {season} ({season_type}).")
                 return pd.DataFrame()
 
             result_set = zero_dribbles_data['resultSets'][0]
@@ -82,7 +85,7 @@ class StressVectorEngine:
             rows = result_set.get('rowSet')
 
             if not headers or not rows:
-                logger.warning(f"    -> API call for 0 Dribbles in {season} was successful but returned no player data.")
+                logger.warning(f"    -> API call for 0 Dribbles in {season} ({season_type}) was successful but returned no player data.")
                 return pd.DataFrame()
 
             df_zero = pd.DataFrame(rows, columns=headers)
@@ -98,59 +101,84 @@ class StressVectorEngine:
             return df_zero
 
         except Exception as e:
-            logger.error(f"    -> ❌ Critical error in fetch_zero_dribble_stats for {season}: {e}", exc_info=True)
+            logger.error(f"    -> ❌ Critical error in fetch_zero_dribble_stats for {season} ({season_type}): {e}", exc_info=True)
             return pd.DataFrame()
         
-    def fetch_creation_metrics(self, season):
+    def fetch_creation_metrics(self, season, season_type="Regular Season"):
         """
         Vector 1: Self-Creation (The 'Creation Tax')
         Fetches shooting stats by Dribble Range.
         """
-        logger.info(f"Fetching Creation Metrics for {season}...")
+        logger.info(f"Fetching Creation Metrics for {season} ({season_type})...")
         
         try:
             # 1. Zero Dribbles (Dependent) - Using the new robust pipeline
-            df_zero = self.fetch_zero_dribble_stats(season)
-            if df_zero.empty:
+            df_zero = self.fetch_zero_dribble_stats(season, season_type=season_type)
+            if df_zero.empty and season_type == "Regular Season":
                 logger.error(f"Could not fetch essential 0-dribble data for {season}. Aborting creation metrics.")
                 return pd.DataFrame()
+            elif df_zero.empty:
+                 logger.warning(f"No 0-dribble data for {season} ({season_type}).")
 
             
             # 2. 3-6 Dribbles (Self-Created/Iso)
-            logger.info(f"  - Fetching 3-6 Dribbles for {season}...")
+            logger.info(f"  - Fetching 3-6 Dribbles for {season} ({season_type})...")
             iso_dribbles = self.client.get_league_player_shooting_stats(
                 season=season, 
-                dribble_range="3-6 Dribbles"
+                dribble_range="3-6 Dribbles",
+                season_type=season_type
             )
-            df_iso = pd.DataFrame(iso_dribbles['resultSets'][0]['rowSet'], 
-                                  columns=iso_dribbles['resultSets'][0]['headers'])
-            df_iso = df_iso[['PLAYER_ID', 'EFG_PCT', 'FGA']]
-            df_iso = df_iso.rename(columns={
-                'EFG_PCT': 'EFG_PCT_3_DRIBBLE',
-                'FGA': 'FGA_3_DRIBBLE'
-            })
+            
+            if iso_dribbles and 'resultSets' in iso_dribbles and iso_dribbles['resultSets']:
+                 df_iso = pd.DataFrame(iso_dribbles['resultSets'][0]['rowSet'], 
+                                      columns=iso_dribbles['resultSets'][0]['headers'])
+                 df_iso = df_iso[['PLAYER_ID', 'EFG_PCT', 'FGA']]
+                 df_iso = df_iso.rename(columns={
+                    'EFG_PCT': 'EFG_PCT_3_DRIBBLE',
+                    'FGA': 'FGA_3_DRIBBLE'
+                 })
+            else:
+                 df_iso = pd.DataFrame(columns=['PLAYER_ID', 'EFG_PCT_3_DRIBBLE', 'FGA_3_DRIBBLE'])
+
             logger.info(f"    -> Got {len(df_iso)} rows.")
             
             # 3. 7+ Dribbles (Deep Iso)
-            logger.info(f"  - Fetching 7+ Dribbles for {season}...")
+            logger.info(f"  - Fetching 7+ Dribbles for {season} ({season_type})...")
             deep_iso = self.client.get_league_player_shooting_stats(
                 season=season, 
-                dribble_range="7+ Dribbles"
+                dribble_range="7+ Dribbles",
+                season_type=season_type
             )
-            df_deep = pd.DataFrame(deep_iso['resultSets'][0]['rowSet'], 
-                                   columns=deep_iso['resultSets'][0]['headers'])
-            df_deep = df_deep[['PLAYER_ID', 'EFG_PCT', 'FGA']]
-            df_deep = df_deep.rename(columns={
-                'EFG_PCT': 'EFG_PCT_7_DRIBBLE',
-                'FGA': 'FGA_7_DRIBBLE'
-            })
+            
+            if deep_iso and 'resultSets' in deep_iso and deep_iso['resultSets']:
+                df_deep = pd.DataFrame(deep_iso['resultSets'][0]['rowSet'], 
+                                       columns=deep_iso['resultSets'][0]['headers'])
+                df_deep = df_deep[['PLAYER_ID', 'EFG_PCT', 'FGA']]
+                df_deep = df_deep.rename(columns={
+                    'EFG_PCT': 'EFG_PCT_7_DRIBBLE',
+                    'FGA': 'FGA_7_DRIBBLE'
+                })
+            else:
+                 df_deep = pd.DataFrame(columns=['PLAYER_ID', 'EFG_PCT_7_DRIBBLE', 'FGA_7_DRIBBLE'])
+
             logger.info(f"    -> Got {len(df_deep)} rows.")
             
             # Merge
             logger.info("  - Merging creation datasets...")
-            df_creation = pd.merge(df_zero, df_iso, on='PLAYER_ID', how='left')
-            df_creation = pd.merge(df_creation, df_deep, on='PLAYER_ID', how='left')
-            
+            if not df_zero.empty:
+                 df_creation = df_zero
+            else:
+                 # If no zero dribble data, start with ISO data if available, or empty
+                 if not df_iso.empty:
+                      df_creation = df_iso[['PLAYER_ID']].drop_duplicates()
+                 else:
+                      return pd.DataFrame() # No data at all
+
+            if not df_iso.empty:
+                 df_creation = pd.merge(df_creation, df_iso, on='PLAYER_ID', how='outer')
+            if not df_deep.empty:
+                 df_creation = pd.merge(df_creation, df_deep, on='PLAYER_ID', how='outer')
+                        
             # Fill NaNs with 0 (some players never take 7+ dribbles)
             df_creation = df_creation.fillna(0)
             
@@ -481,101 +509,117 @@ class StressVectorEngine:
             logger.error(f"❌ Error fetching player metadata for {season}: {e}", exc_info=True)
             return pd.DataFrame()
 
-    def fetch_playtype_metrics(self, season):
+    def fetch_playtype_metrics(self, season, season_type="Regular Season"):
         """
         Fetch playtype data (ISO_FREQUENCY, PNR_HANDLER_FREQUENCY) from NBA Synergy API.
         
         Returns:
-            DataFrame with columns: PLAYER_ID, ISO_FREQUENCY, PNR_HANDLER_FREQUENCY, POST_TOUCH_FREQUENCY
+            DataFrame with columns: PLAYER_ID, ISO_FREQUENCY, ISO_PPP, ISO_EFG_PCT, ...
         """
-        logger.info(f"Fetching Playtype Metrics for {season}...")
+        logger.info(f"Fetching Playtype Metrics for {season} ({season_type})...")
         
         try:
             # Fetch all playtype data for the season
             all_playtype_data = self.playtype_client.get_all_playtype_stats_for_season(
                 season_year=season,
-                season_type="Regular Season"
+                season_type=season_type
             )
             
             if not all_playtype_data:
-                logger.warning(f"No playtype data returned for {season}")
+                logger.warning(f"No playtype data returned for {season} ({season_type})")
                 return pd.DataFrame()
             
             # Parse all playtype responses
             all_records = []
             for play_type, response_data in all_playtype_data.items():
                 if 'error' in response_data:
-                    logger.warning(f"Error fetching {play_type} for {season}: {response_data['error']}")
+                    logger.warning(f"Error fetching {play_type} for {season} ({season_type}): {response_data['error']}")
                     continue
                 
                 try:
                     records = self.playtype_client.parse_playtype_response(response_data)
                     all_records.extend(records)
                 except Exception as e:
-                    logger.warning(f"Error parsing {play_type} for {season}: {e}")
+                    logger.warning(f"Error parsing {play_type} for {season} ({season_type}): {e}")
                     continue
             
             if not all_records:
-                logger.warning(f"No playtype records parsed for {season}")
+                logger.warning(f"No playtype records parsed for {season} ({season_type})")
                 return pd.DataFrame()
             
             # Convert to DataFrame
             df_playtype = pd.DataFrame(all_records)
             
-            # Group by player_id to handle multi-team players (sum FGA across teams)
-            df_playtype_grouped = df_playtype.groupby(['player_id', 'play_type'])['field_goals_attempted'].sum().reset_index()
+            # Define aggregation functions for efficiency metrics
+            # We need to handle multi-team players by weighting efficiency by volume
+            def weighted_avg(x, val_col, weight_col):
+                try:
+                    return np.average(x[val_col], weights=x[weight_col])
+                except ZeroDivisionError:
+                    return 0.0
+                except Exception:
+                    return 0.0
+
+            # 1. Group by Player and PlayType to aggregate across teams
+            # We need to calculate: Total FGA, Total POSS, Weighted PPP, Weighted EFG
             
-            # Calculate total FGA across all play types for each player
+            # First, sum the volumes
+            df_grouped_vol = df_playtype.groupby(['player_id', 'play_type'])[['field_goals_attempted', 'possessions']].sum().reset_index()
+            
+            # Then calculate weighted efficiencies
+            # This is tricky with groupby.apply, so we'll iterate or use a custom aggregation
+            
+            # Simplify: Just iterate through unique player/playtype combos? No, that's slow.
+            # Use apply.
+            
+            df_grouped_eff = df_playtype.groupby(['player_id', 'play_type']).apply(
+                lambda x: pd.Series({
+                    'PPP': weighted_avg(x, 'points_per_possession', 'possessions'),
+                    'EFG_PCT': weighted_avg(x, 'effective_field_goal_percentage', 'field_goals_attempted')
+                })
+            ).reset_index()
+            
+            # Merge volume and efficiency
+            df_playtype_grouped = pd.merge(df_grouped_vol, df_grouped_eff, on=['player_id', 'play_type'])
+            
+            # Calculate total FGA across all play types for each player (for Frequency calc)
             df_total = df_playtype_grouped.groupby('player_id')['field_goals_attempted'].sum().reset_index()
             df_total.columns = ['PLAYER_ID', 'TOTAL_FGA_PLAYTYPE']
             
-            # Get Isolation FGA
-            df_iso = df_playtype_grouped[df_playtype_grouped['play_type'] == 'Isolation'].copy()
-            if not df_iso.empty:
-                df_iso = df_iso[['player_id', 'field_goals_attempted']].copy()
-                df_iso.columns = ['PLAYER_ID', 'ISO_FGA']
-            else:
-                df_iso = pd.DataFrame(columns=['PLAYER_ID', 'ISO_FGA'])
+            # Helper to extract playtype stats
+            def extract_playtype_stats(pt_name, prefix):
+                df_pt = df_playtype_grouped[df_playtype_grouped['play_type'] == pt_name].copy()
+                if not df_pt.empty:
+                    df_pt = df_pt[['player_id', 'field_goals_attempted', 'possessions', 'PPP', 'EFG_PCT']].copy()
+                    df_pt.columns = ['PLAYER_ID', f'{prefix}_FGA', f'{prefix}_POSS', f'{prefix}_PPP', f'{prefix}_EFG_PCT']
+                else:
+                    df_pt = pd.DataFrame(columns=['PLAYER_ID', f'{prefix}_FGA', f'{prefix}_POSS', f'{prefix}_PPP', f'{prefix}_EFG_PCT'])
+                return df_pt
+
+            # Extract Isolation
+            df_iso = extract_playtype_stats('Isolation', 'ISO')
             
-            # Get PnR Handler FGA
-            df_pnr = df_playtype_grouped[df_playtype_grouped['play_type'] == 'PRBallHandler'].copy()
-            if not df_pnr.empty:
-                df_pnr = df_pnr[['player_id', 'field_goals_attempted']].copy()
-                df_pnr.columns = ['PLAYER_ID', 'PNR_HANDLER_FGA']
-            else:
-                df_pnr = pd.DataFrame(columns=['PLAYER_ID', 'PNR_HANDLER_FGA'])
+            # Extract PnR Handler
+            df_pnr = extract_playtype_stats('PRBallHandler', 'PNR_HANDLER')
             
-            # Get PostUp FGA (bonus)
-            # Note: API uses "Postup" (not "PostUp")
-            df_post = df_playtype_grouped[df_playtype_grouped['play_type'] == 'Postup'].copy()
-            if not df_post.empty:
-                df_post = df_post[['player_id', 'field_goals_attempted']].copy()
-                df_post.columns = ['PLAYER_ID', 'POST_FGA']
-            else:
-                df_post = pd.DataFrame(columns=['PLAYER_ID', 'POST_FGA'])
+            # Extract PostUp
+            df_post = extract_playtype_stats('Postup', 'POST')
             
+            # Extract SpotUp (often resilient)
+            # df_spot = extract_playtype_stats('SpotUp', 'SPOT') # API doesn't support SpotUp? checked earlier code, said removed.
+            # Let's check 'SpotUp' again? The comment in client said "SpotUp is not a valid playtype name". 
+            # We'll skip for now.
+
             # Merge all
             df_result = df_total.copy()
             
-            if not df_iso.empty:
-                df_result = pd.merge(df_result, df_iso, on='PLAYER_ID', how='left')
-            else:
-                df_result['ISO_FGA'] = 0.0
+            for df_part in [df_iso, df_pnr, df_post]:
+                if not df_part.empty:
+                    df_result = pd.merge(df_result, df_part, on='PLAYER_ID', how='left')
             
-            if not df_pnr.empty:
-                df_result = pd.merge(df_result, df_pnr, on='PLAYER_ID', how='left')
-            else:
-                df_result['PNR_HANDLER_FGA'] = 0.0
-            
-            if not df_post.empty:
-                df_result = pd.merge(df_result, df_post, on='PLAYER_ID', how='left')
-            else:
-                df_result['POST_FGA'] = 0.0
-            
-            # Fill NaN with 0.0
-            df_result['ISO_FGA'] = df_result['ISO_FGA'].fillna(0.0)
-            df_result['PNR_HANDLER_FGA'] = df_result['PNR_HANDLER_FGA'].fillna(0.0)
-            df_result['POST_FGA'] = df_result['POST_FGA'].fillna(0.0)
+            # Fill NaNs
+            cols_to_fill = [c for c in df_result.columns if c != 'PLAYER_ID']
+            df_result[cols_to_fill] = df_result[cols_to_fill].fillna(0.0)
             
             # Calculate frequencies
             df_result['ISO_FREQUENCY'] = np.where(
@@ -596,107 +640,261 @@ class StressVectorEngine:
                 0.0
             )
             
-            # Return only needed columns
-            df_result = df_result[['PLAYER_ID', 'ISO_FREQUENCY', 'PNR_HANDLER_FREQUENCY', 'POST_TOUCH_FREQUENCY']].copy()
+            # Select columns to return
+            # We want Frequency AND Efficiency (PPP, EFG)
+            cols_to_return = ['PLAYER_ID', 
+                              'ISO_FREQUENCY', 'ISO_PPP', 'ISO_EFG_PCT',
+                              'PNR_HANDLER_FREQUENCY', 'PNR_HANDLER_PPP', 'PNR_HANDLER_EFG_PCT',
+                              'POST_TOUCH_FREQUENCY', 'POST_PPP', 'POST_EFG_PCT']
             
-            logger.info(f"  ✅ Processed Playtype Metrics for {len(df_result)} players")
+            # Ensure all exist
+            for col in cols_to_return:
+                if col not in df_result.columns:
+                    df_result[col] = 0.0
+                    
+            df_result = df_result[cols_to_return].copy()
+            
+            logger.info(f"  ✅ Processed Playtype Metrics for {len(df_result)} players ({season_type})")
             return df_result
             
         except Exception as e:
-            logger.error(f"❌ Error fetching playtype metrics for {season}: {e}", exc_info=True)
+            logger.error(f"❌ Error fetching playtype metrics for {season} ({season_type}): {e}", exc_info=True)
             return pd.DataFrame()
 
-    def run(self, seasons=['2021-22', '2022-23', '2023-24']):
+    def calculate_projected_playoff_output(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculates PROJECTED_PLAYOFF_PPS and PROJECTED_PLAYOFF_OUTPUT.
+        
+        This is the core of the "Physics Simulation". It projects a player's
+        regular season shot diet onto the playoff environment using calculated
+        friction coefficients.
+        
+        Args:
+            df (pd.DataFrame): DataFrame containing merged RS data and friction coefficients.
+            
+        Returns:
+            pd.DataFrame: DataFrame with the new projected features.
+        """
+        logger.info("Calculating Projected Playoff Output features...")
+        
+        # Define shot types, their RS efficiency metric, RS volume metric, and friction coefficient
+        shot_components = {
+            'iso_dribbles': {
+                'efficiency': 'EFG_ISO_WEIGHTED',
+                'volume': 'FGA_ISO_TOTAL',
+                'friction': 'FRICTION_COEFF_ISO'
+            },
+            'zero_dribbles': {
+                'efficiency': 'EFG_PCT_0_DRIBBLE',
+                'volume': 'FGA_0_DRIBBLE',
+                'friction': 'FRICTION_COEFF_0_DRIBBLE'
+            },
+            'playtype_iso': {
+                'efficiency': 'ISO_PPP_RS',
+                'volume': 'ISO_FGA_RS',
+                'friction': 'FRICTION_COEFF_PLAYTYPE_ISO'
+            },
+            'playtype_pnr': {
+                'efficiency': 'PNR_HANDLER_PPP_RS',
+                'volume': 'PNR_HANDLER_FGA_RS',
+                'friction': 'FRICTION_COEFF_PNR_HANDLER'
+            },
+            'playtype_post': {
+                'efficiency': 'POST_PPP_RS',
+                'volume': 'POST_FGA_RS',
+                'friction': 'FRICTION_COEFF_POST'
+            }
+        }
+        
+        # Calculate total FGA from all tracked components for weighting
+        df['TOTAL_PROJECTED_FGA'] = 0
+        for comp in shot_components.values():
+            if comp['volume'] in df.columns:
+                df['TOTAL_PROJECTED_FGA'] += df[comp['volume']].fillna(0)
+        
+        # Calculate projected PPS for each component
+        df['PROJECTED_PLAYOFF_PPS'] = 0
+        
+        for name, comp in shot_components.items():
+            # Ensure all required columns exist
+            if all(c in df.columns for c in [comp['efficiency'], comp['volume'], comp['friction']]):
+                
+                # Shot weight = volume of this shot type / total volume
+                shot_weight = (df[comp['volume']].fillna(0) / df['TOTAL_PROJECTED_FGA']).fillna(0)
+                
+                # Projected efficiency for this component = RS_efficiency * friction
+                projected_comp_pps = df[comp['efficiency']].fillna(0) * df[comp['friction']].fillna(1.0)
+                
+                # Add the weighted component PPS to the total
+                df['PROJECTED_PLAYOFF_PPS'] += shot_weight * projected_comp_pps
+                
+        # Handle cases where total FGA is zero to avoid NaN
+        df['PROJECTED_PLAYOFF_PPS'] = df['PROJECTED_PLAYOFF_PPS'].fillna(0.0)
+        
+        # The "Unit Scaling" Trap Fix: Centralized Normalization
+        # Ensure USG_PCT is 0-1 before creating the interaction term
+        if 'USG_PCT' in df.columns:
+            # First, ensure USG_PCT is numeric
+            df['USG_PCT'] = pd.to_numeric(df['USG_PCT'], errors='coerce').fillna(df['USG_PCT'].median())
+            
+            # Now, normalize if it's in percentage format
+            if df['USG_PCT'].max() > 1.0:
+                logger.info(f"Normalizing USG_PCT from percentage to decimal format (max was {df['USG_PCT'].max():.1f})")
+                df['USG_PCT'] /= 100.0
+        else:
+            df['USG_PCT'] = 0.0 # Default if missing
+            
+        # Final Feature: PROJECTED_PLAYOFF_OUTPUT (The "Remainder")
+        # This is our primary First Principles feature.
+        df['PROJECTED_PLAYOFF_OUTPUT'] = df['PROJECTED_PLAYOFF_PPS'] * df['USG_PCT']
+        
+        logger.info(f"Successfully calculated PROJECTED_PLAYOFF_OUTPUT. Mean: {df['PROJECTED_PLAYOFF_OUTPUT'].mean():.4f}")
+        
+        return df
+
+    def run(self, seasons=['2021-22', '2022-23', '2023-24'], max_workers=1):
         
         all_seasons_data = []
         
-        for season in seasons:
+        def process_single_season(season):
             logger.info(f"=== Processing {season} ===")
             
             try:
-                # 1. Creation
-                df_creation = self.fetch_creation_metrics(season)
-                if df_creation.empty:
-                    logger.warning(f"Skipping {season} due to missing creation data.")
-                    continue
+                # 1. Fetch Regular Season Data
+                logger.info(f"--- Fetching Regular Season data for {season} ---")
+                df_creation_rs = self.fetch_creation_metrics(season, season_type="Regular Season")
+                if df_creation_rs.empty:
+                    logger.warning(f"Skipping {season} due to missing RS creation data.")
+                    return None
                 
-                # 2. Leverage
-                df_leverage = self.fetch_leverage_metrics(season)
+                df_playtype_rs = self.fetch_playtype_metrics(season, season_type="Regular Season")
 
-                # 3. Context
-                df_context = self.fetch_context_metrics(season)
+                # 2. Fetch Playoff Data
+                logger.info(f"--- Fetching Playoff data for {season} ---")
+                df_creation_po = self.fetch_creation_metrics(season, season_type="Playoffs")
+                df_playtype_po = self.fetch_playtype_metrics(season, season_type="Playoffs")
                 
-                # 4. Player Metadata (USG_PCT, AGE) - PHASE 1 FIX
+                # 3. Merge RS and PO data to calculate Friction
+                logger.info(f"--- Calculating Friction Coefficients for {season} ---")
+                
+                # Merge Creation Metrics
+                df_creation_merged = pd.merge(
+                    df_creation_rs.add_suffix('_RS'),
+                    df_creation_po.add_suffix('_PO'),
+                    left_on='PLAYER_ID_RS', right_on='PLAYER_ID_PO',
+                    how='inner' # Inner join: must have both RS and PO data
+                )
+                if not df_creation_merged.empty:
+                    df_creation_merged = df_creation_merged.drop(columns=['PLAYER_ID_PO'])
+                    df_creation_merged = df_creation_merged.rename(columns={'PLAYER_ID_RS': 'PLAYER_ID'})
+                
+                # Merge Playtype Metrics
+                df_playtype_merged = pd.merge(
+                    df_playtype_rs.add_suffix('_RS'),
+                    df_playtype_po.add_suffix('_PO'),
+                    left_on='PLAYER_ID_RS', right_on='PLAYER_ID_PO',
+                    how='inner'
+                )
+                if not df_playtype_merged.empty:
+                    df_playtype_merged = df_playtype_merged.drop(columns=['PLAYER_ID_PO'])
+                    df_playtype_merged = df_playtype_merged.rename(columns={'PLAYER_ID_RS': 'PLAYER_ID'})
+
+                # Combine all friction data
+                if not df_creation_merged.empty and not df_playtype_merged.empty:
+                    df_friction = pd.merge(df_creation_merged, df_playtype_merged, on='PLAYER_ID', how='outer')
+                elif not df_creation_merged.empty:
+                    df_friction = df_creation_merged
+                elif not df_playtype_merged.empty:
+                    df_friction = df_playtype_merged
+                else:
+                    df_friction = pd.DataFrame()
+                
+                # Now, calculate friction for each playtype
+                # Friction = Playoff_PPS / Regular_Season_PPS
+                # We use EFG for dribble-based, and PPP for playtype-based
+                
+                friction_cols = []
+                if not df_friction.empty:
+                    # Dribble-based friction
+                    if 'EFG_ISO_WEIGHTED_PO' in df_friction.columns and 'EFG_ISO_WEIGHTED_RS' in df_friction.columns:
+                        df_friction['FRICTION_COEFF_ISO'] = df_friction['EFG_ISO_WEIGHTED_PO'] / df_friction['EFG_ISO_WEIGHTED_RS']
+                        friction_cols.append('FRICTION_COEFF_ISO')
+                    if 'EFG_PCT_0_DRIBBLE_PO' in df_friction.columns and 'EFG_PCT_0_DRIBBLE_RS' in df_friction.columns:
+                        df_friction['FRICTION_COEFF_0_DRIBBLE'] = df_friction['EFG_PCT_0_DRIBBLE_PO'] / df_friction['EFG_PCT_0_DRIBBLE_RS']
+                        friction_cols.append('FRICTION_COEFF_0_DRIBBLE')
+                    
+                    # Playtype-based friction (using PPP)
+                    if 'ISO_PPP_PO' in df_friction.columns and 'ISO_PPP_RS' in df_friction.columns:
+                        df_friction['FRICTION_COEFF_PLAYTYPE_ISO'] = df_friction['ISO_PPP_PO'] / df_friction['ISO_PPP_RS']
+                        friction_cols.append('FRICTION_COEFF_PLAYTYPE_ISO')
+                    if 'PNR_HANDLER_PPP_PO' in df_friction.columns and 'PNR_HANDLER_PPP_RS' in df_friction.columns:
+                        df_friction['FRICTION_COEFF_PNR_HANDLER'] = df_friction['PNR_HANDLER_PPP_PO'] / df_friction['PNR_HANDLER_PPP_RS']
+                        friction_cols.append('FRICTION_COEFF_PNR_HANDLER')
+                    if 'POST_PPP_PO' in df_friction.columns and 'POST_PPP_RS' in df_friction.columns:
+                        df_friction['FRICTION_COEFF_POST'] = df_friction['POST_PPP_PO'] / df_friction['POST_PPP_RS']
+                        friction_cols.append('FRICTION_COEFF_POST')
+                    
+                    # Replace inf/-inf with NaN, then fill NaN with 1.0 (neutral friction)
+                    if friction_cols:
+                        df_friction[friction_cols] = df_friction[friction_cols].replace([np.inf, -np.inf], np.nan).fillna(1.0)
+                    
+                    logger.info(f"Calculated friction for {len(df_friction)} players in {season}.")
+                
+                # 4. Fetch other RS-based metrics (Leverage, Context, etc.)
+                df_leverage = self.fetch_leverage_metrics(season)
+                df_context = self.fetch_context_metrics(season)
                 df_metadata = self.fetch_player_metadata(season)
                 
-                # 5. Playtype Metrics (ISO_FREQUENCY, PNR_HANDLER_FREQUENCY) - DATA COMPLETENESS FIX
-                df_playtype = self.fetch_playtype_metrics(season)
+                # 5. Combine all data for the season
+                # Start with the base regular season creation data
+                df_season = df_creation_rs
                 
-                # Merge Vectors
-                df_season = df_creation
+                # Merge the friction coefficients we just calculated
+                if not df_friction.empty:
+                    df_season = pd.merge(df_season, df_friction[['PLAYER_ID'] + friction_cols], on='PLAYER_ID', how='left')
+                    # For players without playoff data, friction is neutral (1.0)
+                    for col in friction_cols:
+                         if col in df_season.columns:
+                              df_season[col] = df_season[col].fillna(1.0)
+                else:
+                    # No friction data available for this season, create columns with default 1.0
+                    for col in ['FRICTION_COEFF_ISO', 'FRICTION_COEFF_0_DRIBBLE', 'FRICTION_COEFF_PLAYTYPE_ISO', 'FRICTION_COEFF_PNR_HANDLER', 'FRICTION_COEFF_POST']:
+                        df_season[col] = 1.0
+
+                # Merge other datasets
                 if not df_leverage.empty:
                     df_season = pd.merge(df_season, df_leverage, on='PLAYER_ID', how='left')
-                else:
-                    logger.warning(f"No leverage data for {season}, filling with NaNs")
-                    df_season['LEVERAGE_TS_DELTA'] = np.nan
-                    df_season['LEVERAGE_USG_DELTA'] = np.nan
-                    df_season['CLUTCH_MIN_TOTAL'] = 0
-
                 if not df_context.empty:
                     df_season = pd.merge(df_season, df_context, on='PLAYER_ID', how='left')
-                else:
-                    logger.warning(f"No context data for {season}, filling with NaNs")
-                    df_season['QOC_TS_DELTA'] = np.nan
-                    df_season['QOC_USG_DELTA'] = np.nan
-                    df_season['AVG_OPPONENT_DCS'] = np.nan
-                    df_season['MEAN_OPPONENT_DCS'] = np.nan
-                    df_season['ELITE_WEAK_TS_DELTA'] = np.nan
-                    df_season['ELITE_WEAK_USG_DELTA'] = np.nan
-                
-                # Merge metadata (USG_PCT, TS_PCT, AGE) - PHASE 1 FIX
                 if not df_metadata.empty:
-                    # Merge on PLAYER_ID, update PLAYER_NAME if missing
-                    df_season = pd.merge(
-                        df_season,
-                        df_metadata[['PLAYER_ID', 'USG_PCT', 'TS_PCT', 'AGE']],
-                        on='PLAYER_ID',
-                        how='left'
-                    )
-                    # Update PLAYER_NAME from metadata if it's missing in df_season
-                    if 'PLAYER_NAME' in df_metadata.columns:
-                        df_season['PLAYER_NAME'] = df_season['PLAYER_NAME'].fillna(
-                            df_season['PLAYER_ID'].map(
-                                df_metadata.set_index('PLAYER_ID')['PLAYER_NAME']
-                            )
-                        )
-                else:
-                    logger.warning(f"No metadata data for {season}, filling with NaNs")
-                    df_season['USG_PCT'] = np.nan
-                    df_season['TS_PCT'] = np.nan
-                    df_season['AGE'] = np.nan
-                
-                # Merge playtype data
-                if not df_playtype.empty:
-                    df_season = pd.merge(
-                        df_season,
-                        df_playtype[['PLAYER_ID', 'ISO_FREQUENCY', 'PNR_HANDLER_FREQUENCY', 'POST_TOUCH_FREQUENCY']],
-                        on='PLAYER_ID',
-                        how='left'
-                    )
-                else:
-                    logger.warning(f"No playtype data for {season}, filling with NaNs")
-                    df_season['ISO_FREQUENCY'] = np.nan
-                    df_season['PNR_HANDLER_FREQUENCY'] = np.nan
-                    df_season['POST_TOUCH_FREQUENCY'] = np.nan
+                     # Remove PLAYER_NAME from metadata to avoid suffix duplicates, as df_season already has it
+                     cols_to_use = [c for c in df_metadata.columns if c == 'PLAYER_ID' or c not in df_season.columns]
+                     df_season = pd.merge(df_season, df_metadata[cols_to_use], on='PLAYER_ID', how='left')
+                if not df_playtype_rs.empty:
+                     # Merge the RS playtype data for frequency/efficiency features
+                     df_season = pd.merge(df_season, df_playtype_rs.add_suffix('_RS'), left_on='PLAYER_ID', right_on='PLAYER_ID_RS', how='left')
+                     if 'PLAYER_ID_RS' in df_season.columns:
+                          df_season = df_season.drop(columns=['PLAYER_ID_RS'])
+
+                # 6. Engineer the Projected Playoff Output Feature
+                df_season = self.calculate_projected_playoff_output(df_season)
                 
                 df_season['SEASON'] = season
-                all_seasons_data.append(df_season)
-                
-                # Be nice to the API
-                time.sleep(1.0)
+                return df_season
                 
             except Exception as e:
                 logger.error(f"Failed to process {season}: {e}", exc_info=True)
+                return None
+
+        # Process seasons in parallel
+        logger.info(f"Processing {len(seasons)} seasons with {max_workers} workers...")
+        if max_workers > 1:
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                results = list(executor.map(process_single_season, seasons))
+        else:
+            results = [process_single_season(s) for s in seasons]
+            
+        all_seasons_data = [r for r in results if r is not None]
         
         # Combine all
         if not all_seasons_data:
@@ -705,226 +903,31 @@ class StressVectorEngine:
             
         final_df = pd.concat(all_seasons_data, ignore_index=True)
         
-        # --- Project Phoenix: Surgical Feature Re-Implementation (Step 2.2) ---
-        logger.info("Implementing Project Phoenix pure features...")
-        try:
-            # Prerequisite: Get total FGA from a more reliable source if possible
-            # For now, we approximate total FGA from the sum of tracked dribble ranges
-            # This is an acknowledged limitation we can improve later.
-            if 'FGA_ISO_TOTAL' in final_df.columns and 'FGA_0_DRIBBLE' in final_df.columns:
-                 final_df['TOTAL_FGA_APPROX'] = final_df['FGA_ISO_TOTAL'] + final_df['FGA_0_DRIBBLE']
-            else:
-                final_df['TOTAL_FGA_APPROX'] = final_df['FGA_0_DRIBBLE']
-
-
-            # 1. Calculate League-Average EFG% on Zero Dribbles for each season
-            league_avg_efg_0_dribble = final_df.groupby('SEASON').apply(
-                lambda x: np.average(x['EFG_PCT_0_DRIBBLE'], weights=x['FGA_0_DRIBBLE']) if x['FGA_0_DRIBBLE'].sum() > 0 else 0
-            ).rename('LEAGUE_AVG_EFG_0_DRIBBLE').reset_index()
-            
-            final_df = pd.merge(final_df, league_avg_efg_0_dribble, on='SEASON', how='left')
-
-            # 2. Implement the Pre-Mortem-Revised Feature Dyad
-            # Formula: (player.efg_0_dribble - league_avg) * player.fga_0_dribble
-            final_df['ZERO_DRIBBLE_SCORING_VALUE_ADDED'] = (
-                (final_df['EFG_PCT_0_DRIBBLE'] - final_df['LEAGUE_AVG_EFG_0_DRIBBLE']) * final_df['FGA_0_DRIBBLE']
-            )
-
-            # Context Metric: What proportion of a player's shots are zero-dribble?
-            final_df['ZERO_DRIBBLE_SHOT_PROPORTION'] = np.where(
-                final_df['TOTAL_FGA_APPROX'] > 0,
-                final_df['FGA_0_DRIBBLE'] / final_df['TOTAL_FGA_APPROX'],
-                0
-            )
-
-            # Feature 1: Specialist Efficiency Score
-            final_df['SPECIALIST_EFFICIENCY_SCORE'] = (
-                final_df['ZERO_DRIBBLE_SCORING_VALUE_ADDED'] * final_df['ZERO_DRIBBLE_SHOT_PROPORTION']
-            )
-
-            # Feature 2: Versatility Threat Score
-            final_df['VERSATILITY_THREAT_SCORE'] = (
-                final_df['ZERO_DRIBBLE_SCORING_VALUE_ADDED'] * (1 - final_df['ZERO_DRIBBLE_SHOT_PROPORTION'])
-            )
-
-            # Feature 3: TS_PCT_VS_USAGE_BAND_EXPECTATION
-            if 'USG_PCT' in final_df.columns and 'TS_PCT' in final_df.columns:
-                 # Create usage bands (2% bins)
-                 bins = [0, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 40, 100]
-                 labels = range(len(bins) - 1)
-                 
-                 final_df['USG_BAND'] = pd.cut(final_df['USG_PCT'], bins=bins, labels=labels)
-                 
-                 # Calculate League Average TS% for each band per season
-                 # Weighted by TOTAL_FGA_APPROX to prioritize rotation players
-                 league_avg_ts_by_band = final_df.groupby(['SEASON', 'USG_BAND'], observed=False).apply(
-                     lambda x: np.average(x['TS_PCT'], weights=x['TOTAL_FGA_APPROX']) if x['TOTAL_FGA_APPROX'].sum() > 0 else x['TS_PCT'].mean()
-                 ).rename('LEAGUE_AVG_TS_FOR_BAND').reset_index()
-                 
-                 final_df = pd.merge(final_df, league_avg_ts_by_band, on=['SEASON', 'USG_BAND'], how='left')
-                 
-                 final_df['TS_PCT_VS_USAGE_BAND_EXPECTATION'] = final_df['TS_PCT'] - final_df['LEAGUE_AVG_TS_FOR_BAND']
-            else:
-                 final_df['TS_PCT_VS_USAGE_BAND_EXPECTATION'] = 0
-
-            logger.info("✅ Successfully implemented Phoenix feature dyad.")
-
-        except Exception as e:
-            logger.error(f"❌ Failed to implement Project Phoenix features: {e}", exc_info=True)
-            # Add empty columns to prevent downstream errors
-            final_df['ZERO_DRIBBLE_SCORING_VALUE_ADDED'] = 0
-            final_df['ZERO_DRIBBLE_SHOT_PROPORTION'] = 0
-            final_df['SPECIALIST_EFFICIENCY_SCORE'] = 0
-            final_df['VERSATILITY_THREAT_SCORE'] = 0
+        # --- Final Feature Engineering & Cleanup ---
+        # (This will be where we do the final PROJECTED_PLAYOFF_OUTPUT calculation)
         
-        # --- End Project Phoenix Implementation ---
-        
-        # PHASE 1 FIX: Merge pressure features before calculating Dependence Scores
-        # Dependence Score calculation requires RS_OPEN_SHOT_FREQUENCY from pressure features
-        logger.info("Loading pressure features for Dependence Score calculation...")
-        pressure_path = self.results_dir / "pressure_features.csv"
-        if pressure_path.exists():
-            df_pressure = pd.read_csv(pressure_path)
-            logger.info(f"Loaded {len(df_pressure)} rows of pressure features")
-            
-            # Merge pressure features (need RS_OPEN_SHOT_FREQUENCY for dependence calculation)
-            merge_cols = ['PLAYER_ID', 'SEASON']
-            if 'PLAYER_NAME' in df_pressure.columns:
-                merge_cols.append('PLAYER_NAME')
-            
-            # Only merge the columns needed for dependence calculation
-            pressure_cols_to_merge = ['PLAYER_ID', 'SEASON', 'RS_OPEN_SHOT_FREQUENCY']
-            if 'PLAYER_NAME' in df_pressure.columns:
-                pressure_cols_to_merge.append('PLAYER_NAME')
-            
-            final_df = pd.merge(
-                final_df,
-                df_pressure[pressure_cols_to_merge],
-                on=merge_cols,
-                how='left'
-            )
-            logger.info(f"Merged pressure features: {final_df['RS_OPEN_SHOT_FREQUENCY'].notna().sum()}/{len(final_df)} rows have RS_OPEN_SHOT_FREQUENCY")
-        else:
-            logger.warning(f"Pressure features file not found at {pressure_path}")
-            logger.warning("Dependence Score calculation may have limited coverage without RS_OPEN_SHOT_FREQUENCY")
-        
-
-        # PHASE 1.5: Integrate SHOT_QUALITY_GENERATION_DELTA (Empty Calories Detector)
-        # THIS IS NOW THE SINGLE SOURCE OF TRUTH.
-        # It is merged *before* the dependence calculation.
-        logger.info("Integrating SHOT_QUALITY_GENERATION_DELTA feature...")
-        shot_quality_path = self.results_dir / "shot_quality_generation_delta.csv"
-        if shot_quality_path.exists():
-            df_shot_quality = pd.read_csv(shot_quality_path)
-
-            # Drop the column if it already exists to avoid merge errors
-            if 'SHOT_QUALITY_GENERATION_DELTA' in final_df.columns:
-                final_df = final_df.drop(columns=['SHOT_QUALITY_GENERATION_DELTA'])
-
-            final_df = pd.merge(
-                final_df,
-                df_shot_quality[['PLAYER_ID', 'SEASON', 'SHOT_QUALITY_GENERATION_DELTA']],
-                on=['PLAYER_ID', 'SEASON'],
-                how='left'
-            )
-            shot_quality_count = final_df['SHOT_QUALITY_GENERATION_DELTA'].notna().sum()
-            logger.info(f"Merged SHOT_QUALITY_GENERATION_DELTA: {shot_quality_count}/{len(final_df)} rows have the feature")
-        else:
-            logger.warning(f"SHOT_QUALITY_GENERATION_DELTA file not found at {shot_quality_path}")
-            final_df['SHOT_QUALITY_GENERATION_DELTA'] = np.nan
-
-        # DEBUG: Verify Poole's data before dependence calc
-        poole_check = final_df[
-            (final_df['PLAYER_NAME'] == 'Jordan Poole') & 
-            (final_df['SEASON'] == '2021-22')
-        ]
-        if not poole_check.empty:
-            val = poole_check.iloc[0]['SHOT_QUALITY_GENERATION_DELTA']
-            logger.info(f"DEBUG CHECK: Poole 2021-22 SHOT_QUALITY_DELTA entering dependence calc: {val}")
-            # Expectation: Should be approx -0.047
-        
-        # This is now the single source of truth and is called *after* SHOT_QUALITY_GENERATION_DELTA is merged.
-        logger.info("Calculating Dependence Scores for all player-seasons...")
-        try:
-            # Drop any existing dependence score columns to ensure they are recalculated
-            dep_cols_to_drop = ['DEPENDENCE_SCORE', 'PHYSICALITY_SCORE', 'SKILL_SCORE']
-            for col in dep_cols_to_drop:
-                if col in final_df.columns:
-                    final_df = final_df.drop(columns=[col])
-
-            final_df = calculate_dependence_scores_batch(final_df)
-            logger.info(f"Successfully calculated Dependence Scores for {final_df['DEPENDENCE_SCORE'].notna().sum()}/{len(final_df)} player-seasons")
-        except Exception as e:
-            logger.error(f"Error calculating Dependence Scores: {e}", exc_info=True)
-            logger.warning("Continuing without Dependence Scores - will be calculated during inference")
-            final_df['DEPENDENCE_SCORE'] = np.nan
-            final_df['PHYSICALITY_SCORE'] = np.nan
-            final_df['SKILL_SCORE'] = np.nan
-            
-        # PHASE 1: DEVELOPMENT STAGE FEATURES
-        # These teach the model that different player archetypes require different evaluation rigor
-
-        # SKILL_MATURITY_INDEX = CREATION_TAX / AGE
-        # Young players can have messy creation profiles, skilled players cannot
-        if 'CREATION_TAX' in final_df.columns and 'AGE' in final_df.columns:
-            final_df['SKILL_MATURITY_INDEX'] = final_df['CREATION_TAX'] / final_df['AGE']
-            logger.info(f"Calculated SKILL_MATURITY_INDEX for {final_df['SKILL_MATURITY_INDEX'].notna().sum()}/{len(final_df)} player-seasons")
-        else:
-            final_df['SKILL_MATURITY_INDEX'] = np.nan
-            logger.warning("CREATION_TAX or AGE not found - SKILL_MATURITY_INDEX set to NaN")
-
-        # PHYSICAL_DOMINANCE_RATIO = RS_PRESSURE_APPETITE / EFG_ISO_WEIGHTED
-        # Physical freaks can have raw efficiency, skilled creators cannot
-        # Use pressure appetite as a proxy for physical dominance
-        if 'RS_PRESSURE_APPETITE' in final_df.columns and 'EFG_ISO_WEIGHTED' in final_df.columns:
-            # Avoid division by zero
-            pressure_appetite = final_df['RS_PRESSURE_APPETITE'].fillna(0.0)
-            iso_eff = final_df['EFG_ISO_WEIGHTED'].fillna(0.0)
-            final_df['PHYSICAL_DOMINANCE_RATIO'] = np.where(
-                iso_eff > 0,
-                pressure_appetite / iso_eff,
-                np.where(pressure_appetite > 0, 10.0, 0.0)  # High ratio if pressure appetite exists but no iso efficiency
-            )
-            logger.info(f"Calculated PHYSICAL_DOMINANCE_RATIO for {final_df['PHYSICAL_DOMINANCE_RATIO'].notna().sum()}/{len(final_df)} player-seasons")
-        else:
-            final_df['PHYSICAL_DOMINANCE_RATIO'] = np.nan
-            logger.warning("RS_PRESSURE_APPETITE or EFG_ISO_WEIGHTED not found - PHYSICAL_DOMINANCE_RATIO set to NaN")
-
-
-        # Clean up columns
-        phoenix_cols = [
-            'SPECIALIST_EFFICIENCY_SCORE',
-            'VERSATILITY_THREAT_SCORE',
-            'ZERO_DRIBBLE_SCORING_VALUE_ADDED',
-            'ZERO_DRIBBLE_SHOT_PROPORTION',
-            'TS_PCT_VS_USAGE_BAND_EXPECTATION'
-        ]
-        cols_to_keep = ['PLAYER_ID', 'PLAYER_NAME', 'SEASON',
-                        'CREATION_TAX', 'CREATION_VOLUME_RATIO', 'CREATION_BOOST',
-                        'LEVERAGE_TS_DELTA', 'LEVERAGE_USG_DELTA', 'CLUTCH_MIN_TOTAL',
-                        'QOC_TS_DELTA', 'QOC_USG_DELTA',
-                        'AVG_OPPONENT_DCS', 'MEAN_OPPONENT_DCS',
-                        'ELITE_WEAK_TS_DELTA', 'ELITE_WEAK_USG_DELTA',
-                        'EFG_PCT_0_DRIBBLE', 'EFG_ISO_WEIGHTED',
-                        'USG_PCT', 'AGE',
-                        'ISO_FREQUENCY', 'PNR_HANDLER_FREQUENCY', 'POST_TOUCH_FREQUENCY',  # DATA COMPLETENESS FIX: Added playtype frequencies
-                        'DEPENDENCE_SCORE', 'ASSISTED_FGM_PCT', 'OPEN_SHOT_FREQUENCY', 'SELF_CREATED_USAGE_RATIO',  # PHASE 1: Added dependence score columns
-                        'SKILL_MATURITY_INDEX', 'PHYSICAL_DOMINANCE_RATIO', 'SHOT_QUALITY_GENERATION_DELTA'] + phoenix_cols  # PHASE 1.5: Added Empty Calories detector
-        
-        # Only keep columns that actually exist
-        existing_cols = [c for c in cols_to_keep if c in final_df.columns]
-        final_df = final_df[existing_cols]
-                             
-        output_path = self.results_dir / "predictive_dataset.csv"
+        # For now, just save what we have
+        output_path = self.results_dir / "predictive_dataset_with_friction.csv"
         final_df.to_csv(output_path, index=False)
-        logger.info(f"Successfully saved Predictive Dataset to {output_path}")
+        logger.info(f"Successfully saved Predictive Dataset with Friction to {output_path}")
         logger.info(f"Total Rows: {len(final_df)}")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Feature Engineering for Stylistic Stress Test")
+    parser.add_argument('--workers', type=int, default=1, help='Number of parallel workers (default: 1)')
+    parser.add_argument('--seasons', nargs='+', help='Seasons to process (e.g., 2023-24)')
+    args = parser.parse_args()
+
     engine = StressVectorEngine()
-    # Expanding window to capture enough historical data for training (2015-2025)
-    all_seasons = [
-        '2015-16', '2016-17', '2017-18', '2018-19',
-        '2019-20', '2020-21', '2021-22', '2022-23', '2023-24', '2024-25'
-    ]
-    engine.run(seasons=all_seasons)
+    
+    # Seasons to process
+    if args.seasons:
+        seasons_to_process = args.seasons
+    else:
+        # Default seasons
+        seasons_to_process = [
+            '2015-16', '2016-17', '2017-18', '2018-19',
+            '2019-20', '2020-21', '2021-22', '2022-23', '2023-24', '2024-25'
+        ]
+        
+    engine.run(seasons=seasons_to_process, max_workers=args.workers)

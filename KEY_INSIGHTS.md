@@ -1629,6 +1629,34 @@ else:
 
 ---
 
+## 56. The "DeRozan Problem" - Solved with Physics-Based Friction Simulation 🎯 CRITICAL (December 2025)
+
+**The Problem**: Model overrated regular season production without accounting for playoff friction. DeMar DeRozan was notorious for elite regular season scoring (27 PPG, 62.6% TS) that evaporated in playoffs due to style fragility.
+
+**Root Cause**: Model used regular season efficiency directly without simulating playoff environment changes (tighter whistles, fewer transition opportunities, schemed defenses). "The Drop doesn't matter. The Remainder does."
+
+**The Solution** (First Principles Physics Simulation):
+- **Friction Coefficients**: Calculated historical drop-off from regular season to playoffs for playtypes:
+  - `FRICTION_COEFF_ISO`: Isolation efficiency drop-off (typically ~0.96)
+  - `FRICTION_COEFF_0_DRIBBLE`: Off-ball efficiency drop-off (typically ~0.95)
+  - `FRICTION_COEFF_PLAYTYPE_ISO`: Specific playtype friction
+- **PROJECTED_PLAYOFF_OUTPUT**: Weighted simulation = `PROJECTED_PLAYOFF_PPS × USG_PCT`
+- **PROJECTED_PLAYOFF_PPS**: Weighted average of (RS_efficiency × friction_coeff) across player's shot diet
+- **Force-Inclusion**: Manually included physics-based features despite RFE selection (RFE prioritizes correlation over causality)
+
+**Results**:
+- **DeMar DeRozan (2017-18)**: Correctly classified as "Bulldozer (Fragile Star)" (confidence 0.77)
+- **Julius Randle (2020-21)**: Correctly classified as "Bulldozer (Fragile Star)" (confidence 0.69)
+- **Trae Young (2020-21)**: Correctly classified as "Bulldozer (Fragile Star)" (confidence 0.69)
+- **Model Accuracy**: Increased from 46.77% to 58.15% (+24% improvement)
+- **Feature Importance**: PROJECTED_PLAYOFF_OUTPUT (#2, 14.48% importance), FRICTION_COEFF_ISO (#5, 7.49% importance)
+
+**Key Principle**: **Simulate the physics, don't proxy it**. When the problem is "this style doesn't translate to playoffs," build a model that simulates playoff conditions, not one that penalizes based on assumptions.
+
+**Test Cases**: DeRozan (2017-18), Randle (2020-21), Trae Young (2020-21) - All correctly identified as fragile stars.
+
+---
+
 ## 55. Comprehensive Diagnostics Enable Mechanistic Debugging 🎯 CRITICAL (December 2025)
 
 **The Problem**: Test suites produced binary pass/fail results without insight into WHY models made specific predictions. This made debugging model issues nearly impossible, turning development into trial-and-error rather than systematic improvement.

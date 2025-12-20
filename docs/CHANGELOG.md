@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **DeRozan Problem SOLVED**: Physics-based playoff friction simulation implemented
+  - Added PROJECTED_PLAYOFF_OUTPUT and friction coefficients (FRICTION_COEFF_ISO, FRICTION_COEFF_0_DRIBBLE)
+  - Force-included physics-based features in RFE model despite statistical selection
+  - Parallel processing (6 workers) for faster data collection
+  - Centralized USG_PCT normalization to prevent unit scaling traps
 - **Complete Data Pipeline Restoration**: Fixed critical SHOT_QUALITY_GENERATION_DELTA data gap
   - Collected raw shot quality data for all 10 seasons (2015-2025) using 6 parallel workers
   - Calculated SHOT_QUALITY_GENERATION_DELTA for all 5,312 player-seasons
@@ -21,7 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive test organization in `tests/`
 
 ### Changed
-- **Model Performance**: Improved accuracy from 48.62% to 51.38% with complete 15 features
+- **Model Performance**: Major accuracy jump from 46.77% to 58.15% (+24% improvement) with physics-based features
+- **PROJECTED_PLAYOFF_OUTPUT**: Now rank #2 (14.48% importance) in RFE model
+- **Friction Coefficients**: FRICTION_COEFF_ISO (#4, 8.19% importance), FRICTION_COEFF_0_DRIBBLE (#5, 7.49% importance)
+- **Test Suite Performance**: Latent Star Detection: 71.9% pass rate (23/32), Overall Star Prediction: 53.3% accuracy (18/34)
 - **SHOT_QUALITY_GENERATION_DELTA**: Now rank #4 (5.9% importance) in RFE model for organic tank commander detection
 - **Test Suite Coverage**: Expanded to 23 test cases with 81.8% accuracy on Franchise Cornerstone classification
 - **Documentation consolidation**: Reduced from 35+ scattered files to 6 comprehensive docs

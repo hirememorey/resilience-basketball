@@ -1,36 +1,36 @@
 test_number,player_name,season,category,expected_franchise_cornerstone,current_usage_pct,data_found,predicted_archetype,performance_score,dependence_score,risk_category,predicted_franchise_cornerstone,correct_classification,notes
-1,Nikola Jokić,2023-24,Confirmed Franchise Cornerstone,True,28.799999999999997,True,King (Resilient Star),0.9146520495414734,0.022584469696969367,Franchise Cornerstone,True,True,None
-2,Luka Dončić,2023-24,Confirmed Franchise Cornerstone,True,35.5,True,Bulldozer (Fragile Star),0.9832406044006348,0.0,Franchise Cornerstone,True,True,None
-3,Giannis Antetokounmpo,2023-24,Confirmed Franchise Cornerstone,True,32.0,True,Bulldozer (Fragile Star),0.9864184856414795,0.0,Franchise Cornerstone,True,True,None
-4,Joel Embiid,2023-24,Confirmed Franchise Cornerstone,True,38.7,True,Bulldozer (Fragile Star),0.9806678891181946,0.33593534416086623,Franchise Cornerstone,True,True,None
-5,Joel Embiid,2018-19,Confirmed Franchise Cornerstone,True,32.7,True,Victim (Fragile Role),0.1451864242553711,0.0030025020850709128,Depth,False,False,Performance too low (14.52% < 70%); False Negative: Should be Franchise Cornerstone
-6,Shai Gilgeous-Alexander,2023-24,Borderline Franchise Cornerstone,True,31.7,True,Bulldozer (Fragile Star),0.9901700615882874,0.06248733333333312,Franchise Cornerstone,True,True,None
-7,Tyrese Maxey,2023-24,Borderline Franchise Cornerstone,True,27.3,True,King (Resilient Star),0.7571603059768677,0.40453729643785774,Franchise Cornerstone,True,True,None
-8,Jordan Poole,2023-24,Not Franchise Cornerstone,False,25.6,True,Victim (Fragile Role),0.1833006590604782,0.5757433212035148,Depth,False,True,None
-9,Jordan Poole,2021-22,Not Franchise Cornerstone,False,25.2,True,King (Resilient Star),0.8404895067214966,0.05538671926364247,Franchise Cornerstone,True,False,False Positive: Should not be Franchise Cornerstone
-10,Domantas Sabonis,2023-24,Not Franchise Cornerstone,False,22.0,True,Victim (Fragile Role),0.1405797004699707,0.10639224806201553,Depth,False,True,None
-11,Julius Randle,2023-24,Not Franchise Cornerstone,False,28.7,True,King (Resilient Star),0.8845615983009338,0.5120645812110863,Franchise Cornerstone,False,True,None
-12,DeMar DeRozan,2015-16,Not Franchise Cornerstone,False,29.100000000000005,True,Victim (Fragile Role),0.46181708574295044,0.15745110347968438,Depth,False,True,None
-13,DeMar DeRozan,2016-17,Not Franchise Cornerstone,False,33.7,True,Bulldozer (Fragile Star),0.9950418472290039,0.017045883407804996,Franchise Cornerstone,True,False,False Positive: Should not be Franchise Cornerstone
-14,Karl-Anthony Towns,2021-22,Not Franchise Cornerstone,False,27.200000000000003,True,Bulldozer (Fragile Star),0.8832442164421082,0.05147199999999985,Franchise Cornerstone,True,False,False Positive: Should not be Franchise Cornerstone
-15,Karl-Anthony Towns,2022-23,Not Franchise Cornerstone,False,25.0,True,King (Resilient Star),0.5153422951698303,0.6669157796358598,Luxury Component,False,True,None
-16,Karl-Anthony Towns,2023-24,Not Franchise Cornerstone,False,26.8,True,Bulldozer (Fragile Star),0.940097451210022,0.028110903426791234,Franchise Cornerstone,True,False,False Positive: Should not be Franchise Cornerstone
-17,Ben Simmons,2018-19,Not Franchise Cornerstone,False,21.5,True,Victim (Fragile Role),0.07527678459882736,0.06885245901639336,Depth,False,True,None
-18,Ben Simmons,2020-21,Not Franchise Cornerstone,False,20.0,True,Victim (Fragile Role),0.058144256472587585,0.017821782178217727,Depth,False,True,None
-19,Aaron Gordon,2023-24,Role Player - Depth,False,17.4,True,Victim (Fragile Role),0.02432839199900627,0.14693877551020418,Depth,False,True,None
-20,Brook Lopez,2023-24,Role Player - Depth,False,15.6,True,Victim (Fragile Role),0.0042435224168002605,0.7473923841059603,Avoid,False,True,None
-21,Chris Paul,2015-16,Confirmed Franchise Cornerstone,True,26.5,True,King (Resilient Star),0.6663902401924133,0.3397837308868502,Depth,False,False,Performance too low (66.64% < 70%); Dependence too high (33.98% >= 30%); False Negative: Should be Franchise Cornerstone
-22,Chris Paul,2016-17,Confirmed Franchise Cornerstone,True,23.9,True,King (Resilient Star),0.9245407581329346,0.30987783985102413,Franchise Cornerstone,True,True,None
-23,Chris Paul,2017-18,Confirmed Franchise Cornerstone,True,24.1,True,King (Resilient Star),0.7272811532020569,0.05779601029600989,Franchise Cornerstone,True,True,None
-24,Jimmy Butler III,2015-16,Confirmed Franchise Cornerstone,True,24.2,True,King (Resilient Star),0.7192712426185608,0.10569044482087975,Franchise Cornerstone,True,True,None
-25,James Harden,2015-16,Confirmed Franchise Cornerstone,True,31.900000000000002,True,Bulldozer (Fragile Star),0.9953328371047974,0.11799628942486096,Franchise Cornerstone,True,True,None
-26,Eric Bledsoe,2015-16,Not Franchise Cornerstone,False,27.0,True,King (Resilient Star),0.9335532784461975,0.0,Franchise Cornerstone,True,False,False Positive: Should not be Franchise Cornerstone
-27,James Harden,2015-16,Confirmed Franchise Cornerstone,True,31.900000000000002,True,Bulldozer (Fragile Star),0.9953328371047974,0.11799628942486096,Franchise Cornerstone,True,True,None
-28,John Wall,2015-16,Confirmed Franchise Cornerstone,True,28.000000000000004,True,Victim (Fragile Role),0.4907447397708893,0.38527586572063965,Depth,False,False,Performance too low (49.07% < 70%); Dependence too high (38.53% >= 30%); False Negative: Should be Franchise Cornerstone
-29,LeBron James,2015-16,Confirmed Franchise Cornerstone,True,30.5,True,Bulldozer (Fragile Star),0.9916104674339294,0.1806451612903226,Franchise Cornerstone,True,True,None
-30,Kawhi Leonard,2015-16,Confirmed Franchise Cornerstone,True,25.2,True,King (Resilient Star),0.798395037651062,0.16940959147424517,Franchise Cornerstone,True,True,None
-31,Giannis Antetokounmpo,2024-25,Confirmed Franchise Cornerstone,True,34.599999999999994,True,King (Resilient Star),0.9912211894989014,0.0,Franchise Cornerstone,True,True,None
-32,Donovan Mitchell,2024-25,Confirmed Franchise Cornerstone,True,29.799999999999997,True,King (Resilient Star),0.9687410593032837,0.21337826203802945,Franchise Cornerstone,True,True,None
-33,LeBron James,2024-25,Confirmed Franchise Cornerstone,True,29.100000000000005,True,King (Resilient Star),0.9347378611564636,0.3428182503770737,Franchise Cornerstone,True,True,None
-34,Cade Cunningham,2024-25,Emerging Franchise Cornerstone,True,32.300000000000004,True,Bulldozer (Fragile Star),0.9928198456764221,0.3890944337572646,Franchise Cornerstone,True,True,None
+1,Nikola Jokić,2023-24,Confirmed Franchise Cornerstone,True,28.799999999999997,True,Victim (Fragile Role),0.2996111810207367,0.2932268013889274,Depth,False,False,Performance too low (29.96% < 70%); False Negative: Should be Franchise Cornerstone
+2,Luka Dončić,2023-24,Confirmed Franchise Cornerstone,True,35.5,True,Victim (Fragile Role),0.35439008474349976,0.030550401252690818,Depth,False,False,Performance too low (35.44% < 70%); False Negative: Should be Franchise Cornerstone
+3,Giannis Antetokounmpo,2023-24,Confirmed Franchise Cornerstone,True,32.0,True,Victim (Fragile Role),0.13073886930942535,0.0,Depth,False,False,Performance too low (13.07% < 70%); False Negative: Should be Franchise Cornerstone
+4,Joel Embiid,2023-24,Confirmed Franchise Cornerstone,True,38.7,True,Bulldozer (Fragile Star),0.5498167872428894,0.6808155452436195,Luxury Component,False,False,Performance too low (54.98% < 70%); Dependence too high (68.08% >= 30%); False Negative: Should be Franchise Cornerstone
+5,Joel Embiid,2018-19,Confirmed Franchise Cornerstone,True,32.7,True,Victim (Fragile Role),0.05979444459080696,0.0030025020850709128,Depth,False,False,Performance too low (5.98% < 70%); False Negative: Should be Franchise Cornerstone
+6,Shai Gilgeous-Alexander,2023-24,Borderline Franchise Cornerstone,True,31.7,True,Victim (Fragile Role),0.28229114413261414,0.16943204744146256,Depth,False,False,Performance too low (28.23% < 70%); False Negative: Should be Franchise Cornerstone
+7,Tyrese Maxey,2023-24,Borderline Franchise Cornerstone,True,27.3,True,Victim (Fragile Role),0.07666820287704468,0.40453729643785774,Depth,False,False,Performance too low (7.67% < 70%); Dependence too high (40.45% >= 30%); False Negative: Should be Franchise Cornerstone
+8,Jordan Poole,2023-24,Not Franchise Cornerstone,False,25.6,True,Victim (Fragile Role),0.037744201719760895,0.5757433212035148,Depth,False,True,None
+9,Jordan Poole,2021-22,Not Franchise Cornerstone,False,25.2,True,Victim (Fragile Role),0.029011603444814682,0.418956607495069,Depth,False,True,None
+10,Domantas Sabonis,2023-24,Not Franchise Cornerstone,False,22.0,True,Victim (Fragile Role),0.04135294631123543,0.12923076923076926,Depth,False,True,None
+11,Julius Randle,2023-24,Not Franchise Cornerstone,False,28.7,True,Victim (Fragile Role),0.05949428305029869,0.680622009569378,Avoid,False,True,None
+12,DeMar DeRozan,2015-16,Not Franchise Cornerstone,False,29.100000000000005,True,Victim (Fragile Role),0.13176046311855316,0.15745110347968438,Depth,False,True,None
+13,DeMar DeRozan,2016-17,Not Franchise Cornerstone,False,33.7,True,Bulldozer (Fragile Star),0.9227953553199768,0.017045883407804996,Franchise Cornerstone,True,False,False Positive: Should not be Franchise Cornerstone
+14,Karl-Anthony Towns,2021-22,Not Franchise Cornerstone,False,27.200000000000003,True,Victim (Fragile Role),0.029366038739681244,0.16093542813517114,Depth,False,True,None
+15,Karl-Anthony Towns,2022-23,Not Franchise Cornerstone,False,25.0,True,Victim (Fragile Role),0.08010588586330414,0.7453271028037383,Avoid,False,True,None
+16,Karl-Anthony Towns,2023-24,Not Franchise Cornerstone,False,26.8,True,Victim (Fragile Role),0.03854171186685562,0.29803921568627456,Depth,False,True,None
+17,Ben Simmons,2018-19,Not Franchise Cornerstone,False,21.5,True,Victim (Fragile Role),0.06673714518547058,0.06885245901639336,Depth,False,True,None
+18,Ben Simmons,2020-21,Not Franchise Cornerstone,False,20.0,True,Victim (Fragile Role),0.038954563438892365,0.017821782178217727,Depth,False,True,None
+19,Aaron Gordon,2023-24,Role Player - Depth,False,17.4,True,Victim (Fragile Role),0.017847442999482155,0.14693877551020418,Depth,False,True,None
+20,Brook Lopez,2023-24,Role Player - Depth,False,15.6,True,Victim (Fragile Role),0.011924820020794868,0.7473923841059603,Avoid,False,True,None
+21,Chris Paul,2015-16,Confirmed Franchise Cornerstone,True,26.5,True,Victim (Fragile Role),0.030517255887389183,0.5093975531168631,Depth,False,False,Performance too low (3.05% < 70%); Dependence too high (50.94% >= 30%); False Negative: Should be Franchise Cornerstone
+22,Chris Paul,2016-17,Confirmed Franchise Cornerstone,True,23.9,True,Victim (Fragile Role),0.09495348483324051,0.5146496815286625,Depth,False,False,Performance too low (9.50% < 70%); Dependence too high (51.46% >= 30%); False Negative: Should be Franchise Cornerstone
+23,Chris Paul,2017-18,Confirmed Franchise Cornerstone,True,24.1,True,Victim (Fragile Role),0.05543915927410126,0.42523262548262464,Depth,False,False,Performance too low (5.54% < 70%); Dependence too high (42.52% >= 30%); False Negative: Should be Franchise Cornerstone
+24,Jimmy Butler III,2015-16,Confirmed Franchise Cornerstone,True,24.2,True,Victim (Fragile Role),0.029837414622306824,0.10569044482087975,Depth,False,False,Performance too low (2.98% < 70%); False Negative: Should be Franchise Cornerstone
+25,James Harden,2015-16,Confirmed Franchise Cornerstone,True,31.900000000000002,True,Bulldozer (Fragile Star),0.5481447577476501,0.11799628942486096,Depth,False,False,Performance too low (54.81% < 70%); False Negative: Should be Franchise Cornerstone
+26,Eric Bledsoe,2015-16,Not Franchise Cornerstone,False,27.0,True,Victim (Fragile Role),0.050745658576488495,0.0,Depth,False,True,None
+27,James Harden,2015-16,Confirmed Franchise Cornerstone,True,31.900000000000002,True,Bulldozer (Fragile Star),0.5481447577476501,0.11799628942486096,Depth,False,False,Performance too low (54.81% < 70%); False Negative: Should be Franchise Cornerstone
+28,John Wall,2015-16,Confirmed Franchise Cornerstone,True,28.000000000000004,True,Victim (Fragile Role),0.0792350322008133,0.38527586572063965,Depth,False,False,Performance too low (7.92% < 70%); Dependence too high (38.53% >= 30%); False Negative: Should be Franchise Cornerstone
+29,LeBron James,2015-16,Confirmed Franchise Cornerstone,True,30.5,True,Bulldozer (Fragile Star),0.7235826849937439,0.1806451612903226,Franchise Cornerstone,True,True,None
+30,Kawhi Leonard,2015-16,Confirmed Franchise Cornerstone,True,25.2,True,Victim (Fragile Role),0.06248800456523895,0.40966644389088047,Depth,False,False,Performance too low (6.25% < 70%); Dependence too high (40.97% >= 30%); False Negative: Should be Franchise Cornerstone
+31,Giannis Antetokounmpo,2024-25,Confirmed Franchise Cornerstone,True,34.599999999999994,True,Victim (Fragile Role),0.5108300447463989,0.0,Depth,False,False,Performance too low (51.08% < 70%); False Negative: Should be Franchise Cornerstone
+32,Donovan Mitchell,2024-25,Confirmed Franchise Cornerstone,True,29.799999999999997,True,Bulldozer (Fragile Star),0.5249949097633362,0.48081622678396885,Depth,False,False,Performance too low (52.50% < 70%); Dependence too high (48.08% >= 30%); False Negative: Should be Franchise Cornerstone
+33,LeBron James,2024-25,Confirmed Franchise Cornerstone,True,29.100000000000005,True,Victim (Fragile Role),0.09458796679973602,0.3844607821812329,Depth,False,False,Performance too low (9.46% < 70%); Dependence too high (38.45% >= 30%); False Negative: Should be Franchise Cornerstone
+34,Cade Cunningham,2024-25,Emerging Franchise Cornerstone,True,32.300000000000004,True,Victim (Fragile Role),0.3143351674079895,0.4444023546803232,Depth,False,False,Performance too low (31.43% < 70%); Dependence too high (44.44% >= 30%); False Negative: Should be Franchise Cornerstone
 35,Kevin Porter Jr,2024-25,Not Franchise Cornerstone,False,,False,,,,,,False,No data found
