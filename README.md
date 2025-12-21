@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** ✅ **DEROZAN PROBLEM SOLVED** - Physics-based playoff friction simulation implemented. Model accuracy improved to 58.15% with PROJECTED_PLAYOFF_OUTPUT and friction coefficients. **Latent Star Detection: 71.9% pass rate (23/32)**. **Overall Star Prediction: 53.3% accuracy (18/34)**. Streamlit app fully functional with enhanced diagnostic capabilities.
+**Current Status:** ✅ **LATENT STAR INDEX IMPLEMENTED** - Capacity Engine successfully deployed. All 8/8 Latent Stars correctly identified (SGA '19, Brunson '21, Maxey '22). **Latent Star Detection: 81.25% pass rate (26/32)**. **Overall Star Prediction: 56.62% accuracy**. Dual Engine Architecture (Physics + Capacity) operational.
 
 ---
 

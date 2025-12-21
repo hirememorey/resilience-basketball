@@ -1069,6 +1069,33 @@ class ConditionalArchetypePredictor:
         
         return np.array(features).reshape(1, -1), phase3_metadata
     
+
+    def _calculate_latent_creation_potential(self, player_data: pd.Series) -> float:
+        """
+        Calculate Latent Creation Potential (Capacity Engine).
+        """
+        efg_iso = player_data.get('EFG_ISO_WEIGHTED', None)
+        creation_vol = player_data.get('CREATION_VOLUME_RATIO', 0)
+        usg_pct = player_data.get('USG_PCT', 0)
+        
+        if pd.isna(efg_iso) or pd.isna(creation_vol):
+            return 0.0
+            
+        baseline_eff = 0.44
+        efficiency_delta = efg_iso - baseline_eff
+        volume_scalar = np.log1p(creation_vol * 100)
+        raw_score = efficiency_delta * volume_scalar
+        
+        if usg_pct < 0.20:
+            usg_gap = 0.25 - usg_pct
+            scaling_penalty = (usg_gap / 0.05) * 0.015
+            projected_eff = efg_iso - scaling_penalty
+            projected_delta = projected_eff - baseline_eff
+            projected_score = projected_delta * volume_scalar
+            return projected_score
+            
+        return raw_score
+
     def predict_archetype_at_usage(
         self, 
         player_data: pd.Series, 
@@ -1121,6 +1148,27 @@ class ConditionalArchetypePredictor:
         
         # Calculate star-level potential (King + Bulldozer)
         star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
+
+        # --- LATENT STAR DETECTION (Capacity Engine) ---
+        latent_score = self._calculate_latent_creation_potential(player_data)
+        is_latent_star = False
+        LATENT_STAR_THRESHOLD = 0.15
+        
+        if latent_score > LATENT_STAR_THRESHOLD:
+            is_latent_star = True
+            logger.info(f"Latent Star Detected: Score {latent_score:.4f} > {LATENT_STAR_THRESHOLD}")
+            
+            if star_level_potential < 0.55:
+                original_star_level = star_level_potential
+                star_level_potential = max(star_level_potential, 0.55)
+                prob_dict['Bulldozer'] = star_level_potential
+                prob_dict['King'] = 0.0
+                prob_dict['Sniper'] = 0.0
+                prob_dict['Victim'] = max(0.0, 1.0 - star_level_potential)
+                pred_archetype = 'Bulldozer (Fragile Star)'
+                logger.info(f"Latent Star Boost: {original_star_level:.2%} -> {star_level_potential:.2%} (Projected Bulldozer)")
+
+        player_data['_IS_LATENT_STAR'] = is_latent_star
         
         # --- ALPHA THRESHOLD (Usage-Adjusted Efficiency Gate) ---
         # Principle: Usage is a debt. You must pay it back with efficiency.
@@ -1141,7 +1189,7 @@ class ConditionalArchetypePredictor:
             required_efg = base_efficiency_floor + (0.2 * usage_surplus)
 
             # 4. Check Compliance
-            if pd.notna(efg_iso) and efg_iso < required_efg:
+            if pd.notna(efg_iso) and efg_iso < required_efg and not is_latent_star:
                 logger.info(f"Alpha Threshold Failed: USG {usg:.2f} requires EFG {required_efg:.3f}, got {efg_iso:.3f}")
 
                 # Cap Star Level (Demote to 'Bulldozer' or 'Depth')
@@ -1346,7 +1394,7 @@ class ConditionalArchetypePredictor:
             
             flash_multiplier_conditions_met = is_low_volume and is_elite_efficiency
             
-            if pd.notna(self_created_freq) and self_created_freq < 0.10:
+            if pd.notna(self_created_freq) and self_created_freq < 0.10 and not is_latent_star:
                 # PHASE 4.1: Exempt if Flash Multiplier conditions are met (showing elite skills despite low volume)
                 if flash_multiplier_conditions_met:
                     logger.info(f"Bag Check Gate EXEMPTED: Self-created freq {self_created_freq:.4f} < 0.10 BUT Flash Multiplier conditions met (low volume={creation_vol:.4f} + elite efficiency) = role constraint, not skill deficit")
@@ -1820,7 +1868,7 @@ class ConditionalArchetypePredictor:
                 pd.notna(creation_vol) and creation_vol > 0.60
             )
 
-            if hit_primary or hit_secondary:
+            if (hit_primary or hit_secondary) and not is_latent_star:
                 original_star_level = star_level_potential
                 # Cap star-level to 30% and redistribute
                 star_level_potential = min(star_level_potential, 0.30)

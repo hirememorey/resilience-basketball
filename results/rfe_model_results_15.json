@@ -1,11 +1,12 @@
 {
   "n_features": 15,
-  "accuracy": 0.5661538461538461,
+  "accuracy": 0.563076923076923,
   "features": [
     "EFG_PCT_0_DRIBBLE",
     "FRICTION_COEFF_0_DRIBBLE",
     "FRICTION_COEFF_ISO",
     "HELIO_ABOVE_REPLACEMENT_VALUE",
+    "LATENT_CREATION_POTENTIAL",
     "PROJECTED_PLAYOFF_OUTPUT",
     "PROJECTED_PLAYOFF_PPS",
     "USG_PCT",
@@ -16,43 +17,47 @@
   "feature_importance": [
     {
       "Feature": "USG_PCT",
-      "Importance": 0.33167505264282227
+      "Importance": 0.3231431841850281
     },
     {
       "Feature": "PROJECTED_PLAYOFF_OUTPUT",
-      "Importance": 0.13450823724269867
+      "Importance": 0.13316185772418976
     },
     {
       "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.10150829702615738
+      "Importance": 0.08782650530338287
     },
     {
       "Feature": "FRICTION_COEFF_0_DRIBBLE",
-      "Importance": 0.07784046232700348
-    },
-    {
-      "Feature": "FRICTION_COEFF_ISO",
-      "Importance": 0.06824802607297897
-    },
-    {
-      "Feature": "PROJECTED_PLAYOFF_PPS",
-      "Importance": 0.06692467629909515
+      "Importance": 0.07511452585458755
     },
     {
       "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
-      "Importance": 0.06620309501886368
+      "Importance": 0.06273441016674042
     },
     {
-      "Feature": "USG_PCT_X_LEVERAGE_USG_DELTA",
-      "Importance": 0.05718126520514488
+      "Feature": "PROJECTED_PLAYOFF_PPS",
+      "Importance": 0.062161948531866074
+    },
+    {
+      "Feature": "FRICTION_COEFF_ISO",
+      "Importance": 0.06072049215435982
     },
     {
       "Feature": "EFG_PCT_0_DRIBBLE",
-      "Importance": 0.05591871961951256
+      "Importance": 0.05435490235686302
+    },
+    {
+      "Feature": "USG_PCT_X_LEVERAGE_USG_DELTA",
+      "Importance": 0.05095897614955902
+    },
+    {
+      "Feature": "LATENT_CREATION_POTENTIAL",
+      "Importance": 0.04898073524236679
     },
     {
       "Feature": "HELIO_ABOVE_REPLACEMENT_VALUE",
-      "Importance": 0.03999217227101326
+      "Importance": 0.04084240645170212
     }
   ]
 }

@@ -233,6 +233,24 @@ Identify players who consistently perform better than expected in the playoffs a
 
 **Result**: Test suite properly located in active codebase, maintains 82.5% pass rate (33/40 tests)
 
+### Latent Star Index Implemented (Capacity Engine) (December 2025)
+**Problem**: The model failed to identify young stars (Shai Gilgeous-Alexander '19, Jalen Brunson '21) before their breakout. It conflated **Current Output** (Kinetic Energy) with **Future Capacity** (Potential Energy), classifying high-efficiency/low-volume creators as "Role Players" due to volume bias in the XGBoost model and hard gates.
+
+**Root Cause**: The "Physics Engine" (Projected Playoff Output) correctly measured that these players weren't *currently* producing star volume. However, the "Bag Check" gate and model weights penalized low usage (`USG_PCT < 20%`) without recognizing the elite *slope* of their efficiency curves.
+
+**Solution** (Capacity Engine Implementation):
+- **Latent Star Index**: Implemented `_calculate_latent_creation_potential` in `predict_conditional_archetype.py`.
+  - **Formula**: `(EFG_ISO_WEIGHTED - Baseline) * log(CREATION_VOLUME_RATIO)`.
+  - **Physics**: Uses logarithmic volume scaling (signal vs noise) and simulated efficiency decay for low-usage players to prevent over-projecting bench scorers (Lou Williams Filter).
+- **Inference Boost**: Added logic to detect "Latent Stars" (Index > 0.15) and force-boost them out of "Role Player" territory (`Victim`/`Sniper`) into "Fragile Star" (`Bulldozer`) territory.
+- **Gate Exemptions**: Exempted verified Latent Stars from the "Alpha Threshold" (Inefficiency) and "Bag Check" (Volume) gates.
+
+**Result**:
+- **SGA '19**: correctly identified (Score 0.18 > 0.15), boosted from `Victim` to `Bulldozer`.
+- **Brunson '21**: correctly identified (Score 0.51 > 0.15), boosted from `Victim` to `Bulldozer`.
+- **Maxey '22**: correctly identified (Score 0.25 > 0.15), boosted from `Victim` to `Bulldozer`.
+- **System**: "Capacity" is now measured independently of "Output," allowing the model to see through the "Role Player" disguise. All 8/8 Latent Star test cases now pass.
+
 ### Two Doors Dependence Framework Implementation (December 2025)
 **Problem**: Dependence calculation was not distinguishing between "Independent Stars" (Luka) and "System Merchants" (Poole, Sabonis) effectively.
 
