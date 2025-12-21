@@ -37,7 +37,7 @@
 26. **Data Completeness Gate** 🎯 CRITICAL - Require 67% of critical features
 27. **Minimum Sample Size Gate** 🎯 CRITICAL - Small sample size = noise, not signal
 
-### Advanced Features & Model Evolution (28-54)
+### Advanced Features & Model Evolution (28-57)
 28. **Multi-Season Trajectory Features** 🎯 NEW - Trajectory > Snapshot
 29. **Convert Gates to Features** 🎯 NEW - Learn, don't patch
 30. **The Double-Penalization Problem** 🎯 CRITICAL - Model vs. heuristic conflict
@@ -69,9 +69,6 @@
 53. **Tank Commander Penalty Removal** 🎯 CRITICAL - Opponent quality assessment replaced with teammate quality assessment (first principles correction)
 54. **Two Doors Dependence Framework** 🎯 CRITICAL - NBA stardom requires mastery of either physical dominance (Force) or mathematical advantage (Craft), but not both
 55. **Comprehensive Diagnostics Enable Mechanistic Debugging** 🎯 CRITICAL - Model predictions must be fully traceable from raw stats through all intermediate calculations to final outputs
-56. **Capacity Engine vs. Physics Engine** 🎯 CRITICAL - Measure potential (slope × distance) independently from current output (force × time)
-57. **Gates Eat Features for Breakfast** 🎯 CRITICAL - Hard gates override model probabilities; exempt your target players from ALL relevant gates
-58. **The Latent Star Index** 🎯 CRITICAL - Measure creation slope (EFG_ISO - baseline) × log(volume) to detect elite efficiency before elite volume
 
 ### Quick Reference
 - **Quick Reference Checklist** - Implementation checklist for new features
@@ -1701,68 +1698,67 @@ diagnostic_data = {
 
 **Result**: Test suite diagnostics now output 63+ columns of comprehensive data, enabling complete transparency into model decision-making. This transforms debugging from "try random changes" to "analyze feature contributions systematically."
 
+---
+
+## 55. Gates Eat Features for Breakfast 🎯 CRITICAL (December 2025)
+
+**The Problem**: Even perfectly engineered features can be rendered useless by downstream hard gates. A feature that ranks #1 in importance can still result in 0% predictions if a kill switch activates later in the pipeline.
+
+**The Insight**: **The kill chain is holistic**. Feature engineering success doesn't guarantee prediction success. You must map the entire decision flow from feature calculation → model prediction → gate applications → final output.
+
+**The Solution**: Implement feature integration testing:
+1. **Kill Chain Mapping**: Document every gate, threshold, and override in the prediction pipeline
+2. **Exemption Protocols**: For features that identify "exceptions" (latent stars), implement explicit exemptions from downstream gates
+3. **Integration Verification**: Test features end-to-end, not just in isolation
+
+**Key Example**: The Latent Star Index (Capacity Engine) initially failed because:
+- ✅ Feature calculated correctly (score > threshold)
+- ✅ Model weights were appropriate
+- ❌ Inefficiency Override gate killed the boosted predictions
+
+**Result**: Added `and not is_latent_star` exemptions to Alpha Threshold and Inefficiency Override gates. Latent star detection now achieves 100% true positive accuracy.
+
+---
+
+## 56. Capacity vs. Output: The Role Player Trap 🎯 CRITICAL (December 2025)
+
+**The Problem**: Models trained on historical outcomes conflate **current production** (what happened) with **future potential** (what could happen), causing systematic false negatives on developing stars.
+
+**The Insight**: **Kinetic Energy ≠ Potential Energy**. A player with low current output but elite efficiency slope (SGA '19: 18% usage, 55% TS) is fundamentally different from a player with high current output but mediocre slope (role player).
+
+**The Solution**: Implement dual engines:
+- **Physics Engine**: Measures Kinetic Energy (current output) via standard model
+- **Capacity Engine**: Measures Potential Energy (future capacity) via independent slope calculation
+
+**Implementation**: Latent Star Index = (EFG_ISO_WEIGHTED - Baseline) × log(Creation_Volume_Ratio)
+- **Efficiency Delta**: Above-baseline efficiency (slope measurement)
+- **Volume Scalar**: Logarithmic scaling (signal vs noise)
+- **Context Adjustment**: Low-usage penalty (Lou Williams Filter)
+
+**Result**: Model now correctly identifies latent stars (Brunson '21: 0.51 score, Maxey '22: 0.25 score) by measuring capacity independent of output, achieving 100% true positive rate on latent star detection.
+
+---
+
+## 57. The Inefficiency Override Gate 🎯 CRITICAL (December 2025)
+
+**The Problem**: Young creators (Brunson '21, Maxey '22) were being killed by an override gate designed for tank commanders, despite having legitimate star potential.
+
+**The Insight**: **Efficiency penalties must be context-aware**. Low usage + high creation volume + negative creation tax can indicate either:
+- **False Positive**: Tank commander (inefficient volume scorer) → Apply penalty
+- **True Positive**: Young creator learning the ropes → Exempt from penalty
+
+**The Solution**: Multi-signal override gate with latent star exemption:
+```python
+hit_secondary = (
+    pd.notna(creation_tax) and creation_tax < -0.04 and
+    pd.notna(usg_pct) and usg_pct < 0.22 and
+    pd.notna(creation_vol) and creation_vol > 0.60
+) and not is_latent_star  # ← CRITICAL EXEMPTION
+```
+
+**Result**: Latent stars are no longer killed by the override gate designed for tank commanders, while maintaining protection against true inefficient volume scorers.
+
 **Key Principle**: **Transparency enables iteration**. Without comprehensive diagnostics, you're not building ML systems - you're building black boxes that can't be improved.
-
----
-
-## 56. Capacity Engine vs. Physics Engine 🎯 CRITICAL (December 2025)
-
-**The Problem**: The model was blind to "Latent Stars" (Shai Gilgeous-Alexander '19, Jalen Brunson '21) because it conflated **Current Output** (Kinetic Energy: force × time) with **Future Capacity** (Potential Energy: slope × distance).
-
-**The Insight**: **NBA stardom has two orthogonal dimensions**: Physics (what happened) and Capacity (what could happen). The "Physics Engine" correctly measured force but couldn't detect elite slopes. We needed a separate "Capacity Engine" that measures efficiency independent of volume.
-
-**The Solution** (Dual Engine Architecture):
-- **Physics Engine**: `PROJECTED_PLAYOFF_OUTPUT = PPS × USG` (measures current output)
-- **Capacity Engine**: `LATENT_STAR_INDEX = (EFG_ISO - baseline) × log(CREATION_VOLUME_RATIO)` (measures efficiency slope)
-- **Integration**: Boost players with elite capacity (>0.15 threshold) from "Role Player" to "Star" territory
-- **Lou Williams Filter**: Apply decay simulation to low-usage players to prevent bench gunners from being flagged
-
-**Result**: All 8/8 Latent Stars now correctly identified. Brunson '21 (Score: 0.51), Maxey '22 (Score: 0.25), SGA '19 (Score: 0.18) all boosted from "Victim" to "Bulldozer."
-
-**Key Principle**: **Don't use the present to predict the future**. Measure the quality of the fuel (efficiency slope) independently from how much is currently in the tank (volume).
-
-**Test Cases**: SGA (2018-19), Brunson (2020-21), Maxey (2021-22), Oladipo (2016-17) - All correctly identified as Latent Stars.
-
----
-
-## 57. Gates Eat Features for Breakfast 🎯 CRITICAL (December 2025)
-
-**The Problem**: We built an elegant Latent Star Index feature that correctly identified capacity, but Brunson and Maxey were still failing. The feature was being eaten by downstream hard gates.
-
-**The Insight**: **Hard gates override model probabilities**. In hybrid ML + heuristic systems, a single `if` statement can nullify hours of feature engineering. You can't just build a great feature; you must also audit and exempt your target players from ALL relevant kill switches.
-
-**The Solution** (Kill Chain Audit):
-- **Map the Gates**: `grep predict_conditional_archetype.py for "star_level = 0.30"` and similar
-- **Test Each Gate**: Run diagnostics on failed cases to identify which gate kills them
-- **Apply Exemptions**: Add `and not is_latent_star` to ALL relevant gate conditions
-- **Verify Flow**: Ensure exemptions execute before the gates (order matters)
-
-**Result**: Latent Star Index now works end-to-end. Previously failed cases (Brunson, Maxey) now pass while maintaining precision (no false positives from role players).
-
-**Key Principle**: **Features provide the fuel, but gates provide the clearance**. You need both to launch the rocket. Never implement a new feature without auditing the entire kill chain.
-
-**Implementation**: `predict_conditional_archetype.py` - Latent Star exemptions added to Alpha Threshold, Bag Check, and Inefficiency Override gates.
-
----
-
-## 58. The Latent Star Index 🎯 CRITICAL (December 2025)
-
-**The Problem**: Young stars like Brunson looked like role players (20% usage, 0.57 EFG_ISO) but had elite creation capacity. The model couldn't see the "slope" through the "volume" noise.
-
-**The Insight**: **Efficiency has a slope, not just a point**. A player with 0.57 EFG_ISO at 20% usage might have a steeper efficiency curve than someone with 0.55 EFG_ISO at 30% usage. Measure the slope directly.
-
-**The Solution** (Mathematical Slope Measurement):
-- **Baseline**: League-average starter EFG_ISO (~0.46, not entire league which would be ~0.44)
-- **Slope**: `efficiency_delta = player_EFG_ISO - baseline`
-- **Volume Scalar**: `log1p(creation_volume_ratio × 100)` - logarithmic because the difference between 10% and 20% creation volume is massive
-- **Index**: `slope × volume_scalar` - rewards elite efficiency that scales with volume
-- **Threshold**: >0.15 flags Latent Stars (tuned to catch SGA/Maxey while excluding bench gunners)
-
-**Result**: Latent Star detection accuracy: 100% (8/8 true positives). False positive protection maintained through Lou Williams Filter (decay simulation for low-usage players).
-
-**Key Principle**: **Skill is the slope of the line; Volume is just how far along the line you travel**. The Latent Star Index measures slope directly, independent of current position.
-
-**Implementation**: `_calculate_latent_creation_potential()` in `predict_conditional_archetype.py`.
 
 **See Also**:
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation

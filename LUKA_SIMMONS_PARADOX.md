@@ -48,22 +48,6 @@ We resolved these paradoxes by abandoning the search for a single scalar "Resili
     *   This effectively captures "Counter-Punch Efficiency" while penalizing passivity (Volume drop) and rewarding scaling (Volume increase).
 2.  **Dominance Score:** The X-Axis. Measures **Absolute Value**.
     *   Formula: `Playoff Points Per 75 Possessions`
-
-### Extension: Capacity Engine vs. Physics Engine (December 2025)
-
-Building on the dual-grade system, we discovered a third dimension: **Capacity** vs **Output**.
-
-**Physics Engine** (Kinetic Energy): `Force × Time = Efficiency × Volume`
-- Measures what actually happened (output)
-- Correct for established players
-- Blind to potential (slope)
-
-**Capacity Engine** (Potential Energy): `Slope × Distance = Efficiency_Delta × log(Volume)`
-- Measures what could happen (capacity)
-- Detects latent stars before breakout
-- Independent of current usage
-
-**Integration**: The model now runs both engines and uses Capacity to override Physics when detecting elite slopes (Latent Stars).
     *   We determined that "Delta" metrics (Playoff vs RS) are flawed for Dominance because they reward low-usage players for stability. The true measure of Dominance in the playoffs is **Absolute Magnitude**.
 
 ### The Four Archetypes

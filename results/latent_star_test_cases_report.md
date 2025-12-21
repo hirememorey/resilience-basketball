@@ -1,28 +1,28 @@
 # Latent Star Detection: Critical Case Studies Test Report
 
-**Date**: 2025-12-20 22:44:07
+**Date**: 2025-12-20 22:48:29
 
 ## Executive Summary
 
-- **Total Test Cases**: 42
-- **Data Found**: 42
+- **Total Test Cases**: 48
+- **Data Found**: 48
 - **Passed**: 18
-- **Failed**: 24
-- **Pass Rate**: 42.9%
+- **Failed**: 30
+- **Pass Rate**: 37.5%
 
 ## Results by Category
 
 ### True Positive
-- **Total**: 17
+- **Total**: 19
 - **Passed**: 0
-- **Failed**: 17
+- **Failed**: 19
 - **Pass Rate**: 0.0%
 
 ### False Positive
-- **Total**: 5
+- **Total**: 8
 - **Passed**: 2
-- **Failed**: 3
-- **Pass Rate**: 40.0%
+- **Failed**: 6
+- **Pass Rate**: 25.0%
 
 ### Not Franchise Cornerstone
 - **Total**: 2
@@ -41,6 +41,12 @@
 - **Passed**: 1
 - **Failed**: 0
 - **Pass Rate**: 100.0%
+
+### System Hub
+- **Total**: 1
+- **Passed**: 0
+- **Failed**: 1
+- **Pass Rate**: 0.0%
 
 ## Detailed Results
 
@@ -88,6 +94,12 @@
 | 40 | Markelle Fultz | 2021-22 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 30.00% | 17.02% | Depth | ✅ PASS |
 | 41 | Markelle Fultz | 2022-23 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 0.00% | 34.30% | Depth | ✅ PASS |
 | 42 | Markelle Fultz | 2023-24 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 0.00% | 60.00% | Depth | ✅ PASS |
+| 43 | Jamal Murray | 2019-20 | True Positive - Latent Star (Riser) | Bulldozer (High) | Victim (Fragile Role) | 38.55% | 53.60% | Depth | ❌ FAIL |
+| 44 | Rudy Gobert | 2020-21 | False Positive - System Specialist | Sniper (Low) [Luxury Component] | Victim (Fragile Role) | 1.13% | 50.00% | Depth | ❌ FAIL |
+| 45 | Isaiah Thomas | 2016-17 | True Positive - Outlier | King (High) [Franchise Cornerstone] | Bulldozer (Fragile Star) | 55.00% | 11.44% | Depth | ❌ FAIL |
+| 46 | Zach LaVine | 2020-21 | False Positive - Empty Calories | Bulldozer (Medium) [Luxury Component] | Bulldozer (Fragile Star) | 59.71% | 33.90% | Depth | ❌ FAIL |
+| 47 | Fred VanVleet | 2021-22 | False Positive - Inefficient Volume | Victim (Low) [Avoid] | Bulldozer (Fragile Star) | 55.00% | 63.73% | Depth | ❌ FAIL |
+| 48 | Draymond Green | 2015-16 | System Hub - Unique Archetype | Sniper (Low) [Luxury Component] | Victim (Fragile Role) | 0.77% | 11.29% | Depth | ❌ FAIL |
 
 ## Notes
 
@@ -140,4 +152,16 @@
 **Domantas Sabonis (2021-22)**: Expected risk category 'Luxury Component', got 'Depth'
 
 **Tyrese Haliburton (2021-22)**: Expected high performance (≥65%), got 55.00%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 55.00%
+
+**Jamal Murray (2019-20)**: Expected high performance (≥65%), got 38.55%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
+
+**Rudy Gobert (2020-21)**: Expected risk category 'Luxury Component', got 'Depth'
+
+**Isaiah Thomas (2016-17)**: Expected high performance (≥65%), got 55.00%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 55.00%
+
+**Zach LaVine (2020-21)**: Expected risk category 'Luxury Component', got 'Depth'
+
+**Fred VanVleet (2021-22)**: Expected low performance (<55%), got 55.00%; Expected risk category 'Avoid', got 'Depth'; Risk category matches but performance doesn't: 55.00%
+
+**Draymond Green (2015-16)**: Expected risk category 'Luxury Component', got 'Depth'
 

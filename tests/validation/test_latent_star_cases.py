@@ -703,6 +703,73 @@ def get_test_cases() -> List[LatentStarTestCase]:
         context="Age 25. Role player, never reached star potential.",
         mechanism="Final age-25 season. Tests model's ability to identify persistent lack of star traits."
     ),
+        # ========== Category 8: New Hard Cases (First Principles Stress Test) ==========
+        LatentStarTestCase(
+            name="Jamal Murray",
+            season="2019-20",
+            category="True Positive - Latent Star (Riser)",
+            test_usage=0.30,
+            expected_outcome="Bulldozer",
+            expected_star_level="High",  # >65%
+            context="The 'Bubble Murray' breakout. Mediocre RS stats (18.5 ppg) masking elite playoff capacity.",
+            mechanism="Tests 'Latent Star Index' - identifying slope/capacity despite modest RS output. 'Blue Arrow' effect."
+        ),
+        LatentStarTestCase(
+            name="Rudy Gobert",
+            season="2020-21",
+            category="False Positive - System Specialist",
+            test_usage=0.20,
+            expected_outcome="Sniper",
+            expected_star_level="Low",  # <55% (in terms of offensive star power)
+            expected_risk_category="Luxury Component",  # High Performance (Efficiency) + High Dependence
+            context="DPOY, #1 seed. Elite efficiency but near-zero self-creation.",
+            mechanism="Should fail the Independence test (High Dependence) due to Sabonis Constraint (Creation Volume < 0.15)."
+        ),
+        LatentStarTestCase(
+            name="Isaiah Thomas",
+            season="2016-17",
+            category="True Positive - Outlier",
+            test_usage=0.34,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="The 'King in the Fourth'. 28.9 PPG. 5'9\" defensive liability.",
+            mechanism="Elite Creation and Leverage vectors should override physical stature limitations in the offensive model."
+        ),
+        LatentStarTestCase(
+            name="Zach LaVine",
+            season="2020-21",
+            category="False Positive - Empty Calories",
+            test_usage=0.30,
+            expected_outcome="Bulldozer", # Likely capable of volume, but fragile
+            expected_star_level="Medium",  # 30-65%
+            expected_risk_category="Luxury Component", # High Performance + High Dependence
+            context="27.4 PPG, 50/40/85 splits on non-playoff Bulls. 'Good Stats Bad Team'.",
+            mechanism="High stats but high dependence on system freedom. Should flag as Luxury Component (High Production, High Dependence)."
+        ),
+        LatentStarTestCase(
+            name="Fred VanVleet",
+            season="2021-22",
+            category="False Positive - Inefficient Volume",
+            test_usage=0.28,
+            expected_outcome="Victim",
+            expected_star_level="Low",  # <55%
+            expected_risk_category="Avoid", # Low Performance + High Dependence (Inefficient)
+            context="All-Star, but 40% FG on high volume. 'Chucker' profile test.",
+            mechanism="Creation Tax and Inefficient Volume Score should penalize him heavily despite All-Star status."
+        ),
+        LatentStarTestCase(
+            name="Draymond Green",
+            season="2015-16",
+            category="System Hub - Unique Archetype",
+            test_usage=0.20,
+            expected_outcome="Sniper",
+            expected_star_level="Low",  # <55% (Offensively)
+            expected_risk_category="Luxury Component", # Elite role player but dependent on system context
+            context="The 73-9 Warriors engine. Elite impact, low scoring volume.",
+            mechanism="Should be identified as High Dependence (needs shooters) but High Value role player."
+        ),
+
     ]
     
     return test_cases
