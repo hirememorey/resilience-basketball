@@ -1083,17 +1083,11 @@ class ConditionalArchetypePredictor:
             
         baseline_eff = 0.44
         efficiency_delta = efg_iso - baseline_eff
-        volume_scalar = np.log1p(creation_vol * 100)
-        raw_score = efficiency_delta * volume_scalar
         
-        if usg_pct < 0.20:
-            usg_gap = 0.25 - usg_pct
-            scaling_penalty = (usg_gap / 0.05) * 0.015
-            projected_eff = efg_iso - scaling_penalty
-            projected_delta = projected_eff - baseline_eff
-            projected_score = projected_delta * volume_scalar
-            return projected_score
-            
+        # Use sqrt for a less punitive scalar at low volumes, amplifying the efficiency signal
+        volume_scalar = np.sqrt(creation_vol) * 10
+        raw_score = efficiency_delta * volume_scalar
+                    
         return raw_score
 
     def predict_archetype_at_usage(
@@ -1158,15 +1152,21 @@ class ConditionalArchetypePredictor:
             is_latent_star = True
             logger.info(f"Latent Star Detected: Score {latent_score:.4f} > {LATENT_STAR_THRESHOLD}")
             
-            if star_level_potential < 0.55:
+            # Dynamic Boost Logic (The "Thermometer" Upgrade)
+            # Map latent_score to target potential: 0.15 -> 0.55, 0.50 -> 0.76
+            # Slope ≈ 0.60. Formula: target = 0.55 + (score - 0.15) * 0.60
+            target_potential = 0.55 + (latent_score - 0.15) * 0.60
+            target_potential = min(0.95, target_potential)  # Safety cap
+            
+            if star_level_potential < target_potential:
                 original_star_level = star_level_potential
-                star_level_potential = max(star_level_potential, 0.55)
+                star_level_potential = target_potential
                 prob_dict['Bulldozer'] = star_level_potential
                 prob_dict['King'] = 0.0
                 prob_dict['Sniper'] = 0.0
                 prob_dict['Victim'] = max(0.0, 1.0 - star_level_potential)
                 pred_archetype = 'Bulldozer (Fragile Star)'
-                logger.info(f"Latent Star Boost: {original_star_level:.2%} -> {star_level_potential:.2%} (Projected Bulldozer)")
+                logger.info(f"Latent Star Boost: {original_star_level:.2%} -> {star_level_potential:.2%} (Score {latent_score:.3f})")
 
         player_data['_IS_LATENT_STAR'] = is_latent_star
         
