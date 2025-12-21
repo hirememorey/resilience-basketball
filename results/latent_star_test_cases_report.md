@@ -1,6 +1,6 @@
 # Latent Star Detection: Critical Case Studies Test Report
 
-**Date**: 2025-12-20 16:00:47
+**Date**: 2025-12-20 21:50:00
 
 ## Executive Summary
 
@@ -47,35 +47,35 @@
 | Test | Player | Season | Category | Expected | Predicted | Performance | Dependence | Risk Category | Pass |
 |------|--------|--------|----------|----------|-----------|-------------|------------|---------------|------|
 | 1 | Shai Gilgeous-Alexander | 2018-19 | True Positive - Latent Star | Bulldozer (High) | Victim (Fragile Role) | 0.00% | 30.73% | Depth | ❌ FAIL |
-| 2 | Victor Oladipo | 2016-17 | True Positive - Latent Star | Bulldozer (High) | Victim (Fragile Role) | 4.34% | 51.17% | Depth | ❌ FAIL |
+| 2 | Victor Oladipo | 2016-17 | True Positive - Latent Star | Bulldozer (High) | Victim (Fragile Role) | 5.04% | 51.17% | Depth | ❌ FAIL |
 | 3 | Jalen Brunson | 2020-21 | True Positive - Latent Star | Bulldozer (High) | Victim (Fragile Role) | 0.00% | 44.99% | Depth | ❌ FAIL |
 | 4 | Tyrese Maxey | 2021-22 | True Positive - Latent Star | Bulldozer (High) | Victim (Fragile Role) | 0.00% | 39.25% | Depth | ❌ FAIL |
-| 5 | Pascal Siakam | 2018-19 | True Positive - Latent Star | Bulldozer (High) | Victim (Fragile Role) | 1.03% | 21.36% | Depth | ❌ FAIL |
-| 6 | Jayson Tatum | 2017-18 | True Positive - Rookie Sensation | Bulldozer (High) | Victim (Fragile Role) | 5.41% | 28.02% | Depth | ❌ FAIL |
-| 7 | Mikal Bridges | 2021-22 | True Positive - Usage Shock | Bulldozer (High) | Victim (Fragile Role) | 10.34% | 42.50% | Depth | ❌ FAIL |
+| 5 | Pascal Siakam | 2018-19 | True Positive - Latent Star | Bulldozer (High) | Victim (Fragile Role) | 1.11% | 21.36% | Depth | ❌ FAIL |
+| 6 | Jayson Tatum | 2017-18 | True Positive - Rookie Sensation | Bulldozer (High) | Victim (Fragile Role) | 5.38% | 28.02% | Depth | ❌ FAIL |
+| 7 | Mikal Bridges | 2021-22 | True Positive - Usage Shock | Bulldozer (High) | Victim (Fragile Role) | 10.36% | 42.50% | Depth | ❌ FAIL |
 | 8 | Desmond Bane | 2021-22 | True Positive - Latent Star | Bulldozer (High) | Victim (Fragile Role) | 0.00% | 64.46% | Depth | ❌ FAIL |
-| 9 | Nikola Jokić | 2015-16 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Victim (Fragile Role) | 11.84% | 41.05% | Depth | ❌ FAIL |
-| 10 | Nikola Jokić | 2016-17 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Victim (Fragile Role) | 8.10% | 28.21% | Depth | ❌ FAIL |
-| 11 | Nikola Jokić | 2017-18 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Victim (Fragile Role) | 7.69% | 34.94% | Depth | ❌ FAIL |
-| 12 | Nikola Jokić | 2018-19 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Victim (Fragile Role) | 11.99% | 26.39% | Depth | ❌ FAIL |
-| 13 | Anthony Davis | 2015-16 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Victim (Fragile Role) | 5.70% | 61.62% | Depth | ❌ FAIL |
-| 14 | Anthony Davis | 2016-17 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Victim (Fragile Role) | 8.74% | 17.51% | Depth | ❌ FAIL |
-| 15 | Joel Embiid | 2016-17 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Bulldozer (Fragile Star) | 58.13% | 81.24% | Luxury Component | ❌ FAIL |
-| 16 | Joel Embiid | 2017-18 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Victim (Fragile Role) | 6.30% | 14.57% | Depth | ❌ FAIL |
-| 17 | Jordan Poole | 2021-22 | False Positive - Mirage Breakout | Victim (Low) [Luxury Component] | Victim (Fragile Role) | 13.25% | 41.90% | Depth | ❌ FAIL |
-| 18 | Talen Horton-Tucker | 2020-21 | False Positive - Mirage Breakout | Victim (Low) | Victim (Fragile Role) | 5.01% | 17.18% | Depth | ✅ PASS |
+| 9 | Nikola Jokić | 2015-16 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Victim (Fragile Role) | 11.30% | 41.05% | Depth | ❌ FAIL |
+| 10 | Nikola Jokić | 2016-17 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Victim (Fragile Role) | 8.15% | 28.21% | Depth | ❌ FAIL |
+| 11 | Nikola Jokić | 2017-18 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Victim (Fragile Role) | 8.14% | 34.94% | Depth | ❌ FAIL |
+| 12 | Nikola Jokić | 2018-19 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Victim (Fragile Role) | 12.35% | 26.39% | Depth | ❌ FAIL |
+| 13 | Anthony Davis | 2015-16 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Victim (Fragile Role) | 5.37% | 61.62% | Depth | ❌ FAIL |
+| 14 | Anthony Davis | 2016-17 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Victim (Fragile Role) | 8.47% | 17.51% | Depth | ❌ FAIL |
+| 15 | Joel Embiid | 2016-17 | True Positive - Franchise Cornerstone | King (High) [Franchise Cornerstone] | Bulldozer (Fragile Star) | 55.74% | 81.24% | Luxury Component | ❌ FAIL |
+| 16 | Joel Embiid | 2017-18 | True Positive - Franchise Cornerstone | Bulldozer (High) [Franchise Cornerstone] | Victim (Fragile Role) | 6.10% | 14.57% | Depth | ❌ FAIL |
+| 17 | Jordan Poole | 2021-22 | False Positive - Mirage Breakout | Victim (Low) [Luxury Component] | Victim (Fragile Role) | 13.89% | 41.90% | Depth | ❌ FAIL |
+| 18 | Talen Horton-Tucker | 2020-21 | False Positive - Mirage Breakout | Victim (Low) | Victim (Fragile Role) | 5.21% | 17.18% | Depth | ✅ PASS |
 | 19 | Christian Wood | 2020-21 | False Positive - Empty Calories | Victim (Low) | Victim (Fragile Role) | 0.00% | 62.19% | Depth | ✅ PASS |
 | 20 | D'Angelo Russell | 2018-19 | False Positive - Fool's Gold | Victim (Low) | Victim (Fragile Role) | 0.00% | 68.07% | Avoid | ✅ PASS |
 | 21 | Julius Randle | 2020-21 | False Positive - Empty Calories | Victim (Low) | Victim (Fragile Role) | 0.00% | 41.23% | Depth | ✅ PASS |
-| 22 | DeMar DeRozan | 2015-16 | Not Franchise Cornerstone | Bulldozer (High) [Depth] | Victim (Fragile Role) | 45.23% | 15.75% | Depth | ✅ PASS |
-| 23 | DeMar DeRozan | 2016-17 | Not Franchise Cornerstone | Bulldozer (High) [Depth] | Bulldozer (Fragile Star) | 80.41% | 1.70% | Franchise Cornerstone | ❌ FAIL |
+| 22 | DeMar DeRozan | 2015-16 | Not Franchise Cornerstone | Bulldozer (High) [Depth] | Victim (Fragile Role) | 47.72% | 15.75% | Depth | ✅ PASS |
+| 23 | DeMar DeRozan | 2016-17 | Not Franchise Cornerstone | Bulldozer (High) [Depth] | Bulldozer (Fragile Star) | 80.93% | 1.70% | Franchise Cornerstone | ❌ FAIL |
 | 24 | Ben Simmons | 2017-18 | True Negative - Fragile Star | Victim (Low) | Victim (Fragile Role) | 0.00% | 19.02% | Depth | ✅ PASS |
 | 25 | Ben Simmons | 2018-19 | True Negative - Fragile Star | Victim (Low) | Victim (Fragile Role) | 0.00% | 6.89% | Depth | ✅ PASS |
 | 26 | Ben Simmons | 2020-21 | True Negative - Fragile Star | Victim (Low) | Victim (Fragile Role) | 0.00% | 1.78% | Depth | ✅ PASS |
 | 27 | Tyus Jones | 2021-22 | System Player - Ceiling Test | Sniper (Low) | Victim (Fragile Role) | 0.00% | 73.29% | Avoid | ✅ PASS |
-| 28 | Domantas Sabonis | 2021-22 | True Negative - Comparison Case | Victim (Low) [Luxury Component] | Victim (Fragile Role) | 2.98% | 8.16% | Depth | ❌ FAIL |
-| 29 | Tyrese Haliburton | 2021-22 | True Positive - Comparison Case | Bulldozer (High) [Franchise Cornerstone] | Victim (Fragile Role) | 5.26% | 58.18% | Depth | ❌ FAIL |
-| 30 | Karl-Anthony Towns | 2015-16 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 3.46% | 56.46% | Depth | ✅ PASS |
+| 28 | Domantas Sabonis | 2021-22 | True Negative - Comparison Case | Victim (Low) [Luxury Component] | Victim (Fragile Role) | 2.92% | 8.16% | Depth | ❌ FAIL |
+| 29 | Tyrese Haliburton | 2021-22 | True Positive - Comparison Case | Bulldozer (High) [Franchise Cornerstone] | Victim (Fragile Role) | 5.30% | 58.18% | Depth | ❌ FAIL |
+| 30 | Karl-Anthony Towns | 2015-16 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 3.39% | 56.46% | Depth | ✅ PASS |
 | 31 | Karl-Anthony Towns | 2016-17 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 0.00% | 62.67% | Depth | ✅ PASS |
 | 32 | Karl-Anthony Towns | 2017-18 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 0.00% | 60.41% | Depth | ✅ PASS |
 | 33 | Karl-Anthony Towns | 2018-19 | True Negative - Empty Stats Star | Victim (Low) | Victim (Fragile Role) | 0.00% | 25.28% | Depth | ✅ PASS |
@@ -84,8 +84,8 @@
 | 36 | Markelle Fultz | 2017-18 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 0.00% | 60.65% | Depth | ✅ PASS |
 | 37 | Markelle Fultz | 2018-19 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 0.00% | 61.29% | Depth | ✅ PASS |
 | 38 | Markelle Fultz | 2019-20 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 0.00% | 28.88% | Depth | ✅ PASS |
-| 39 | Markelle Fultz | 2020-21 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 1.38% | 71.15% | Avoid | ✅ PASS |
-| 40 | Markelle Fultz | 2021-22 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 2.83% | 17.02% | Depth | ✅ PASS |
+| 39 | Markelle Fultz | 2020-21 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 1.48% | 71.15% | Avoid | ✅ PASS |
+| 40 | Markelle Fultz | 2021-22 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 3.13% | 17.02% | Depth | ✅ PASS |
 | 41 | Markelle Fultz | 2022-23 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 0.00% | 34.30% | Depth | ✅ PASS |
 | 42 | Markelle Fultz | 2023-24 | True Negative - Draft Bust | Victim (Low) | Victim (Fragile Role) | 0.00% | 60.00% | Depth | ✅ PASS |
 
@@ -95,35 +95,35 @@
 
 **Shai Gilgeous-Alexander (2018-19)**: Expected high performance (≥65%), got 0.00%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
 
-**Victor Oladipo (2016-17)**: Expected high performance (≥65%), got 4.34%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
+**Victor Oladipo (2016-17)**: Expected high performance (≥65%), got 5.04%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
 
 **Jalen Brunson (2020-21)**: Expected high performance (≥65%), got 0.00%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
 
 **Tyrese Maxey (2021-22)**: Expected high performance (≥65%), got 0.00%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
 
-**Pascal Siakam (2018-19)**: Expected high performance (≥65%), got 1.03%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
+**Pascal Siakam (2018-19)**: Expected high performance (≥65%), got 1.11%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
 
-**Jayson Tatum (2017-18)**: Expected high performance (≥65%), got 5.41%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
+**Jayson Tatum (2017-18)**: Expected high performance (≥65%), got 5.38%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
 
-**Mikal Bridges (2021-22)**: Expected high performance (≥65%), got 10.34%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
+**Mikal Bridges (2021-22)**: Expected high performance (≥65%), got 10.36%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
 
 **Desmond Bane (2021-22)**: Expected high performance (≥65%), got 0.00%; Archetype mismatch: expected Bulldozer, got Victim (Fragile Role)
 
-**Nikola Jokić (2015-16)**: Expected high performance (≥65%), got 11.84%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 11.84%
+**Nikola Jokić (2015-16)**: Expected high performance (≥65%), got 11.30%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 11.30%
 
-**Nikola Jokić (2016-17)**: Expected high performance (≥65%), got 8.10%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 8.10%
+**Nikola Jokić (2016-17)**: Expected high performance (≥65%), got 8.15%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 8.15%
 
-**Nikola Jokić (2017-18)**: Expected high performance (≥65%), got 7.69%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 7.69%
+**Nikola Jokić (2017-18)**: Expected high performance (≥65%), got 8.14%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 8.14%
 
-**Nikola Jokić (2018-19)**: Expected high performance (≥65%), got 11.99%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 11.99%
+**Nikola Jokić (2018-19)**: Expected high performance (≥65%), got 12.35%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 12.35%
 
-**Anthony Davis (2015-16)**: Expected high performance (≥65%), got 5.70%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 5.70%
+**Anthony Davis (2015-16)**: Expected high performance (≥65%), got 5.37%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 5.37%
 
-**Anthony Davis (2016-17)**: Expected high performance (≥65%), got 8.74%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 8.74%
+**Anthony Davis (2016-17)**: Expected high performance (≥65%), got 8.47%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 8.47%
 
-**Joel Embiid (2016-17)**: Expected high performance (≥65%), got 58.13%; Expected risk category 'Franchise Cornerstone', got 'Luxury Component'; Risk category matches but performance doesn't: 58.13%
+**Joel Embiid (2016-17)**: Expected high performance (≥65%), got 55.74%; Expected risk category 'Franchise Cornerstone', got 'Luxury Component'; Risk category matches but performance doesn't: 55.74%
 
-**Joel Embiid (2017-18)**: Expected high performance (≥65%), got 6.30%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 6.30%
+**Joel Embiid (2017-18)**: Expected high performance (≥65%), got 6.10%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 6.10%
 
 **Jordan Poole (2021-22)**: Expected risk category 'Luxury Component', got 'Depth'
 
@@ -131,5 +131,5 @@
 
 **Domantas Sabonis (2021-22)**: Expected risk category 'Luxury Component', got 'Depth'
 
-**Tyrese Haliburton (2021-22)**: Expected high performance (≥65%), got 5.26%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 5.26%
+**Tyrese Haliburton (2021-22)**: Expected high performance (≥65%), got 5.30%; Expected risk category 'Franchise Cornerstone', got 'Depth'; Risk category matches but performance doesn't: 5.30%
 

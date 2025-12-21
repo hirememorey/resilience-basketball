@@ -74,7 +74,8 @@ class RFEModelTrainer:
             'PROJECTED_PLAYOFF_PPS',    # The projected efficiency component of the Remainder.
             'FRICTION_COEFF_ISO',       # The friction coefficient for isolation
             'FRICTION_COEFF_0_DRIBBLE', # The friction coefficient for off-ball
-            'SHOT_QUALITY_GENERATION_DELTA' # Existing critical feature - keep.
+            'SHOT_QUALITY_GENERATION_DELTA', # Existing critical feature - keep.
+            'HELIO_ABOVE_REPLACEMENT_VALUE' # NEW (Dec 2025): Rewards inefficient stars less than efficient ones, but rewards VOLUME.
         ]
         
         for feat in critical_features:

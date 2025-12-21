@@ -75,3 +75,4 @@ predicted_archetype = model.predict_at_usage(stress_vectors, usage=25.0)
 
 
 
+

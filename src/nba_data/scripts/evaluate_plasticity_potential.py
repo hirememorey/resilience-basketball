@@ -747,6 +747,22 @@ class StressVectorEngine:
         # Final Feature: PROJECTED_PLAYOFF_OUTPUT (The "Remainder")
         # This is our primary First Principles feature.
         df['PROJECTED_PLAYOFF_OUTPUT'] = df['PROJECTED_PLAYOFF_PPS'] * df['USG_PCT']
+
+        # NEW FEATURE (Dec 2025): HELIO_ABOVE_REPLACEMENT_VALUE
+        # Solves the "Luka Paradox" without breaking the "DeRozan Filter".
+        # Formula: (Max(0, USG - 0.30)^2) * (PPS - 0.90)
+        # 1. Isolates Extreme Usage (>30%)
+        # 2. Scales non-linearly (squared) to reward true Heliocentric outliers
+        # 3. Penalizes inefficient volume (Westbrook Trap) by checking against replacement floor (0.90)
+        
+        # Calculate usage excess (only count usage above 30%)
+        usage_excess = (df['USG_PCT'] - 0.30).clip(lower=0)
+        
+        # Calculate efficiency delta (relative to replacement level floor of 0.90 PPS)
+        efficiency_delta = df['PROJECTED_PLAYOFF_PPS'] - 0.90
+        
+        # Calculate the feature
+        df['HELIO_ABOVE_REPLACEMENT_VALUE'] = (usage_excess ** 2) * efficiency_delta
         
         logger.info(f"Successfully calculated PROJECTED_PLAYOFF_OUTPUT. Mean: {df['PROJECTED_PLAYOFF_OUTPUT'].mean():.4f}")
         

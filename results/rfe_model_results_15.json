@@ -1,10 +1,11 @@
 {
   "n_features": 15,
-  "accuracy": 0.5815384615384616,
+  "accuracy": 0.5661538461538461,
   "features": [
     "EFG_PCT_0_DRIBBLE",
     "FRICTION_COEFF_0_DRIBBLE",
     "FRICTION_COEFF_ISO",
+    "HELIO_ABOVE_REPLACEMENT_VALUE",
     "PROJECTED_PLAYOFF_OUTPUT",
     "PROJECTED_PLAYOFF_PPS",
     "USG_PCT",
@@ -15,39 +16,43 @@
   "feature_importance": [
     {
       "Feature": "USG_PCT",
-      "Importance": 0.3341566324234009
+      "Importance": 0.33167505264282227
     },
     {
       "Feature": "PROJECTED_PLAYOFF_OUTPUT",
-      "Importance": 0.14484305679798126
+      "Importance": 0.13450823724269867
     },
     {
       "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.10455579310655594
+      "Importance": 0.10150829702615738
     },
     {
       "Feature": "FRICTION_COEFF_0_DRIBBLE",
-      "Importance": 0.0818619653582573
+      "Importance": 0.07784046232700348
     },
     {
       "Feature": "FRICTION_COEFF_ISO",
-      "Importance": 0.07491115480661392
-    },
-    {
-      "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
-      "Importance": 0.07075929641723633
+      "Importance": 0.06824802607297897
     },
     {
       "Feature": "PROJECTED_PLAYOFF_PPS",
-      "Importance": 0.0687902569770813
+      "Importance": 0.06692467629909515
+    },
+    {
+      "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
+      "Importance": 0.06620309501886368
     },
     {
       "Feature": "USG_PCT_X_LEVERAGE_USG_DELTA",
-      "Importance": 0.06021934375166893
+      "Importance": 0.05718126520514488
     },
     {
       "Feature": "EFG_PCT_0_DRIBBLE",
-      "Importance": 0.05990251898765564
+      "Importance": 0.05591871961951256
+    },
+    {
+      "Feature": "HELIO_ABOVE_REPLACEMENT_VALUE",
+      "Importance": 0.03999217227101326
     }
   ]
 }
