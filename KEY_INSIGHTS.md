@@ -37,7 +37,7 @@
 26. **Data Completeness Gate** 🎯 CRITICAL - Require 67% of critical features
 27. **Minimum Sample Size Gate** 🎯 CRITICAL - Small sample size = noise, not signal
 
-### Advanced Features & Model Evolution (28-58)
+### Advanced Features & Model Evolution (28-63)
 28. **Multi-Season Trajectory Features** 🎯 NEW - Trajectory > Snapshot
 29. **Convert Gates to Features** 🎯 NEW - Learn, don't patch
 58. **Vectorized Potential (Projected Dependence)** 🎯 NEW - Link latent creation energy to future independence
@@ -1782,6 +1782,26 @@ hit_secondary = (
 **Result**: Latent stars now move towards "Franchise Cornerstone" quadrant. True stars get independence reward; false prophets and tank commanders have their rewards dampened/voided.
 
 **Key Principle**: **Projection requires both axes**. A complete player projection includes not just "how good" but "how portable" that goodness will be.
+
+## 59. Crucible-Weighted Training: "Resilience is Only Observable Under Load" 🎯 CRITICAL (December 2025)
+
+Don't treat all possessions equally. A garbage time 3-pointer against a tanking team provides zero information about playoff resilience. Use sample weights that prioritize "Crucible Moments": playoff games, high-quality opponents, and efficient clutch situations. Formula: `Weight = 1.0 + (IsPlayoff × 2.0) + (OpponentDCS_Normalized × 1.5) + (IsClutch × 0.5) + Synthetic_Crucible`. Include weight clipping and efficiency gating to prevent overfitting.
+
+## 60. Synthetic Crucible v2: "Pressure is Universal, Context is Variable" 🎯 CRITICAL (December 2025)
+
+For players without playoff experience, construct proxy stress scores from regular season "micro-crucibles": Performance vs. Top 10 Defenses, Late Clock Efficiency, and Double-Team Response. Use Bayesian shrinkage to prevent small-sample illusions and volume floors to ensure statistical validity. This creates a continuous gradient of "proven pressure resilience" that the model can learn from.
+
+## 61. The "Variance Trap" (Small Sample Mirage) - Bayesian Shrinkage Required 🎯 CRITICAL (December 2025)
+
+Rookie "micro-crucibles" are inherently small sample sizes. A 3/4 late-clock shooting streak might be skill, variance, or context. Always shrink small-sample metrics towards league averages based on attempt count. Formula: `shrunk_metric = (attempts × raw_metric + prior_weight × prior_mean) / (attempts + prior_weight)`. Prevents the model from hallucinating elite clutch performance from statistical noise.
+
+## 62. The "Role Player Bias" (Specialist Trap) - Quality × Difficulty Interaction Required 🎯 CRITICAL (December 2025)
+
+Role players can excel in high-stress situations by taking easier shots (wide-open catch-and-shoot 3s). Weight proxy scores by shot quality metrics (creation volume, shot difficulty) to distinguish load-bearing resilience from situational success. Formula: `weighted_proxy_score = proxy_score × sqrt(creation_volume) × shot_quality_penalty`.
+
+## 63. The "Garbage Time Elite" (Context Failure) - Point Differential Filtering Required 🎯 CRITICAL (December 2025)
+
+Players can appear elite against "Top 10 Defenses" in blowouts when starters are resting. Always filter proxy calculations to competitive windows (±15 points) to ensure measured resilience reflects true high-stakes performance, not garbage time inflation.
 
 **See Also**:
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation

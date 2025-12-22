@@ -121,7 +121,7 @@ class RFEModelTrainer:
         
         df_merged = pd.merge(
             df_features,
-            df_targets[['PLAYER_NAME', 'SEASON', 'ARCHETYPE', 'RESILIENCE_QUOTIENT', 'DOMINANCE_SCORE']],
+            df_targets[['PLAYER_NAME', 'SEASON', 'ARCHETYPE', 'RESILIENCE_QUOTIENT', 'DOMINANCE_SCORE', 'PO_MINUTES_TOTAL']],
             on=['PLAYER_NAME', 'SEASON'],
             how='inner'
         )
@@ -402,37 +402,88 @@ class RFEModelTrainer:
         # REDUCED from 5x to 3x (Dec 8, 2025) - SHOT_QUALITY_GENERATION_DELTA feature reduces reliance on sample weighting
         # Weight function: weight = 1.0 + (is_victim_actual * is_high_usage * 2.0)
         # This gives 3x total weight (1.0 base + 2.0 penalty = 3.0) for high-usage victims
-        logger.info("Calculating sample weights for asymmetric loss (3x penalty for high-usage victims)...")
+        logger.info("Calculating Crucible Weights for asymmetric loss...")
+
+        #
+        # Phase 5: Crucible-Weighted Training (Dec 21, 2025)
+        # Principle: "Resilience is only observable under Load."
+        # Weight samples based on the hostility of the environment (Crucible Factor).
+        #
         
-        # Get actual archetypes for training set
-        y_train_archetypes = df.loc[train_indices, 'ARCHETYPE']
-        is_victim = (y_train_archetypes == 'Victim (Fragile Role)').astype(int)
+        # 1. Get required data from the training set dataframe
+        df_train = df.loc[train_indices].copy()
         
-        # Get usage for training set
-        if 'USG_PCT' in df.columns:
-            usg_pct = df.loc[train_indices, 'USG_PCT'].fillna(0.0)
-            # Normalize USG_PCT if it's in percentage format
-            if usg_pct.max() > 1.0:
-                usg_pct = usg_pct / 100.0
-            is_high_usage = (usg_pct > 0.25).astype(int)  # High usage threshold (25%)
+        # 2. Calculate individual weight components
+        
+        # Component 1: Playoff Experience (IsPlayoff * 2.0)
+        # Use po_minutes_total > 0 as a reliable indicator of playoff participation
+        is_playoff = df_train.get('PO_MINUTES_TOTAL', 0) > 0
+        playoff_weight = is_playoff.astype(float) * 2.0
+        
+        # Component 2: Opponent Quality (OpponentDCS_Normalized * 1.5)
+        # Normalize opponent defensive context score (DCS) from 0 to 1
+        opp_dcs = df_train.get('MEAN_OPPONENT_DCS', pd.Series(df['MEAN_OPPONENT_DCS'].median(), index=df_train.index))
+        opp_dcs_min = df['MEAN_OPPONENT_DCS'].min()
+        opp_dcs_max = df['MEAN_OPPONENT_DCS'].max()
+        
+        # De-Risking: Handle division by zero if all values are the same
+        if (opp_dcs_max - opp_dcs_min) > 0:
+            opp_dcs_normalized = (opp_dcs - opp_dcs_min) / (opp_dcs_max - opp_dcs_min)
         else:
-            is_high_usage = pd.Series([0] * len(y_train_archetypes))
-            logger.warning("USG_PCT not found - sample weighting will not account for usage")
+            opp_dcs_normalized = pd.Series(0.5, index=df_train.index) # Neutral weight if no variance
+            
+        opponent_quality_weight = opp_dcs_normalized.fillna(0.5) * 1.5 # Fill NaNs with median
         
-        # Calculate weights: 1.0 base + penalty for high-usage victims
-        # REDUCED from 5x to 3x (Dec 8, 2025) - SHOT_QUALITY_GENERATION_DELTA feature reduces reliance on sample weighting
-        # Weight function: weight = 1.0 + (is_victim_actual * is_high_usage * penalty_multiplier)
-        # 3x total weight (1.0 base + 2.0 penalty = 3.0) for high-usage victims
-        penalty_multiplier = 2.0  # REDUCED from 4.0 (5x) to 2.0 (3x) - Dec 8, 2025
-        sample_weights = 1.0 + (is_victim * is_high_usage * penalty_multiplier)
+        # Component 3: Clutch Minutes (IsClutch * 0.5)
+        # Define "Clutch" as having played > 0 clutch minutes
+        is_clutch = df_train.get('CLUTCH_MIN_TOTAL', 0) > 0
+        clutch_weight = is_clutch.astype(float) * 0.5
         
-        logger.info(f"  Base weight: 1.0")
-        logger.info(f"  Penalty multiplier: {penalty_multiplier} (total weight = {1.0 + penalty_multiplier}x for high-usage victims)")
-        logger.info(f"  High-usage victims (penalty): {is_victim.sum()} victims, {is_high_usage.sum()} high-usage")
-        logger.info(f"  High-usage victims receiving penalty: {(is_victim * is_high_usage).sum()}")
-        logger.info(f"  Weighted samples: {(sample_weights > 1.0).sum()} (weight > 1.0)")
-        logger.info(f"  Max weight: {sample_weights.max():.2f}")
-        logger.info(f"  Mean weight: {sample_weights.mean():.2f}")
+        # De-Risking Strategy 1: The "Rookie Blindspot" (Synthetic Crucible)
+        # For players with no playoff data, heavily weight their games against Top 10 defenses.
+        # We can use QOC_TS_DELTA > 0 as a proxy for performing well against tougher opponents.
+        has_no_playoff_data = ~is_playoff
+        
+        # Use QOC_TS_DELTA as a proxy for performance against good defenses
+        # A positive delta means they performed better than their average against tougher teams.
+        qoc_ts_delta = df_train.get('QOC_TS_DELTA', 0)
+        
+        # Apply a synthetic weight boost for rookies/young players who do well against good regular season defenses
+        synthetic_crucible_weight = (has_no_playoff_data & (qoc_ts_delta > 0)).astype(float) * 1.0  # Synthetic boost of 1.0
+        
+        # 3. Calculate Final Crucible Weight
+        # Weight = Base (1.0) + Playoff + Opponent Quality + Clutch + Synthetic Crucible
+        base_weight = 1.0
+        crucible_weights = base_weight + playoff_weight + opponent_quality_weight + clutch_weight + synthetic_crucible_weight
+        
+        # De-Risking Strategy 2: The "Variance Trap" (Weight Clipping)
+        # Cap the maximum sample weight to prevent outliers from dominating.
+        max_weight_clip = 4.0
+        crucible_weights = crucible_weights.clip(upper=max_weight_clip)
+        
+        # De-Risking Strategy 3: The "Base Load" Guarantee
+        # Ensure the minimum weight is not zero, so all samples contribute something.
+        min_weight_floor = 0.5
+        crucible_weights = crucible_weights.clip(lower=min_weight_floor)
+        
+        # De-Risking Strategy 4: The "Clutch Merchant" Trap (Efficiency Gating)
+        # Only apply clutch weight boost if the player's clutch performance was efficient.
+        # LEVERAGE_TS_DELTA > 0 is a good proxy for efficient clutch performance.
+        leverage_ts_delta = df_train.get('LEVERAGE_TS_DELTA', 0)
+        is_efficient_clutch = leverage_ts_delta > 0
+        
+        # Remove the clutch weight for inefficient clutch players
+        crucible_weights.loc[is_clutch & ~is_efficient_clutch] -= 0.5
+        
+        sample_weights = crucible_weights
+        
+        logger.info(f"  Crucible Weights Calculated:")
+        logger.info(f"    - Mean Weight: {sample_weights.mean():.2f}")
+        logger.info(f"    - Max Weight (Clipped): {sample_weights.max():.2f}")
+        logger.info(f"    - Min Weight (Floored): {sample_weights.min():.2f}")
+        logger.info(f"    - Players with Playoff Boost: {is_playoff.sum()}")
+        logger.info(f"    - Players with Synthetic Crucible Boost: {synthetic_crucible_weight.sum()}")
+        logger.info(f"    - Players with Efficient Clutch Boost: {(is_clutch & is_efficient_clutch).sum()}")
         
         # Initialize XGBoost
         model = xgb.XGBClassifier(
@@ -446,7 +497,7 @@ class RFEModelTrainer:
         )
         
         # Train with sample weights
-        logger.info("Training model with asymmetric loss (sample weighting)...")
+        logger.info("Training model with Crucible sample weighting...")
         model.fit(X_train, y_train, sample_weight=sample_weights.values)
         
         # Save Model

@@ -1,14 +1,15 @@
 {
   "n_features": 15,
-  "accuracy": 0.563076923076923,
+  "accuracy": 0.5230769230769231,
   "features": [
     "EFG_PCT_0_DRIBBLE",
     "FRICTION_COEFF_0_DRIBBLE",
     "FRICTION_COEFF_ISO",
     "HELIO_ABOVE_REPLACEMENT_VALUE",
-    "LATENT_CREATION_POTENTIAL",
+    "INEFFICIENT_VOLUME_SCORE",
     "PROJECTED_PLAYOFF_OUTPUT",
     "PROJECTED_PLAYOFF_PPS",
+    "SHOT_QUALITY_GENERATION_DELTA",
     "USG_PCT",
     "USG_PCT_X_CREATION_VOLUME_RATIO",
     "USG_PCT_X_EFG_ISO_WEIGHTED",
@@ -17,47 +18,51 @@
   "feature_importance": [
     {
       "Feature": "USG_PCT",
-      "Importance": 0.3231431841850281
+      "Importance": 0.42327484488487244
     },
     {
       "Feature": "PROJECTED_PLAYOFF_OUTPUT",
-      "Importance": 0.13316185772418976
-    },
-    {
-      "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.08782650530338287
+      "Importance": 0.08388737589120865
     },
     {
       "Feature": "FRICTION_COEFF_0_DRIBBLE",
-      "Importance": 0.07511452585458755
+      "Importance": 0.05744433403015137
+    },
+    {
+      "Feature": "SHOT_QUALITY_GENERATION_DELTA",
+      "Importance": 0.0561409592628479
     },
     {
       "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
-      "Importance": 0.06273441016674042
-    },
-    {
-      "Feature": "PROJECTED_PLAYOFF_PPS",
-      "Importance": 0.062161948531866074
-    },
-    {
-      "Feature": "FRICTION_COEFF_ISO",
-      "Importance": 0.06072049215435982
-    },
-    {
-      "Feature": "EFG_PCT_0_DRIBBLE",
-      "Importance": 0.05435490235686302
+      "Importance": 0.0530371218919754
     },
     {
       "Feature": "USG_PCT_X_LEVERAGE_USG_DELTA",
-      "Importance": 0.05095897614955902
-    },
-    {
-      "Feature": "LATENT_CREATION_POTENTIAL",
-      "Importance": 0.04898073524236679
+      "Importance": 0.050108373165130615
     },
     {
       "Feature": "HELIO_ABOVE_REPLACEMENT_VALUE",
-      "Importance": 0.04084240645170212
+      "Importance": 0.048849862068891525
+    },
+    {
+      "Feature": "FRICTION_COEFF_ISO",
+      "Importance": 0.04867112264037132
+    },
+    {
+      "Feature": "INEFFICIENT_VOLUME_SCORE",
+      "Importance": 0.04735749959945679
+    },
+    {
+      "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
+      "Importance": 0.04550759121775627
+    },
+    {
+      "Feature": "PROJECTED_PLAYOFF_PPS",
+      "Importance": 0.04462515562772751
+    },
+    {
+      "Feature": "EFG_PCT_0_DRIBBLE",
+      "Importance": 0.041095755994319916
     }
   ]
 }

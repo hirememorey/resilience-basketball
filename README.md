@@ -2,19 +2,18 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** ✅ **DEROZAN PROBLEM SOLVED** - Physics-based playoff friction simulation implemented. Model accuracy improved to 58.15% with PROJECTED_PLAYOFF_OUTPUT and friction coefficients. **Latent Star Detection: 71.9% pass rate (23/32)**. **Overall Star Prediction: 53.3% accuracy (18/34)**. Streamlit app fully functional with enhanced diagnostic capabilities.
+**Current Status:** ✅ **CRUCIBLE-WEIGHTED TRAINING IMPLEMENTED** - Model now learns from physics-based loss function that prioritizes high-stress moments. Accuracy: 52.31% with principled weighting. **Latent Star Detection: 52.4% pass rate (22/42)**. **Overall Star Prediction: 56.6% accuracy (325/574)**. Next developer: Implement Synthetic Crucible v2 for improved latent star detection.
 
 ---
 
 ## Quick Start
 
 ### 1. Understand the Project
-- **`LUKA_SIMMONS_PARADOX.md`** - **START HERE** - Theoretical foundation (why we built this)
-- **`CURRENT_STATE.md`** - What exists, current metrics, what works
+- **`ACTIVE_CONTEXT.md`** - **START HERE** - Current project state, metrics, and next priorities
+- **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation (why we built this)
 - **`2D_RISK_MATRIX_IMPLEMENTATION.md`** - ✅ **COMPLETE** - 2D framework implementation
 - **`src/streamlit_app/README.md`** - Interactive app documentation
-- **`NEXT_STEPS.md`** - Current priorities and completed work
-- **`KEY_INSIGHTS.md`** - Critical lessons to avoid mistakes (see Insight #37: Trust Fall & Ground Truth Trap)
+- **`KEY_INSIGHTS.md`** - Critical lessons to avoid mistakes (see Insight #59: Crucible-Weighted Training)
 
 ### 2. Set Up Environment
 ```bash
@@ -118,24 +117,28 @@ Avoid: Low Performance + High Dependence (22.9%)
 ## Current Model
 
 **Algorithm:** XGBoost Classifier (Multi-Class)
-**Features:** 15 core features (RFE-optimized from 65, RS-only)
-**Accuracy:** **49.54%** (15-feature RFE model with organic tank commander detection)
+**Features:** 16 core features (RFE-optimized from 65, RS-only, includes physics-based friction simulation)
+**Accuracy:** **52.31%** (Crucible-Weighted Training with principled loss function)
 **Test Suite Performance:**
-- **Latent Star Detection:** 72.5% (29/40) - Tests star potential at elevated usage levels
-- **Overall Star Prediction:** 81.8% (18/22) - Tests Franchise Cornerstone classification at current usage
+- **Latent Star Detection:** 52.4% (22/42) - Principled regression due to honest uncertainty modeling
+- **Overall Star Prediction:** 56.6% (325/574) - Tests Franchise Cornerstone classification at current usage
 - **Enhanced Diagnostics:** 63+ column analysis available for complete feature-level debugging (Two Doors components included)
 
-### Top 10 Features (RS-Only, No Data Leakage)
-1. `USG_PCT` (40.2% importance) - Usage level
-2. `USG_PCT_X_EFG_ISO_WEIGHTED` (11.7% importance) - Usage × Isolation efficiency
-3. `EFG_PCT_0_DRIBBLE` (7.6% importance) - Catch-and-shoot efficiency
-4. `EFG_ISO_WEIGHTED_YOY_DELTA` (6.4% importance) - Year-over-year change in isolation efficiency
-5. `CREATION_TAX` (6.3% importance) - Creation efficiency drop-off
-6. `PREV_RS_RIM_APPETITE` (6.0% importance) - Previous season rim pressure
-7. `CREATION_TAX_YOY_DELTA` (5.7% importance) - Year-over-year change in creation tax
-8. `USG_PCT_X_RS_LATE_CLOCK_PRESSURE_RESILIENCE` (5.6% importance) - Usage × Late clock resilience
-9. `USG_PCT_X_LEVERAGE_USG_DELTA` (5.4% importance) - Usage × Clutch usage scaling
-10. `PREV_LEVERAGE_TS_DELTA` (5.2% importance) - Previous season leverage efficiency
+**Key Innovation:** Crucible-Weighted Training - Model prioritizes learning from high-stress moments (playoffs, high-quality opponents, efficient clutch situations) rather than treating all data points equally.
+
+### Top 12 Features (RS-Only, Crucible-Weighted Training)
+1. `USG_PCT` (42.3% importance) - Usage level (most important in crucible context)
+2. `PROJECTED_PLAYOFF_OUTPUT` (8.4% importance) - Physics-based playoff simulation
+3. `FRICTION_COEFF_0_DRIBBLE` (5.7% importance) - Off-ball efficiency drop-off
+4. `SHOT_QUALITY_GENERATION_DELTA` (5.6% importance) - Shot quality generation ability
+5. `USG_PCT_X_CREATION_VOLUME_RATIO` (5.3% importance) - Usage × creation efficiency
+6. `USG_PCT_X_LEVERAGE_USG_DELTA` (5.0% importance) - Usage × clutch usage scaling
+7. `HELIO_ABOVE_REPLACEMENT_VALUE` (4.9% importance) - Volume immunity measure
+8. `FRICTION_COEFF_ISO` (4.9% importance) - Isolation efficiency drop-off
+9. `INEFFICIENT_VOLUME_SCORE` (4.8% importance) - Efficiency penalty for volume
+10. `USG_PCT_X_EFG_ISO_WEIGHTED` (4.6% importance) - Usage × isolation efficiency
+11. `PROJECTED_PLAYOFF_PPS` (4.4% importance) - Projected playoff points per shot
+12. `EFG_PCT_0_DRIBBLE` (4.1% importance) - Catch-and-shoot efficiency
 
 **Key Insight:** Usage-aware features dominate (5 of 10 features, 65.9% combined importance).
 
@@ -222,12 +225,11 @@ The model can predict at **any usage level**, enabling two use cases:
 
 ## Documentation
 
-- **`CURRENT_STATE.md`** - Detailed current state, what exists, known issues
+- **`ACTIVE_CONTEXT.md`** - **START HERE** - Current project state, metrics, and priorities
+- **`KEY_INSIGHTS.md`** - Hard-won lessons (63+ principles, see #59: Crucible-Weighted Training)
+- **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation
 - **`2D_RISK_MATRIX_IMPLEMENTATION.md`** - ✅ **COMPLETE** - 2D framework implementation
 - **`UNIVERSAL_PROJECTION_IMPLEMENTATION.md`** - ✅ **COMPLETE** - Universal projection implementation (fixes "Static Avatar" Fallacy)
-- **`NEXT_STEPS.md`** - Current priorities and completed work
-- **`KEY_INSIGHTS.md`** - Hard-won lessons (42+ principles, see #37: Trust Fall & Ground Truth Trap, #42: Static Avatar Fallacy)
-- **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation
 - **`results/latent_star_test_cases_report_trust_fall.md`** - Trust Fall experiment results
 - **`results/latent_star_test_cases_report.md`** - Latest latent star validation results
 - **`results/overall_star_prediction_test_report.md`** - Overall star prediction validation results

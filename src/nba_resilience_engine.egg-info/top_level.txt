@@ -1,4 +1,5 @@
 data
 features
 model
+streamlit_app
 utils
