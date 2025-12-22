@@ -10,7 +10,7 @@ Utilizing first principles, I want you to analyze this project in detail. Once y
 Utilizing first principles, I want you to come up with an ideal plan of implementation. Once you have the plan, I want you to ask yourself why it won’t work. Then use the answer from that question to further redevelop and/or refine your plan. Do not generate any code yet, just walk me through your plan in detail.
 
 ##@AnalyzePlan
-We receive this feedback. From first principles how do you evaluate it? Do you agree or disagree? Why?
+We receive this feedback. From first principles how do you evaluate it? Do you agree or disagree? Why? Do not generate any code, just walk me through what you believe would be the highest leverage action for a developer to take. What are the non-obvious failure modes?
 
 ## @PanelPlan
 Utilizing first principles, I want you to generate three distinct implementation plans from the perspectives of:

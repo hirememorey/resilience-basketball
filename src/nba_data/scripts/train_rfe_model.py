@@ -348,21 +348,24 @@ class RFEModelTrainer:
         De-Risking Strategies:
         1. Bayesian Shrinkage: Small sample metrics are shrunk towards a neutral baseline.
         2. Role Player Bias Mitigation: Score is scaled by creation volume.
+        3. Robustness Gate: Score is dampened for "finesse" players who lack physical indicators.
         """
-        logger.info("  Calculating Synthetic Crucible Score (v2)...")
+        logger.info("  Calculating Synthetic Crucible Score (v3 with Robustness Gate)...")
         
         # Component 1: Hostility (Performance vs. Top Defenses)
-        # ELITE_WEAK_TS_DELTA is ideal: Perf vs Top 10 Defenses - Perf vs Bottom 10
-        hostility_proxy = df.get('ELITE_WEAK_TS_DELTA', 0).fillna(0)
+        hostility_proxy = df.get('ELITE_WEAK_TS_DELTA', pd.Series(0, index=df.index)).fillna(0)
         
         # Component 2: Friction (Late Clock Efficiency)
-        friction_proxy = df.get('RS_LATE_CLOCK_PRESSURE_RESILIENCE', 0).fillna(0)
+        friction_proxy = df.get('RS_LATE_CLOCK_PRESSURE_RESILIENCE', pd.Series(0, index=df.index)).fillna(0)
         
         # Component 3: Stakes (Clutch Experience)
-        stakes_proxy = df.get('CLUTCH_MIN_TOTAL', 0).fillna(0)
+        stakes_proxy = df.get('CLUTCH_MIN_TOTAL', pd.Series(0, index=df.index)).fillna(0)
         
         # --- Normalization (0 to 1 scale) ---
         def robust_normalize(series):
+            # Check for non-numeric types and handle them
+            if not pd.api.types.is_numeric_dtype(series):
+                series = pd.to_numeric(series, errors='coerce').fillna(series.median())
             min_val = series.quantile(0.05)
             max_val = series.quantile(0.95)
             if (max_val - min_val) == 0: return pd.Series(0.5, index=series.index)
@@ -373,36 +376,70 @@ class RFEModelTrainer:
         norm_stakes = robust_normalize(stakes_proxy)
         
         # --- De-Risking: Bayesian Shrinkage on Friction ---
-        # We can't trust late-clock eFG% on a tiny sample.
-        # We'll use RS_LATE_CLOCK_PRESSURE_APPETITE as a proxy for shot volume.
-        late_clock_attempts_proxy = df.get('RS_LATE_CLOCK_PRESSURE_APPETITE', 0).fillna(0) * df.get('TOTAL_FGA', 100).fillna(100)
-        
-        k = 20  # The "skepticism constant" or "burden of proof" (20 shots)
-        
+        late_clock_attempts_proxy = df.get('RS_LATE_CLOCK_PRESSURE_APPETITE', pd.Series(0, index=df.index)).fillna(0) * df.get('TOTAL_FGA', pd.Series(100, index=df.index)).fillna(100)
+        k = 20
         friction_confidence = (late_clock_attempts_proxy / (late_clock_attempts_proxy + k)).fillna(0)
-        
-        # Shrink towards the 50th percentile (0.5, since it's normalized)
         weighted_friction = (norm_friction * friction_confidence) + (0.5 * (1 - friction_confidence))
         logger.info(f"    - Applied Bayesian Shrinkage to friction proxy (avg confidence: {friction_confidence.mean():.2f})")
 
         # --- Composite Score Calculation (Weighted Average) ---
-        # Hostility (40%), Friction (40%), Stakes (20%)
         weights = {'hostility': 0.4, 'friction': 0.4, 'stakes': 0.2}
-        
         synthetic_raw = (
             norm_hostility * weights['hostility'] +
             weighted_friction * weights['friction'] +
             norm_stakes * weights['stakes']
         )
         
-        # --- De-Risking: Role Player Bias Mitigation ---
-        # Scale the score by creation volume. We want engines, not passengers.
-        # Use sqrt to dampen the effect of extreme creation volume.
-        creation_volume = df.get('CREATION_VOLUME_RATIO', 0.5).fillna(0.5)
-        responsibility_scalar = np.sqrt(creation_volume.clip(0.1, 1.0)) # Clip to avoid penalizing rookies too much
+        # --- De-Risking 1: Role Player Bias Mitigation ---
+        creation_volume = df.get('CREATION_VOLUME_RATIO', pd.Series(0.5, index=df.index)).fillna(0.5)
+        responsibility_scalar = np.sqrt(creation_volume.clip(0.1, 1.0))
         
-        final_score = (synthetic_raw * responsibility_scalar).fillna(0)
-        logger.info(f"    - Final Synthetic Score (avg: {final_score.mean():.3f}) scaled by Creation Volume")
+        # --- De-Risking 2: The Robustness Gate (Force vs. Finesse) ---
+        logger.info("    - Applying Robustness Gate...")
+        
+        # 2.1: Calculate Force Vector
+        ftr = df.get('RS_FTr', pd.Series(0, index=df.index)).fillna(0)
+        rim_appetite = df.get('RS_RIM_APPETITE', pd.Series(0, index=df.index)).fillna(0)
+        norm_ftr = robust_normalize(ftr)
+        norm_rim_appetite = robust_normalize(rim_appetite)
+        
+        # 2.2: Calculate Robustness Coefficient
+        robustness_coefficient = (0.6 * norm_ftr + 0.4 * norm_rim_appetite).clip(0.3, 1.0)
+        logger.info(f"      - Base Robustness Coefficient (avg: {robustness_coefficient.mean():.3f})")
+
+        # 2.3: De-Risking for the Gate - "The Curry Paradox" (Elite Skill Override)
+        efg_iso = df.get('EFG_ISO_WEIGHTED', pd.Series(0, index=df.index)).fillna(0)
+        sq_delta = df.get('SHOT_QUALITY_GENERATION_DELTA', pd.Series(0, index=df.index)).fillna(0)
+        
+        efg_95th = efg_iso.quantile(0.95)
+        sq_delta_95th = sq_delta.quantile(0.95)
+        
+        is_elite_shooter = (efg_iso > efg_95th) | (sq_delta > sq_delta_95th)
+        
+        # Store original for logging
+        original_robustness = robustness_coefficient.copy()
+        robustness_coefficient.loc[is_elite_shooter] = 1.0
+        override_count = (original_robustness != robustness_coefficient).sum()
+        if override_count > 0:
+            logger.info(f"      - Applied Elite Skill Override to {override_count} players (e.g., Curry)")
+
+        # 2.4: De-Risking for the Gate - "The Grifter Trap" (Whistle Filter)
+        ftr_80th = ftr.quantile(0.80)
+        rim_appetite_40th = rim_appetite.quantile(0.40)
+        
+        is_grifter = (ftr > ftr_80th) & (rim_appetite < rim_appetite_40th)
+        
+        # Store original for logging
+        original_robustness_after_elite = robustness_coefficient.copy()
+        robustness_coefficient.loc[is_grifter] = robustness_coefficient.loc[is_grifter].clip(upper=0.5)
+        grifter_count = (original_robustness_after_elite != robustness_coefficient).sum()
+        if grifter_count > 0:
+            logger.info(f"      - Applied Whistle Filter to {grifter_count} potential 'grifters' (e.g., Trae Young)")
+
+        # --- Final Score Calculation ---
+        # Base Score * Volume Scalar * Robustness Dampener
+        final_score = (synthetic_raw * responsibility_scalar * robustness_coefficient).fillna(0)
+        logger.info(f"    - Final Synthetic Score (avg: {final_score.mean():.3f}) after Volume & Robustness scaling")
         
         return final_score
 
