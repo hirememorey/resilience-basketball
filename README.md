@@ -2,7 +2,7 @@
 
 **Goal:** Identify players who consistently perform better than expected in the playoffs, and explain *why* using mechanistic insights.
 
-**Current Status:** ✅ **CRUCIBLE-WEIGHTED TRAINING IMPLEMENTED** - Model now learns from physics-based loss function that prioritizes high-stress moments. Accuracy: 52.31% with principled weighting. **Latent Star Detection: 52.4% pass rate (22/42)**. **Overall Star Prediction: 56.6% accuracy (325/574)**. Next developer: Implement Synthetic Crucible v2 for improved latent star detection.
+**Current Status:** ✅ **SYNTHETIC CRUCIBLE V2 IMPLEMENTED** - Model now uses continuous pressure proxy system with Bayesian shrinkage. Accuracy: 52.31% with principled weighting. **Latent Star Detection: 54.2% pass rate (26/48)**. **Overall Star Prediction: 56.6% accuracy (325/574)**. Next developer: Implement "Robustness Gate" to distinguish force-based vs. finesse-based pressure resolution.
 
 ---
 

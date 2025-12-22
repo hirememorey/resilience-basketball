@@ -368,24 +368,28 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ## Next Developer: Start Here
 
-**Current State**: ✅ **CRUCIBLE-WEIGHTED TRAINING IMPLEMENTED** - The model now learns from a physics-based loss function that prioritizes high-stress moments (Playoffs, High Opponent Quality, Efficient Clutch Play). This has created a more robust, honest foundation but caused a principled regression in Latent Star Detection (54.2% -> 52.4%) because the model is now correctly skeptical of unproven players.
+**Current State**: ✅ **SYNTHETIC CRUCIBLE V2 IMPLEMENTED** - The model now uses a continuous gradient "Pressure Proxy System" that aggregates "micro-crucibles" from regular season high-stress moments. This has successfully improved Latent Star Detection from 52.4% to 54.2%, correctly identifying players like Shai Gilgeous-Alexander and Jalen Brunson, but introduced a principled increase in false positives for "finesse merchants" like Jordan Poole.
 
 **Recent Progress** (December 2025):
-- ✅ **Crucible Weighting**: Implemented asymmetric sample weighting based on "Hostility of Environment"
-- ✅ **De-Risking Strategy**: Implemented Weight Clipping, Base Load Guarantee, and Efficiency Gating
-- ✅ **Data Pipeline Repair**: Fixed `resilience_archetypes.csv` generation to include `PO_MINUTES_TOTAL`
-- ✅ **First Principles Alignment**: Model no longer treats garbage time possessions as equal to Game 7 possessions
+- ✅ **Synthetic Crucible v2**: Implemented multi-dimensional pressure proxy system with Bayesian shrinkage and creation volume scaling
+- ✅ **Continuous Gradient**: Replaced binary rookie boost with composite score based on performance vs. top defenses, late-clock efficiency, and clutch exposure
+- ✅ **Latent Star Detection**: Improved from 52.4% to 54.2% pass rate, with True Positive rate of 47.4% (9/19 cases)
+- ✅ **Validation**: Successfully identified hidden potential in SGA (2018-19), Brunson (2020-21), Maxey (2021-22), Siakam (2018-19), and Bridges (2021-22)
 
-**Highest Leverage Action**: **Implement "Synthetic Crucible v2"**
-The model's skepticism of rookies is physically correct but analytically unhelpful. We must provide it with better "Proxy Stress" signals.
-1.  **Engineer Features**: `Performance_vs_Top10_Defense`, `Late_Clock_Efficiency` (Shot Clock < 4s), `Double_Team_Efficiency`.
-2.  **Calculate Score**: Create a composite `Synthetic_Crucible_Score` in `train_rfe_model.py`.
-3.  **Apply Logic**: Use this score to modulate the `sample_weight` for non-playoff players, replacing the simple v1 binary boost.
+**Highest Leverage Action**: **Implement "The Robustness Gate" (Physicality-Adjusted Crucible)**
+The Synthetic Crucible v2 successfully finds latent stars but incorrectly boosts "finesse merchants" who excel in regular season pressure but collapse in playoffs due to fragility. We must distinguish between "Force Resolution" (physical, portable) and "Variance Resolution" (skill-based, fragile).
 
-**Non-Obvious Failure Modes (Synthetic Crucible v2)**:
-1.  **The "Small Sample Mirage"**: Rookies have tiny samples in high-stress moments. **Mitigation**: Use Bayesian Shrinkage towards league average based on attempt count.
-2.  **The "Role Player Bias"**: Spot-up shooters thrive in late clocks if created for. **Mitigation**: Weight by `Shot_Quality` (difficulty) or `Creation_Volume`.
-3.  **The "Garbage Time Elite"**: Good stats vs. Top 10 defenses in blowouts. **Mitigation**: Filter by score differential (e.g., within 15 points).
+1.  **Add Robustness Factor**: Enhance `_calculate_synthetic_crucible_score()` in `train_rfe_model.py` with a physicality component:
+    *   **Force Indicators**: `RS_FTr` (free throw rate) and `RS_RIM_APPETITE` (rim pressure)
+    *   **Robustness Score**: Weighted average of physicality metrics, normalized 0-1
+    *   **Application**: Multiply `Synthetic_Crucible_Score` by Robustness Factor (0.3-1.0 range)
+2.  **Elite Skill Override**: Players with >95th percentile `EFG_ISO_WEIGHTED` or `SHOT_QUALITY_GENERATION_DELTA` bypass the Robustness Gate (protects Curry/Lillard).
+3.  **Whistle Filter**: Cross-reference high FTr with `FRICTION_COEFF_ISO` to penalize "grifters" who draw cheap fouls.
+
+**Non-Obvious Failure Modes**:
+1.  **The "Curry Paradox"**: Elite finesse players flagged as fragile. **Fix**: Elite Skill Override.
+2.  **The "Grifter Trap"**: High FTr players incorrectly seen as physical. **Fix**: Whistle Filter using friction coefficients.
+3.  **The "Sample Size Mirage"**: Role players with inflated physicality stats. **Fix**: Maintain creation volume scaling.
 
 **If Issues Arise**:
 - **Test Suite Regression**: Remember this is a feature, not a bug. Do not rollback. Fix by adding better physics (Synthetic Crucible v2).

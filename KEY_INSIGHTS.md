@@ -68,7 +68,11 @@
 52. **Project Phoenix: Ground-Truth Data Acquisition** 🎯 CRITICAL - No proxies for critical signals - acquire ground-truth data directly
 53. **Tank Commander Penalty Removal** 🎯 CRITICAL - Opponent quality assessment replaced with teammate quality assessment (first principles correction)
 53. **Tank Commander Penalty Removal** 🎯 CRITICAL - Opponent quality assessment replaced with teammate quality assessment (first principles correction)
-54. **Two Doors Dependence Framework** 🎯 CRITICAL - NBA stardom requires mastery of either physical dominance (Force) or mathematical advantage (Craft), but not both
+54. **Bayesian Shrinkage for Small Samples** 🎯 CRITICAL - Small sample metrics must be shrunk toward league averages using confidence weighting
+55. **Force vs. Finesse Pressure Resolution** 🎯 CRITICAL - Physical pressure resolution (rim/FTr) is portable; skill-based resolution (jumpers/space) is fragile
+56. **Synthetic Crucible: Pressure Proxy System** 🎯 CRITICAL - Regular season "micro-crucibles" can predict playoff resilience when aggregated with proper weighting
+57. **Hidden Gems vs. Fool's Gold Trade-off** 🎯 CRITICAL - Improving latent star detection increases false positives; next step is robustness filtering
+58. **Two Doors Dependence Framework** 🎯 CRITICAL - NBA stardom requires mastery of either physical dominance (Force) or mathematical advantage (Craft), but not both
 55. **Comprehensive Diagnostics Enable Mechanistic Debugging** 🎯 CRITICAL - Model predictions must be fully traceable from raw stats through all intermediate calculations to final outputs
 
 ### Quick Reference

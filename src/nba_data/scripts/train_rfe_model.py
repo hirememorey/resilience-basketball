@@ -340,6 +340,72 @@ class RFEModelTrainer:
         
         return X, existing_features
 
+    def _calculate_synthetic_crucible_score(self, df: pd.DataFrame) -> pd.Series:
+        """
+        Calculates the Synthetic Crucible Score for players without playoff experience.
+        This score is a composite of performance in high-stress regular season contexts.
+        
+        De-Risking Strategies:
+        1. Bayesian Shrinkage: Small sample metrics are shrunk towards a neutral baseline.
+        2. Role Player Bias Mitigation: Score is scaled by creation volume.
+        """
+        logger.info("  Calculating Synthetic Crucible Score (v2)...")
+        
+        # Component 1: Hostility (Performance vs. Top Defenses)
+        # ELITE_WEAK_TS_DELTA is ideal: Perf vs Top 10 Defenses - Perf vs Bottom 10
+        hostility_proxy = df.get('ELITE_WEAK_TS_DELTA', 0).fillna(0)
+        
+        # Component 2: Friction (Late Clock Efficiency)
+        friction_proxy = df.get('RS_LATE_CLOCK_PRESSURE_RESILIENCE', 0).fillna(0)
+        
+        # Component 3: Stakes (Clutch Experience)
+        stakes_proxy = df.get('CLUTCH_MIN_TOTAL', 0).fillna(0)
+        
+        # --- Normalization (0 to 1 scale) ---
+        def robust_normalize(series):
+            min_val = series.quantile(0.05)
+            max_val = series.quantile(0.95)
+            if (max_val - min_val) == 0: return pd.Series(0.5, index=series.index)
+            return ((series - min_val) / (max_val - min_val)).clip(0, 1)
+
+        norm_hostility = robust_normalize(hostility_proxy)
+        norm_friction = robust_normalize(friction_proxy)
+        norm_stakes = robust_normalize(stakes_proxy)
+        
+        # --- De-Risking: Bayesian Shrinkage on Friction ---
+        # We can't trust late-clock eFG% on a tiny sample.
+        # We'll use RS_LATE_CLOCK_PRESSURE_APPETITE as a proxy for shot volume.
+        late_clock_attempts_proxy = df.get('RS_LATE_CLOCK_PRESSURE_APPETITE', 0).fillna(0) * df.get('TOTAL_FGA', 100).fillna(100)
+        
+        k = 20  # The "skepticism constant" or "burden of proof" (20 shots)
+        
+        friction_confidence = (late_clock_attempts_proxy / (late_clock_attempts_proxy + k)).fillna(0)
+        
+        # Shrink towards the 50th percentile (0.5, since it's normalized)
+        weighted_friction = (norm_friction * friction_confidence) + (0.5 * (1 - friction_confidence))
+        logger.info(f"    - Applied Bayesian Shrinkage to friction proxy (avg confidence: {friction_confidence.mean():.2f})")
+
+        # --- Composite Score Calculation (Weighted Average) ---
+        # Hostility (40%), Friction (40%), Stakes (20%)
+        weights = {'hostility': 0.4, 'friction': 0.4, 'stakes': 0.2}
+        
+        synthetic_raw = (
+            norm_hostility * weights['hostility'] +
+            weighted_friction * weights['friction'] +
+            norm_stakes * weights['stakes']
+        )
+        
+        # --- De-Risking: Role Player Bias Mitigation ---
+        # Scale the score by creation volume. We want engines, not passengers.
+        # Use sqrt to dampen the effect of extreme creation volume.
+        creation_volume = df.get('CREATION_VOLUME_RATIO', 0.5).fillna(0.5)
+        responsibility_scalar = np.sqrt(creation_volume.clip(0.1, 1.0)) # Clip to avoid penalizing rookies too much
+        
+        final_score = (synthetic_raw * responsibility_scalar).fillna(0)
+        logger.info(f"    - Final Synthetic Score (avg: {final_score.mean():.3f}) scaled by Creation Volume")
+        
+        return final_score
+
     def train(self, n_features=15):
         """Train the XGBoost Model with RFE-selected features."""
         logger.info("=" * 80)
@@ -439,17 +505,16 @@ class RFEModelTrainer:
         is_clutch = df_train.get('CLUTCH_MIN_TOTAL', 0) > 0
         clutch_weight = is_clutch.astype(float) * 0.5
         
-        # De-Risking Strategy 1: The "Rookie Blindspot" (Synthetic Crucible)
-        # For players with no playoff data, heavily weight their games against Top 10 defenses.
-        # We can use QOC_TS_DELTA > 0 as a proxy for performing well against tougher opponents.
+        # De-Risking Strategy 1: The "Rookie Blindspot" (Synthetic Crucible V2)
+        # For players with no playoff data, we must construct a "Proxy Stress" score.
+        # This replaces the simple binary flag with a continuous gradient.
         has_no_playoff_data = ~is_playoff
         
-        # Use QOC_TS_DELTA as a proxy for performance against good defenses
-        # A positive delta means they performed better than their average against tougher teams.
-        qoc_ts_delta = df_train.get('QOC_TS_DELTA', 0)
+        synthetic_crucible_score = self._calculate_synthetic_crucible_score(df_train)
         
-        # Apply a synthetic weight boost for rookies/young players who do well against good regular season defenses
-        synthetic_crucible_weight = (has_no_playoff_data & (qoc_ts_delta > 0)).astype(float) * 1.0  # Synthetic boost of 1.0
+        # The score modulates the boost. A score of 0.5 results in a 1.5x weight.
+        # We multiply by 2.0 to give it a similar impact range as the playoff boost.
+        synthetic_crucible_weight = (has_no_playoff_data * synthetic_crucible_score * 2.0)
         
         # 3. Calculate Final Crucible Weight
         # Weight = Base (1.0) + Playoff + Opponent Quality + Clutch + Synthetic Crucible
