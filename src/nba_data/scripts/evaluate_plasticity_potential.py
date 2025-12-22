@@ -922,6 +922,54 @@ class StressVectorEngine:
         # --- Final Feature Engineering & Cleanup ---
         # (This will be where we do the final PROJECTED_PLAYOFF_OUTPUT calculation)
         
+        # NEW FEATURES (Dec 2025): Latent Star Index and Inefficient Volume Score
+        # These are critical for the Projected Dependence logic.
+        
+        # 1. INEFFICIENT_VOLUME_SCORE
+        # Principle: Efficiency must survive Volume.
+        # Measures volume that comes at the cost of extreme inefficiency.
+        final_df['INEFFICIENT_VOLUME_SCORE'] = (
+            final_df['CREATION_VOLUME_RATIO'].fillna(0) * 
+            (-final_df['CREATION_TAX'].fillna(0)).clip(lower=0)
+        )
+        
+        # 2. latent_score (Capacity Engine)
+        # Principle: Ability precedes Responsibility.
+        # Measures elite efficiency on low-to-moderate volume.
+        baseline_eff = 0.44
+        efficiency_delta = (final_df['EFG_ISO_WEIGHTED'].fillna(0) - baseline_eff).clip(lower=-0.1) # Soft floor
+        volume_scalar = np.sqrt(final_df['CREATION_VOLUME_RATIO'].fillna(0)) * 10
+        final_df['latent_score'] = efficiency_delta * volume_scalar
+        
+        # 3. Merging SHOT_QUALITY_GENERATION_DELTA (Source of Truth)
+        # This is a prerequisite for dependence calculation.
+        sq_path = Path("results/shot_quality_generation_delta.csv")
+        if sq_path.exists():
+            logger.info(f"Merging SHOT_QUALITY_GENERATION_DELTA from {sq_path}...")
+            sq_df = pd.read_csv(sq_path)
+            # Ensure types match for merging
+            sq_df['PLAYER_ID'] = sq_df['PLAYER_ID'].astype(int)
+            final_df['PLAYER_ID'] = final_df['PLAYER_ID'].astype(int)
+            
+            # Merge on ID and Season
+            final_df = pd.merge(
+                final_df, 
+                sq_df[['PLAYER_ID', 'SEASON', 'SHOT_QUALITY_GENERATION_DELTA']], 
+                on=['PLAYER_ID', 'SEASON'], 
+                how='left'
+            )
+            # Fill missing with 0 (conservative)
+            final_df['SHOT_QUALITY_GENERATION_DELTA'] = final_df['SHOT_QUALITY_GENERATION_DELTA'].fillna(0.0)
+        else:
+            logger.warning(f"SHOT_QUALITY_GENERATION_DELTA file not found at {sq_path}. Using 0.0 default.")
+            if 'SHOT_QUALITY_GENERATION_DELTA' not in final_df.columns:
+                final_df['SHOT_QUALITY_GENERATION_DELTA'] = 0.0
+
+        # 4. Calculate Dependence Scores (Projected)
+        # This will now use the new logic in calculate_dependence_score.py
+        logger.info("Calculating Projected Dependence Scores...")
+        final_df = calculate_dependence_scores_batch(final_df)
+        
         # For now, just save what we have
         output_path = self.results_dir / "predictive_dataset_with_friction.csv"
         final_df.to_csv(output_path, index=False)

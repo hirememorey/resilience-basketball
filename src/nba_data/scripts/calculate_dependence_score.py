@@ -38,6 +38,8 @@ def calculate_dependence_scores_batch(df: pd.DataFrame) -> pd.DataFrame:
         scores = calculate_dependence_score(row)
         return pd.Series({
             'DEPENDENCE_SCORE': scores.get('dependence_score', 1.0),
+            'RAW_DEPENDENCE_SCORE': scores.get('raw_dependence_score', 1.0),
+            'PROJECTED_DEPENDENCE_SCORE': scores.get('projected_dependence_score', 1.0),
             'PHYSICALITY_SCORE': scores.get('physicality_score', 0.0),
             'SKILL_SCORE': scores.get('skill_score', 0.0)
         })
@@ -47,6 +49,8 @@ def calculate_dependence_scores_batch(df: pd.DataFrame) -> pd.DataFrame:
     
     # Assign back to dataframe
     df['DEPENDENCE_SCORE'] = score_cols['DEPENDENCE_SCORE']
+    df['RAW_DEPENDENCE_SCORE'] = score_cols['RAW_DEPENDENCE_SCORE']
+    df['PROJECTED_DEPENDENCE_SCORE'] = score_cols['PROJECTED_DEPENDENCE_SCORE']
     df['PHYSICALITY_SCORE'] = score_cols['PHYSICALITY_SCORE']
     df['SKILL_SCORE'] = score_cols['SKILL_SCORE']
     
@@ -55,26 +59,76 @@ def calculate_dependence_scores_batch(df: pd.DataFrame) -> pd.DataFrame:
 def calculate_dependence_score(row: pd.Series) -> dict:
     """
     Calculates Dependence Score for a single player (row).
-    Returns a dictionary with the score and components.
+    This now includes a projection based on latent potential.
     """
-    # 1. Calculate Physicality Score (Door A)
+    # 1. Calculate Raw Physicality and Skill Scores
     physicality_score = _calculate_physicality_score(row)
-    
-    # 2. Calculate Skill Score (Door B)
     skill_score = _calculate_skill_score(row)
     
-    # 3. Calculate Dependence Score
-    # DEPENDENCE_SCORE = 1.0 - Max(PHYSICALITY_SCORE, SKILL_SCORE)
-    dependence_score = 1.0 - max(physicality_score, skill_score)
+    # 2. Calculate Raw Dependence Score (pre-projection)
+    raw_dependence = 1.0 - max(physicality_score, skill_score)
     
-    # Clip to valid range [0, 1]
-    dependence_score = max(0.0, min(1.0, dependence_score))
+    # 3. Calculate Projected Dependence by applying latent discount
+    projected_dependence = _apply_latent_dependence_projection(row, raw_dependence)
+    
+    # 4. Clip to valid range [0, 1]
+    final_dependence_score = max(0.0, min(1.0, projected_dependence))
     
     return {
-        'dependence_score': dependence_score,
+        'dependence_score': final_dependence_score,
+        'raw_dependence_score': raw_dependence,
+        'projected_dependence_score': projected_dependence,
         'physicality_score': physicality_score,
         'skill_score': skill_score
     }
+
+def _apply_latent_dependence_projection(row: pd.Series, raw_dependence: float) -> float:
+    """
+    Adjusts the raw dependence score downwards based on latent creation potential.
+    Includes principled mitigations for common failure modes.
+    """
+    latent_score = float(row.get('latent_score', 0.0))
+    sq_delta = float(row.get('SHOT_QUALITY_GENERATION_DELTA', 0.0))
+    inefficient_volume_score = float(row.get('INEFFICIENT_VOLUME_SCORE', 0.0))
+
+    if np.isnan(latent_score): latent_score = 0.0
+    if np.isnan(sq_delta): sq_delta = 0.0
+    if np.isnan(inefficient_volume_score): inefficient_volume_score = 0.0
+
+    # If no latent potential, no adjustment is made.
+    if latent_score <= 0.0:
+        return raw_dependence
+
+    # --- 1. Base Discount Calculation ---
+    # Principle: Potential Energy has a Vector.
+    # We use a sqrt function to reflect that the journey to independence is non-linear
+    # and harder to complete than the initial flashes of skill. Max 25% discount.
+    max_discount = 0.25
+    base_discount = max_discount * np.sqrt(min(latent_score, 1.0))
+
+    # --- 2. Mitigations (Continuous Gradients, Not Hard Gates) ---
+    
+    # Mitigation A: The "Jordan Poole Anomaly" (False Prophet)
+    # Principle: Pressure acts as a Filter. True creators generate quality shots.
+    # We use a sigmoid function to create a smooth gradient.
+    # If sq_delta is highly positive, full discount. If negative, discount is dampened.
+    # k=50 makes the transition around 0 quite sensitive.
+    shot_creation_truth_serum = 1 / (1 + np.exp(-50 * sq_delta))
+
+    # Mitigation B: The "Tank Commander" Trap (Empty Calories)
+    # Principle: Efficiency must survive Volume.
+    # We create a penalty that scales with inefficient volume.
+    # A score of 0.10 or higher results in a near-zero multiplier.
+    efficiency_gate = max(0.0, 1.0 - (inefficient_volume_score * 10))
+
+    # --- 3. Final Discount Calculation ---
+    # The final discount is the base discount, modulated by our two "truth serums".
+    final_discount = base_discount * shot_creation_truth_serum * efficiency_gate
+    
+    projected_dependence = raw_dependence - final_discount
+    
+    return projected_dependence
+
 
 def _calculate_physicality_score(row: pd.Series) -> float:
     """

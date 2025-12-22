@@ -1,33 +1,45 @@
 # Active Context: NBA Playoff Resilience Engine
 
 **Last Updated**: December 21, 2025
-**Status**: ✅ **CONTINUOUS SCALAR BREAKTHROUGH** - Replaced binary latent star boost (0.55) with dynamic scalar based on latent_score magnitude. Implemented sqrt-based volume scaling for better detection of elite efficiency at low usage. **Latent Star Test Suite: 54.2% pass rate (26/48) with 47.4% True Positive accuracy**. **Overall Star Prediction: 56.62% accuracy**. Luka Paradox and DeRozan Problem both solved.
- 
+**Status**: ✅ **VECTORIZED POTENTIAL IMPLEMENTED** - Upgraded dependence model to project a player's future independence, not just their current state. This aligns with the principle that "Potential Energy has a Vector, not just a Magnitude." Latent stars are now correctly projected to move towards the "Franchise Cornerstone" quadrant.
+
 ---
- 
+
 ## Project Goal
- 
+
 Identify players who consistently perform better than expected in the playoffs and explain *why* using mechanistic insights. **PRIMARY FRAMEWORK: 2D Risk Matrix** - evaluates Performance (what happened) and Dependence (is it portable) as orthogonal dimensions, categorizing players into four risk quadrants: Franchise Cornerstone, Luxury Component, Depth, Avoid.
- 
+
 ---
- 
+
 ## Current Phase: 2D Risk Matrix Breakthrough
- 
+
 **MAJOR BREAKTHROUGH**: Abandoned 1D label refinement approach that was causing "Ground Truth Trap" issues. **2D Risk Matrix now established as primary evaluation framework**, properly separating Performance (outcomes) from Dependence (portability) as orthogonal dimensions.
- 
+
 **Framework Status**: 2D Risk Matrix with XGBoost classifier (15 features), ground-truth data, usage-aware projections. **Dependence Continuum**: Shows dependence as 0-100% scale with filtering capabilities. Organic feature-based validation (INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA) enables natural learning of tank commander patterns without hard gates.
- 
+
 **2D Risk Matrix Categories**:
 - **Franchise Cornerstone**: High Performance + Low Dependence (Luka, Jokić) - Max contract, build around
 - **Luxury Component**: High Performance + High Dependence (Poole, Sabonis) - Valuable in system, risky as #1
 - **Depth Piece**: Low Performance + Low Dependence (Role players) - Reliable but limited
 - **Avoid**: Low Performance + High Dependence (System merchants) - Empty calories
- 
+
 **Key Achievement**: Solved the "Ground Truth Paradox" with hybrid 2D/1D evaluation. Cases with 2D expectations use proper Performance vs. Dependence assessment (gates disabled), while legacy cases maintain 1D compatibility (gates enabled).
- 
+
 ---
- 
+
 ## Recent Critical Fixes (December 2025)
+
+### Projected Dependence (Vectorized Potential) (December 2025)
+**Problem**: The model correctly projected a latent star's *Performance* (X-axis) but left their *Dependence* (Y-axis) static. This created a "Misclassified Star" error, where players like rookie Jokić were correctly identified as future stars but were stranded in the "Luxury Component" quadrant due to their current high dependence on a system.
+
+**Root Cause**: We treated potential as a scalar (they will be better) instead of a vector (they will be better *and more independent*). The physics of player development—where ability precedes responsibility—was not being captured.
+
+**Solution** (First Principles Vector Projection):
+- **Linked Latent Score to Dependence**: Implemented a continuous-gradient discount to the `dependence_score` based on the player's `latent_score`. The logic, `projected_dependence = raw_dependence - f(latent_creation_energy)`, models the principle that players with high latent creation ability are on a trajectory towards independence.
+- **"False Prophet" Mitigation**: The dependence discount is modulated by `SHOT_QUALITY_GENERATION_DELTA`. A high latent score without the ability to generate quality shots for the offense does not lower dependence, correctly separating "Shot Makers" (Dependent) from "Shot Creators" (Independent). This uses a sigmoid function for a smooth, continuous gradient.
+- **"Tank Commander" Mitigation**: The discount is also gated by `INEFFICIENT_VOLUME_SCORE`. Players who achieve high creation volume out of necessity on bad teams ("empty calories") do not receive a dependence discount, preventing the model from mistaking forced usage for true potential.
+
+**Result**: The model now projects both axes of the 2D Risk Matrix, moving true latent stars towards the "Franchise Cornerstone" quadrant. This provides a more accurate, physically intuitive projection of a player's ultimate ceiling.
 
 ### Dependence Score Recalibration & "Jordan Poole Penalty" (December 2025)
 **Problem**: The dependence framework correctly identified system-dependent players mechanistically, but the "grading scale" was too lenient. This led to the "Jordan Poole Problem," where players known to be "System Merchants" were still classified as having low dependence.
@@ -437,7 +449,7 @@ for i, feat in enumerate(features, 1):
     print(f'  {marker} {i}. {feat}')
 physics_features = [f for f in features if 'PROJECTED_PLAYOFF' in f or 'FRICTION_COEFF' in f]
 heliocentric_features = [f for f in features if 'HELIO' in f]
-print(f'\\nPhysics-based features: {len(physics_features)}')
+print(f'\nPhysics-based features: {len(physics_features)}')
 print(f'Heliocentric features: {len(heliocentric_features)}')
 "
 

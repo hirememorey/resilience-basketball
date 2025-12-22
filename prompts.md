@@ -22,6 +22,9 @@ For each plan, list the pros, cons, and key trade-offs. Then, recommend which pl
 ##OverEngineering
 From first principles, do you think we may be overengineering and overthinking what is actually much simpler? Why or why not?
 
+##NextAction
+From first principles, what is the highest leverage action the next developer should take and why? What are the non-obvious failure modes of this approach? How can they be de-risked?
+
 ## @PreMortem
 This is a great plan. Now, I want you to perform a pre-mortem. Fast forward six weeks. The implementation of this plan has been a complete disaster. What was the single, non-obvious, and incorrect assumption we made in this plan that caused the failure? Based on that insight, what is the one change we must make to the plan *right now* to prevent that failure?
 

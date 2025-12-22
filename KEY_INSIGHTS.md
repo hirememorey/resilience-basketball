@@ -37,9 +37,10 @@
 26. **Data Completeness Gate** 🎯 CRITICAL - Require 67% of critical features
 27. **Minimum Sample Size Gate** 🎯 CRITICAL - Small sample size = noise, not signal
 
-### Advanced Features & Model Evolution (28-57)
+### Advanced Features & Model Evolution (28-58)
 28. **Multi-Season Trajectory Features** 🎯 NEW - Trajectory > Snapshot
 29. **Convert Gates to Features** 🎯 NEW - Learn, don't patch
+58. **Vectorized Potential (Projected Dependence)** 🎯 NEW - Link latent creation energy to future independence
 30. **The Double-Penalization Problem** 🎯 CRITICAL - Model vs. heuristic conflict
 31. **Smart Deference vs. Panic Abdication** 🎯 CRITICAL - Conditional abdication tax
 32. **Capacity vs. Role (Flash Multiplier Exemption)** 🎯 CRITICAL - Elite efficiency exempts from Bag Check
@@ -1763,6 +1764,24 @@ hit_secondary = (
 **Result**: Latent stars are no longer killed by the override gate designed for tank commanders, while maintaining protection against true inefficient volume scorers.
 
 **Key Principle**: **Transparency enables iteration**. Without comprehensive diagnostics, you're not building ML systems - you're building black boxes that can't be improved.
+
+---
+
+## 58. Vectorized Potential (Projected Dependence) 🎯 NEW (December 2025)
+
+**The Problem**: Model projected Performance (X-axis) but left Dependence (Y-axis) static. Latent stars like rookie Jokić were correctly identified as future stars but stranded in "Luxury Component" quadrant due to current high dependence.
+
+**The Insight**: **Potential Energy has a Vector, not just a Magnitude**. A scalar like `latent_score = 0.35` doesn't just mean "better player," it means "player who will become less dependent." The physics of player development: **Ability precedes Responsibility** - elite creation skills enable independence.
+
+**The Fix**: Implemented Projected Dependence logic:
+- **Base Discount**: `max_discount * sqrt(latent_score)` - Non-linear scaling reflecting harder independence journey
+- **"False Prophet" Mitigation**: Sigmoid dampening based on `SHOT_QUALITY_GENERATION_DELTA` (true creators generate quality shots)
+- **"Tank Commander" Mitigation**: Linear penalty based on `INEFFICIENT_VOLUME_SCORE` (efficiency must survive volume)
+- **Integration**: Modified `calculate_dependence_score.py` to apply `projected_dependence = raw_dependence - final_discount`
+
+**Result**: Latent stars now move towards "Franchise Cornerstone" quadrant. True stars get independence reward; false prophets and tank commanders have their rewards dampened/voided.
+
+**Key Principle**: **Projection requires both axes**. A complete player projection includes not just "how good" but "how portable" that goodness will be.
 
 **See Also**:
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
