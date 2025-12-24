@@ -368,115 +368,33 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ## Next Developer: Start Here
 
-**Current State**: ⚠️ **ROBUSTNESS GATE UNSUCCESSFUL** - The "Robustness Gate" (v3 of the Synthetic Crucible) was implemented to distinguish "Force" from "Finesse" players. While mechanistically sound, it **did not improve the False Positive Pass Rate (still 25.0%)**. Players like Jordan Poole are still incorrectly flagged as latent stars.
+**Current State**: ⚠️ **CRITICAL INSIGHT: "Fool's Gold" problem is a DATA INTEGRITY issue, not just a math issue.** - Previous attempts to solve the Jordan Poole false positive failed because of a "Two Worlds" divergence: the Training pipeline was reading different, newer data files than the Inference pipeline. The model couldn't see the physics it was being trained on. The core issue is plumbing, not just logic.
 
-**Analysis**: The "Robustness Gate" acts as a linear dampener on the Synthetic Crucible score. The test results show that this is insufficient to counteract the powerful signals from raw regular season production in clutch moments. The model is correctly identifying *that* these players perform under pressure, but it's overweighting that signal relative to their physical fragility. The current physics model is too trusting.
+**Highest Leverage Action**: **Implement "Fragility as a Feature" using a 4-Phase Integrity Protocol.**
+This plan addresses the data integrity failures first, then implements the new physics.
 
-**Highest Leverage Action**: **Implement "Fragility as a Feature"**
-The current approach *dampens a proxy*. The next iteration must model fragility directly as a *first-class feature*. We need to teach the model that certain styles of play have an inherent, predictable failure rate in the playoffs.
+**Phase 1: Plumbing & Data Integrity Protocol**
+*   **Objective**: Ensure Training and Inference read from a single, identical source of truth (`predictive_dataset_with_friction.csv`) and that all data joins are robust against silent failures.
+*   **Actions**:
+    1.  **Unify Data Source**: Modify `predict_conditional_archetype.py` to read `predictive_dataset_with_friction.csv`.
+    2.  **Stabilize Target Merge**: Add `PLAYER_ID` to the `resilience_archetypes.csv` in-memory before merging in `train_rfe_model.py` to prevent brittle name-based joins.
+    3.  **Enforce Type Safety**: Explicitly cast all join keys (`PLAYER_ID`, `SEASON`) to the correct data type before any merge operation to prevent silent data loss.
 
-1.  **Create `FRAGILITY_SCORE`**: In `evaluate_plasticity_potential.py`, create a new feature that is a composite of:
-    *   **Low Physicality**: `1 - Robustness_Coefficient` (from the gate logic).
-    *   **High System Dependence**: High `RS_OPEN_SHOT_FREQUENCY` (relies on others for looks).
-    *   **Low Creation Value**: Low `SHOT_QUALITY_GENERATION_DELTA`.
-2.  **Force-Include in Model**: Add `FRAGILITY_SCORE` to the `critical_features` list in `train_rfe_model.py`.
-3.  **Retrain & Validate**: The model should now learn to directly penalize players who exhibit these traits, rather than us indirectly penalizing them through sample weights.
+**Phase 2: Feature Engineering: `FRAGILITY_SCORE`**
+*   **Objective**: Create a single, quantifiable feature in `evaluate_plasticity_potential.py` that represents a player's physical fragility and system dependence.
+*   **Formula**: `FRAGILITY_SCORE = ( (1 - Physicality) * 0.5 ) + ( System_Dependence * 0.3 ) + ( Low_Creation_Value * 0.2 )`
+*   **De-Risking Logic**:
+    *   **"Curry Paradox" (Sniper Exception)**: Players with >95th percentile `EFG_ISO_WEIGHTED` or `SHOT_QUALITY_GENERATION_DELTA` are immune to physicality penalties.
+    *   **"Grifter Trap" (Trae Young Rule)**: Players with high Free Throw Rate but low Rim Pressure have their physicality score capped to prevent misinterpreting foul-baiting as resilience.
 
-**Non-Obvious Failure Modes**:
-1.  **Over-Penalizing Specialists**: Sharpshooters (e.g., Kyle Korver) will have a high `FRAGILITY_SCORE`. **Fix**: This is acceptable. They are not Franchise Cornerstones; they are Luxury Components. The 2D Risk Matrix is designed to handle this distinction.
-2.  **Data Sparsity**: Some of the underlying metrics for fragility might be sparse for rookies. **Fix**: Rely on established defaults and Bayesian shrinkage, similar to the Synthetic Crucible.
+**Phase 3: Model Training**
+*   **Objective**: Force the model to consider `FRAGILITY_SCORE` as a non-negotiable, causal factor.
+*   **Action**: Force-include `FRAGILITY_SCORE` in the `critical_features` list in `train_rfe_model.py`, bypassing RFE's potential to discard it based on correlation.
 
-**If Issues Arise**:
-- **Missing Features**: Ensure `evaluate_plasticity_potential.py` is run before training to generate the new `FRAGILITY_SCORE`.
-- **Import Errors**: Ensure scripts are run as modules (`python -m src...`) or install in editable mode (`pip install -e .`).
-- **Test Suite Regression**: If True Positives drop, it means our fragility definition is too broad. We can tune the weights within the `FRAGILITY_SCORE` to be less punitive towards creation metrics.
+**Phase 4: Inference Enforcement (The Hard Gate)**
+*   **Objective**: If the model, biased by "Volume Tyranny," still classifies a fragile player as a "King," manually enforce the physical law.
+*   **Action**: In `predict_conditional_archetype.py`, add a post-prediction check:
+    *   `if predicted_archetype == "King" AND FRAGILITY_SCORE > 0.75 AND USG_PCT > 0.20:`
+    *   `-> Demote to "Bulldozer (Fragile Star)"`
 
-
-**Key Scripts for Maintenance**:
-- `python -m src.nba_data.scripts.train_rfe_model` - Train the Crucible-Weighted model
-- `python -m tests.validation.test_latent_star_cases` - Run the validation suite
-
-
-# Check data completeness and 2D scores
-python -c "from src.streamlit_app.utils.data_loaders import create_master_dataframe; df = create_master_dataframe(); print(f'Players: {len(df)}, Performance scores: {df[\"PERFORMANCE_SCORE\"].notna().sum()}/{len(df)}, Risk categories: {df[\"RISK_CATEGORY\"].notna().sum()}/{len(df)}')"
-
-# Verify 2015-16 season normalization (should show proper star distribution)
-python -c "
-import pandas as pd
-df = pd.read_csv('results/2d_risk_matrix_all_players.csv')
-season_2015 = df[df['SEASON'] == '2015-16']
-curry = season_2015[season_2015['PLAYER_NAME'] == 'Stephen Curry']
-if len(curry) > 0:
-    print(f'Curry 2015-16: {curry.iloc[0][\"PERFORMANCE_SCORE\"]:.3f} - {curry.iloc[0][\"RISK_CATEGORY\"]}')
-    print(f'2015-16 Franchise Cornerstones: {len(season_2015[season_2015[\"RISK_CATEGORY\"] == \"Franchise Cornerstone\"])}')
-"
-
-# Test radar chart generation with N/A handling
-python -c "from src.streamlit_app.components.stress_vectors_radar import create_stress_vectors_radar; fig = create_stress_vectors_radar(['A', 'B'], [75.0, None]); print('Radar chart handles N/A correctly')"
-
-# Verify USG_PCT normalization (should show decimal format)
-python -c "
-import pandas as pd
-df = pd.read_csv('results/predictive_dataset.csv')
-sample = df.head(3)
-for idx, row in sample.iterrows():
-    print(f'{row[\"PLAYER_NAME\"]} {row[\"SEASON\"]}: USG_PCT = {row[\"USG_PCT\"]} ({\"decimal\" if row[\"USG_PCT\"] <= 1.0 else \"percentage\"})')
-"
-
-# Check model features include physics-based friction simulation and Volume Immunity
-python -c "
-import joblib
-model = joblib.load('models/resilience_xgb_rfe_15.pkl')
-features = model.feature_names_in_
-print(f'Model has {len(features)} features:')
-for i, feat in enumerate(features, 1):
-    if 'HELIO_ABOVE_REPLACEMENT_VALUE' in feat:
-        marker = '🌟'
-    elif 'PROJECTED_PLAYOFF' in feat:
-        marker = '🎯'
-    elif 'FRICTION_COEFF' in feat:
-        marker = '⚡'
-    elif 'SHOT_QUALITY_GENERATION_DELTA' in feat:
-        marker = '🎯'
-    else:
-        marker = '✅'
-    print(f'  {marker} {i}. {feat}')
-physics_features = [f for f in features if 'PROJECTED_PLAYOFF' in f or 'FRICTION_COEFF' in f]
-heliocentric_features = [f for f in features if 'HELIO' in f]
-print(f'\nPhysics-based features: {len(physics_features)}')
-print(f'Heliocentric features: {len(heliocentric_features)}')
-"
-
-# Verify enhanced diagnostic capabilities (Two Doors components)
-python -c "
-import pandas as pd
-df = pd.read_csv('results/latent_star_test_cases_diagnostics.csv')
-doors_cols = [col for col in df.columns if col.startswith('doors_')]
-print(f'Enhanced diagnostics: {len(doors_cols)} Two Doors columns found')
-if doors_cols:
-    print('Two Doors components:', doors_cols[:5], '...')
-    # Check if components are populated
-    sample_row = df.iloc[0]
-    physicality = sample_row.get('doors_physicality_score')
-    skill = sample_row.get('doors_skill_score')
-    print(f'Sample Two Doors scores - Physicality: {physicality:.3f}, Skill: {skill:.3f}')
-else:
-    print('ERROR: Two Doors components not found in diagnostics')
-"
-
-# Compare diagnostic file sizes (should be comprehensive now)
-python -c "
-import os
-latent_diag = 'results/latent_star_test_cases_diagnostics.csv'
-overall_diag = 'results/overall_star_prediction_diagnostics.csv'
-
-for file in [latent_diag, overall_diag]:
-    if os.path.exists(file):
-        size_mb = os.path.getsize(file) / (1024 * 1024)
-        with open(file, 'r') as f:
-            cols = len(f.readline().split(','))
-        print(f'{file}: {size_mb:.2f} MB, {cols} columns')
-    else:
-        print(f'{file}: NOT FOUND')
-"
-```
+This four-phase plan ensures we fix the underlying data pipeline vulnerabilities before layering on new physics, which was the root cause of previous failures.
