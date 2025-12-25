@@ -1,8 +1,8 @@
 # SHOT_QUALITY_GENERATION_DELTA Implementation Summary
 
-**Date**: December 13, 2025
-**Status**: ✅ **FULLY IMPLEMENTED**
-**Result**: Feature successfully integrated into RFE model with organic tank commander detection
+**Date**: December 13, 2025 (Updated: December 25, 2025)
+**Status**: ✅ **IMPLEMENTED IN RFE MODEL** ⚠️ **NEEDS IMPLEMENTATION IN TELESCOPE MODEL**
+**Result**: Feature integrated into RFE model but needs evaluation for Telescope model with HELIO targets
 
 ---
 
@@ -189,11 +189,35 @@ Reasons:
 
 ---
 
+## Current Status (December 25, 2025): Telescope Model Implementation
+
+**Context**: This analysis was conducted for the RFE model (PIE target). We are now implementing SHOT_QUALITY_GENERATION_DELTA for the **Telescope model** (FUTURE_PEAK_HELIO target).
+
+**Key Differences**:
+- **Different Target**: HELIO_LOAD_INDEX focuses on load × efficiency, not PIE
+- **Different Model**: XGBoost regression vs classification
+- **Different Features**: Telescope uses physics-based features focused on scalability
+
+**Next Steps for Telescope Model**:
+1. **Add SHOT_QUALITY_GENERATION_DELTA** to Telescope feature list
+2. **Retrain Telescope model** with new feature
+3. **Evaluate feature importance** in HELIO context
+4. **Test if weak signal issues persist** with different target variable
+
+**Hypothesis**: The feature may work better in Telescope model because:
+- HELIO target explicitly rewards "load × efficiency"
+- Telescope focuses on future scalability, not current performance
+- Different feature set may allow SHOT_QUALITY_GENERATION_DELTA to have more independent signal
+
+---
+
 ## References
 
 - **Investigation Script**: `investigate_shot_quality_model_usage.py`
 - **Results**: `results/shot_quality_model_usage_analysis.csv`
 - **Validation Report**: `docs/SHOT_QUALITY_GENERATION_DELTA_VALIDATION_SUMMARY.md`
+- **Telescope Model**: `src/nba_data/scripts/train_telescope_model.py`
+- **Helio Targets**: `results/training_targets_helio.csv`
 
 
 

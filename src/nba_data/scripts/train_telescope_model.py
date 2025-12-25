@@ -59,20 +59,22 @@ def load_and_merge_data():
     df_features = pd.read_csv(features_path)
     
     # 2. Load Targets
-    targets_path = Path("data/telescope_targets.csv")
+    targets_path = Path("results/training_targets_helio.csv")
     if not targets_path.exists():
         logger.error(f"Targets not found at {targets_path}")
         sys.exit(1)
     df_targets = pd.read_csv(targets_path)
+    df_targets_slim = df_targets[['PLAYER_ID', 'SEASON_YEAR', 'FUTURE_PEAK_HELIO']]
     
     # 3. Merge
+    # Standardize season format for merging
+    df_features['SEASON_YEAR'] = df_features['SEASON'].apply(lambda x: int(x.split('-')[0]) + 1)
+    
     # Ensure correct dtypes for merging
     df_features['PLAYER_ID'] = df_features['PLAYER_ID'].astype(str)
-    df_targets['PLAYER_ID'] = df_targets['PLAYER_ID'].astype(str)
-    df_features['SEASON'] = df_features['SEASON'].astype(str)
-    df_targets['SEASON'] = df_targets['SEASON'].astype(str)
+    df_targets_slim['PLAYER_ID'] = df_targets_slim['PLAYER_ID'].astype(str)
     
-    merged = pd.merge(df_features, df_targets, on=['PLAYER_ID', 'SEASON'], how='inner')
+    merged = pd.merge(df_features, df_targets_slim, on=['PLAYER_ID', 'SEASON_YEAR'], how='inner')
     logger.info(f"Merged dataset size: {len(merged)} rows")
     
     return merged
@@ -98,7 +100,7 @@ def train_telescope_model():
     logger.info(f"Training with {len(available_features)} features: {available_features}")
     
     X = df_growth[available_features]
-    y = df_growth['TELESCOPE_TARGET']
+    y = df_growth['FUTURE_PEAK_HELIO']
     
     # Train/Test Split (Random is okay for now, but Temporal is better. 
     # Given small dataset, let's just do random to get a working prototype).

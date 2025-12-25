@@ -2,7 +2,7 @@
 
 **Goal:** To build a predictive system that can accurately distinguish between immediate playoff contributors, future stars, and "fool's gold" players.
 
-**Current Status:** ✅ **"TWO-CLOCK" ARCHITECTURE DESIGNED**. We have shifted from a single, flawed model to a dual-engine architecture that separates **Current Viability** (The Crucible) from **Future Potential** (The Telescope).
+**Current Status:** ✅ **TELESCOPE MODEL v1 TRAINED**. HELIO_LOAD_INDEX targets generated and Telescope model trained (R² = 0.11). Next priority: Implement SHOT_QUALITY_GENERATION_DELTA feature to break R² ceiling.
 
 ---
 
@@ -34,8 +34,19 @@ python src/nba_data/scripts/train_crucible_model.py
 python src/nba_data/scripts/detect_ghost_risk.py
 ```
 
-**Stage 2: The Telescope (Future Potential) - *Work in Progress***
-*(This stage is the next priority for development)*
+**Stage 2: The Telescope (Future Potential) - *Phase 4 Implementation***
+
+```bash
+# 1. Generate HELIO targets (predicting peak future playoff scalability)
+python src/nba_data/scripts/generate_helio_targets.py
+
+# 2. Train the Telescope model
+python src/nba_data/scripts/train_telescope_model.py
+
+# 3. Evaluate performance and plan feature enhancements
+# Current: R² = 0.11, USG_PCT strongest driver
+# Next: Add SHOT_QUALITY_GENERATION_DELTA to distinguish "System Merchants" from "Scalable Engines"
+```
 
 ### 4. Run Validation Tests
 ```bash

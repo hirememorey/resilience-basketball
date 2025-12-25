@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 24, 2025
-**Status**: 🔬 **HELIO PIVOT VALIDATED** - Original HELIO_INDEX falsified via simulation. New HELIO_LOAD_INDEX formula (Offensive_Load^1.3 × Efficiency_Delta) correctly ranks Jokić #1 while Gobert scores near zero. Ready for implementation.
+**Last Updated**: December 25, 2025
+**Status**: 🔭 **TELESCOPE MODEL TRAINED** - `HELIO_LOAD_INDEX` targets generated and Telescope Model v1 trained. R-squared is 0.11, identifying `USG_PCT` and `CREATION_VOLUME` as key drivers. Baseline established; next focus is feature engineering to capture "System Dependence."
 
 ---
 
@@ -20,16 +20,12 @@ To build a predictive system that can accurately distinguish between immediate p
 - **Output**: `CRUCIBLE_SCORE` (1 - Probability of Liability)
 
 ### 2. The Telescope (The "Projection" - Potential Engine)
-- **Status**: 🔬 **TARGET FORMULA VALIDATED** - HELIO_LOAD_INDEX correctly identifies heliocentric engines (Jokić #1, Gobert near zero)
+- **Status**: ⚠️ **V1 TRAINED (Low R2)** - Model is directionally correct but lacks explanatory power (R2 = 0.11).
 - **Purpose**: Answers the question: *"What is this player's **peak scalability** over the next 3 seasons?"*
-- **Target Variable**: `FUTURE_PEAK_HELIO_LOAD_INDEX` - MAX(HELIO_LOAD_INDEX) over next 3 playoff runs, 0 for washouts
-- **Formula**: `(OFFENSIVE_LOAD^1.3) × EFFICIENCY_DELTA` where `OFFENSIVE_LOAD = USG_PCT + (AST_PCT × 0.75)`
-- **Methodology**:
-    1. **Future Peak Logic**: Target is peak scalability in playoff runs N+1 to N+3.
-    2. **Washout Imputation**: Players with <100 playoff minutes in 3-year window get Target = 0.
-    3. **Non-Linear Load Scaling**: Exponent 1.3 separates true engines from hyper-efficient role players.
-- **Features**: Current physics-based features (CREATION_TAX, LEVERAGE_TS_DELTA, etc.)
-- **Output**: `TELESCOPE_SCORE` (Predicted Future HELIO_LOAD_INDEX)
+- **Target Variable**: `FUTURE_PEAK_HELIO` - MAX(HELIO_LOAD_INDEX) over next 3 playoff runs.
+- **Formula**: `(OFFENSIVE_LOAD^1.3) × EFFICIENCY_DELTA` where `EFFICIENCY_DELTA` is relative to **Replacement Level** (League Avg - 5.0).
+- **Current Drivers**: `USG_PCT`, `USG_PCT_X_CREATION_VOLUME_RATIO`, `USG_PCT_X_LEVERAGE_USG_DELTA`.
+- **Missing Signal**: Differentiation between "Self-Creators" and "System Merchants."
 
 ---
 
@@ -48,51 +44,34 @@ The system now categorizes players based on the intersection of the two clocks:
 
 ## Validation Results: Physics Compliance Achieved
 
-**Test Suite Results**: System demonstrates **physics compliance** (no skill hallucination) but **teleological confusion** (wrong optimization target).
-
 ### ✅ **HELIO Formula Validation (Target Pivot Success)**
-- **Nikola Jokić (2024-25 Peak)**: **#1 Overall** ✓ (Correctly identifies heliocentric engine)
-- **James Harden (2017-18 Peak)**: **#4 Overall** ✓ (Elite load + efficiency maintained)
-- **Tyrese Haliburton (2023-24 Peak)**: **#11 Overall** ✓ (Rises into elite tier)
-- **Rudy Gobert (2021-22 Peak)**: **#96 Overall** ✓ (Near zero - correctly penalized for low load)
-- **DeMar DeRozan (2019-20 Peak)**: **#20 Overall** ✓ (No longer artificially inflated)
+- **Diagnostic Check**: Validated that `HELIO_LOAD_INDEX` correctly values high-load/low-efficiency stars (Westbrook '18) above Washouts (0.0).
+- **Logic Upgrade**: Shifted baseline from "League Average" to "Replacement Level" to properly capture value of volume creation.
 
-### 🔍 **Falsification Process Completed**
-Original HELIO_INDEX `(USG × TS × Creation_Ratio)` was **falsified** via simulation:
-- **Jokić ranked #67** (failed the engine test)
-- **Gobert ranked #31** (failed the role player test)
-- **New HELIO_LOAD_INDEX** passes all validation checks
+### 🔍 **Telescope Model v1 Performance**
+- **RMSE**: 1.1344
+- **R2 Score**: 0.1102 (Weak but non-zero)
+- **Top Feature**: `USG_PCT` (0.21 importance) - confirms "Opportunity is Prerequisite" principle.
+- **Insight**: Model currently over-indexes on raw usage. Needs "Antidote" features to punish empty calories.
 
 ---
 
 ## Next Developer: Start Here
 
-**Current State**: HELIO_LOAD_INDEX formula validated via simulation. Ready to implement the target generation pipeline.
+**Current State**: Telescope Model v1 trained on `FUTURE_PEAK_HELIO` targets. R-squared is low (0.11), indicating the need for better features to explain variance.
 
-**Highest Leverage Action**: Execute the **HELIO_LOAD_INDEX Target Generation**
-- **Why**: Transform the Telescope from predicting "Good Players" to predicting "Scalable Engines."
-- **How**: Create `src/nba_data/scripts/generate_helio_targets.py` implementing the Future Peak logic with 3-year lookahead window.
-- **Impact**: Will correctly identify heliocentric engines while penalizing utility-focused role players.
+**Highest Leverage Action**: Implement the **"Empty Calories" Antidote**
+- **Feature**: `SHOT_QUALITY_GENERATION_DELTA`
+- **Why**: Distinguish between players who *create* their own shots (Scalable) vs. those who consume created shots (System Dependent).
+- **Goal**: Differentiate `Trae Young` (High Delta) from `D'Angelo Russell` (Low Delta).
 
-**Implementation Plan**: See `PHASE_4_HELIO_IMPLEMENTATION_PLAN.md` for detailed steps.
-
-**Secondary Priorities** (After HELIO Pivot):
-1.  **Dataset Expansion**: Process additional seasons for larger training set.
-2.  **Dashboard Integration**: Visualize 2D Risk Matrix in Streamlit app.
-3.  **Model Refinement**: Tune thresholds and interaction terms.
+**Secondary Priorities**:
+1.  **Refine Feature Set**: Add interaction terms for `SHOT_QUALITY` x `TS_PCT` to avoid the "Chucker Trap."
+2.  **Expand Dataset**: Process more historical seasons to increase training sample size.
+3.  **Visualization**: Add Telescope outputs to the Streamlit dashboard.
 
 **Key Scripts**:
-- `scripts/evaluate_helio_target.py` (Original HELIO_INDEX simulation - falsified)
-- `scripts/evaluate_helio_load.py` (HELIO_LOAD_INDEX simulation - validated)
-- `src/nba_data/scripts/evaluate_plasticity_potential.py` (Physics Engine)
-- `src/nba_data/scripts/build_crucible_dataset.py` (Dataset Synthesis)
-- `src/nba_data/scripts/generate_telescope_targets.py` (Target Generation)
-- `src/nba_data/scripts/project_player_avatars.py` (Universal Projection)
-- `src/nba_data/scripts/train_telescope_model.py` (Model Training)
-- `src/nba_data/scripts/predict_2d_risk_matrix.py` (Synthesis)
-- `src/nba_data/scripts/validate_2d_risk_matrix.py` (Validation)
+- `src/nba_data/scripts/generate_helio_targets.py` (Target Generation - **UPDATED**)
+- `src/nba_data/scripts/train_telescope_model.py` (Model Training - **UPDATED**)
+- `results/training_targets_helio.csv` (Current Ground Truth)
 
-**Simulation Results**:
-- `results/helio_index_simulation.csv` (Original formula - falsified)
-- `results/helio_load_simulation.csv` (New formula - validated)</content>
-<parameter name="file_path">ACTIVE_CONTEXT.md

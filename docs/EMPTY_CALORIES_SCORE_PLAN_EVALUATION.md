@@ -1,8 +1,8 @@
 # EMPTY_CALORIES_SCORE Plan Evaluation: First Principles Analysis
 
-**Date**: December 9, 2025  
-**Status**: ✅ **SUPERSEDED** - Enhancement implemented via INEFFICIENT_VOLUME_SCORE multi-signal approach  
-**Verdict**: ⚠️ **PARTIALLY AGREE** - Good concept but needs refinement (implemented via different approach)
+**Date**: December 9, 2025 (Updated: December 25, 2025)
+**Status**: ✅ **EVALUATED FOR RFE MODEL** ⚠️ **NEEDS REEVALUATION FOR TELESCOPE MODEL**
+**Verdict**: ⚠️ **PARTIALLY AGREE** - Good concept but needs refinement; may work differently with HELIO targets
 
 ---
 
@@ -258,6 +258,27 @@ Before implementing, validate:
 - [ ] Does safety valve gate still not break any true positives?
 - [ ] Does feature have sufficient importance after retraining (>5%)?
 - [ ] Does test suite pass rate improve?
+
+---
+
+## Current Status (December 25, 2025): Telescope Model Context
+
+**Context**: This evaluation was conducted for the RFE model (PIE target). We are now implementing similar concepts for the **Telescope model** (FUTURE_PEAK_HELIO target).
+
+**Key Differences**:
+- **Different Target**: HELIO_LOAD_INDEX = (USG + AST_PCT×0.75)^1.3 × Efficiency_Delta
+- **Different Model**: Regression predicting future scalability vs classification predicting current star-level
+- **Current Performance**: R² = 0.11, with USG_PCT as strongest driver (21% importance)
+
+**Relevance to Telescope Model**:
+- **USG_PCT × SHOT_QUALITY_GENERATION_DELTA** interaction may be more effective in Telescope context
+- HELIO target explicitly penalizes "high usage + low efficiency" patterns
+- May provide the missing signal to break R² ceiling
+
+**Next Steps**:
+1. **Implement SHOT_QUALITY_GENERATION_DELTA** in Telescope feature set
+2. **Test EMPTY_CALORIES_SCORE concept** (USG_PCT × max(0, -SHOT_QUALITY_GENERATION_DELTA))
+3. **Compare to existing INEFFICIENT_VOLUME_SCORE** in new context
 
 ---
 

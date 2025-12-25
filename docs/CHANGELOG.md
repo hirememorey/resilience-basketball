@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **HELIO_LOAD_INDEX Target Generation**: Complete implementation of Telescope model target pipeline
+  - Created `generate_helio_targets.py` script implementing 3-year lookahead window logic
+  - Implemented `HELIO_LOAD_INDEX = (OFFENSIVE_LOAD^1.3) × EFFICIENCY_DELTA` with replacement level baseline
+  - Generated `training_targets_helio.csv` with FUTURE_PEAK_HELIO targets for all regular season rows
+  - **Key Discovery**: League average baseline created "Negative Inversion Trap"; replaced with replacement level (League Avg - 5.0)
+- **Telescope Model v1**: Initial training on HELIO targets with physics-based features
+  - R² = 0.11 baseline established with USG_PCT (21% importance) as strongest driver
+  - Features: CREATION_VOLUME_RATIO, LEVERAGE_USG_DELTA, RS_PRESSURE_APPETITE, AGE
+  - Validated that model correctly values high-usage stars above washouts
 - **HELIO_LOAD_INDEX Target Formula**: Validated new target variable for Telescope model pivot
   - Implemented `HELIO_LOAD_INDEX = (OFFENSIVE_LOAD^1.3) × EFFICIENCY_DELTA` where `OFFENSIVE_LOAD = USG_PCT + (AST_PCT × 0.75)`
   - Created simulation scripts: `evaluate_helio_target.py` (original formula) and `evaluate_helio_load.py` (validated formula)
