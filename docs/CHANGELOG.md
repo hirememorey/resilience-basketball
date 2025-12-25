@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **HELIO_LOAD_INDEX Target Formula**: Validated new target variable for Telescope model pivot
+  - Implemented `HELIO_LOAD_INDEX = (OFFENSIVE_LOAD^1.3) × EFFICIENCY_DELTA` where `OFFENSIVE_LOAD = USG_PCT + (AST_PCT × 0.75)`
+  - Created simulation scripts: `evaluate_helio_target.py` (original formula) and `evaluate_helio_load.py` (validated formula)
+  - **Key Validation**: Nikola Jokić ranks #1, Rudy Gobert near zero - correctly identifies heliocentric engines
+  - **PHASE_4_HELIO_IMPLEMENTATION_PLAN.md**: Complete implementation roadmap for target generation pipeline
 - **DeRozan Problem SOLVED**: Physics-based playoff friction simulation implemented
   - Added PROJECTED_PLAYOFF_OUTPUT and friction coefficients (FRICTION_COEFF_ISO, FRICTION_COEFF_0_DRIBBLE)
   - Force-included physics-based features in RFE model despite statistical selection

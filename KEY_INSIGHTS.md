@@ -1847,6 +1847,59 @@ Rookie "micro-crucibles" are inherently small sample sizes. A 3/4 late-clock sho
 
 ## 62. The "Role Player Bias" (Specialist Trap) - Quality × Difficulty Interaction Required 🎯 CRITICAL (December 2025)
 
+**The Problem**: Hyper-efficient role players (e.g., elite corner 3-point shooters) can achieve high Offensive Ratings while carrying minimal load, artificially inflating their scores in load-based metrics.
+
+**The Insight**: **Non-linear load scaling required**. Use exponent >1.0 on load component to separate true engines from hyper-efficient specialists.
+
+**The Fix**: `HELIO_LOAD_INDEX = (OFFENSIVE_LOAD ^ 1.3) × EFFICIENCY_DELTA` instead of `LOAD × EFFICIENCY`. This exponentially rewards high-load players while keeping low-load specialists appropriately scored.
+
+**Key Principle**: **Load carries diminishing marginal utility**. The difference between 20% load and 25% load is more valuable than 10% load vs 15% load.
+
+## 63. The "Sloppy Sniper" Loophole (Turnover Tax Omission) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Metrics using `TS_PCT` (True Shooting) reward high-volume, high-TOV players because TOVs increase USG_PCT but TS_PCT ignores them, creating false positives for inefficient ball-stoppers.
+
+**The Insight**: **Possession-based efficiency metrics required**. TS_PCT treats TOVs as neutral; Offensive Rating penalizes them. Use OR for scalability predictions.
+
+**The Fix**: `EFFICIENCY_DELTA = OFF_RATING - LEAGUE_AVG_OFF_RATING` instead of `TS_PCT - REPLACEMENT_TS`. This correctly penalizes Harden-style high-TOV playmakers.
+
+**Key Principle**: **Scalability requires efficiency under load**. Players who turn the ball over can't scale because possessions are finite.
+
+## 64. The "Nash/Jokic Erasure" (Playmaking Blindspot) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Metrics using `USG_PCT` alone erase playmaking value. Steve Nash or Nikola Jokić can be low-USG high-AST engines who create massive gravity, but USG_PCT treats them like role players.
+
+**The Insight**: **Offensive Load = Scoring Responsibility + Playmaking Responsibility**. Include AST_PCT in load calculation to capture true engine capacity.
+
+**The Fix**: `OFFENSIVE_LOAD = USG_PCT + (AST_PCT × 0.75)` instead of `LOAD = USG_PCT`. The 0.75 factor represents the relative value of a created shot vs. a self-finished possession.
+
+**Key Principle**: **Heliocentricity includes gravity**. True engines create opportunities for others, not just themselves.
+
+## 65. The "Future Peak" Logic (Washout Imputation Required) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Training targets based on future outcomes only sees "survivors," missing the 0-outcomes for busts. Models become overly optimistic without seeing failure.
+
+**The Insight**: **Explicit failure imputation required**. For players who wash out (play in Year N but <100 playoff minutes in N+1 to N+3), set target = 0. This teaches the model that disappearance is predictable.
+
+**The Fix**: `FUTURE_PEAK_HELIO = MAX(HELIO_LOAD_INDEX in playoff runs N+1 to N+3) or 0 if washout`. Include sample size filters to avoid noise from short playoff runs.
+
+**Key Principle**: **The Telescope must learn failure**. Without zeros, it hallucinates potential.
+
+## 66. The "Jokic-Gobert" Validation Test 🎯 CRITICAL (December 2025)
+
+**The Problem**: Target variables can appear sound in isolation but fail on key archetypes. Without archetype validation, you build elegant failures.
+
+**The Insight**: **Test targets against known physics before implementation**. If your heliocentric engine target doesn't rank Jokić > Gobert, it's wrong regardless of mathematical elegance.
+
+**The Fix**: Validate all target formulas against this checklist:
+- Jokić ranks in top 5 (heliocentric engine)
+- Gobert ranks near bottom (low-load utility player)
+- Haliburton ranks in top 15 (efficient playmaker)
+- Westbrook ranks in top 10 (high-load playmaker, despite efficiency issues)
+- Curry ranks in top 10 (elite efficiency + moderate load)
+
+**Key Principle**: **Physics compliance over mathematical purity**. A target that fails archetype tests is falsified, no matter how theoretically sound.
+
 Role players can excel in high-stress situations by taking easier shots (wide-open catch-and-shoot 3s). Weight proxy scores by shot quality metrics (creation volume, shot difficulty) to distinguish load-bearing resilience from situational success. Formula: `weighted_proxy_score = proxy_score × sqrt(creation_volume) × shot_quality_penalty`.
 
 ## 63. The "Garbage Time Elite" (Context Failure) - Point Differential Filtering Required 🎯 CRITICAL (December 2025)
