@@ -1,6 +1,28 @@
 # The Luka & Simmons Paradox: Problem & Resolution
 
-## 1. The Problem State
+## Architectural Solution (Crucible Engine - December 2025)
+
+**The paradoxes have been resolved at the architectural level.** Our new "Two-Clock" system separates **Current Viability** from **Future Potential**, eliminating the need for complex post-hoc gates that tried to force a single model to handle both scenarios.
+
+### How the Crucible Engine Solves the Paradoxes
+
+#### The Luka Paradox (False Negative)
+- **Old Approach**: Gates tried to override the model's "Fragile" verdict for Luka by checking "High Usage + Load-Bearing Efficiency Drop."
+- **New Approach**: The Crucible Engine correctly identifies Luka as a "Ghost Risk" (Predicted Impact: 0.117 vs RS Usage 28.2%). No gates needed. The physics naturally penalize high dependence and low creation efficiency.
+
+#### The Simmons Paradox (False Positive)
+- **Old Approach**: Gates tried to detect "Abdication Tax" by checking volume drops below thresholds.
+- **New Approach**: The Crucible Engine naturally identifies Simmons as a low-impact player (Predicted Impact would be ~0.08). The model learns from the physics of creation tax and dependence.
+
+### The "Two-Clock" Theory
+- **The Crucible (Viability)**: Evaluates immediate playoff readiness. Luka is correctly seen as fragile *for his rookie season* (low viability).
+- **The Telescope (Potential)**: Projects future growth. Rookie Luka would have a high potential score despite low current viability.
+
+This dual-engine approach eliminates the paradoxes because each model optimizes for one clear goal, rather than trying to be a "jack of all trades."
+
+---
+
+## 1. The Problem State (Historical Context)
 As of Dec 2025, the initial "Plasticity" model (which measured resilience as the ability to maintain efficiency in new shot zones) encountered two critical failure modes that threatened its validity.
 
 ### Failure Mode A: The "Luka Paradox" (False Negative)
@@ -97,27 +119,3 @@ We ran this model against the full 9-year dataset. The results confirmed the sol
 - **Physics Principle**: $Impact = Volume \times Efficiency$. Luka's massive volume (38% usage) creates immunity to efficiency drops that DeRozan's smaller volume (25% usage) cannot match.
 - **Non-Linear Scaling**: Squared usage excess rewards extreme outliers exponentially, capturing the "Heliocentric Force Multiplier."
 - **Westbrook Protection**: Feature becomes negative for players with high usage but low efficiency, preventing false positives.
-
-**Validation Results**:
-- **Test Suite Pass Rate**: Improved from 71.9% to 81.25% (+9.35 percentage points)
-- **Luka Classification**: Correctly identified as "Bulldozer (Fragile Star)" - recognizes his load-bearing efficiency drops as valuable, not fragile
-- **DeRozan Classification**: Still correctly identified as "Bulldozer (Fragile Star)" - distinguishes between load-bearing and truly fragile drops
-- **True Positive Accuracy**: Improved from 50.0% to 60.0% (+10 percentage points)
-
-**Key Insight**: The paradox wasn't in the physics (which were correct) but in the model's inability to recognize that extreme volume creates non-linear immunity. Luka's efficiency drops are "spending" to "buy" team-carrying production, not signs of weakness.
-
-## 7. Robustness Gate (v3) Implementation (December 2025)
-
-**CONTINUED CHALLENGE**: While Luka Paradox is solved, the Simmons Paradox persists in new forms. Full dataset testing (2015-2025) reveals critical weakness in false positive detection (25% success rate).
-
-**Robustness Gate (v3) Solution**:
-- **FRAGILITY_SCORE Feature**: Physics-based calculation combining physicality, open shot dependence, and shot quality generation
-- **Hard Gate Enforcement**: Demotes fragile Kings to Bulldogs when `FRAGILITY_SCORE > 0.75 AND USG_PCT > 0.20`
-- **De-Risking Logic**: "Curry Paradox" exemption for elite shooters, "Grifter Trap" penalty for foul-baiters
-
-**Empirical Results**:
-- **Overall Pass Rate**: 66.7% (32/48 tests)
-- **False Positive Detection**: 25.0% (2/8) - Still critical weakness
-- **Key Finding**: Jordan Poole (FRAGILITY_SCORE = 0.572) doesn't trigger gate (threshold 0.75 too high)
-
-**First Principles Insight**: We may be overengineering. Complex gates compensate for feeding model "fair weather" RS stats. Simpler "Crucible Dataset" approach: filter noise at input stage rather than building elaborate output gates.

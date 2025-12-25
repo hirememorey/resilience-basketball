@@ -43,6 +43,9 @@
 29. **Convert Gates to Features** 🎯 NEW - Learn, don't patch
 30. **Crucible Dataset Approach** 🎯 CRITICAL - Blind model to "fair weather" RS stats; only feed projected playoff physics. Eliminates need for complex output gates.
 58. **Vectorized Potential (Projected Dependence)** 🎯 NEW - Link latent creation energy to future independence
+59. **Two-Clock Architecture** 🎯 CRITICAL - Separate Current Viability from Future Potential
+60. **Input Sanitation vs. Output Gates** 🎯 CRITICAL - Blind model to "fair weather" stats; filter noise at input stage
+61. **Survivorship Bias in Potential Modeling** 🎯 CRITICAL - Explicitly impute failure for washed-out players
 30. **The Double-Penalization Problem** 🎯 CRITICAL - Model vs. heuristic conflict
 31. **Smart Deference vs. Panic Abdication** 🎯 CRITICAL - Conditional abdication tax
 32. **Capacity vs. Role (Flash Multiplier Exemption)** 🎯 CRITICAL - Elite efficiency exempts from Bag Check
@@ -785,8 +788,9 @@ When implementing new features, ask:
 - [ ] Am I using organic features instead of hard gates? (INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA enable natural learning) (Fix #54) ✅
 - [ ] Am I expanding model capacity when critical signals are excluded? (15 features > 10 features allows inclusion of tank commander detectors) (Fix #54) ✅
 - [ ] Am I collecting comprehensive diagnostics for debugging? (Raw stats → Features → Interactions → Framework components → Final predictions) (Fix #55)
-- [ ] Am I overengineering? (Complex gates compensate for feeding model fair weather stats - consider Crucible Dataset approach instead)
+- [ ] Am I using a Two-Clock architecture? (Separate Viability Engine from Potential Engine)
 - [ ] Am I filtering noise at input stage rather than output stage? (Blind model to RS noise, feed only projected playoff physics)
+- [ ] Am I imputing failure explicitly? (For potential modeling, include washed-out players with replacement-level outcomes)
 
 ---
 
@@ -1790,6 +1794,44 @@ hit_secondary = (
 **Result**: Latent stars now move towards "Franchise Cornerstone" quadrant. True stars get independence reward; false prophets and tank commanders have their rewards dampened/voided.
 
 **Key Principle**: **Projection requires both axes**. A complete player projection includes not just "how good" but "how portable" that goodness will be.
+
+## 59. Two-Clock Architecture: Separate Viability from Potential 🎯 CRITICAL (December 2025)
+
+**The Problem**: Single-model approach tried to optimize for "Win Now" (Current Viability) and "Win Later" (Future Potential) with one loss function, creating insoluble conflicts.
+
+**The Insight**: **Viability and Potential are chemically different properties**. Current viability is governed by **friction** (Can you maintain efficiency when space tightens?). Future potential is governed by **capacity** (Can you handle more load without breaking?).
+
+**The Fix**: Dual-engine architecture:
+- **The Crucible (Viability Engine)**: XGBoost Regressor predicting `PIE_TARGET` from RS physics. Evaluates immediate playoff readiness.
+- **The Telescope (Potential Engine)**: XGBoost Regressor predicting `MAX(PIE_TARGET)` over next 3 seasons. Projects future growth.
+
+**Key Principle**: **Decouple the error terms**. Stop punishing the "Current Reality" model for missing "Future Potential," and vice versa.
+
+## 60. Input Sanitation vs. Output Gates 🎯 CRITICAL (December 2025)
+
+**The Problem**: Complex `if/else` gates tried to force reality on a model trained on "fair weather" regular season stats.
+
+**The Insight**: **Filter noise at the input stage, not the output stage**. Instead of building elaborate gates to override predictions, blind the model to misleading data from the start.
+
+**The Fix**: Crucible Dataset approach:
+- Remove `RS_TS_PCT`, `RS_PPP` (fair weather stats)
+- Only feed `FRICTION_ADJUSTED_VOLUME`, `TRUSTWORTHY_EFFICIENCY` (projected playoff physics)
+- Let model learn natural patterns instead of forcing human logic
+
+**Key Principle**: **Trust the Physics**. The model will naturally identify "Ghost Risks" (high usage + low adjusted impact) without manual overrides.
+
+## 61. Survivorship Bias in Potential Modeling 🎯 CRITICAL (December 2025)
+
+**The Problem**: Training the Telescope on `MAX(PIE_TARGET)` over future seasons only sees players who survived to achieve those seasons, missing the "0" outcomes for busts.
+
+**The Insight**: **Explicit failure imputation required**. The model must see that most rookies don't become stars - the dataset must include "washed-out" players with `PIE_TARGET = 0.05` (replacement level).
+
+**The Fix**: For players who played in Year X but vanished by Year X+3:
+- Add them back to the training data
+- Set `PIE_TARGET = 0.05` for the "missing" seasons
+- This teaches the model that "disappearing" is a common (and predictable) outcome
+
+**Key Principle**: **The Telescope must learn failure**. Without seeing the zeros, it becomes overly optimistic about rookie potential.
 
 ## 59. Crucible-Weighted Training: "Resilience is Only Observable Under Load" 🎯 CRITICAL (December 2025)
 

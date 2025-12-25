@@ -3,66 +3,56 @@
   "accuracy": 0.5230769230769231,
   "features": [
     "EFG_PCT_0_DRIBBLE",
+    "FRAGILITY_SCORE",
     "FRICTION_COEFF_0_DRIBBLE",
     "FRICTION_COEFF_ISO",
     "HELIO_ABOVE_REPLACEMENT_VALUE",
     "INEFFICIENT_VOLUME_SCORE",
     "PROJECTED_PLAYOFF_OUTPUT",
     "PROJECTED_PLAYOFF_PPS",
-    "SHOT_QUALITY_GENERATION_DELTA",
-    "USG_PCT",
-    "USG_PCT_X_CREATION_VOLUME_RATIO",
-    "USG_PCT_X_EFG_ISO_WEIGHTED",
-    "USG_PCT_X_LEVERAGE_USG_DELTA"
+    "RS_EARLY_CLOCK_PRESSURE_RESILIENCE",
+    "SHOT_QUALITY_GENERATION_DELTA"
   ],
   "feature_importance": [
     {
-      "Feature": "USG_PCT",
-      "Importance": 0.42327484488487244
+      "Feature": "HELIO_ABOVE_REPLACEMENT_VALUE",
+      "Importance": 0.2291109561920166
     },
     {
-      "Feature": "PROJECTED_PLAYOFF_OUTPUT",
-      "Importance": 0.08388737589120865
+      "Feature": "FRAGILITY_SCORE",
+      "Importance": 0.137612447142601
     },
     {
       "Feature": "FRICTION_COEFF_0_DRIBBLE",
-      "Importance": 0.05744433403015137
-    },
-    {
-      "Feature": "SHOT_QUALITY_GENERATION_DELTA",
-      "Importance": 0.0561409592628479
-    },
-    {
-      "Feature": "USG_PCT_X_CREATION_VOLUME_RATIO",
-      "Importance": 0.0530371218919754
-    },
-    {
-      "Feature": "USG_PCT_X_LEVERAGE_USG_DELTA",
-      "Importance": 0.050108373165130615
-    },
-    {
-      "Feature": "HELIO_ABOVE_REPLACEMENT_VALUE",
-      "Importance": 0.048849862068891525
-    },
-    {
-      "Feature": "FRICTION_COEFF_ISO",
-      "Importance": 0.04867112264037132
+      "Importance": 0.09636522829532623
     },
     {
       "Feature": "INEFFICIENT_VOLUME_SCORE",
-      "Importance": 0.04735749959945679
+      "Importance": 0.0856013149023056
     },
     {
-      "Feature": "USG_PCT_X_EFG_ISO_WEIGHTED",
-      "Importance": 0.04550759121775627
+      "Feature": "PROJECTED_PLAYOFF_OUTPUT",
+      "Importance": 0.08340030908584595
+    },
+    {
+      "Feature": "FRICTION_COEFF_ISO",
+      "Importance": 0.08061819523572922
+    },
+    {
+      "Feature": "RS_EARLY_CLOCK_PRESSURE_RESILIENCE",
+      "Importance": 0.07915323227643967
+    },
+    {
+      "Feature": "SHOT_QUALITY_GENERATION_DELTA",
+      "Importance": 0.07390812784433365
     },
     {
       "Feature": "PROJECTED_PLAYOFF_PPS",
-      "Importance": 0.04462515562772751
+      "Importance": 0.07321231812238693
     },
     {
       "Feature": "EFG_PCT_0_DRIBBLE",
-      "Importance": 0.041095755994319916
+      "Importance": 0.06101786717772484
     }
   ]
 }
