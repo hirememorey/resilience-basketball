@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 21, 2025
-**Status**: ✅ **VECTORIZED POTENTIAL IMPLEMENTED** - Upgraded dependence model to project a player's future independence, not just their current state. This aligns with the principle that "Potential Energy has a Vector, not just a Magnitude." Latent stars are now correctly projected to move towards the "Franchise Cornerstone" quadrant.
+**Last Updated**: December 24, 2025
+**Status**: ✅ **ROBUSTNESS GATE (V3) IMPLEMENTED** - Complete overhaul of data plumbing and feature engineering. Introduced FRAGILITY_SCORE with physics-based gate enforcement. Full dataset testing reveals 66.7% pass rate with critical false positive detection weakness. Key insight: May be overengineering - simpler "Crucible Dataset" approach could eliminate complex gates.
 
 ---
 
@@ -11,19 +11,21 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ---
 
-## Current Phase: 2D Risk Matrix Breakthrough
+## Current Phase: Robustness Gate (v3) Complete
 
-**MAJOR BREAKTHROUGH**: Abandoned 1D label refinement approach that was causing "Ground Truth Trap" issues. **2D Risk Matrix now established as primary evaluation framework**, properly separating Performance (outcomes) from Dependence (portability) as orthogonal dimensions.
+**MAJOR BREAKTHROUGH**: Robustness Gate (v3) fully implemented with comprehensive data plumbing fixes and FRAGILITY_SCORE feature engineering. **Full dataset testing reveals critical insights**: 66.7% pass rate with only 25% success on false positive detection.
 
-**Framework Status**: 2D Risk Matrix with XGBoost classifier (15 features), ground-truth data, usage-aware projections. **Dependence Continuum**: Shows dependence as 0-100% scale with filtering capabilities. Organic feature-based validation (INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA) enables natural learning of tank commander patterns without hard gates.
+**Framework Status**: Complete 2D Risk Matrix with physics-based features (PROJECTED_PLAYOFF_OUTPUT, FRICTION_COEFF_*, FRAGILITY_SCORE). Hard gate enforcement at inference time. Comprehensive testing across 2015-2025 seasons (48 test cases, 5,312 players).
+
+**Critical Finding**: **False Positive Detection Failure** - Only 25% success rate at catching mirage breakouts (Jordan Poole, Zach LaVine, etc.). Fragility gate threshold (0.75) appears too conservative.
+
+**Key Insight**: **May be overengineering**. Complex gate logic (fragility overrides, immunity checks) might be unnecessary if we fix the foundation - filter "fair weather" stats from model input rather than building elaborate output gates.
 
 **2D Risk Matrix Categories**:
 - **Franchise Cornerstone**: High Performance + Low Dependence (Luka, Jokić) - Max contract, build around
 - **Luxury Component**: High Performance + High Dependence (Poole, Sabonis) - Valuable in system, risky as #1
 - **Depth Piece**: Low Performance + Low Dependence (Role players) - Reliable but limited
 - **Avoid**: Low Performance + High Dependence (System merchants) - Empty calories
-
-**Key Achievement**: Solved the "Ground Truth Paradox" with hybrid 2D/1D evaluation. Cases with 2D expectations use proper Performance vs. Dependence assessment (gates disabled), while legacy cases maintain 1D compatibility (gates enabled).
 
 ---
 
@@ -326,6 +328,52 @@ Identify players who consistently perform better than expected in the playoffs a
 
 **Result**: True Positive accuracy improved from 0.0% to 47.4% (+47.4 percentage points). Overall test pass rate improved from 37.5% to 54.2% (+16.7 percentage points). Model now properly differentiates the *magnitude* of potential energy, not just its existence.
 
+### MAJOR IMPLEMENTATION: Robustness Gate (v3) Complete (December 2025)
+**Problem Solved**: Comprehensive overhaul of data integrity and false positive detection. Previous attempts failed due to "Two Worlds" divergence where training and inference pipelines read different data sources.
+
+**Root Cause**: Data plumbing failures - inference pipeline reading old `predictive_dataset.csv` while training used `predictive_dataset_with_friction.csv`. Model learned physics it couldn't see during prediction.
+
+**Solution** (4-Phase Integrity Protocol):
+**Phase 1: Data Plumbing & Integrity**
+- Unified inference pipeline to read `predictive_dataset_with_friction.csv`
+- Stabilized training target merges with robust `PLAYER_ID`-based joins
+- Added defensive merge logic to prevent silent data loss
+
+**Phase 2: FRAGILITY_SCORE Feature Engineering**
+- Implemented physics-based fragility calculation in `evaluate_plasticity_potential.py`
+- Formula: `FRAGILITY_SCORE = ((1 - Physicality) * 0.5) + (Open_Shot_Freq * 0.3) + ((1 - Shot_Quality_Delta) * 0.2)`
+- De-risking: "Curry Paradox" (elite shooters immune), "Grifter Trap" (high FTr + low rim pressure capped)
+- Successfully calculated for all 5,312 players
+
+**Phase 3: Model Integration**
+- Added `FRAGILITY_SCORE` to critical features list, forcing inclusion despite RFE
+- Model now considers fragility as causal factor in archetype predictions
+
+**Phase 4: Hard Gate Enforcement**
+- Implemented post-prediction fragility gate in `predict_conditional_archetype.py`
+- Demotes fragile Kings to Bulldogs when `FRAGILITY_SCORE > 0.75 AND USG_PCT > 0.20`
+- Added comprehensive logging and phase3_flags tracking
+
+**Result**: Complete system with physics-based enforcement. Full dataset testing: 66.7% pass rate across 48 test cases.
+
+### Critical Empirical Findings: Full Dataset Testing (December 2025)
+**Problem Exposed**: Full dataset testing (2015-2025) reveals fundamental limitations in current approach.
+
+**Key Results**:
+- **Overall Pass Rate**: 66.7% (32/48 tests)
+- **False Positive Detection**: 25.0% success (2/8) - **Critical Failure**
+- **True Positive Detection**: 84.2% success (16/19) - **Strong**
+- **True Negative Detection**: 76.5% success (13/17) - **Good**
+
+**Failing Cases (False Positives)**:
+- **Jordan Poole (2021-22)**: 99.45% performance (expected <55%) - FRAGILITY_SCORE=0.572 < 0.75 threshold
+- **Talen Horton-Tucker (2020-21)**: 91.60% performance (expected <55%)
+- **D'Angelo Russell (2018-19)**: 68.07% performance (expected <55%)
+- **Zach LaVine (2020-21)**: 99.57% performance (expected 30-70%)
+- **Fred VanVleet (2021-22)**: 72.59% performance (expected <55%)
+
+**First Principles Insight**: **We may be overengineering**. Complex gate logic (fragility overrides, immunity checks) compensates for feeding the model "fair weather" regular season stats. Simpler "Crucible Dataset" approach: filter noise at input stage rather than building elaborate output gates.
+
 ---
 
 ## Scoreboard (Current Metrics)
@@ -333,20 +381,25 @@ Identify players who consistently perform better than expected in the playoffs a
 ### Model Performance
 - **Accuracy**: 52.31% (Crucible-Weighted, Physics-Based Foundation)
 - **True Predictive Power**: RS-only features, temporal split (574 train, 325 test samples)
-- **Feature Count**: 16 (includes physics-based features: PROJECTED_PLAYOFF_OUTPUT, friction coefficients)
-- **Key Improvement**: Direct simulation of playoff physics instead of proxy correlations
+- **Feature Count**: 16 (includes physics-based features: PROJECTED_PLAYOFF_OUTPUT, friction coefficients, FRAGILITY_SCORE)
+- **Key Improvement**: Direct simulation of playoff physics with gate enforcement
 
-### Test Suite Performance
-- **Latent Star Detection**: `52.4%` (22/42) — Slight regression due to principled weighting of proven resilience
-  - **Resilient Stars (True Positives)**: Lower confidence in unproven stars (expected behavior)
-  - **Fragile Stars (True Negatives)**: High fidelity in filtering false positives
-  - **Latent Stars (Hidden Gems)**: Correctly skeptical of players without high-pressure evidence
-  - **Key Success**: Model is now "honest" about uncertainty, prioritizing proven resilience over potential
+### Test Suite Performance (Full Dataset: 2015-2025)
+- **Overall Pass Rate**: 66.7% (32/48 tests)
+- **By Category**:
+  - **True Positive**: 84.2% (16/19) - Strong at identifying real stars
+  - **False Positive**: 25.0% (2/8) - **Critical weakness** in detecting mirage breakouts
+  - **True Negative**: 76.5% (13/17) - Good at identifying non-stars
+  - **System Players**: 100.0% (1/1) - Perfect for unique archetypes
 
-- **Overall Star Prediction**: `56.62%` (325/574) — tests Franchise Cornerstone classification at current usage levels
-  - **Franchise Cornerstones**: Precision 0.65, Recall 0.54 — captures 54% of true stars (+9pp improvement)
-  - **Fragile Stars**: Precision 0.58, Recall 0.35 — conservative but accurate when labeling fragility
-  - **Key Finding**: Volume Immunity successfully distinguishes load-bearing efficiency drops from fragile collapses
+- **False Positive Failures** (Mirage Breakouts):
+  - Jordan Poole (2021-22): 99.45% performance (expected <55%)
+  - Talen Horton-Tucker (2020-21): 91.60% performance (expected <55%)
+  - D'Angelo Russell (2018-19): 68.07% performance (expected <55%)
+  - Zach LaVine (2020-21): 99.57% performance (expected 30-70%)
+  - Fred VanVleet (2021-22): 72.59% performance (expected <55%)
+
+- **Key Finding**: Robustness Gate implemented but threshold (0.75) too conservative. Jordan Poole's FRAGILITY_SCORE=0.572 doesn't trigger gate.
 
 ### Comprehensive 2D Coverage
 - **Total Players Analyzed**: 5,312 (100% of dataset, 2015-2025 seasons)
@@ -368,33 +421,29 @@ Identify players who consistently perform better than expected in the playoffs a
 
 ## Next Developer: Start Here
 
-**Current State**: ⚠️ **CRITICAL INSIGHT: "Fool's Gold" problem is a DATA INTEGRITY issue, not just a math issue.** - Previous attempts to solve the Jordan Poole false positive failed because of a "Two Worlds" divergence: the Training pipeline was reading different, newer data files than the Inference pipeline. The model couldn't see the physics it was being trained on. The core issue is plumbing, not just logic.
+**Current State**: ✅ **ROBUSTNESS GATE (V3) COMPLETE** - Data plumbing fixed, FRAGILITY_SCORE implemented, hard gate enforced. Full dataset testing reveals 66.7% pass rate with critical false positive detection weakness (25% success).
 
-**Highest Leverage Action**: **Implement "Fragility as a Feature" using a 4-Phase Integrity Protocol.**
-This plan addresses the data integrity failures first, then implements the new physics.
+**Critical Insight**: **We may be overengineering**. Complex gate logic compensates for feeding model "fair weather" regular season stats. Simpler "Crucible Dataset" approach: filter noise at input stage rather than building elaborate output gates.
 
-**Phase 1: Plumbing & Data Integrity Protocol**
-*   **Objective**: Ensure Training and Inference read from a single, identical source of truth (`predictive_dataset_with_friction.csv`) and that all data joins are robust against silent failures.
-*   **Actions**:
-    1.  **Unify Data Source**: Modify `predict_conditional_archetype.py` to read `predictive_dataset_with_friction.csv`.
-    2.  **Stabilize Target Merge**: Add `PLAYER_ID` to the `resilience_archetypes.csv` in-memory before merging in `train_rfe_model.py` to prevent brittle name-based joins.
-    3.  **Enforce Type Safety**: Explicitly cast all join keys (`PLAYER_ID`, `SEASON`) to the correct data type before any merge operation to prevent silent data loss.
+**Highest Leverage Action**: **Evaluate "Efficiency-Gated Threshold Drop" vs "Crucible Dataset" Refactor**
 
-**Phase 2: Feature Engineering: `FRAGILITY_SCORE`**
-*   **Objective**: Create a single, quantifiable feature in `evaluate_plasticity_potential.py` that represents a player's physical fragility and system dependence.
-*   **Formula**: `FRAGILITY_SCORE = ( (1 - Physicality) * 0.5 ) + ( System_Dependence * 0.3 ) + ( Low_Creation_Value * 0.2 )`
-*   **De-Risking Logic**:
-    *   **"Curry Paradox" (Sniper Exception)**: Players with >95th percentile `EFG_ISO_WEIGHTED` or `SHOT_QUALITY_GENERATION_DELTA` are immune to physicality penalties.
-    *   **"Grifter Trap" (Trae Young Rule)**: Players with high Free Throw Rate but low Rim Pressure have their physicality score capped to prevent misinterpreting foul-baiting as resilience.
+**Option A: Efficiency-Gated Threshold Drop (Incremental)**
+Lower FRAGILITY_SCORE hard gate threshold from 0.75 to 0.55, but conditionalize with "Elite Immunity" check:
+- Trigger when `FRAGILITY_SCORE > 0.55 AND USG_PCT > 0.20`
+- But exempt if `SHOT_QUALITY_GENERATION_DELTA > 90th percentile` (protects Curry/Maxey)
+- **Risk**: Still post-hoc logic; doesn't address root cause
 
-**Phase 3: Model Training**
-*   **Objective**: Force the model to consider `FRAGILITY_SCORE` as a non-negotiable, causal factor.
-*   **Action**: Force-include `FRAGILITY_SCORE` in the `critical_features` list in `train_rfe_model.py`, bypassing RFE's potential to discard it based on correlation.
+**Option B: Crucible Dataset Refactor (First Principles)**
+Blind the model to "Regular Season noise" - only feed projected playoff physics:
+- Remove RS_TS_PCT, RS_PPP from features
+- Only use PROJECTED_PLAYOFF_PPS, FRICTION_ADJUSTED_VOLUME, HELIO_FEATURES
+- Let model learn naturally from playoff-simulated data
+- **Risk**: Requires complete model retraining; may break existing predictions
 
-**Phase 4: Inference Enforcement (The Hard Gate)**
-*   **Objective**: If the model, biased by "Volume Tyranny," still classifies a fragile player as a "King," manually enforce the physical law.
-*   **Action**: In `predict_conditional_archetype.py`, add a post-prediction check:
-    *   `if predicted_archetype == "King" AND FRAGILITY_SCORE > 0.75 AND USG_PCT > 0.20:`
-    *   `-> Demote to "Bulldozer (Fragile Star)"`
+**Recommended Approach**: **Test Option A first** (lower threshold to 0.55 with immunity). If false positive detection still <50%, implement Option B. The empirical evidence suggests Option A will catch Jordan Poole (0.572 score) while protecting Maxey/Curry.
 
-This four-phase plan ensures we fix the underlying data pipeline vulnerabilities before layering on new physics, which was the root cause of previous failures.
+**Key Test Cases to Validate**:
+- **Jordan Poole (2021-22)**: Should demote to Bulldozer/Victim
+- **Tyrese Maxey (2023-24)**: Should remain King/Bulldozer (elite SQ Delta)
+- **Trae Young (2020-21)**: Should demote to Bulldozer (fragile but efficient)
+- **Target**: Improve false positive detection from 25% to >50%

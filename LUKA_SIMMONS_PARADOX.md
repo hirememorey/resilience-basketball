@@ -105,3 +105,19 @@ We ran this model against the full 9-year dataset. The results confirmed the sol
 - **True Positive Accuracy**: Improved from 50.0% to 60.0% (+10 percentage points)
 
 **Key Insight**: The paradox wasn't in the physics (which were correct) but in the model's inability to recognize that extreme volume creates non-linear immunity. Luka's efficiency drops are "spending" to "buy" team-carrying production, not signs of weakness.
+
+## 7. Robustness Gate (v3) Implementation (December 2025)
+
+**CONTINUED CHALLENGE**: While Luka Paradox is solved, the Simmons Paradox persists in new forms. Full dataset testing (2015-2025) reveals critical weakness in false positive detection (25% success rate).
+
+**Robustness Gate (v3) Solution**:
+- **FRAGILITY_SCORE Feature**: Physics-based calculation combining physicality, open shot dependence, and shot quality generation
+- **Hard Gate Enforcement**: Demotes fragile Kings to Bulldogs when `FRAGILITY_SCORE > 0.75 AND USG_PCT > 0.20`
+- **De-Risking Logic**: "Curry Paradox" exemption for elite shooters, "Grifter Trap" penalty for foul-baiters
+
+**Empirical Results**:
+- **Overall Pass Rate**: 66.7% (32/48 tests)
+- **False Positive Detection**: 25.0% (2/8) - Still critical weakness
+- **Key Finding**: Jordan Poole (FRAGILITY_SCORE = 0.572) doesn't trigger gate (threshold 0.75 too high)
+
+**First Principles Insight**: We may be overengineering. Complex gates compensate for feeding model "fair weather" RS stats. Simpler "Crucible Dataset" approach: filter noise at input stage rather than building elaborate output gates.

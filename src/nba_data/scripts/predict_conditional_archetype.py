@@ -127,7 +127,7 @@ class ConditionalArchetypePredictor:
     
     def _load_features(self) -> pd.DataFrame:
         """Load feature dataset for reference."""
-        df_features = pd.read_csv(self.results_dir / "predictive_dataset.csv")
+        df_features = pd.read_csv(self.results_dir / "predictive_dataset_with_friction.csv")
         
         # Merge with other feature files (same as training script)
         pressure_path = self.results_dir / "pressure_features.csv"
@@ -1125,6 +1125,12 @@ class ConditionalArchetypePredictor:
         probs = self.model.predict_proba(features)[0]
         pred_class = self.model.predict(features)[0]
         pred_archetype = self.encoder.inverse_transform([pred_class])[0]
+
+        # Debug logging for Jordan Poole
+        if player_data.get('PLAYER_NAME') == 'Jordan Poole' and player_data.get('SEASON') == '2021-22':
+            logger.info(f"DEBUG Jordan Poole: Raw model prediction: {pred_archetype}")
+            logger.info(f"DEBUG Jordan Poole: Raw probabilities: King={probs[0]:.1%}, Bulldozer={probs[1]:.1%}, Sniper={probs[2]:.1%}, Victim={probs[3]:.1%}")
+            logger.info(f"DEBUG Jordan Poole: FRAGILITY_SCORE={player_data.get('FRAGILITY_SCORE', 'N/A')}, USG_PCT={player_data.get('USG_PCT', 'N/A')}")
         
         # Get probabilities for each archetype
         prob_dict = {}
@@ -1169,7 +1175,47 @@ class ConditionalArchetypePredictor:
                 logger.info(f"Latent Star Boost: {original_star_level:.2%} -> {star_level_potential:.2%} (Score {latent_score:.3f})")
 
         player_data['_IS_LATENT_STAR'] = is_latent_star
-        
+
+        # --- FRAGILITY GATE (Physical Law Enforcement) ---
+        # Principle: Physics is Law, not a Suggestion.
+        # If a fragile player is over-predicted as a King, demote them to Bulldozer.
+        fragility_gate_triggered = False
+        if apply_phase3_fixes and apply_hard_gates:
+            fragility_score = player_data.get('FRAGILITY_SCORE', 0.5)
+            usage_pct = player_data.get('USG_PCT', 0.0)
+
+            # Check if predicted as King and fragile enough to trigger gate
+            if (pred_archetype == 'King (Resilient Star)' and
+                fragility_score > 0.75 and
+                usage_pct > 0.20):
+
+                logger.info(f"FRAGILITY GATE TRIGGERED: Demoting player from 'King' to 'Bulldozer'.")
+                logger.info(f"  -> Reason: FRAGILITY_SCORE ({fragility_score:.3f}) > 0.75 and USG_PCT ({usage_pct:.3f}) > 0.20")
+
+                # Find the Bulldozer class index
+                bulldozer_index = np.where(self.encoder.classes_ == 'Bulldozer (Fragile Star)')[0][0]
+
+                # Create new probabilities, setting Bulldozer to the old King's probability
+                old_king_prob = prob_dict['King']
+                new_probs = np.zeros_like(probs)
+                new_probs[bulldozer_index] = old_king_prob
+                probs = new_probs
+
+                # Update predictions
+                pred_class = bulldozer_index
+                pred_archetype = 'Bulldozer (Fragile Star)'
+
+                # Update probability dictionary
+                prob_dict = {}
+                for i, archetype in enumerate(self.encoder.classes_):
+                    short_name = archetype_short_names.get(archetype, archetype)
+                    prob_dict[short_name] = probs[i]
+                    prob_dict[archetype] = probs[i]  # Keep full name too
+
+                # Recalculate star-level potential
+                star_level_potential = prob_dict.get('King', 0) + prob_dict.get('Bulldozer', 0)
+                fragility_gate_triggered = True
+
         # --- ALPHA THRESHOLD (Usage-Adjusted Efficiency Gate) ---
         # Principle: Usage is a debt. You must pay it back with efficiency.
         # A 30% usage player must be MORE efficient than a 20% usage player to be a Cornerstone.
@@ -1917,6 +1963,10 @@ class ConditionalArchetypePredictor:
             phase3_flags.append("Exempted from Multi-Signal Tax (has positive signals)")
         if fragility_gate_applied and rim_appetite is not None:
             phase3_flags.append(f"Fragility gate applied (RS_RIM_APPETITE: {rim_appetite:.4f})")
+        if fragility_gate_triggered:
+            fragility_score = player_data.get('FRAGILITY_SCORE', 0.5)
+            usage_pct = player_data.get('USG_PCT', 0.0)
+            phase3_flags.append(f"FRAGILITY_SCORE Gate applied (Score: {fragility_score:.3f}, Usage: {usage_pct:.3f})")
         if bag_check_gate_applied and self_created_freq is not None:
             phase3_flags.append(f"Bag Check Gate applied (Self-created freq: {self_created_freq:.4f})")
         if leverage_data_penalty_applied:

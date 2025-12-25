@@ -17,6 +17,7 @@
 8. **Validation-First Approach** - Test formulas on known cases before building pipeline
 9. **Understand Data Distribution Before Normalizing** - Use actual percentiles, not theoretical ranges
 10. **The Abdication Detector** - LEVERAGE_USG_DELTA < -0.05 indicates passivity
+11. **Overengineering Trap** - Complex gates compensate for feeding model "fair weather" stats. Filter noise at input stage, not output stage.
 
 ### Critical Implementation Patterns (11-27)
 11. **Opportunity vs. Ability (The Tree Model Trap)** 🎯 CRITICAL - Project volume features, don't just scale
@@ -37,9 +38,10 @@
 26. **Data Completeness Gate** 🎯 CRITICAL - Require 67% of critical features
 27. **Minimum Sample Size Gate** 🎯 CRITICAL - Small sample size = noise, not signal
 
-### Advanced Features & Model Evolution (28-63)
+### Advanced Features & Model Evolution (28-64)
 28. **Multi-Season Trajectory Features** 🎯 NEW - Trajectory > Snapshot
 29. **Convert Gates to Features** 🎯 NEW - Learn, don't patch
+30. **Crucible Dataset Approach** 🎯 CRITICAL - Blind model to "fair weather" RS stats; only feed projected playoff physics. Eliminates need for complex output gates.
 58. **Vectorized Potential (Projected Dependence)** 🎯 NEW - Link latent creation energy to future independence
 30. **The Double-Penalization Problem** 🎯 CRITICAL - Model vs. heuristic conflict
 31. **Smart Deference vs. Panic Abdication** 🎯 CRITICAL - Conditional abdication tax
@@ -783,6 +785,8 @@ When implementing new features, ask:
 - [ ] Am I using organic features instead of hard gates? (INEFFICIENT_VOLUME_SCORE, SHOT_QUALITY_GENERATION_DELTA enable natural learning) (Fix #54) ✅
 - [ ] Am I expanding model capacity when critical signals are excluded? (15 features > 10 features allows inclusion of tank commander detectors) (Fix #54) ✅
 - [ ] Am I collecting comprehensive diagnostics for debugging? (Raw stats → Features → Interactions → Framework components → Final predictions) (Fix #55)
+- [ ] Am I overengineering? (Complex gates compensate for feeding model fair weather stats - consider Crucible Dataset approach instead)
+- [ ] Am I filtering noise at input stage rather than output stage? (Blind model to RS noise, feed only projected playoff physics)
 
 ---
 

@@ -75,7 +75,8 @@ class RFEModelTrainer:
             'FRICTION_COEFF_ISO',       # The friction coefficient for isolation
             'FRICTION_COEFF_0_DRIBBLE', # The friction coefficient for off-ball
             'SHOT_QUALITY_GENERATION_DELTA', # Existing critical feature - keep.
-            'HELIO_ABOVE_REPLACEMENT_VALUE' # NEW (Dec 2025): Rewards inefficient stars less than efficient ones, but rewards VOLUME.
+            'HELIO_ABOVE_REPLACEMENT_VALUE', # NEW (Dec 2025): Rewards inefficient stars less than efficient ones, but rewards VOLUME.
+            'FRAGILITY_SCORE'           # NEW (Dec 2025): Physicality and system dependence.
         ]
         
         for feat in critical_features:
@@ -119,11 +120,28 @@ class RFEModelTrainer:
         # Merge targets into the unified feature set
         df_targets.columns = [c.upper() for c in df_targets.columns]
         
-        df_merged = pd.merge(
-            df_features,
-            df_targets[['PLAYER_NAME', 'SEASON', 'ARCHETYPE', 'RESILIENCE_QUOTIENT', 'DOMINANCE_SCORE', 'PO_MINUTES_TOTAL']],
-            on=['PLAYER_NAME', 'SEASON'],
-            how='inner'
+        # INSERT THIS LOGIC BLOCK        
+        logger.info("Stabilizing target merge by adding PLAYER_ID to resilience archetypes...")        
+        player_id_map = df_features[['PLAYER_NAME', 'SEASON', 'PLAYER_ID']].drop_duplicates()                
+        
+        # Check for potential name/season duplicates before merge        
+        if player_id_map.duplicated(subset=['PLAYER_NAME', 'SEASON']).any():            
+            logger.warning("Found duplicate PLAYER_NAME/SEASON combinations in feature set. Merge may be ambiguous.")                    
+        
+        df_targets = pd.merge(df_targets, player_id_map, on=['PLAYER_NAME', 'SEASON'], how='left')        
+        
+        # Critical Check: Verify the mapping was successful        
+        if df_targets['PLAYER_ID'].isnull().any():            
+            missing_count = df_targets['PLAYER_ID'].isnull().sum()            
+            logger.warning(f"{missing_count} players in resilience_archetypes.csv could not be mapped to a PLAYER_ID. They will be dropped from training.")            
+            df_targets.dropna(subset=['PLAYER_ID'], inplace=True)
+        
+        # CHANGE THIS MERGE        
+        df_merged = pd.merge(            
+            df_features,            
+            df_targets[['PLAYER_ID', 'SEASON', 'ARCHETYPE', 'RESILIENCE_QUOTIENT', 'DOMINANCE_SCORE', 'PO_MINUTES_TOTAL']],             
+            on=['PLAYER_ID', 'SEASON'], 
+            how='inner'        
         )
         
         logger.info(f"Merged Dataset Size: {len(df_merged)} player-seasons.")

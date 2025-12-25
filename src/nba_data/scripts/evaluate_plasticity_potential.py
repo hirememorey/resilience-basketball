@@ -453,6 +453,41 @@ class StressVectorEngine:
             logger.error(f"❌ Error in Context Metrics: {e}", exc_info=True)
             return pd.DataFrame()
 
+    def _calculate_fragility_score(self, df: pd.DataFrame) -> pd.DataFrame:
+        logger.info("Calculating FRAGILITY_SCORE (v3)...")
+
+        def robust_normalize(series):
+            min_val = series.quantile(0.05)
+            max_val = series.quantile(0.95)
+            if (max_val - min_val) == 0: return pd.Series(0.5, index=series.index)
+            return ((series - min_val) / (max_val - min_val)).clip(0, 1)
+        # 1. Calculate base Physicality Score
+        norm_ftr = robust_normalize(df.get('RS_FTr', pd.Series(0, index=df.index)))
+        norm_rim_appetite = robust_normalize(df.get('RS_RIM_APPETITE', pd.Series(0, index=df.index)))
+        physicality_score = (0.6 * norm_ftr + 0.4 * norm_rim_appetite).fillna(0.5)
+        # 2. De-Risking: "The Curry Paradox" (Sniper Exception)
+        qualified_mask = df.get('TOTAL_FGA_TRACKED', pd.Series(0, index=df.index)) > 200 # Use existing volume metric
+        qualified_players = df[qualified_mask]
+        efg_95th = qualified_players['EFG_ISO_WEIGHTED'].quantile(0.95)
+        sq_delta_95th = qualified_players['SHOT_QUALITY_GENERATION_DELTA'].quantile(0.95)
+        is_elite_shooter = (df['EFG_ISO_WEIGHTED'] > efg_95th) | (df['SHOT_QUALITY_GENERATION_DELTA'] > sq_delta_95th)
+        physicality_score.loc[is_elite_shooter] = 1.0 # Immune to penalty
+        # 3. De-Risking: "The Grifter Trap" (Trae Young Rule)
+        ftr_80th = qualified_players['RS_FTr'].quantile(0.80)
+        rim_appetite_40th = qualified_players['RS_RIM_APPETITE'].quantile(0.40)
+        is_grifter = (df['RS_FTr'] > ftr_80th) & (df['RS_RIM_APPETITE'] < rim_appetite_40th)
+        physicality_score.loc[is_grifter] = physicality_score.loc[is_grifter].clip(upper=0.5)
+        # 4. Calculate Final Fragility Score
+        norm_open_shot_freq = robust_normalize(df.get('RS_OPEN_SHOT_FREQUENCY', pd.Series(0, index=df.index)))
+        norm_sq_delta = robust_normalize(df.get('SHOT_QUALITY_GENERATION_DELTA', pd.Series(0, index=df.index)))
+        df['FRAGILITY_SCORE'] = (
+            ((1.0 - physicality_score) * 0.50) +
+            (norm_open_shot_freq * 0.30) +
+            ((1.0 - norm_sq_delta) * 0.20)
+        ).fillna(0.5)
+        logger.info(f"  -> FRAGILITY_SCORE calculated. Average: {df['FRAGILITY_SCORE'].mean():.3f}")
+        return df
+
     def calculate_context_metrics(self, season):
         """
         Vector 3: Context (Quality of Competition)
@@ -918,6 +953,46 @@ class StressVectorEngine:
             return
             
         final_df = pd.concat(all_seasons_data, ignore_index=True)
+
+        pressure_path = self.results_dir / "pressure_features.csv"
+        if pressure_path.exists():
+            df_pressure = pd.read_csv(pressure_path)
+            # Drop PLAYER_NAME if it exists to avoid merge conflicts
+            if 'PLAYER_NAME' in df_pressure.columns:
+                df_pressure = df_pressure.drop(columns=['PLAYER_NAME'])
+            final_df = pd.merge(
+                final_df,
+                df_pressure,
+                on=['PLAYER_ID', 'SEASON'],
+                how='left'
+            )
+
+        physicality_path = self.results_dir / "physicality_features.csv"
+        if physicality_path.exists():
+            df_physicality = pd.read_csv(physicality_path)
+            # Drop PLAYER_NAME if it exists to avoid merge conflicts
+            if 'PLAYER_NAME' in df_physicality.columns:
+                df_physicality = df_physicality.drop(columns=['PLAYER_NAME'])
+            final_df = pd.merge(
+                final_df,
+                df_physicality,
+                on=['PLAYER_ID', 'SEASON'],
+                how='left'
+            )
+        
+        rim_pressure_path = self.results_dir / "rim_pressure_features.csv"
+        if rim_pressure_path.exists():
+            df_rim_pressure = pd.read_csv(rim_pressure_path)
+            # Drop PLAYER_NAME if it exists to avoid merge conflicts
+            if 'PLAYER_NAME' in df_rim_pressure.columns:
+                df_rim_pressure = df_rim_pressure.drop(columns=['PLAYER_NAME'])
+            final_df = pd.merge(
+                final_df,
+                df_rim_pressure,
+                on=['PLAYER_ID', 'SEASON'],
+                how='left'
+            )
+
         
         # --- Final Feature Engineering & Cleanup ---
         # (This will be where we do the final PROJECTED_PLAYOFF_OUTPUT calculation)
@@ -969,6 +1044,9 @@ class StressVectorEngine:
         # This will now use the new logic in calculate_dependence_score.py
         logger.info("Calculating Projected Dependence Scores...")
         final_df = calculate_dependence_scores_batch(final_df)
+        
+        # INSERT THIS CALL
+        final_df = self._calculate_fragility_score(final_df)
         
         # For now, just save what we have
         output_path = self.results_dir / "predictive_dataset_with_friction.csv"
