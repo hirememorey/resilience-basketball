@@ -1,6 +1,19 @@
-player,season,performance_score,dependence_score,risk_category,expected_category,performance_match,dependence_match,category_match,status
-Jordan Poole,2021-22,0.5862241387367249,0.5142152111267237,"Moderate Performance, High Dependence",Luxury Component,False,True,False,FAIL
-Luka Dončić,2023-24,0.968672513961792,0.26592191707370116,Franchise Cornerstone,Franchise Cornerstone,True,True,True,PASS
-Domantas Sabonis,2021-22,0.3,0.6019694736842105,"Moderate Performance, High Dependence",Luxury Component,False,True,False,FAIL
-Jalen Brunson,2020-21,0.3231874108314514,0.3931272234273319,"Moderate Performance, Moderate Dependence",Depth,False,False,False,FAIL
-Tyrese Haliburton,2021-22,0.22502045333385468,0.3986924137500141,Depth (Moderate Dependence),Franchise Cornerstone,False,False,False,FAIL
+test_name,season,category,expected_risk,actual_risk,crucible,telescope,pass,note
+Nikola Jokić,2015-16,True Positive - Franchise Cornerstone,Franchise Cornerstone,Ghost/Avoid,0.66019696,0.08440757,False,
+Nikola Jokić,2016-17,True Positive - Franchise Cornerstone,Franchise Cornerstone,Franchise Cornerstone,0.72446144,0.12494201,True,
+Nikola Jokić,2017-18,True Positive - Franchise Cornerstone,Franchise Cornerstone,Franchise Cornerstone,0.74157727,0.096918404,True,
+Nikola Jokić,2018-19,True Positive - Franchise Cornerstone,Franchise Cornerstone,Franchise Cornerstone,0.84809554,0.10786218,True,
+Anthony Davis,2015-16,True Positive - Franchise Cornerstone,Franchise Cornerstone,Latent Star,0.6566495,0.15123726,False,Crucible score too low (Viability)
+Anthony Davis,2016-17,True Positive - Franchise Cornerstone,Franchise Cornerstone,Franchise Cornerstone,0.9750293,0.18125077,True,
+Joel Embiid,2016-17,True Positive - Franchise Cornerstone,Franchise Cornerstone,,,,False,Player/Season not found in dataset
+Joel Embiid,2017-18,True Positive - Franchise Cornerstone,Franchise Cornerstone,Franchise Cornerstone,0.9878912,0.12296327,True,
+Jordan Poole,2021-22,False Positive - Mirage Breakout,Luxury Component,Ghost/Avoid,0.4448673,0.07776794,False,
+DeMar DeRozan,2015-16,Not Franchise Cornerstone,Depth,Latent Star,0.43516767,0.12133825,False,
+DeMar DeRozan,2016-17,Not Franchise Cornerstone,Depth,Franchise Cornerstone,0.96753645,0.12587197,False,
+Domantas Sabonis,2021-22,True Negative - Comparison Case,Luxury Component,Latent Star,0.50233746,0.11151075,False,
+Tyrese Haliburton,2021-22,True Positive - Comparison Case,Franchise Cornerstone,Latent Star,0.5625614,0.111140214,False,Crucible score too low (Viability)
+Rudy Gobert,2020-21,False Positive - System Specialist,Luxury Component,Latent Star,0.4731142,0.1330113,False,
+Isaiah Thomas,2016-17,True Positive - Outlier,Franchise Cornerstone,Franchise Cornerstone,0.9947249,0.15116513,True,
+Zach LaVine,2020-21,False Positive - Empty Calories,Luxury Component,Franchise Cornerstone,0.9856231,0.13504668,False,
+Fred VanVleet,2021-22,False Positive - Inefficient Volume,Avoid,Ghost/Avoid,0.047437847,0.076935865,False,
+Draymond Green,2015-16,System Hub - Unique Archetype,Luxury Component,Latent Star,0.45969456,0.17250597,False,
