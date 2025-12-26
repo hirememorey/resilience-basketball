@@ -23,9 +23,11 @@ The implementation addressed the key failure modes identified in the planning ph
 - **Action**: Empirically derived "Friction Curves" by analyzing historical data.
 - **Result**: The projection engine in `src/nba_data/utils/projection_utils.py` now applies friction coefficients based on a player's `SHOT_QUALITY_GENERATION_DELTA`, correctly modeling that efficiency is not linear with usage.
 
-### B. Failure Mode: The "Context Vacuum" - ✅ MITIGATED
+### B. Failure Mode: The "Context Vacuum" & "System Merchant" Mirage - ✅ MITIGATED
 - **Action**: A "Stress Test" was performed using Jalen Brunson and Jordan Poole.
-- **Result**: The test confirmed that the engine correctly models Brunson's low friction and highlighted the limitations of the linear model for "Schematic Cliff" players like Poole, providing a key insight for future work.
+- **Result**: The test confirmed that the engine correctly models Brunson's low friction.
+- **Insight**: We implemented the **Subsidy Index** to detect "System Merchants" whose efficiency is rented from teammate gravity.
+- **Outcome**: The model now mechanistically discounts efficiency based on movement and possession time ($SkillIndex = Max(Speed, PossTime)$), ensuring only "owned" efficiency is projected.
 
 ### C. Failure Mode: "Metric Soup" (The Presentation Killer) - ✅ MITIGATED
 - **Action**: The **"2D Risk Matrix" Visualization** was built using Streamlit.

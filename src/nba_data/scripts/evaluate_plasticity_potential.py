@@ -49,29 +49,38 @@ def validate_with_pydantic(df: pd.DataFrame) -> pd.DataFrame:
     
     df_to_validate = df.copy()
     
+    # Normalize column names to lowercase to match Pydantic model fields
+    df_to_validate.columns = [col.lower() for col in df_to_validate.columns]
+    
     # The Pydantic model requires 'minutes', but the dataframe uses various metrics.
-    # We will use 'RS_TOTAL_VOLUME' as the canonical measure for minutes played.
-    if 'RS_TOTAL_VOLUME' in df_to_validate.columns:
-        df_to_validate.rename(columns={'RS_TOTAL_VOLUME': 'minutes'}, inplace=True)
+    # We will use 'rs_total_volume' as the canonical measure for minutes played.
+    if 'rs_total_volume_x' in df_to_validate.columns:
+        df_to_validate.rename(columns={'rs_total_volume_x': 'minutes'}, inplace=True)
+    elif 'rs_total_volume' in df_to_validate.columns:
+        df_to_validate.rename(columns={'rs_total_volume': 'minutes'}, inplace=True)
     elif 'minutes' not in df_to_validate.columns:
-        logger.warning("No 'minutes' or 'RS_TOTAL_VOLUME' column found for validation. Using 0.0 as default.")
+        logger.warning("No 'minutes' or 'rs_total_volume' column found for validation. Using 0.0 as default.")
         df_to_validate['minutes'] = 0.0
 
-    # Ensure USG_PCT is present for validation
-    if 'USG_PCT' not in df_to_validate.columns:
-        logger.warning("No 'USG_PCT' column found for validation. Using 0.0 as default.")
-        df_to_validate['USG_PCT'] = 0.0
+    # Ensure usg_pct is present for validation
+    if 'usg_pct' not in df_to_validate.columns:
+        logger.warning("No 'usg_pct' column found for validation. Using 0.0 as default.")
+        df_to_validate['usg_pct'] = 0.0
         
-    # Ensure TS_PCT is present for validation
-    if 'TS_PCT' not in df_to_validate.columns:
-        logger.warning("No 'TS_PCT' column found for validation. Using 0.0 as default.")
-        df_to_validate['TS_PCT'] = 0.0
+    # Ensure ts_pct is present for validation
+    if 'ts_pct' not in df_to_validate.columns:
+        logger.warning("No 'ts_pct' column found for validation. Using 0.0 as default.")
+        df_to_validate['ts_pct'] = 0.0
         
-    # Ensure PLAYER_NAME is present for validation
-    if 'PLAYER_NAME' not in df_to_validate.columns:
-        logger.warning("No 'PLAYER_NAME' column found for validation. Using 'Unknown' as default.")
-        df_to_validate['PLAYER_NAME'] = 'Unknown'
+    # Ensure player_name is present for validation
+    if 'player_name' not in df_to_validate.columns:
+        logger.warning("No 'player_name' column found for validation. Using 'Unknown' as default.")
+        df_to_validate['player_name'] = 'Unknown'
 
+    # Ensure season is present
+    if 'season' not in df_to_validate.columns:
+         logger.warning("No 'season' column found for validation. Using 'Unknown' as default.")
+         df_to_validate['season'] = 'Unknown'
 
     validated_records = []
     error_count = 0
@@ -82,9 +91,11 @@ def validate_with_pydantic(df: pd.DataFrame) -> pd.DataFrame:
             # Pydantic can validate directly from a dict
             validated_model = PlayerSeason.model_validate(row.to_dict())
             validated_records.append(validated_model.model_dump())
-        except ValidationError:
+        except ValidationError as e:
+            if error_count == 0: # Log only the first error to avoid spam
+                logger.error(f"First Pydantic validation error: {e}")
+                logger.error(f"Row data that failed validation: {row.to_dict()}")
             error_count += 1
-            # Skip logging individual errors to prevent spam
             pass
 
     if error_count > 0:
@@ -97,10 +108,10 @@ def validate_with_pydantic(df: pd.DataFrame) -> pd.DataFrame:
     validated_df = pd.DataFrame(validated_records)
     logger.info(f"Validation complete. {len(validated_df)} / {total_rows} rows passed.")
     
-    # Revert column name if we changed it
-    if 'minutes' in validated_df.columns and 'RS_TOTAL_VOLUME' in df.columns:
-        validated_df.rename(columns={'minutes': 'RS_TOTAL_VOLUME'}, inplace=True)
-
+    # We return the Pydantic-validated DataFrame as is. 
+    # This enforces the lowercase schema (e.g. 'player_id', 'season', 'usg_pct')
+    # derived from src/nba_data/core/models.py
+    
     return validated_df
 
 
@@ -185,6 +196,97 @@ class StressVectorEngine:
             logger.error(f"    -> ❌ Critical error in fetch_zero_dribble_stats for {season} ({season_type}): {e}", exc_info=True)
             return pd.DataFrame()
         
+    def fetch_tracking_metrics(self, season: str, season_type: str = "Regular Season") -> pd.DataFrame:
+        """
+        Fetches player tracking metrics (Speed/Distance and Possessions) for subsidy index calculation.
+        """
+        logger.info(f"Fetching Tracking Metrics (Speed & Possessions) for {season} ({season_type})...")
+        try:
+            # 1. Fetch Speed & Distance (The "Motor" Signal)
+            logger.info(f"  - Fetching SpeedDistance for {season}...")
+            speed_data = self.client.get_league_player_tracking_stats(
+                season=season, 
+                pt_measure_type="SpeedDistance",
+                season_type=season_type
+            )
+            
+            # 2. Fetch Possessions (The "Engine" Signal)
+            logger.info(f"  - Fetching Possessions for {season}...")
+            time.sleep(0.6) # Rate limit kindness
+            poss_data = self.client.get_league_player_tracking_stats(
+                season=season, 
+                pt_measure_type="Possessions",
+                season_type=season_type
+            )
+
+            if not speed_data or not poss_data:
+                logger.warning(f"Missing tracking data for {season} ({season_type}).")
+                return pd.DataFrame()
+
+            # Process Speed Data
+            headers_speed = speed_data['resultSets'][0]['headers']
+            rows_speed = speed_data['resultSets'][0]['rowSet']
+            df_speed = pd.DataFrame(rows_speed, columns=headers_speed)
+            df_speed = df_speed[['PLAYER_ID', 'AVG_SPEED_OFF']]
+            
+            # Process Possession Data
+            headers_poss = poss_data['resultSets'][0]['headers']
+            rows_poss = poss_data['resultSets'][0]['rowSet']
+            df_poss = pd.DataFrame(rows_poss, columns=headers_poss)
+            df_poss = df_poss[['PLAYER_ID', 'TIME_OF_POSS', 'AVG_SEC_PER_TOUCH']]
+            
+            # Merge
+            df_tracking = pd.merge(df_speed, df_poss, on='PLAYER_ID', how='outer')
+            
+            # Rename for schema consistency
+            df_tracking = df_tracking.rename(columns={
+                'AVG_SPEED_OFF': 'avg_speed_offense',
+                'TIME_OF_POSS': 'time_of_poss'
+            })
+            
+            logger.info(f"✅ Successfully fetched tracking metrics for {len(df_tracking)} players.")
+            return df_tracking
+
+        except Exception as e:
+            logger.error(f"❌ Error fetching tracking metrics for {season}: {e}", exc_info=True)
+            return pd.DataFrame()
+
+    def calculate_subsidy_index(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculates the SUBSIDY_INDEX using the Max-Gate logic:
+        SkillIndex = Max(NormalizedSpeed, NormalizedTimeOfPoss)
+        SubsidyIndex = 1.0 - SkillIndex
+        """
+        logger.info("Calculating SUBSIDY_INDEX using Max-Gate logic...")
+        
+        if 'avg_speed_offense' not in df.columns or 'time_of_poss' not in df.columns:
+            logger.warning("Required tracking metrics missing. Using default subsidy_index=0.5")
+            df['subsidy_index'] = 0.5
+            return df
+
+        # Fill NaNs
+        df['avg_speed_offense'] = df['avg_speed_offense'].fillna(df['avg_speed_offense'].median() if not df['avg_speed_offense'].empty else 4.4)
+        df['time_of_poss'] = df['time_of_poss'].fillna(0.0)
+
+        # Robust Normalization (5th to 95th percentile)
+        def robust_norm(series):
+            low = series.quantile(0.05)
+            high = series.quantile(0.95)
+            if high == low: return pd.Series(0.0, index=series.index)
+            return ((series - low) / (high - low)).clip(0, 1)
+
+        norm_speed = robust_norm(df['avg_speed_offense'])
+        norm_poss = robust_norm(df['time_of_poss'])
+
+        # The Max-Gate: Specialization in EITHER movement OR dominance is Skill
+        df['skill_index'] = np.maximum(norm_speed, norm_poss)
+        
+        # Subsidy is the inverse of skill
+        df['subsidy_index'] = 1.0 - df['skill_index']
+        
+        logger.info(f"✅ SUBSIDY_INDEX calculated. Mean: {df['subsidy_index'].mean():.3f}")
+        return df
+
     def fetch_creation_metrics(self, season, season_type="Regular Season"):
         """
         Vector 1: Self-Creation (The 'Creation Tax')
@@ -259,6 +361,13 @@ class StressVectorEngine:
                  df_creation = pd.merge(df_creation, df_iso, on='PLAYER_ID', how='outer')
             if not df_deep.empty:
                  df_creation = pd.merge(df_creation, df_deep, on='PLAYER_ID', how='outer')
+            
+            if df_creation.empty:
+                logger.warning(f"No creation data available for {season} ({season_type}). Returning empty DataFrame with correct schema.")
+                return pd.DataFrame(columns=['PLAYER_ID', 'PLAYER_NAME', 'EFG_PCT_0_DRIBBLE', 'FGA_0_DRIBBLE', 
+                                             'EFG_PCT_3_DRIBBLE', 'FGA_3_DRIBBLE', 'EFG_PCT_7_DRIBBLE', 'FGA_7_DRIBBLE',
+                                             'FGA_ISO_TOTAL', 'EFG_ISO_WEIGHTED', 'CREATION_TAX', 'TOTAL_FGA_TRACKED',
+                                             'CREATION_VOLUME_RATIO', 'CREATION_BOOST'])
                         
             # Fill NaNs with 0 (some players never take 7+ dribbles)
             df_creation = df_creation.fillna(0)
@@ -282,11 +391,11 @@ class StressVectorEngine:
             # Feature: Creation Volume Ratio
             df_creation['TOTAL_FGA_TRACKED'] = df_creation['FGA_0_DRIBBLE'] + df_creation['FGA_ISO_TOTAL']
             
-            df_creation['CREATION_VOLUME_RATIO'] = np.where(
+            df_creation['CREATION_VOLUME_RATIO'] = pd.Series(np.where(
                 df_creation['TOTAL_FGA_TRACKED'] > 0,
                 df_creation['FGA_ISO_TOTAL'] / df_creation['TOTAL_FGA_TRACKED'],
                 0
-            )
+            ), index=df_creation.index).fillna(0.0)
             
             # PHASE 1: CREATION_BOOST - Positive creation tax is a superpower
             # If efficiency increases when creating (positive tax), weight by 1.5x
@@ -842,8 +951,22 @@ class StressVectorEngine:
                 # Shot weight = volume of this shot type / total volume
                 shot_weight = (df[comp['volume']].fillna(0) / df['TOTAL_PROJECTED_FGA']).fillna(0)
                 
-                # Projected efficiency for this component = RS_efficiency * friction
-                projected_comp_pps = df[comp['efficiency']].fillna(0) * df[comp['friction']].fillna(1.0)
+                # Projected efficiency for this component
+                # We apply the SUBSIDY TAX: Only the "Owned" portion of efficiency is portable.
+                # Intrinsic_Efficiency = RS_Efficiency * (1.0 - Subsidy_Index)
+                # Projected_Efficiency = Intrinsic_Efficiency * Friction
+                
+                # We use a softened subsidy tax (scaling it) to avoid destroying role players entirely,
+                # but ensuring system merchants are penalized.
+                subsidy_index = df['subsidy_index'].fillna(0.5)
+                # For high-volume components (ISO, etc.), subsidy is usually lower, but we apply it globally
+                # to the starting efficiency of the component.
+                
+                projected_comp_pps = (
+                    df[comp['efficiency']].fillna(0) * 
+                    (1.0 - (subsidy_index * 0.5)) * # 50% max penalty to the starting floor
+                    df[comp['friction']].fillna(1.0)
+                )
                 
                 # Add the weighted component PPS to the total
                 df['PROJECTED_PLAYOFF_PPS'] += shot_weight * projected_comp_pps
@@ -974,12 +1097,17 @@ class StressVectorEngine:
                     
                     logger.info(f"Calculated friction for {len(df_friction)} players in {season}.")
                 
-                # 5. Fetch other RS-based metrics (Leverage, Context, etc.)
+                # 5. Fetch other RS-based metrics (Tracking, Leverage, Context, etc.)
+                df_tracking = self.fetch_tracking_metrics(season, season_type="Regular Season")
                 df_leverage = self.fetch_leverage_metrics(season)
                 df_context = self.fetch_context_metrics(season)
                 
                 # 6. Combine all data for the season using LEFT joins from metadata
                 logger.info(f"--- Merging all feature sets for {season} ---")
+
+                # Merge tracking data
+                if not df_tracking.empty:
+                    df_season = pd.merge(df_season, df_tracking, on='PLAYER_ID', how='left')
 
                 # Merge creation data
                 if not df_creation_rs.empty:
@@ -1005,7 +1133,10 @@ class StressVectorEngine:
                      if 'PLAYER_ID_RS' in df_season.columns:
                           df_season = df_season.drop(columns=['PLAYER_ID_RS'])
 
-                # 7. Engineer the Projected Playoff Output Feature
+                # 7. Calculate Subsidy Index (Prior to Projection)
+                df_season = self.calculate_subsidy_index(df_season)
+
+                # 8. Engineer the Projected Playoff Output Feature
                 df_season = self.calculate_projected_playoff_output(df_season)
                 
                 df_season['SEASON'] = season

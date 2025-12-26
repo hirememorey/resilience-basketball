@@ -38,9 +38,22 @@ Players can appear elite against "Top 10 Defenses" in blowouts when starters are
 
 **The Fix**: Always run a diagnostic `.describe()` on raw API data before setting gates. The 75th percentile for "0 Dribble" FGA is ~4.5 per game. Calibrate gates to the actual observed distribution, not a theoretical total.
 
-**See Also**:
+## 70. The "System Merchant" Mirage (Subsidy Index) 🎯 CRITICAL (December 2025)
+
+**The Problem**: A model that projects total observed efficiency assumes a player "owns" their percentage. In reality, some players "rent" their efficiency from their ecosystem (e.g., Jordan Poole '22 benefiting from Steph Curry's gravity). When projected to a new context (higher usage, worse teammates), this "Subsidy" vanishes, leading to catastrophic projection errors.
+
+**The Insight**: Skill is the ability to generate efficient looks via either Kinetic Energy (Movement) or Potential Energy (Ball Dominance). Passengers have neither.
+
+**The Fix**: Implement the **Subsidy Index** using player tracking data.
+- **Formula**: $SkillIndex = Max(NormalizedSpeed, NormalizedTimeOfPoss)$
+- **Tax**: $SubsidyIndex = 1.0 - SkillIndex$
+- Apply a "Subsidy Tax" to efficiency *before* applying friction. This ensures that only "owned" efficiency is portable across environments.
+
+**Key Principle**: **Filter for ownership before projecting for magnitude.**
+
+## See Also
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
-- `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation
+- `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)
 - `NEXT_STEPS.md` - **START HERE** - Current priorities and completed work
 - `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
 - `extended_resilience_framework.md` - Stress vectors explained

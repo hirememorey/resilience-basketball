@@ -51,9 +51,17 @@ We have transitioned from ad-hoc scripts to a linear "Data Factory" pipeline.
 - **Jordan Poole ('22)**: Predicted **2.59**.
 - **The Physics**: Despite high raw stats (18.5 PPG), the model detected the low `SHOT_QUALITY_GENERATION_DELTA` (0.142).
 
+### ✅ **The "System Merchant" Filter (Subsidy Index)**
+- **Hypothesis**: Efficiency is "Rented" from the ecosystem, not owned by the player.
+- **Implementation**: `Subsidy Index = 1.0 - Max(Speed, PossTime)`.
+- **Result**: 
+    - **Jalen Brunson ('22)**: Subsidy Index **0.015** (Pure Skill).
+    - **Jordan Poole ('22)**: Subsidy Index **0.223** (High Dependence).
+- **Verdict**: The model now mechanistically discounts efficiency derived from system gravity.
+
 ---
 
 ## Next Steps
 
-1.  **Refactor**: Update `evaluate_plasticity_potential.py` to use `src/nba_data/core/models.py`.
+1.  **Refactor**: Update `evaluate_plasticity_potential.py` to use `src/nba_data/core/models.py`. (Partial Complete - Schema enforced).
 2.  **Visualization**: Final polish on the Sloan Risk Matrix.

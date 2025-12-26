@@ -13,6 +13,7 @@
 #### The Simmons Paradox (False Positive)
 - **Old Approach**: Gates tried to detect "Abdication Tax" by checking volume drops below thresholds.
 - **New Approach**: The Crucible Engine naturally identifies Simmons as a low-impact player (Predicted Impact would be ~0.08). The model learns from the physics of creation tax and dependence.
+- **The "Merchant" Resolution**: We introduced the **Subsidy Index** to detect players whose efficiency is dependent on teammate gravity (e.g., Jordan Poole '22). By isolating "Intrinsic Skill" (Kinetic or Potential Energy) from "System Subsidy," we eliminate false positives from high-efficiency role players who cannot scale.
 
 ### The "Two-Clock" Theory
 - **The Crucible (Viability)**: Evaluates immediate playoff readiness. Luka is correctly seen as fragile *for his rookie season* (low viability).

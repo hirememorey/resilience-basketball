@@ -68,6 +68,16 @@ class PlayerSeason(BaseModel):
     # Vector 3: Context
     avg_opponent_dcs: Optional[float] = None # Defensive Context Score
 
+    # Vector 4: System Dependence (The Subsidy Index)
+    avg_speed_offense: Optional[float] = Field(None, ge=0)
+    time_of_poss: Optional[float] = Field(None, ge=0)
+    subsidy_index: Optional[float] = Field(None, ge=0, le=1.0) # 0.0 = Pure Skill, 1.0 = Purely Subsidized
+
+    # Outputs (Projected)
+    projected_playoff_pps: Optional[float] = None
+    projected_playoff_output: Optional[float] = None
+    helio_above_replacement_value: Optional[float] = None
+
     class Config:
         extra = "ignore" # Allow extra fields during transition, but eventually forbid
 

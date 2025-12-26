@@ -18,6 +18,7 @@ This command executes the two primary stages of the factory:
 This script is the heart of the factory. It ingests raw data from the NBA Stats API and performs all necessary feature engineering to produce the core `predictive_dataset.csv`. Key outputs include:
 -   `SHOT_QUALITY_GENERATION_DELTA`: A measure of a player's ability to create high-quality shots.
 -   `HELIO_POTENTIAL_SCORE`: A non-linear feature capturing a player's potential to be a heliocentric engine.
+-   `SUBSIDY_INDEX`: A measure of how much efficiency is "rented" from the environment vs. "owned" by the player.
 -   `FRICTION_COEFFICIENTS`: Empirically derived values that model how efficiency degrades with usage.
 
 ### 2. The Visualization: `visualize_risk_matrix.py`

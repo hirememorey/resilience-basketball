@@ -1,18 +1,31 @@
-# Universal Projection Implementation: Fixing the "Static Avatar" Fallacy
+# Universal Projection Implementation: Fixing the "Static Avatar" Fallacy & The "Poole Mirage"
 
 **Date**: December 2025  
-**Status**: ✅ **COMPLETE**  
+**Status**: ✅ **COMPLETE** (v2 with Subsidy Index)  
 **Priority**: High - Core Model Logic Upgrade
 
-## The Problem: "Static Avatar" Fallacy
+## The Problem: "Static Avatar" Fallacy & The "Poole Mirage"
 
-When predicting at different usage levels (e.g., "How would Brunson perform at 30% usage?"), the model was updating `USG_PCT` but leaving `CREATION_VOLUME_RATIO` at the role-player level (e.g., 0.20).
+1. **Static Avatar**: When predicting at different usage levels, the model was updating `USG_PCT` but leaving `CREATION_VOLUME_RATIO` at role-player levels.
+2. **The Poole Mirage**: The model was assuming all observed efficiency was "owned" by the player. In reality, "System Merchants" (e.g., Jordan Poole '22) "rent" efficiency from elite teammates. When projected to higher usage (new context), this subsidy evaporates.
 
-**Result**: The model saw an impossible profile: high usage (30%) + low creation volume (20%) = "off-ball chucker" or "system merchant forced into a role they can't handle." The model correctly predicted "Victim" or "Sniper" because this profile doesn't exist in nature for successful stars.
+## The Solution: Universal Projection v2 (Subsidy-Aware)
 
-**Reality**: A true latent star (Brunson) changes their shot diet as usage scales. At 30% usage, Brunson's creation volume rises to ~50-60%, not 20%.
+We now use a two-stage projection engine:
 
-## The Solution: Universal Projection with Empirical Distributions
+1. **De-Subsidy**: Isolate "Intrinsic Skill" by applying the **Subsidy Index**.
+2. **Project**: Scale the "Owned" portion of efficiency using empirical distributions and friction.
+
+### 1. The Subsidy Index (Ownership Logic)
+
+Using Player Tracking data, we define Skill as either **Kinetic Energy** (Movement) or **Potential Energy** (Ball Dominance):
+
+$$SkillIndex = Max(NormalizedSpeed_{Offense}, NormalizedTimeOfPossession)$$
+$$SubsidyIndex = 1.0 - SkillIndex$$
+
+- **Treatment**: Efficiency is taxed by the Subsidy Index before projection. A player with high subsidy (Low speed, Low possession time) has their baseline efficiency discounted by up to 50%.
+
+### 2. Universal Projection with Empirical Distributions
 
 Instead of conditional projection (only when `usage_level > current_usage`), we now:
 
@@ -58,59 +71,40 @@ Modified `prepare_features()` to:
 
 ### 4. Feature Projection Order
 
-**Correct Order**: Project → Tax → Use
+**Correct Order**: Project → De-Subsidy → Tax → Use
 
-1. Calculate projected values from original values (empirical or linear)
-2. Apply multi-signal tax to projected values
-3. Use in interaction terms and base features
+1. Calculate projected volume values (CREATION_VOLUME_RATIO, etc.)
+2. Apply the **Subsidy Tax** to efficiency components based on the player's tracking profile.
+3. Apply **Friction Coefficients** to the subsidized efficiency.
+4. Use in interaction terms and final output.
 
-**Previous (Wrong) Order**: Tax → Project
-- This taxed the original value, then projected it, which was incorrect
+**Key Principle**: You cannot project what you do not own.
 
-## Features Projected
+## Validation: The "Ground Truth" Test (2021-22)
 
-1. **CREATION_VOLUME_RATIO**: Primary volume feature
-2. **LEVERAGE_USG_DELTA**: Clutch usage scaling
-3. **RS_PRESSURE_APPETITE**: Pressure shot willingness
+| Metric | Jalen Brunson (Engine) | Jordan Poole (Merchant) |
+| :--- | :--- | :--- |
+| **Subsidy Index** | **0.015** (1.5%) | **0.223** (22.3%) |
+| **Projected Impact** | **Scales** with usage. | **Discounted** by subsidy tax. |
 
-**Note**: Efficiency features (CREATION_TAX, EFG_ISO_WEIGHTED) do NOT project - they remain constant.
-
-## Validation
-
-### Test Cases
-
-1. **Jalen Brunson (2020-21) at 30% usage**:
-   - Current: 19.6% usage, 0.20 creation volume
-   - Projected: 30% usage, ~0.50-0.60 creation volume (empirical bucket median)
-   - Expected: Should predict "Bulldozer" or "King" (not "Victim")
-
-2. **Tyrese Maxey (2021-22) at 30% usage**:
-   - Current: 20.1% usage, 0.25 creation volume
-   - Projected: 30% usage, ~0.55-0.65 creation volume
-   - Expected: Should predict "Bulldozer" or "King"
-
-### Expected Impact
-
-- **Latent Star Detection**: Should improve significantly
-- **Test Case Pass Rate**: Should increase from 68.8% to ~75-80%
-- **Model Accuracy**: May improve slightly (1-2 percentage points)
+The system now correctly identifies that Poole's efficiency was 15x more subsidized than Brunson's, solving the "Mirage Breakout" failure mode.
 
 ## Files Modified
 
-1. **`src/nba_data/scripts/predict_conditional_archetype.py`**:
-   - Added empirical usage bucket calculation to `_calculate_feature_distributions()`
-   - Added `_get_usage_bucket()` helper method
-   - Added `_project_features_empirically()` method
-   - Modified `prepare_features()` to use universal projection
-   - Updated interaction term calculations to use projected values
-   - Updated base feature calculations to use projected values
+1. **`src/nba_data/scripts/evaluate_plasticity_potential.py`**:
+   - Added `fetch_tracking_metrics()` for Speed and Possession Time.
+   - Implemented `calculate_subsidy_index()` using Max-Gate logic.
+   - Updated `calculate_projected_playoff_output()` to apply the Subsidy Tax.
+2. **`src/nba_data/core/models.py`**:
+   - Added `subsidy_index`, `avg_speed_offense`, and `time_of_poss` to `PlayerSeason`.
+   - Added projected outputs (`projected_playoff_pps`, etc.) to schema.
 
 ## Key Principles
 
 1. **Features must scale together**: Usage, creation volume, leverage, pressure appetite are causally linked
 2. **Empirical > Linear**: Use data-driven distributions, not theoretical linear relationships
 3. **Project first, tax second**: Apply taxes to projected values, not original values
-4. **Preserve relative position**: If player is above median at current usage, keep them above at target
+4. **Filter for ownership**: Distinguish between owned efficiency and rented subsidy.
 
 ## Next Steps
 
@@ -122,6 +116,6 @@ Modified `prepare_features()` to:
 ## References
 
 - **Original Analysis**: User's "Static Avatar" Fallacy diagnosis
-- **Key Insights**: `KEY_INSIGHTS.md` (Insight #11: Opportunity vs. Ability)
-- **Current Model**: `CURRENT_STATE.md`
+- **Key Insights**: `KEY_INSIGHTS.md` (Insight #70: System Merchant Mirage)
+- **Current Model**: `ACTIVE_CONTEXT.md`
 
