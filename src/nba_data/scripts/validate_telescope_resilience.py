@@ -60,10 +60,20 @@ def get_test_cases() -> List[LatentStarTestCase]:
             season="2018-19",
             category="True Positive - Latent Star",
             test_usage=0.30,
+            expected_outcome="Bulldozer",  # Good breakout
+            expected_star_level="High",  # >65%
+            context="Rookie year. 18.3% Usage. Role player behind Lou Williams and Danilo Gallinari.",
+            mechanism="Should see elite Driving/Physicality Vector (Rim Pressure) even at low volume."
+        ),
+        LatentStarTestCase(
+            name="Victor Oladipo",
+            season="2016-17",
+            category="True Positive - Latent Star",
+            test_usage=0.30,
             expected_outcome="Bulldozer",
-            expected_star_level="High",
-            context="Rookie year. 18.3% Usage.",
-            mechanism="Should see elite Rim Pressure even at low volume."
+            expected_star_level="High",  # >65%
+            context="Russell Westbrook's MVP usage-hole year. Oladipo was relegated to a spot-up shooter (21% Usage).",
+            mechanism="Did he maintain Creation Vector efficiency on the few self-created shots?"
         ),
         LatentStarTestCase(
             name="Jalen Brunson",
@@ -71,9 +81,9 @@ def get_test_cases() -> List[LatentStarTestCase]:
             category="True Positive - Latent Star",
             test_usage=0.32,
             expected_outcome="Bulldozer",
-            expected_star_level="High",
+            expected_star_level="High",  # >65%
             context="19.6% Usage. Backup to Luka Dončić.",
-            mechanism="High Creation Efficiency + High Leverage Resilience."
+            mechanism="Gold Standard validation. High Creation Efficiency + High Leverage Resilience."
         ),
         LatentStarTestCase(
             name="Tyrese Maxey",
@@ -81,35 +91,163 @@ def get_test_cases() -> List[LatentStarTestCase]:
             category="True Positive - Latent Star",
             test_usage=0.28,
             expected_outcome="Bulldozer",
-            expected_star_level="High",
-            context="22.2% Usage.",
-            mechanism="Elite Creation Vector and Leverage Vector."
+            expected_star_level="High",  # >65%
+            context="22.2% Usage. Broke out to 27.3% in '24.",
+            mechanism="Elite Creation Vector and Leverage Vector even at lower usage."
+        ),
+        LatentStarTestCase(
+            name="Pascal Siakam",
+            season="2018-19",
+            category="True Positive - Latent Star",
+            test_usage=0.28,
+            expected_outcome="Bulldozer", # Or King
+            expected_star_level="High", # >65%
+            context="The 'Spin Cycle' breakout year (20.5% Usage). Won MIP and Championship.",
+            mechanism="High motor, transition scoring, improving face-up game. Demonstrates scalability of efficiency with volume."
+        ),
+        LatentStarTestCase(
+            name="Jayson Tatum",
+            season="2017-18",
+            category="True Positive - Rookie Sensation",
+            test_usage=0.28,
+            expected_outcome="Bulldozer",
+            expected_star_level="High", # >65%
+            context="Rookie year (19.5% Usage). Exploded in playoffs without Kyrie/Hayward.",
+            mechanism="Elite shot creation profile and positional size even at low usage."
+        ),
+        LatentStarTestCase(
+            name="Mikal Bridges",
+            season="2021-22",
+            category="True Positive - Usage Shock",
+            test_usage=0.30,
+            expected_outcome="Bulldozer",
+            expected_star_level="High", # >65%
+            context="Role player in Phoenix (14.2% Usage). Broke out when traded to Brooklyn with higher usage.",
+            mechanism="Tests model's ability to see star potential through role constraints. Elite efficiency on low volume."
+        ),
+        LatentStarTestCase(
+            name="Desmond Bane",
+            season="2021-22",
+            category="True Positive - Latent Star",
+            test_usage=0.28,
+            expected_outcome="Bulldozer",
+            expected_star_level="High", # >65%
+            context="22.6% Usage. Elite secondary creator with high shooting efficiency.",
+            mechanism="Tests model's ability to identify secondary creators who can scale up. Elite Creation Vector and shooting."
         ),
         
-        # ========== Category 1.5: Franchise Cornerstones (Jokic cases) ==========
+        # ========== Category 1.5: The "Franchise Cornerstone" Misses (Critical False Negatives) ==========
+        # These are elite players who should be identified as Franchise Cornerstones but the model is missing
+        LatentStarTestCase(
+            name="Nikola Jokić",
+            season="2015-16",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="King",  # Or Bulldozer
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",  # High Performance + Low Dependence
+            context="Rookie year (19.4% Usage). Age 21. Future MVP and champion. Elite passing and efficiency.",
+            mechanism="Tests model's ability to identify elite bigs with unique skill sets. Should see high creation volume, elite efficiency, and low dependence."
+        ),
         LatentStarTestCase(
             name="Nikola Jokić",
             season="2016-17",
             category="True Positive - Franchise Cornerstone",
             test_usage=0.30,
             expected_outcome="King",
-            expected_star_level="High",
+            expected_star_level="High",  # >65%
             expected_risk_category="Franchise Cornerstone",
-            context="Age 22 (23.1% Usage). Emerging as elite playmaker.",
-            mechanism="Elite creation volume and efficiency. Low dependence on system."
+            context="Age 22 (23.1% Usage). Emerging as elite playmaker and scorer. Future MVP trajectory.",
+            mechanism="Elite creation volume and efficiency. Low dependence on system. Should be identified as franchise cornerstone."
         ),
-        
-        # ========== Category 2: The "Mirage" Breakouts (False Positives) ==========
+        LatentStarTestCase(
+            name="Nikola Jokić",
+            season="2017-18",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 23 (23.8% Usage). All-Star season. Elite passing and scoring efficiency.",
+            mechanism="Should identify elite creation and efficiency. Low dependence - self-created offense."
+        ),
+        LatentStarTestCase(
+            name="Nikola Jokić",
+            season="2018-19",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 24 (27.1% Usage). First-team All-NBA. Elite playmaker and scorer.",
+            mechanism="Franchise cornerstone with elite creation volume and efficiency. Low dependence on system."
+        ),
+        LatentStarTestCase(
+            name="Anthony Davis",
+            season="2015-16",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="Bulldozer",  # Or King
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 23 (29.0% Usage). All-Star, All-NBA. Elite rim pressure and defensive anchor.",
+            mechanism="Elite physicality vector (rim pressure) and creation. Should be identified as franchise cornerstone."
+        ),
+        LatentStarTestCase(
+            name="Anthony Davis",
+            season="2016-17",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="Bulldozer",  # Or King
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 24 (32.1% Usage). All-Star, All-NBA. Elite two-way player.",
+            mechanism="Elite rim pressure, creation volume, and efficiency. Low dependence - self-created offense."
+        ),
+        LatentStarTestCase(
+            name="Joel Embiid",
+            season="2016-17",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Rookie year (35.6% Usage). Age 23. Elite rim pressure and scoring. Future MVP.",
+            mechanism="Elite physicality vector and creation volume. Should be identified as franchise cornerstone despite high usage."
+        ),
+        LatentStarTestCase(
+            name="Joel Embiid",
+            season="2017-18",
+            category="True Positive - Franchise Cornerstone",
+            test_usage=0.30,
+            expected_outcome="Bulldozer",  # Or King
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 24 (33.0% Usage). All-Star. Elite rim pressure and scoring efficiency.",
+            mechanism="Elite creation volume and physicality. Low dependence - self-created offense."
+        ),
+    
+        # ========== Category 2: The "Mirage" Breakouts & Fragile Stars (False Positives) ==========
         LatentStarTestCase(
             name="Jordan Poole",
             season="2021-22",
             category="False Positive - Mirage Breakout",
             test_usage=0.30,
             expected_outcome="Victim",
-            expected_star_level="Low",
-            expected_risk_category="Luxury Component",
+            expected_star_level="Low",  # <55% (or use 2D: High Performance + High Dependence)
+            expected_risk_category="Luxury Component",  # High Performance + High Dependence
             context="26% Usage. System merchant relying on Curry gravity.",
-            mechanism="Should detect low Pressure Resilience and high subsidy index."
+            mechanism="Should detect low Pressure Resilience and dependence on open shots. 2D: High Performance (succeeded) + High Dependence (system merchant)."
+        ),
+        LatentStarTestCase(
+            name="Talen Horton-Tucker",
+            season="2020-21",
+            category="False Positive - Mirage Breakout",
+            test_usage=0.25,
+            expected_outcome="Victim",
+            expected_star_level="Low",  # <55%
+            context="18% Usage. Elite rim pressure numbers on low volume but poor efficiency.",
+            mechanism="Creation Efficiency was actually poor despite high Physicality Vector."
         ),
         LatentStarTestCase(
             name="Christian Wood",
@@ -117,23 +255,75 @@ def get_test_cases() -> List[LatentStarTestCase]:
             category="False Positive - Empty Calories",
             test_usage=0.26,
             expected_outcome="Victim",
-            expected_star_level="Low",
+            expected_star_level="Low",  # <55%
             context="Massive stats on tanking team. Low leverage performance.",
             mechanism="Tests Leverage Vector (Clutch) and Pressure Vector."
         ),
-        
+        LatentStarTestCase(
+            name="D'Angelo Russell",
+            season="2018-19",
+            category="False Positive - Fool's Gold",
+            test_usage=0.31,
+            expected_outcome="Victim",
+            expected_star_level="Low",  # <55%
+            context="All-Star season (31% Usage). Reliance on mid-range/floaters.",
+            mechanism="Tests Physicality fragility (low Rim Pressure Resilience)."
+        ),
+        LatentStarTestCase(
+            name="Julius Randle",
+            season="2020-21",
+            category="False Positive - Empty Calories",
+            test_usage=0.30,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="All-NBA season (29% Usage). Imploded in playoffs (29.8% FG).",
+            mechanism="Tests for 'Bulldozer' profile that lacks true resilience traits (tough shot making, leverage stability)."
+        ),
+    
         # ========== Category 3: The "Ben Simmons" Fragility Test ==========
+        LatentStarTestCase(
+            name="Ben Simmons",
+            season="2017-18",
+            category="True Negative - Fragile Star",
+            test_usage=0.25,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Rookie year (22.3% Usage). Playoff collapse vs Celtics (1 point game).",
+            mechanism="High raw stats but fatal flaws in Creation (shooting) and Leverage (passivity)."
+        ),
+        LatentStarTestCase(
+            name="Ben Simmons",
+            season="2018-19",
+            category="True Negative - Fragile Star",
+            test_usage=0.25,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="22.1% Usage. Continued playoff struggles.",
+            mechanism="Persistent lack of creation tax viability."
+        ),
         LatentStarTestCase(
             name="Ben Simmons",
             season="2020-21",
             category="True Negative - Fragile Star",
             test_usage=0.25,
             expected_outcome="Victim",
-            expected_star_level="Low",
-            context="20.2% Usage. The Hawks series collapse.",
-            mechanism="Abdication Tax and low Creation Tax."
+            expected_star_level="Low", # <55%
+            context="20.2% Usage. The Hawks series collapse. Fear of free throws.",
+            mechanism="Abdication Tax should trigger (negative Leverage USG Delta) and low Creation Tax."
         ),
-        
+    
+        # ========== Category 4: The "System Players" (The Ceiling Test) ==========
+        LatentStarTestCase(
+            name="Tyus Jones",
+            season="2021-22",
+            category="System Player - Ceiling Test",
+            test_usage=0.25,
+            expected_outcome="Sniper", # Or Victim
+            expected_star_level="Low",  # <55%
+            context="Elite assist-to-turnover ratio role player.",
+            mechanism="Should predict 'Sniper' or 'Victim' at high usage. Lacks creation ceiling."
+        ),
+    
         # ========== Category 5: Comparison Cases ==========
         LatentStarTestCase(
             name="Domantas Sabonis",
@@ -141,10 +331,10 @@ def get_test_cases() -> List[LatentStarTestCase]:
             category="True Negative - Comparison Case",
             test_usage=0.28,
             expected_outcome="Victim",
-            expected_star_level="Low",
-            expected_risk_category="Luxury Component",
-            context="All-Star, but lacks playoff resilience.",
-            mechanism="Identify lack of stress vectors (Physicality/Creation). High Dependence."
+            expected_star_level="Low",  # <55% (or use 2D: High Performance + High Dependence)
+            expected_risk_category="Luxury Component",  # High Performance + High Dependence (system-based)
+            context="Traded 1-1 for Haliburton. All-Star, but lacks playoff resilience.",
+            mechanism="Model should identify lack of stress vectors (Physicality/Creation) needed for playoff success. 2D: High Performance + High Dependence (system-based rim pressure)."
         ),
         LatentStarTestCase(
             name="Tyrese Haliburton",
@@ -152,10 +342,144 @@ def get_test_cases() -> List[LatentStarTestCase]:
             category="True Positive - Comparison Case",
             test_usage=0.28,
             expected_outcome="Bulldozer",
-            expected_star_level="High",
-            expected_risk_category="Franchise Cornerstone",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",  # High Performance + Low Dependence (portable skills)
             context="Traded 1-1 for Sabonis. Elite Creation and Leverage vectors.",
-            mechanism="Identify elite stress vectors. Low Dependence."
+            mechanism="Model should identify elite stress vectors. 2D: High Performance + Low Dependence (portable, self-created)."
+        ),
+    
+        # ========== Category 6: The "Empty Stats" Stars (True Negatives - Regular Season Stars, Playoff Fragile) ==========
+        LatentStarTestCase(
+            name="Karl-Anthony Towns",
+            season="2015-16",
+            category="True Negative - Empty Stats Star",
+            test_usage=0.28,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Rookie year (25.5% Usage). High volume scorer but lacks playoff resilience.",
+            mechanism="Tests model's ability to identify players with high raw stats but low stress vectors (Physicality/Creation/Leverage)."
+        ),
+        LatentStarTestCase(
+            name="Karl-Anthony Towns",
+            season="2016-17",
+            category="True Negative - Empty Stats Star",
+            test_usage=0.28,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 21. High usage scorer (28.1%) but playoff struggles.",
+            mechanism="Persistent lack of playoff resilience despite elite regular season production."
+        ),
+        LatentStarTestCase(
+            name="Karl-Anthony Towns",
+            season="2017-18",
+            category="True Negative - Empty Stats Star",
+            test_usage=0.28,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 22. All-Star but playoff performance doesn't match regular season.",
+            mechanism="Model should identify lack of stress vectors needed for playoff success."
+        ),
+        LatentStarTestCase(
+            name="Karl-Anthony Towns",
+            season="2018-19",
+            category="True Negative - Empty Stats Star",
+            test_usage=0.28,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 23. High volume scorer but playoff fragility persists.",
+            mechanism="Tests consistency - same flaws across multiple seasons."
+        ),
+        LatentStarTestCase(
+            name="Karl-Anthony Towns",
+            season="2019-20",
+            category="True Negative - Empty Stats Star",
+            test_usage=0.28,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 24. Elite regular season stats but playoff struggles continue.",
+            mechanism="Model should consistently identify lack of playoff resilience."
+        ),
+        LatentStarTestCase(
+            name="Karl-Anthony Towns",
+            season="2020-21",
+            category="True Negative - Empty Stats Star",
+            test_usage=0.28,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 25. High usage scorer but playoff performance gap remains.",
+            mechanism="Final pre-age-25 season. Tests model's ability to identify persistent patterns."
+        ),
+    
+        # ========== Category 7: The "Draft Bust" Cases (True Negatives - High Draft Picks Who Failed) ==========
+        LatentStarTestCase(
+            name="Markelle Fultz",
+            season="2017-18",
+            category="True Negative - Draft Bust",
+            test_usage=0.25,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Rookie year (19.5% Usage). #1 overall pick with shooting yips.",
+            mechanism="Tests model's ability to identify fatal flaws (shooting, creation) even in high draft picks."
+        ),
+        LatentStarTestCase(
+            name="Markelle Fultz",
+            season="2018-19",
+            category="True Negative - Draft Bust",
+            test_usage=0.25,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 20. Continued shooting struggles and injury issues.",
+            mechanism="Persistent lack of creation tax viability and shooting ability."
+        ),
+        LatentStarTestCase(
+            name="Markelle Fultz",
+            season="2019-20",
+            category="True Negative - Draft Bust",
+            test_usage=0.25,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 21. Traded to Orlando, continued struggles.",
+            mechanism="Model should identify lack of star-level potential despite draft position."
+        ),
+        LatentStarTestCase(
+            name="Markelle Fultz",
+            season="2020-21",
+            category="True Negative - Draft Bust",
+            test_usage=0.25,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 22. ACL injury, limited playing time.",
+            mechanism="Tests model's handling of injury-affected seasons."
+        ),
+        LatentStarTestCase(
+            name="Markelle Fultz",
+            season="2021-22",
+            category="True Negative - Draft Bust",
+            test_usage=0.25,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 23. Return from injury, role player production.",
+            mechanism="Model should identify lack of star-level potential."
+        ),
+        LatentStarTestCase(
+            name="Markelle Fultz",
+            season="2022-23",
+            category="True Negative - Draft Bust",
+            test_usage=0.25,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 24. Solid role player but not star-level.",
+            mechanism="Tests consistency - model should maintain low star-level prediction."
+        ),
+        LatentStarTestCase(
+            name="Markelle Fultz",
+            season="2023-24",
+            category="True Negative - Draft Bust",
+            test_usage=0.25,
+            expected_outcome="Victim",
+            expected_star_level="Low", # <55%
+            context="Age 25. Role player, never reached star potential.",
+            mechanism="Final age-25 season. Tests model's ability to identify persistent lack of star traits."
         ),
     ]
     return test_cases
