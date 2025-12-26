@@ -96,8 +96,16 @@ class StressVectorEngine:
                 'EFG_PCT': 'EFG_PCT_0_DRIBBLE',
                 'FGA': 'FGA_0_DRIBBLE'
             })
+
+            
             
             logger.info(f"    -> Success: Fetched {len(df_zero)} rows for 0 Dribble stats.")
+
+            # Calibrated MINIMUM VOLUME THRESHOLD (Lowered for inclusivity of Latent Stars)
+            initial_count = len(df_zero)
+            df_zero = df_zero[df_zero['FGA_0_DRIBBLE'] > 1.5].copy()
+            logger.info(f"    -> Filtered {initial_count - len(df_zero)} players below 1.5 FGA_0_DRIBBLE threshold.")
+
             return df_zero
 
         except Exception as e:
@@ -190,10 +198,10 @@ class StressVectorEngine:
             
             # Avoid division by zero
             df_creation['EFG_ISO_WEIGHTED'] = np.where(
-                df_creation['FGA_ISO_TOTAL'] > 0,
+                df_creation['FGA_ISO_TOTAL'] > 0.5, # Calibrated MINIMUM VOLUME THRESHOLD (Lowered for inclusivity)
                 ((df_creation['EFG_PCT_3_DRIBBLE'] * df_creation['FGA_3_DRIBBLE']) + 
                  (df_creation['EFG_PCT_7_DRIBBLE'] * df_creation['FGA_7_DRIBBLE'])) / df_creation['FGA_ISO_TOTAL'],
-                0
+                0 # Set to 0 for unqualified players
             )
             
             df_creation['CREATION_TAX'] = df_creation['EFG_ISO_WEIGHTED'] - df_creation['EFG_PCT_0_DRIBBLE']
@@ -1035,6 +1043,19 @@ class StressVectorEngine:
             )
             # Fill missing with 0 (conservative)
             final_df['SHOT_QUALITY_GENERATION_DELTA'] = final_df['SHOT_QUALITY_GENERATION_DELTA'].fillna(0.0)
+
+            # 4. HELIO_POTENTIAL_SCORE (Phase 4 Non-Linearity Feature)
+            # Formula: SHOT_QUALITY_GENERATION_DELTA * (USG_PCT^1.5)
+            # This rewards high creation quality at extreme usage exponentially.
+            if 'USG_PCT' in final_df.columns:
+                # Ensure USG_PCT is in decimal format for the exponent
+                usg_decimal = final_df['USG_PCT']
+                if usg_decimal.max() > 1.0:
+                    usg_decimal = usg_decimal / 100.0
+                
+                final_df['HELIO_POTENTIAL_SCORE'] = final_df['SHOT_QUALITY_GENERATION_DELTA'] * (usg_decimal ** 1.5)
+                logger.info(f"Calculated HELIO_POTENTIAL_SCORE. Mean: {final_df['HELIO_POTENTIAL_SCORE'].mean():.4f}")
+
         else:
             logger.warning(f"SHOT_QUALITY_GENERATION_DELTA file not found at {sq_path}. Using 0.0 default.")
             if 'SHOT_QUALITY_GENERATION_DELTA' not in final_df.columns:

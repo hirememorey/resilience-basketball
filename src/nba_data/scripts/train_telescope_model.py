@@ -46,17 +46,33 @@ FEATURES = [
     'AGE',
     # Interaction terms
     'USG_PCT_X_CREATION_VOLUME_RATIO',
-    'USG_PCT_X_LEVERAGE_USG_DELTA'
+    'USG_PCT_X_LEVERAGE_USG_DELTA',
+    'SHOT_QUALITY_GENERATION_DELTA',
+    'SHOT_QUALITY_GENERATION_DELTA_X_USG',
+    'HELIO_POTENTIAL_SCORE'
 ]
 
 def load_and_merge_data():
     """Load projected features and telescope targets, merge them."""
     # 1. Load Features (Projected Avatars)
-    features_path = Path("data/projected_telescope_dataset.csv")
+    features_path = Path("results/predictive_dataset.csv") # Changed from projected_telescope_dataset.csv to capture the new feature
+    if not features_path.exists():
+        # Fallback for compatibility if predictive_dataset doesn't have projections yet
+        features_path = Path("data/projected_telescope_dataset.csv")
+
     if not features_path.exists():
         logger.error(f"Features not found at {features_path}")
         sys.exit(1)
+    
     df_features = pd.read_csv(features_path)
+    
+    # Feature Engineering: Create Interaction Term on the fly if needed
+    if 'SHOT_QUALITY_GENERATION_DELTA' in df_features.columns and 'USG_PCT' in df_features.columns:
+         df_features['SHOT_QUALITY_GENERATION_DELTA_X_USG'] = df_features['SHOT_QUALITY_GENERATION_DELTA'] * df_features['USG_PCT']
+         
+         # The "Non-Linearity" Antidote
+         # Rewarding high creation quality at extreme usage exponentially
+         df_features['HELIO_POTENTIAL_SCORE'] = df_features['SHOT_QUALITY_GENERATION_DELTA'] * (df_features['USG_PCT'] ** 1.5)
     
     # 2. Load Targets
     targets_path = Path("results/training_targets_helio.csv")

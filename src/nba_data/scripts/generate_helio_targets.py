@@ -129,13 +129,14 @@ class HelioTargetGenerator:
                     future_scores = helio_scores[window_mask]
                     future_minutes = minutes[window_mask]
                     
-                    # The Washout Signal
+                    # The Washout Signal (revealed capacity is zero if they played but failed to stick)
                     if np.sum(future_minutes) < 100:
                         peak_helio = 0.0
                     else:
                         peak_helio = np.max(future_scores)
                 else:
-                    peak_helio = 0.0 # Washout if no future data in window
+                    # No data in window: This is NOT a zero, it is UNKNOWN (Censored data)
+                    peak_helio = np.nan
                 
                 player_targets.append({'PLAYER_ID': player_id, 'SEASON_YEAR': season, 'FUTURE_PEAK_HELIO': peak_helio})
 
@@ -166,7 +167,12 @@ class HelioTargetGenerator:
             df_rs['FUTURE_PEAK_HELIO'] = df_rs['FUTURE_PEAK_HELIO_y'].combine_first(df_rs['FUTURE_PEAK_HELIO_x'])
             df_rs = df_rs.drop(columns=['FUTURE_PEAK_HELIO_x', 'FUTURE_PEAK_HELIO_y'])
 
-        df_rs['FUTURE_PEAK_HELIO'] = df_rs['FUTURE_PEAK_HELIO'].fillna(0.0) # Default to washout
+        # Drop rows where target is NaN (the Booker/Fox/SGA Trap fix)
+        # We only train on "Revealed Outcomes"
+        initial_len = len(df_rs)
+        df_rs = df_rs.dropna(subset=['FUTURE_PEAK_HELIO'])
+        logger.info(f"Dropped {initial_len - len(df_rs)} rows with no playoff outcome (Censored Data).")
+
         if 'TARGET_SEASON_YEAR' in df_rs.columns:
             df_rs = df_rs.drop(columns=['TARGET_SEASON_YEAR'])
 

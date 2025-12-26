@@ -178,7 +178,7 @@ def calculate_league_average_shot_quality(
             if all(col in rs_df.columns for col in tight_defense_cols):
                 rs_df['TIGHT_FGA'] = rs_df['FGA_0_2'].fillna(0) + rs_df['FGA_2_4'].fillna(0)
                 rs_df['TIGHT_EFG_WEIGHTED'] = np.where(
-                    rs_df['TIGHT_FGA'] > 5,  # Minimum volume
+                    rs_df['TIGHT_FGA'] > 50,  # Minimum volume
                     ((rs_df['EFG_0_2'].fillna(0) * rs_df['FGA_0_2'].fillna(0)) + 
                      (rs_df['EFG_2_4'].fillna(0) * rs_df['FGA_2_4'].fillna(0))) / rs_df['TIGHT_FGA'],
                     np.nan
@@ -202,7 +202,7 @@ def calculate_league_average_shot_quality(
     if 'assisted' not in league_averages:
         rs_df = shot_quality_df[shot_quality_df['SEASON_TYPE'].isin(['RS', 'Regular Season'])].copy()
         if not rs_df.empty and 'EFG_6_PLUS' in rs_df.columns and 'FGA_6_PLUS' in rs_df.columns:
-            valid_open = rs_df[(rs_df['FGA_6_PLUS'].fillna(0) > 5) & rs_df['EFG_6_PLUS'].notna()]
+            valid_open = rs_df[(rs_df['FGA_6_PLUS'].fillna(0) > 50) & rs_df['EFG_6_PLUS'].notna()]
             if len(valid_open) > 0:
                 total_fga = valid_open['FGA_6_PLUS'].sum()
                 if total_fga > 0:
@@ -278,7 +278,7 @@ def calculate_player_shot_quality_generated(
                 player_sq = player_sq.iloc[0]
                 if all(col in player_sq.index for col in ['EFG_0_2', 'EFG_2_4', 'FGA_0_2', 'FGA_2_4']):
                     tight_fga = (player_sq.get('FGA_0_2', 0) or 0) + (player_sq.get('FGA_2_4', 0) or 0)
-                    if tight_fga > 0:
+                    if tight_fga > 25: # MINIMUM VOLUME THRESHOLD
                         tight_efg = (
                             (player_sq.get('EFG_0_2', 0) or 0) * (player_sq.get('FGA_0_2', 0) or 0) +
                             (player_sq.get('EFG_2_4', 0) or 0) * (player_sq.get('FGA_2_4', 0) or 0)
@@ -313,7 +313,7 @@ def calculate_player_shot_quality_generated(
                 player_sq = player_sq.iloc[0]
                 if 'EFG_6_PLUS' in player_sq.index and 'FGA_6_PLUS' in player_sq.index:
                     open_fga = player_sq.get('FGA_6_PLUS', 0) or 0
-                    if open_fga > 0:
+                    if open_fga > 25: # MINIMUM VOLUME THRESHOLD
                         results['assisted_quality'] = player_sq.get('EFG_6_PLUS', 0) or 0
                     else:
                         results['assisted_quality'] = np.nan
@@ -344,7 +344,7 @@ def calculate_player_shot_quality_generated(
             
             if all(col in player_sq.index for col in efg_cols + fga_cols):
                 total_fga = sum(player_sq.get(f'FGA_{cat}', 0) or 0 for cat in categories)
-                if total_fga > 10:  # Minimum volume
+                if total_fga > 100:  # Minimum volume
                     weighted_sum = sum(
                         (player_sq.get(f'EFG_{cat}', 0) or 0) * (player_sq.get(f'FGA_{cat}', 0) or 0)
                         for cat in categories
@@ -519,6 +519,11 @@ def merge_with_predictive_dataset(delta_df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"Loaded predictive dataset: {len(predictive_df)} records")
     
     # Merge on PLAYER_ID and SEASON
+    # If column already exists in predictive_df, drop it first to avoid collision
+    if 'SHOT_QUALITY_GENERATION_DELTA' in predictive_df.columns:
+        logger.info("SHOT_QUALITY_GENERATION_DELTA already exists in predictive dataset. Overwriting...")
+        predictive_df = predictive_df.drop(columns=['SHOT_QUALITY_GENERATION_DELTA'])
+
     merged_df = pd.merge(
         predictive_df,
         delta_df[['PLAYER_ID', 'SEASON', 'SHOT_QUALITY_GENERATION_DELTA']],
