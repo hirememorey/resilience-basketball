@@ -1056,10 +1056,18 @@ class StressVectorEngine:
                 final_df['HELIO_POTENTIAL_SCORE'] = final_df['SHOT_QUALITY_GENERATION_DELTA'] * (usg_decimal ** 1.5)
                 logger.info(f"Calculated HELIO_POTENTIAL_SCORE. Mean: {final_df['HELIO_POTENTIAL_SCORE'].mean():.4f}")
 
+                # 5. SHOT_QUALITY_GENERATION_DELTA_X_USG (Interaction Term)
+                final_df['SHOT_QUALITY_GENERATION_DELTA_X_USG'] = final_df['SHOT_QUALITY_GENERATION_DELTA'] * usg_decimal
+                logger.info(f"Calculated SHOT_QUALITY_GENERATION_DELTA_X_USG. Mean: {final_df['SHOT_QUALITY_GENERATION_DELTA_X_USG'].mean():.4f}")
+
         else:
             logger.warning(f"SHOT_QUALITY_GENERATION_DELTA file not found at {sq_path}. Using 0.0 default.")
             if 'SHOT_QUALITY_GENERATION_DELTA' not in final_df.columns:
                 final_df['SHOT_QUALITY_GENERATION_DELTA'] = 0.0
+            if 'HELIO_POTENTIAL_SCORE' not in final_df.columns:
+                final_df['HELIO_POTENTIAL_SCORE'] = 0.0
+            if 'SHOT_QUALITY_GENERATION_DELTA_X_USG' not in final_df.columns:
+                final_df['SHOT_QUALITY_GENERATION_DELTA_X_USG'] = 0.0
 
         # 4. Calculate Dependence Scores (Projected)
         # This will now use the new logic in calculate_dependence_score.py

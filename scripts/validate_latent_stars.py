@@ -26,7 +26,9 @@ CONTROL_CASES = [
     # Premier Role Player (should have a very low score)
     {"PLAYER_NAME": "P.J. Tucker", "SEASON": "2018-19"},
     # "Fool's Gold" / System Merchant Example
-    {"PLAYER_NAME": "D'Angelo Russell", "SEASON": "2021-22"}
+    {"PLAYER_NAME": "D'Angelo Russell", "SEASON": "2021-22"},
+    # The "Jordan Poole Paradox" - High Volume/Efficiency but Low Scalability
+    {"PLAYER_NAME": "Jordan Poole", "SEASON": "2021-22"}
 ]
 
 ALL_CASES = LATENT_STAR_CASES + CONTROL_CASES
@@ -101,8 +103,6 @@ def evaluate_latent_stars():
             logger.warning(f"Feature '{feature}' not found in test data. Calculating if possible.")
             if feature == 'HELIO_POTENTIAL_SCORE':
                 df_test['HELIO_POTENTIAL_SCORE'] = df_test['SHOT_QUALITY_GENERATION_DELTA'] * (df_test['USG_PCT'] ** 1.5)
-            elif feature == 'SHOT_QUALITY_GENERATION_DELTA_X_USG':
-                df_test['SHOT_QUALITY_GENERATION_DELTA_X_USG'] = df_test['SHOT_QUALITY_GENERATION_DELTA'] * df_test['USG_PCT']
             else:
                 df_test[feature] = 0
             

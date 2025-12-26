@@ -203,20 +203,6 @@ def project_stress_vectors_for_usage(
     # Store flash multiplier flag for downstream logic
     projected_data['_FLASH_MULTIPLIER_ACTIVE'] = flash_applied
 
-    # Recalculate derived non-linear features for the new usage level
-    # This ensures the projection is physically consistent with the Telescope Model v2.1
-    if 'SHOT_QUALITY_GENERATION_DELTA' in projected_data.index:
-        # HELIO_POTENTIAL_SCORE = SHOT_QUALITY_GENERATION_DELTA * (USG_PCT^1.5)
-        # Ensure USG_PCT is decimal for the exponent
-        usg_val = projected_data['USG_PCT']
-        if usg_val > 1.0:
-            usg_val /= 100.0
-            
-        projected_data['HELIO_POTENTIAL_SCORE'] = projected_data['SHOT_QUALITY_GENERATION_DELTA'] * (usg_val ** 1.5)
-        
-        # Also update SHOT_QUALITY_GENERATION_DELTA_X_USG interaction term if it exists
-        projected_data['SHOT_QUALITY_GENERATION_DELTA_X_USG'] = projected_data['SHOT_QUALITY_GENERATION_DELTA'] * usg_val
-
     return projected_data
 
 

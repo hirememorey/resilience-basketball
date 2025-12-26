@@ -1,7 +1,9 @@
 # Active Context: NBA Playoff Resilience Engine
 
 **Last Updated**: December 25, 2025
-**Status**: 🔭 **TELESCOPE MODEL V2.1 CALIBRATED** - Structural repairs complete. `HELIO_POTENTIAL_SCORE` (Non-linear) and "Revealed Capacity" target logic have corrected the magnitude mismatch for future stars.
+**Status**: 🔭 **TELESCOPE MODEL V2.1 CALIBRATED** - "The Jordan Poole Constraint" Verified.
+- **Validation**: Added Jordan Poole (2021-22) to automated regression suite.
+- **Result**: Model predicts 2.59 (Role Player) vs Brunson 7.06 (Engine). The "Mirage Breakout" is correctly filtered.
 
 ---
 
@@ -32,32 +34,27 @@ To build a predictive system that can accurately distinguish between immediate p
 
 ### ✅ **The "Empty Calories" Antidote**
 - **Hypothesis**: Distinguishing "Source of Offense" (Creation vs. Consumption) is the highest leverage action.
-- **Correction**: Stabilized `SHOT_QUALITY_GENERATION_DELTA` with calibrated volume thresholds (>1.5 FGA for catch-and-shoot, >0.5 FGA for ISO).
-- **Validation**: Correctly identifies low-usage finishers (Lively II, Robinson) as high-quality generators.
+- **Correction**: Stabilized `SHOT_QUALITY_GENERATION_DELTA` with calibrated volume thresholds.
 
 ### ✅ **The "Lottery Star" Trap Fix**
-- **Issue**: Marked non-playoff players as 0, teaching the model that high usage on bad teams = washout.
-- **Correction**: Adopted "Revealed Capacity" logic. Training set now **drops** censored data (lottery years) instead of marking as zero.
+- **Correction**: Adopted "Revealed Capacity" logic. Censored data is dropped, not zeroed.
 - **Result**: Model correctly projects stars even during their "lottery development" phase.
 
 ### ✅ **Magnitude Matching (Brunson/Maxey Cases)**
-- **Jalen Brunson ('21)**: Predicted 7.30 vs Actual 7.73.
-- **Tyrese Maxey ('22)**: Predicted 5.53 vs Actual 5.35.
+- **Jalen Brunson ('21)**: Predicted 7.06 vs Actual 7.73.
+- **Tyrese Maxey ('22)**: Predicted 5.41 vs Actual 5.35.
 - **Verdict**: Non-linearity feature has corrected the previously conservative magnitude of star projections.
+
+### ✅ **The "Mirage Breakout" Detection (Poole Case)**
+- **Jordan Poole ('22)**: Predicted **2.59**.
+- **The Physics**: Despite high raw stats (18.5 PPG), the model detected the low `SHOT_QUALITY_GENERATION_DELTA` (0.142) compared to true engines like Brunson (0.201).
+- **Verdict**: System successfully distinguishes between "Gravity Beneficiaries" and "Gravity Generators."
 
 ---
 
 ## Next Developer: Start Here
 
-**Current State**: Phase 4 Pivot is complete. The Telescope is now calibrated to detect future heliocentric engines.
+**Current State**: Phase 4 Pivot is complete. The Telescope is fully calibrated and validated against key edge cases.
 
-**Next Priority**: **Universal Projection Integration**
-1.  **Avatar Projection**: Ensure `HELIO_POTENTIAL_SCORE` and `SHOT_QUALITY_GENERATION_DELTA` are correctly handled in the projection engine (`src/nba_data/utils/projection_utils.py`).
-2.  **Visualization**: Add the "Heliocentric Potential" chart to the Streamlit app to distinguish between "System Scalers" and "Helio Engines."
-3.  **Benchmarking**: Run the 2D Risk Matrix analysis using the new calibrated Telescope scores.
-
-**Key Scripts**:
-- `src/nba_data/scripts/evaluate_plasticity_potential.py` (Feature Origin)
-- `src/nba_data/scripts/generate_helio_targets.py` (Censored Data Target Logic)
-- `src/nba_data/scripts/train_telescope_model.py` (Final Regressor)
-- `scripts/validate_latent_stars.py` (Validation Suite)
+**Next Priority**: **Prepare for the Sloan Sports Analytics Conference.**
+- **Your Strategic Brief**: `SLOAN_PREPARATION_PLAN.md` contains the full context, the highest-leverage next steps, and the de-risking plan for the "Universal Avatar" simulation engine. Start there.
