@@ -19,6 +19,7 @@ This script is the heart of the factory. It ingests raw data from the NBA Stats 
 -   `SHOT_QUALITY_GENERATION_DELTA`: A measure of a player's ability to create high-quality shots.
 -   `HELIO_POTENTIAL_SCORE`: A non-linear feature capturing a player's potential to be a heliocentric engine.
 -   `SUBSIDY_INDEX`: A measure of how much efficiency is "rented" from the environment vs. "owned" by the player.
+-   `FRAGILITY_SCORE`: A measure of stylistic fragility, incorporating Abdication (usage drops) and Choking (efficiency drops) under pressure.
 -   `FRICTION_COEFFICIENTS`: Empirically derived values that model how efficiency degrades with usage.
 
 ### 2. The Visualization: `visualize_risk_matrix.py`

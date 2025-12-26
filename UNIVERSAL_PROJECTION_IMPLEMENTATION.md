@@ -78,27 +78,31 @@ Modified `prepare_features()` to:
 
 1. Calculate projected volume values (CREATION_VOLUME_RATIO, etc.)
 2. Apply the **Subsidy Tax** to efficiency components based on the player's tracking profile.
-3. Apply **Friction Coefficients** to the subsidized efficiency.
-4. Use in interaction terms and final output.
+3. **Apply Friction Coefficients** to the subsidized efficiency.
+4. **Apply Fragility Taxes**: Final efficiency is penalized by the **Fragility Score** (Abdication + Choke taxes).
+5. Use in interaction terms and final output.
 
-**Key Principle**: You cannot project what you do not own.
+**Key Principle**: You cannot project what you do not own, and what you own must be durable.
 
 ## Validation: The "Ground Truth" Test (2021-22)
 
-| Metric | Nikola Jokić ('19) (Owner) | Jordan Poole ('22) (Merchant) |
-| :--- | :--- | :--- |
-| **Subsidy Index** | **0.198** (19.8%) | **0.522** (52.2%) |
-| **Projected Impact** | **Scales** with usage. | **Discounted** by subsidy tax. |
+| Metric | Nikola Jokić ('19) (Owner) | Jordan Poole ('22) (Merchant) | D'Angelo Russell ('19) (Fragile) |
+| :--- | :--- | :--- | :--- |
+| **Subsidy Index** | **0.198** (19.8%) | **0.522** (52.2%) | **0.129** (12.9%) |
+| **Fragility Score** | **Low** | **Moderate** | **High** (Abdication) |
+| **Projected Impact** | **Scales** with usage. | **Discounted** by subsidy. | **Penalized** by fragility. |
 
-The system now correctly identifies that Poole's efficiency was ~2.6x more subsidized than Jokic's, resolving both the "Mirage Breakout" and "Big Man Blindspot" failure modes.
+The system now correctly identifies that Poole's efficiency was ~2.6x more subsidized than Jokic's, and that D-Lo's high-ownership volume is not portable due to high-leverage abdication.
 
 ## Files Modified
 
 1. **`src/nba_data/scripts/evaluate_plasticity_potential.py`**:
    - Added `fetch_touch_metrics()` for Post and Elbow production.
    - Updated `calculate_subsidy_index()` to use the 3-dimensional Max-Gate logic.
+   - Implemented `FRAGILITY_SCORE v3.5` with Abdication and Choke taxes.
 2. **`src/nba_data/core/models.py`**:
-   - Added `weighted_touch_production` and `skill_index` to `PlayerSeason` schema for validation and debugging.
+   - Added `weighted_touch_production` and `skill_index` to `PlayerSeason` schema.
+   - Added `fragility_score`, `leverage_usg_delta`, and `leverage_ts_delta` for persistence.
 
 ## Key Principles
 
