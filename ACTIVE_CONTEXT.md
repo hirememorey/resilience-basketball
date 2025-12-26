@@ -1,9 +1,15 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 25, 2025
+**Last Updated**: December 26, 2025
 **Status**: 🏗️ **PHASE 5: RE-ARCHITECTURE & SLOAN PREP** - "The Factory Model"
-- **Action**: Purged ~50 "Explorer Mode" scripts to `archive/`.
-- **Focus**: Hardening the "Universal Avatar" pipeline for the Sloan Conference.
+- **Action**: Retrained Telescope model with Subsidy Index v2 (Ownership Matrix).
+- **Validation**:
+    - **Subsidy Logic**: `Skill = Max(TimeOfPoss, AstPct)`. (Speed removed to fix "Activity Merchant" trap).
+    - **Jalen Brunson**: Subsidy `0.288` (High Ownership). Potential: **6.55**.
+    - **Jordan Poole**: Subsidy `0.223` (High Dependence). Potential: **2.69**.
+    - **Nikola Jokic**: Subsidy `0.163` (High Ownership). Potential: **2.74**.
+    - **Verdict**: Jokic > Poole order restored, but Jokic's magnitude (2.74) is still a "False Low" (should be >6.0). This remains the primary active failure mode ("The Big Man Blindspot").
+- **Focus**: Integrating "Touch Efficiency" (Post/Elbow) to fix Big Man valuation.
 
 ---
 
@@ -20,7 +26,7 @@ We have transitioned from ad-hoc scripts to a linear "Data Factory" pipeline.
 ### 1. Ingestion & Feature Engineering (The Engine)
 - **Script**: `src/nba_data/scripts/evaluate_plasticity_potential.py`
 - **Output**: `results/predictive_dataset_with_friction.csv`
-- **Key Metrics**: `HELIO_POTENTIAL_SCORE`, `FRICTION_COEFFICIENT`, `SHOT_QUALITY_GENERATION_DELTA`.
+- **Key Metrics**: `HELIO_POTENTIAL_SCORE`, `FRICTION_COEFFICIENT`, `SUBSIDY_INDEX`.
 
 ### 2. Universal Projection (The Physics)
 - **Module**: `src/nba_data/utils/projection_utils.py`
@@ -53,7 +59,7 @@ We have transitioned from ad-hoc scripts to a linear "Data Factory" pipeline.
 
 ### ✅ **The "System Merchant" Filter (Subsidy Index)**
 - **Hypothesis**: Efficiency is "Rented" from the ecosystem, not owned by the player.
-- **Implementation**: `Subsidy Index = 1.0 - Max(Speed, PossTime)`.
+- **Implementation**: `Subsidy Index = 1.0 - Max(TimeOfPoss, AstPct)`.
 - **Result**: 
     - **Jalen Brunson ('22)**: Subsidy Index **0.015** (Pure Skill).
     - **Jordan Poole ('22)**: Subsidy Index **0.223** (High Dependence).
@@ -63,5 +69,6 @@ We have transitioned from ad-hoc scripts to a linear "Data Factory" pipeline.
 
 ## Next Steps
 
-1.  **Refactor**: Update `evaluate_plasticity_potential.py` to use `src/nba_data/core/models.py`. (Partial Complete - Schema enforced).
-2.  **Visualization**: Final polish on the Sloan Risk Matrix.
+1.  **Fix "Big Man Blindspot"**: Integrate `ELBOW_TOUCH_EFFICIENCY` and `POST_TOUCH_EFFICIENCY` into the Skill Index. (Jokic 2.74 is a physics violation).
+2.  **Refactor**: Update `evaluate_plasticity_potential.py` to use `src/nba_data/core/models.py`. (Partial Complete - Schema enforced).
+3.  **Visualization**: Final polish on the Sloan Risk Matrix.

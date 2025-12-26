@@ -40,20 +40,36 @@ Players can appear elite against "Top 10 Defenses" in blowouts when starters are
 
 ## 70. The "System Merchant" Mirage (Subsidy Index) 🎯 CRITICAL (December 2025)
 
-**The Problem**: A model that projects total observed efficiency assumes a player "owns" their percentage. In reality, some players "rent" their efficiency from their ecosystem (e.g., Jordan Poole '22 benefiting from Steph Curry's gravity). When projected to a new context (higher usage, worse teammates), this "Subsidy" vanishes, leading to catastrophic projection errors.
+**The Problem**: A model that projects total observed efficiency assumes a player "owns" their percentage. In reality, some players "rent" their efficiency from their ecosystem (e.g., Jordan Poole '22 benefiting from Steph Curry's gravity). When projected to higher usage (new context), this "Subsidy" vanishes.
 
-**The Insight**: Skill is the ability to generate efficient looks via either Kinetic Energy (Movement) or Potential Energy (Ball Dominance). Passengers have neither.
+**The Insight**: Skill is the ability to generate efficient looks via **Ownership**.
+-   **Old Assumption**: Speed = Skill. (False: Fast running without the ball is often dependent activity).
+-   **New Assumption (The Ownership Matrix)**: Skill is either **Ball Dominance** (Time of Poss) or **Playmaking** (Ast%). Passengers have neither.
 
-**The Fix**: Implement the **Subsidy Index** using player tracking data.
-- **Formula**: $SkillIndex = Max(NormalizedSpeed, NormalizedTimeOfPoss)$
+**The Fix**: Implement the **Subsidy Index v2** using player tracking data.
+- **Formula**: $SkillIndex = Max(NormalizedTimeOfPoss, NormalizedAstPct)$
 - **Tax**: $SubsidyIndex = 1.0 - SkillIndex$
-- Apply a "Subsidy Tax" to efficiency *before* applying friction. This ensures that only "owned" efficiency is portable across environments.
+- **Result**: Jordan Poole (Fast, but dependent) is exposed. Nikola Jokic (Slow, but dominant creator) is valued correctly.
 
 **Key Principle**: **Filter for ownership before projecting for magnitude.**
+
+## 71. The "Activity Merchant" Trap (Speed != Skill) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Defining "Motor" as simply "Speed" or "Distance Traveled" penalizes genius-level stationary processors (Jokic, Luka) and rewards frantic system players (Poole).
+
+**The Insight**: High speed without ball dominance or playmaking is often **Dependent Activity** (cutting, running off screens). True "Motor" for a primary option is Decision Velocity, not Foot Speed.
+
+**The Fix**: Remove `AvgSpeed` from the Skill Index calculation entirely. Focus on `TimeOfPoss` (On-Ball Load) and `AstPct` (Creation Load).
+
+## 72. The "Big Man Blindspot" (Touch vs. Dominance) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Even with the new Subsidy Index, elite finishing bigs (Christian Wood, Sabonis) can look like "System Merchants" because they don't hold the ball long (`TimeOfPoss`) or run point (`AstPct`). However, their efficiency is sometimes "owned" via elite touch/post-work.
+
+**The Insight**: Big Man ownership looks different than Guard ownership. It manifests as **Efficiency Maintenance at Volume** on "Touch" plays (Post-ups, Elbow touches).
+
+**The Fix (Next Steps)**: Integrate `ELBOW_TOUCH_EFFICIENCY` and `POST_TOUCH_EFFICIENCY` into the Skill Index for players > 6'9".
 
 ## See Also
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)
-- `NEXT_STEPS.md` - **START HERE** - Current priorities and completed work
 - `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
-- `extended_resilience_framework.md` - Stress vectors explained

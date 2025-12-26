@@ -23,6 +23,8 @@ Using Player Tracking data, we define Skill as either **Kinetic Energy** (Moveme
 $$SkillIndex = Max(NormalizedSpeed_{Offense}, NormalizedTimeOfPossession)$$
 $$SubsidyIndex = 1.0 - SkillIndex$$
 
+*Note: As of Dec 26, 2025, Speed has been removed from the Skill Index to avoid the "Activity Merchant" trap (e.g., Jordan Poole). The formula is now Max(TimeOfPoss, AstPct).*
+
 - **Treatment**: Efficiency is taxed by the Subsidy Index before projection. A player with high subsidy (Low speed, Low possession time) has their baseline efficiency discounted by up to 50%.
 
 ### 2. Universal Projection with Empirical Distributions

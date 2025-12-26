@@ -35,45 +35,35 @@ logger = logging.getLogger(__name__)
 # Constants
 GROWTH_COHORT_AGE_LIMIT = 26
 FEATURES = [
-    'CREATION_TAX',
-    'CREATION_VOLUME_RATIO',
-    'LEVERAGE_USG_DELTA',
-    'LEVERAGE_TS_DELTA',
-    'RS_PRESSURE_APPETITE', # If available
-    'EFG_ISO_WEIGHTED',
-    'USG_PCT',
-    'DEPENDENCE_SCORE',
-    'AGE',
-    # Interaction terms
-    'USG_PCT_X_CREATION_VOLUME_RATIO',
-    'USG_PCT_X_LEVERAGE_USG_DELTA',
-    'SHOT_QUALITY_GENERATION_DELTA',
-    'SHOT_QUALITY_GENERATION_DELTA_X_USG',
-    'HELIO_POTENTIAL_SCORE'
+    'age',
+    'usg_pct',
+    'ts_pct',
+    'shot_quality_generation_delta',
+    'creation_volume_ratio',
+    'helio_potential_score',
+    'subsidy_index',
+    'projected_playoff_pps',
+    'projected_playoff_output',
+    'helio_above_replacement_value',
+    'avg_opponent_dcs'
 ]
 
 def load_and_merge_data():
     """Load projected features and telescope targets, merge them."""
     # 1. Load Features (Projected Avatars)
-    features_path = Path("results/predictive_dataset.csv") # Changed from projected_telescope_dataset.csv to capture the new feature
-    if not features_path.exists():
-        # Fallback for compatibility if predictive_dataset doesn't have projections yet
-        features_path = Path("data/projected_telescope_dataset.csv")
-
+    features_path = Path("results/predictive_dataset_with_friction.csv")
     if not features_path.exists():
         logger.error(f"Features not found at {features_path}")
         sys.exit(1)
     
     df_features = pd.read_csv(features_path)
     
-    # Feature Engineering: Create Interaction Term on the fly if needed
-    if 'SHOT_QUALITY_GENERATION_DELTA' in df_features.columns and 'USG_PCT' in df_features.columns:
-         df_features['SHOT_QUALITY_GENERATION_DELTA_X_USG'] = df_features['SHOT_QUALITY_GENERATION_DELTA'] * df_features['USG_PCT']
-         
-         # The "Non-Linearity" Antidote
-         # Rewarding high creation quality at extreme usage exponentially
-         df_features['HELIO_POTENTIAL_SCORE'] = df_features['SHOT_QUALITY_GENERATION_DELTA'] * (df_features['USG_PCT'] ** 1.5)
-    
+    # Ensure all features are present (even as 0) to avoid XGBoost errors
+    for feature in FEATURES:
+        if feature not in df_features.columns:
+            logger.warning(f"Feature '{feature}' missing from dataset. Filling with 0.0.")
+            df_features[feature] = 0.0
+            
     # 2. Load Targets
     targets_path = Path("results/training_targets_helio.csv")
     if not targets_path.exists():
@@ -83,14 +73,20 @@ def load_and_merge_data():
     df_targets_slim = df_targets[['PLAYER_ID', 'SEASON_YEAR', 'FUTURE_PEAK_HELIO']]
     
     # 3. Merge
-    # Standardize season format for merging
-    df_features['SEASON_YEAR'] = df_features['SEASON'].apply(lambda x: int(x.split('-')[0]) + 1)
+    # Standardize season format for merging (e.g. "2023-24" -> 2024)
+    df_features['SEASON_YEAR'] = df_features['season'].apply(lambda x: int(x.split('-')[0]) + 1)
     
     # Ensure correct dtypes for merging
-    df_features['PLAYER_ID'] = df_features['PLAYER_ID'].astype(str)
+    df_features['player_id'] = df_features['player_id'].astype(str)
     df_targets_slim['PLAYER_ID'] = df_targets_slim['PLAYER_ID'].astype(str)
     
-    merged = pd.merge(df_features, df_targets_slim, on=['PLAYER_ID', 'SEASON_YEAR'], how='inner')
+    merged = pd.merge(
+        df_features, 
+        df_targets_slim, 
+        left_on=['player_id', 'SEASON_YEAR'],
+        right_on=['PLAYER_ID', 'SEASON_YEAR'],
+        how='inner'
+    )
     logger.info(f"Merged dataset size: {len(merged)} rows")
     
     return merged
@@ -98,26 +94,19 @@ def load_and_merge_data():
 def train_telescope_model():
     df = load_and_merge_data()
     
-    if 'USG_PCT' not in df.columns and 'usg_pct_vs_top10' in df.columns:
-        logger.info("Renaming 'usg_pct_vs_top10' to 'USG_PCT' for model training.")
-        df.rename(columns={'usg_pct_vs_top10': 'USG_PCT'}, inplace=True)
-        
     # Filter for Growth Cohort
     original_size = len(df)
-    df_growth = df[df['AGE'] <= GROWTH_COHORT_AGE_LIMIT].copy()
+    df_growth = df[df['age'] <= GROWTH_COHORT_AGE_LIMIT].copy()
     logger.info(f"Filtered for Growth Cohort (Age <= {GROWTH_COHORT_AGE_LIMIT}): {len(df_growth)}/{original_size} rows")
     
-    # Validate Features exist
+    # Final check for features
     available_features = [f for f in FEATURES if f in df_growth.columns]
-    missing_features = [f for f in FEATURES if f not in df_growth.columns]
-    if missing_features:
-        logger.warning(f"Missing features: {missing_features}")
     
     logger.info(f"Training with {len(available_features)} features: {available_features}")
     
     X = df_growth[available_features]
     y = df_growth['FUTURE_PEAK_HELIO']
-    
+
     # Train/Test Split (Random is okay for now, but Temporal is better. 
     # Given small dataset, let's just do random to get a working prototype).
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)

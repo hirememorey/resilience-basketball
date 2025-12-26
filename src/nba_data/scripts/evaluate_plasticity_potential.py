@@ -253,20 +253,33 @@ class StressVectorEngine:
 
     def calculate_subsidy_index(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Calculates the SUBSIDY_INDEX using the Max-Gate logic:
-        SkillIndex = Max(NormalizedSpeed, NormalizedTimeOfPoss)
+        Calculates the SUBSIDY_INDEX using the "Ownership Matrix" logic:
+        
+        SkillIndex = Max(NormalizedTimeOfPoss, NormalizedAstPct)
+        
+        Rationale:
+        - TimeOfPoss: Represents On-Ball Creation (Heliocentricity).
+        - AstPct: Represents Playmaking Creation (Hub / Floor General).
+        - Speed is EXCLUDED: High speed without ball/passing is "Activity", not "Ownership". 
+          (e.g., Cutters rely on screens/passers).
+          
         SubsidyIndex = 1.0 - SkillIndex
         """
-        logger.info("Calculating SUBSIDY_INDEX using Max-Gate logic...")
+        logger.info("Calculating SUBSIDY_INDEX using Ownership Matrix (Poss + Ast)...")
         
-        if 'avg_speed_offense' not in df.columns or 'time_of_poss' not in df.columns:
-            logger.warning("Required tracking metrics missing. Using default subsidy_index=0.5")
-            df['subsidy_index'] = 0.5
-            return df
+        # Ensure AST_PCT is present (fetch_player_metadata now grabs it)
+        if 'AST_PCT' not in df.columns:
+            logger.warning("AST_PCT missing for Subsidy Calculation. Fetching or defaulting...")
+            # Fallback if not in df (should be there from metadata now)
+            df['AST_PCT'] = 0.15 # League average-ish
+            
+        if 'time_of_poss' not in df.columns:
+             logger.warning("time_of_poss missing. Defaulting to 0.")
+             df['time_of_poss'] = 0.0
 
         # Fill NaNs
-        df['avg_speed_offense'] = df['avg_speed_offense'].fillna(df['avg_speed_offense'].median() if not df['avg_speed_offense'].empty else 4.4)
         df['time_of_poss'] = df['time_of_poss'].fillna(0.0)
+        df['AST_PCT'] = df['AST_PCT'].fillna(0.0)
 
         # Robust Normalization (5th to 95th percentile)
         def robust_norm(series):
@@ -275,11 +288,12 @@ class StressVectorEngine:
             if high == low: return pd.Series(0.0, index=series.index)
             return ((series - low) / (high - low)).clip(0, 1)
 
-        norm_speed = robust_norm(df['avg_speed_offense'])
         norm_poss = robust_norm(df['time_of_poss'])
+        norm_ast = robust_norm(df['AST_PCT'])
 
-        # The Max-Gate: Specialization in EITHER movement OR dominance is Skill
-        df['skill_index'] = np.maximum(norm_speed, norm_poss)
+        # The Max-Gate: Specialization in EITHER Ball Dominance OR Playmaking is Ownership.
+        # Speed is removed to expose "Empty Activity" merchants (Poole).
+        df['skill_index'] = np.maximum(norm_poss, norm_ast)
         
         # Subsidy is the inverse of skill
         df['subsidy_index'] = 1.0 - df['skill_index']
@@ -704,7 +718,7 @@ class StressVectorEngine:
             )
             
             # Verify required columns exist
-            required_cols = ['PLAYER_ID', 'PLAYER_NAME', 'USG_PCT', 'TS_PCT', 'AGE', 'MIN']
+            required_cols = ['PLAYER_ID', 'PLAYER_NAME', 'USG_PCT', 'TS_PCT', 'AST_PCT', 'AGE', 'MIN']
             missing_cols = [col for col in required_cols if col not in df_advanced.columns]
             if missing_cols:
                 logger.error(f"❌ Missing required columns in advanced_stats response: {missing_cols}")
