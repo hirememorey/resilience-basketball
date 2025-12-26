@@ -71,5 +71,8 @@ We have transitioned from ad-hoc scripts to a linear "Data Factory" pipeline.
 ## Next Steps
 
 1.  **Fix "Big Man Blindspot"**: Integrate `ELBOW_TOUCH_EFFICIENCY` and `POST_TOUCH_EFFICIENCY` into the Skill Index. (Jokic 2.74 is a physics violation).
-2.  **Refactor**: Update `evaluate_plasticity_potential.py` to use `src/nba_data/core/models.py`. (Partial Complete - Schema enforced).
+2.  **Implement Scalability Gradient**: Replace "Standardized Ceiling" hard logic with the **Elastic Volume Projection** (Insight #73).
+    - `Projected_Volume = Current_Usage + ((0.30 - Current_Usage) * Skill_Index)`
+    - This allows Tatum/Siakam to scale without breaking Harrell/Capela.
+3.  **Refactor**: Update `evaluate_plasticity_potential.py` to use `src/nba_data/core/models.py`. (Partial Complete - Schema enforced).
 3.  **Visualization**: Final polish on the Sloan Risk Matrix.

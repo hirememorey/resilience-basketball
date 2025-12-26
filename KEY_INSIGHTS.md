@@ -69,6 +69,18 @@ Players can appear elite against "Top 10 Defenses" in blowouts when starters are
 
 **The Fix (Next Steps)**: Integrate `ELBOW_TOUCH_EFFICIENCY` and `POST_TOUCH_EFFICIENCY` into the Skill Index for players > 6'9".
 
+## 73. The "Scalability Gradient" (Elasticity of Volume) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Early-career stars (Tatum '18, Siakam '19) are penalized for low usage, but arbitrarily projecting everyone to 30% usage creates false positives for "Efficiency Merchants" (Montrezl Harrell). Using a hard gate (e.g., "Only project if Subsidy < 0.4") violates the First Principle of "No Hard Gates."
+
+**The Insight**: Volume Scalability is not binary; it is a continuous function of **Ownership**. A player's ability to absorb new volume is proportional to their Skill Index.
+
+**The Fix**: Instead of a gate, use an **Elastic Projection**.
+- `Projected_Volume = Current_Usage + ((Target_Usage - Current_Usage) * (1.0 - Subsidy_Index))`
+- **Pure Owner (Subsidy 0.0)**: Gets full credit for the gap to 30% usage.
+- **Pure Merchant (Subsidy 1.0)**: Gets zero credit (stays at current usage).
+- **Result**: Tatum scales up. Harrell stays put. No magic thresholds required.
+
 ## See Also
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)
