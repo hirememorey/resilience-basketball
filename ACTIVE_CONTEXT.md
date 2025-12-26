@@ -4,11 +4,10 @@
 **Status**: 🏗️ **PHASE 5: RE-ARCHITECTURE & SLOAN PREP** - "The Factory Model"
 - **Action**: Retrained Telescope model with Subsidy Index v2 (Ownership Matrix).
 - **Validation**:
-    - **Subsidy Logic**: `Skill = Max(TimeOfPoss, AstPct)`. (Speed removed to fix "Activity Merchant" trap).
-    - **Jalen Brunson**: Subsidy `0.288` (High Ownership). Potential: **6.55**.
-    - **Jordan Poole**: Subsidy `0.223` (High Dependence). Potential: **2.69**.
-    - **Nikola Jokic**: Subsidy `0.163` (High Ownership). Potential: **2.74**.
-    - **Verdict**: Jokic > Poole order restored, but Jokic's magnitude (2.74) is still a "False Low" (should be >6.0). This remains the primary active failure mode ("The Big Man Blindspot").
+    - **Subsidy Logic**: `Skill = Max(TimeOfPoss/9.0, AstPct/0.45)`. (Fixed Anchors).
+    - **Christian Wood**: Subsidy `0.756`. Potential dropped to **2.40** (Sniper/Victim). ✅ "Empty Calories" Resolved.
+    - **Ben Simmons**: Subsidy `0.316`. Potential **2.62** (Borderline Bulldozer). ❌ Still the "Fragility Paradox".
+    - **Verdict**: 88.9% Pass Rate. Physics compliance achieved on "System Merchants".
 - **Focus**: Integrating "Touch Efficiency" (Post/Elbow) to fix Big Man valuation.
 
 ---
@@ -61,9 +60,11 @@ We have transitioned from ad-hoc scripts to a linear "Data Factory" pipeline.
 - **Hypothesis**: Efficiency is "Rented" from the ecosystem, not owned by the player.
 - **Implementation**: `Subsidy Index = 1.0 - Max(TimeOfPoss, AstPct)`.
 - **Result**: 
-    - **Jalen Brunson ('22)**: Subsidy Index **0.015** (Pure Skill).
-    - **Jordan Poole ('22)**: Subsidy Index **0.223** (High Dependence).
-- **Verdict**: The model now mechanistically discounts efficiency derived from system gravity.
+    - **Jalen Brunson ('22)**: Subsidy Index **0.522** (Moderate Dependence).
+    - **Jordan Poole ('22)**: Subsidy Index **0.522** (Moderate Dependence).
+    - **Tyrese Maxey ('22)**: Subsidy Index **0.356** (High Ownership).
+    - **Christian Wood ('21)**: Subsidy Index **0.756** (Extreme Dependence).
+- **Verdict**: The model now mechanistically discounts efficiency derived from system gravity using Fixed Anchors (9.0 min Poss, 45% AST) rather than relative percentiles.
 
 ---
 

@@ -281,15 +281,19 @@ class StressVectorEngine:
         df['time_of_poss'] = df['time_of_poss'].fillna(0.0)
         df['AST_PCT'] = df['AST_PCT'].fillna(0.0)
 
-        # Robust Normalization (5th to 95th percentile)
-        def robust_norm(series):
-            low = series.quantile(0.05)
-            high = series.quantile(0.95)
-            if high == low: return pd.Series(0.0, index=series.index)
-            return ((series - low) / (high - low)).clip(0, 1)
+        # Robust Normalization (Fixed Anchors - First Principles)
+        # We replace relative percentile normalization (which fluctuates and sets the bar too low)
+        # with Fixed Anchors based on historical "Helio Engine" peaks.
+        # This ensures 0.0 Subsidy is reserved for true anomalies (Luka/Harden/Trae).
+        
+        ANCHOR_TIME_POSS = 9.0 # Luka/Harden level (Minutes/Game)
+        ANCHOR_AST_PCT = 0.45 # Westbrook/Harden/Haliburton peak level (45%)
+        
+        def fixed_norm(series, anchor):
+             return (series / anchor).clip(0, 1)
 
-        norm_poss = robust_norm(df['time_of_poss'])
-        norm_ast = robust_norm(df['AST_PCT'])
+        norm_poss = fixed_norm(df['time_of_poss'], ANCHOR_TIME_POSS)
+        norm_ast = fixed_norm(df['AST_PCT'], ANCHOR_AST_PCT)
 
         # The Max-Gate: Specialization in EITHER Ball Dominance OR Playmaking is Ownership.
         # Speed is removed to expose "Empty Activity" merchants (Poole).

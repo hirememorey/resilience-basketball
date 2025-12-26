@@ -288,5 +288,39 @@ def validate_telescope_resilience():
     logger.info(f"Missing Data: {missing}")
     logger.info("="*120)
 
+    # 4. Output Results to Files
+    output_dir = Path("results")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # CSV Output
+    df_results = pd.DataFrame(results)
+    csv_path = output_dir / "telescope_validation_results.csv"
+    df_results.to_csv(csv_path, index=False)
+    logger.info(f"Detailed results saved to {csv_path}")
+    
+    # Markdown Output
+    md_path = output_dir / "telescope_validation_summary.md"
+    with open(md_path, 'w') as f:
+        f.write("# Telescope Model Validation Summary\n\n")
+        f.write(f"**Pass Rate**: {passed}/{total} ({passed/total:.1%})\n\n")
+        f.write("## Detailed Test Results\n\n")
+        f.write("| Player Name | Season | Subsidy | Potential | Predicted | Expected | Status |\n")
+        f.write("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
+        
+        for r in results:
+            if r.get('status') == 'MISSING DATA':
+                f.write(f"| {r['name']} | {r['season']} | - | - | - | - | ⚠️ MISSING |\n")
+            else:
+                status_emoji = "✅ PASS" if r['success'] else "❌ FAIL"
+                f.write(f"| {r['name']} | {r['season']} | {r['subsidy']:.3f} | {r['potential']:.2f} | {r['predicted_archetype']} | {r['expected']} | {status_emoji} |\n")
+                
+        if failures:
+            f.write("\n## Identified Failures\n\n")
+            for f_case in failures:
+                f.write(f"- **{f_case['name']} ({f_case['season']})**: Expected {f_case['expected']}, but model predicted {f_case['predicted_archetype']}. ")
+                f.write(f"(Potential: {f_case['potential']:.2f}, Subsidy: {f_case['subsidy']:.3f})\n")
+                
+    logger.info(f"Markdown summary saved to {md_path}")
+
 if __name__ == "__main__":
     validate_telescope_resilience()
