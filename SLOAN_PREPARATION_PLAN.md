@@ -49,6 +49,10 @@ The implementation addressed the key failure modes identified in the planning ph
     -   **Tool**: Streamlit (`src/nba_data/scripts/visualize_risk_matrix.py`).
     -   **Outcome**: Completed. The primary deliverable is live and operational.
 
+4.  [✅] **Resolve the "Fragility Paradox" (D-Lo / Simmons)**:
+    -   **Action**: Implemented the **Abdication Tax** and **Choke Tax** in the feature engineering pipeline.
+    -   **Outcome**: D'Angelo Russell ('19) was successfully demoted from "King" to "Sniper," resolving a major false positive. We now have a mechanistic explanation for "Empty Calorie" volume.
+
 ## Project Architecture Update: The "Factory Model"
 
 In addition to the Sloan preparation, the project underwent a significant re-architecture to improve reproducibility and reduce entropy.

@@ -83,6 +83,30 @@ Players can appear elite against "Top 10 Defenses" in blowouts when starters are
 - **Pure Merchant (Subsidy 1.0)**: Gets zero credit (stays at current usage).
 - **Result**: Tatum scales up. Harrell stays put. No magic thresholds required.
 
+## 74. The "Abdication and Choke" Taxes (Fragility v3.5) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Players with high ownership and high volume (Ben Simmons, D'Angelo Russell, KAT) can fool the model into predicting stardom, despite known playoff fragility. "Owned" volume is not enough if that ownership is fragile.
+
+**The Insight**: Stylistic Fragility manifests in two distinct physics-based failure modes:
+1.  **Abdication (Fear)**: Usage plummeting in high-leverage moments (`LEVERAGE_USG_DELTA`). Simmons/D-Lo famously stop looking for shots.
+2.  **Choking (Incompetence)**: Efficiency plummeting while volume stays high (`LEVERAGE_TS_DELTA`). KAT continues to shoot but the quality collapses under pressure.
+
+**The Fix**: Implement a composite `FRAGILITY_SCORE` that applies multiplicative penalties for both modes.
+- **Abdication Tax**: `(leverage_usg_delta * -15.0)`
+- **Choke Tax**: `(leverage_ts_delta * -5.0)`
+- **Result**: D'Angelo Russell ('19) was successfully demoted from **King** to **Sniper** (Potential 5.8 -> 1.4).
+
+## 75. The "Linearity Trap" (ML vs. Physics) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Despite having a high Fragility Score, some elite players (Simmons, KAT) remain predicted as "Kings" by the Telescope Model.
+
+**The Insight**: In a tree-based or linear model, the "Sum of Parts" for an elite athlete (Elite Defense + Elite Playmaking + 30% Usage) is so high that the "Fragility Penalty" is insufficient to move the needle. The model learns that high volume is the ultimate signal, drowning out the drag coefficient.
+
+**The Fix**: For true "Type 1" protection (False Positives), the engine requires a **Two-Stage Architecture**:
+1.  **Filter (The Physics)**: A hard gate based on the Fragility Score.
+2.  **Rank (The ML)**: Rank the survivors based on projected potential.
+*Principle: You cannot "Average" your way out of a fatal flaw.*
+
 ## See Also
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)

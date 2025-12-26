@@ -45,7 +45,9 @@ FEATURES = [
     'projected_playoff_pps',
     'projected_playoff_output',
     'helio_above_replacement_value',
-    'avg_opponent_dcs'
+    'avg_opponent_dcs',
+    'fragility_score',
+    'physicality_score'
 ]
 
 def load_and_merge_data():

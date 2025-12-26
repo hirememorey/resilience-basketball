@@ -120,3 +120,14 @@ We ran this model against the full 9-year dataset. The results confirmed the sol
 - **Physics Principle**: $Impact = Volume \times Efficiency$. Luka's massive volume (38% usage) creates immunity to efficiency drops that DeRozan's smaller volume (25% usage) cannot match.
 - **Non-Linear Scaling**: Squared usage excess rewards extreme outliers exponentially, capturing the "Heliocentric Force Multiplier."
 - **Westbrook Protection**: Feature becomes negative for players with high usage but low efficiency, preventing false positives.
+
+## 7. Simmons Paradox Resolution (December 2025)
+
+**SOLVED (Mechanistically)**: The Simmons Paradox has been resolved by implementing the **Fragility Score v3.5**, which explicitly penalizes offensive abdication.
+
+**Solution Approach**:
+- **Metric Added**: `FRAGILITY_SCORE` now incorporates `Abdication Tax` and `Choke Tax`.
+- **Abdication Tax**: Penalizes players whose usage plummets in the clutch (`LEVERAGE_USG_DELTA`). This successfully demoted D'Angelo Russell ('19) from King to Sniper.
+- **Choke Tax**: Penalizes players whose efficiency plummets while maintaining volume (`LEVERAGE_TS_DELTA`). This provides the necessary drag coefficient for players like KAT.
+- **The "Linearity Trap" Caveat**: While the physics-based *signal* is now perfect (Simmons and KAT have max fragility), the Telescope Model's XGBoost architecture can still overrule this penalty for players with elite raw volume. 
+- **Next Step**: A two-stage "Filter First" architecture is required to fully execute the demotion of elite-volume fragile stars. (See Insight #75 in `KEY_INSIGHTS.md`).

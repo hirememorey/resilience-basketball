@@ -75,6 +75,15 @@ class PlayerSeason(BaseModel):
     skill_index: Optional[float] = Field(None, ge=0, le=1.0)
     subsidy_index: Optional[float] = Field(None, ge=0, le=1.0) # 0.0 = Pure Skill, 1.0 = Purely Subsidized
 
+    # Vector 5: Stylistic Fragility (The "Durability" Dimension)
+    physicality_score: Optional[float] = Field(None, ge=0, le=1.0) # 1.0 = Elite Physicality
+    fragility_score: Optional[float] = Field(None, ge=0, le=1.0) # 1.0 = Extremely Fragile
+    inefficient_volume_score: Optional[float] = Field(None, ge=0, le=1.0)
+    
+    # Vector 2: Leverage (Clutch) - Explicitly added for debugging/persistence
+    leverage_usg_delta: Optional[float] = None
+    leverage_ts_delta: Optional[float] = None
+
     # Outputs (Projected)
     projected_playoff_pps: Optional[float] = None
     projected_playoff_output: Optional[float] = None

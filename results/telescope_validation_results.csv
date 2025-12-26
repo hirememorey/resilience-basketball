@@ -1,41 +1,41 @@
-name,season,category,subsidy,potential,predicted_archetype,risk_cat,expected,success
-Shai Gilgeous-Alexander,2018-19,True Positive - Latent Star,0.5777777777777777,4.59992,King,Luxury Component,Bulldozer,True
-Victor Oladipo,2016-17,True Positive - Latent Star,0.7288888888888889,1.281369,Sniper,Avoid/System Merchant,Bulldozer,False
-Jalen Brunson,2020-21,True Positive - Latent Star,0.5222222222222223,6.56244,King,Luxury Component,Bulldozer,True
-Tyrese Maxey,2021-22,True Positive - Latent Star,0.3555555555555556,4.956146,King,Luxury Component,Bulldozer,True
-Pascal Siakam,2018-19,True Positive - Latent Star,0.6866666666666668,2.2126749,Sniper,Avoid/System Merchant,Bulldozer,False
-Jayson Tatum,2017-18,True Positive - Rookie Sensation,0.8,1.6470509,Sniper,Avoid/System Merchant,Bulldozer,False
-Mikal Bridges,2021-22,True Positive - Usage Shock,0.8133333333333334,0.5544317,Victim,Avoid/System Merchant,Bulldozer,False
-Desmond Bane,2021-22,True Positive - Latent Star,0.6977777777777778,0.88630074,Victim,Avoid/System Merchant,Bulldozer,False
-Nikola Jokić,2015-16,True Positive - Franchise Cornerstone,0.6088888888888889,1.0179766,Sniper,Avoid/System Merchant,King,False
-Nikola Jokić,2016-17,True Positive - Franchise Cornerstone,0.4088888888888888,1.9955742,Sniper,Avoid/System Merchant,King,False
-Nikola Jokić,2017-18,True Positive - Franchise Cornerstone,0.3644444444444444,2.5196707,Bulldozer,Luxury Component,King,True
-Nikola Jokić,2018-19,True Positive - Franchise Cornerstone,0.1977777777777778,7.5418024,King,Luxury Component,King,True
-Anthony Davis,2015-16,True Positive - Franchise Cornerstone,0.26,4.229914,King,Luxury Component,Bulldozer,True
-Anthony Davis,2016-17,True Positive - Franchise Cornerstone,0.1300000000000001,4.831563,King,Franchise Cornerstone,Bulldozer,True
-Joel Embiid,2016-17,True Positive - Franchise Cornerstone,0.3099999999999999,0.516233,Victim,Avoid/System Merchant,King,False
-Joel Embiid,2017-18,True Positive - Franchise Cornerstone,0.0,5.778467,King,Franchise Cornerstone,Bulldozer,True
-Jordan Poole,2021-22,False Positive - Mirage Breakout,0.5222222222222223,1.307986,Sniper,Avoid/System Merchant,Victim,True
-Talen Horton-Tucker,2020-21,False Positive - Mirage Breakout,0.5355555555555556,2.5719044,Bulldozer,Luxury Component,Victim,False
-Christian Wood,2020-21,False Positive - Empty Calories,0.61,1.3165197,Sniper,Avoid/System Merchant,Victim,True
-D'Angelo Russell,2018-19,False Positive - Fool's Gold,0.1288888888888888,6.2531314,King,Franchise Cornerstone,Victim,False
-Julius Randle,2020-21,False Positive - Empty Calories,0.4022222222222221,2.2881706,Sniper,Avoid/System Merchant,Victim,True
-Ben Simmons,2017-18,True Negative - Fragile Star,0.1955555555555556,6.174756,King,Luxury Component,Victim,False
-Ben Simmons,2018-19,True Negative - Fragile Star,0.2422222222222222,6.947499,King,Luxury Component,Victim,False
-Ben Simmons,2020-21,True Negative - Fragile Star,0.3155555555555556,3.6699138,Bulldozer,Luxury Component,Victim,False
-Tyus Jones,2021-22,System Player - Ceiling Test,0.3666666666666667,2.066945,Sniper,Avoid/System Merchant,Sniper,True
-Domantas Sabonis,2021-22,True Negative - Comparison Case,0.4099999999999999,2.500449,Bulldozer,Luxury Component,Victim,True
-Tyrese Haliburton,2021-22,True Positive - Comparison Case,0.2555555555555555,6.9958816,King,Luxury Component,Bulldozer,True
-Karl-Anthony Towns,2015-16,True Negative - Empty Stats Star,0.3800000000000001,1.7614845,Sniper,Avoid/System Merchant,Victim,True
-Karl-Anthony Towns,2016-17,True Negative - Empty Stats Star,0.09,5.9820724,King,Franchise Cornerstone,Victim,False
-Karl-Anthony Towns,2017-18,True Negative - Empty Stats Star,0.3399999999999999,1.3046283,Sniper,Avoid/System Merchant,Victim,True
-Karl-Anthony Towns,2018-19,True Negative - Empty Stats Star,0.09,7.0127034,King,Franchise Cornerstone,Victim,False
-Karl-Anthony Towns,2019-20,True Negative - Empty Stats Star,0.4,0.46003643,Victim,Avoid/System Merchant,Victim,True
-Karl-Anthony Towns,2020-21,True Negative - Empty Stats Star,0.42,2.2401278,Sniper,Avoid/System Merchant,Victim,True
-Markelle Fultz,2017-18,True Negative - Draft Bust,0.3466666666666667,3.36823,Bulldozer,Luxury Component,Victim,False
-Markelle Fultz,2018-19,True Negative - Draft Bust,0.528888888888889,2.9488919,Bulldozer,Luxury Component,Victim,False
-Markelle Fultz,2019-20,True Negative - Draft Bust,0.3777777777777777,2.93668,Bulldozer,Luxury Component,Victim,False
-Markelle Fultz,2020-21,True Negative - Draft Bust,0.3222222222222223,2.2868502,Sniper,Avoid/System Merchant,Victim,True
-Markelle Fultz,2021-22,True Negative - Draft Bust,0.0044444444444444,2.3063896,Sniper,Depth Piece,Victim,True
-Markelle Fultz,2022-23,True Negative - Draft Bust,0.3555555555555556,2.217866,Sniper,Avoid/System Merchant,Victim,True
-Markelle Fultz,2023-24,True Negative - Draft Bust,0.5688888888888889,2.1334493,Sniper,Avoid/System Merchant,Victim,True
+name,season,category,subsidy,potential,predicted_archetype,risk_cat,expected,success,status
+Shai Gilgeous-Alexander,2018-19,True Positive - Latent Star,0.5777777777777777,4.0850348472595215,King,Luxury Component,Bulldozer,True,
+Victor Oladipo,2016-17,True Positive - Latent Star,0.7288888888888889,1.2093535661697388,Sniper,Avoid/System Merchant,Bulldozer,False,
+Jalen Brunson,2020-21,True Positive - Latent Star,0.5222222222222223,6.817600250244141,King,Luxury Component,Bulldozer,True,
+Tyrese Maxey,2021-22,True Positive - Latent Star,0.3555555555555556,5.614352703094482,King,Luxury Component,Bulldozer,True,
+Pascal Siakam,2018-19,True Positive - Latent Star,0.6866666666666668,2.57536244392395,Bulldozer,Luxury Component,Bulldozer,True,
+Jayson Tatum,2017-18,True Positive - Rookie Sensation,0.8,2.5235958099365234,Bulldozer,Luxury Component,Bulldozer,True,
+Mikal Bridges,2021-22,True Positive - Usage Shock,0.8133333333333334,1.1529924869537354,Sniper,Avoid/System Merchant,Bulldozer,False,
+Desmond Bane,2021-22,True Positive - Latent Star,0.6977777777777778,0.6886301636695862,Victim,Avoid/System Merchant,Bulldozer,False,
+Nikola Jokić,2015-16,True Positive - Franchise Cornerstone,0.6088888888888889,0.8646232485771179,Victim,Avoid/System Merchant,King,False,
+Nikola Jokić,2016-17,True Positive - Franchise Cornerstone,0.4088888888888888,2.263481855392456,Sniper,Avoid/System Merchant,King,False,
+Nikola Jokić,2017-18,True Positive - Franchise Cornerstone,0.3644444444444444,3.899604082107544,Bulldozer,Luxury Component,King,True,
+Nikola Jokić,2018-19,True Positive - Franchise Cornerstone,0.1977777777777778,4.398131370544434,King,Luxury Component,King,True,
+Anthony Davis,2015-16,True Positive - Franchise Cornerstone,0.26,1.7775081396102905,Sniper,Avoid/System Merchant,Bulldozer,False,
+Anthony Davis,2016-17,True Positive - Franchise Cornerstone,0.1300000000000001,4.979824542999268,King,Franchise Cornerstone,Bulldozer,True,
+Joel Embiid,2016-17,True Positive - Franchise Cornerstone,0.3099999999999999,0.7126957774162292,Victim,Avoid/System Merchant,King,False,
+Joel Embiid,2017-18,True Positive - Franchise Cornerstone,0.0,6.1318559646606445,King,Franchise Cornerstone,Bulldozer,True,
+Jordan Poole,2021-22,False Positive - Mirage Breakout,0.5222222222222223,0.6376820802688599,Victim,Avoid/System Merchant,Victim,True,
+Talen Horton-Tucker,2020-21,,,,,,,,MISSING DATA
+Christian Wood,2020-21,False Positive - Empty Calories,0.61,0.741783857345581,Victim,Avoid/System Merchant,Victim,True,
+D'Angelo Russell,2018-19,False Positive - Fool's Gold,0.1288888888888888,1.427453875541687,Sniper,Depth Piece,Victim,True,
+Julius Randle,2020-21,False Positive - Empty Calories,0.4022222222222221,4.45984411239624,King,Luxury Component,Victim,False,
+Ben Simmons,2017-18,True Negative - Fragile Star,0.1955555555555556,4.710883617401123,King,Luxury Component,Victim,False,
+Ben Simmons,2018-19,True Negative - Fragile Star,0.2422222222222222,4.3239850997924805,King,Luxury Component,Victim,False,
+Ben Simmons,2020-21,True Negative - Fragile Star,0.3155555555555556,4.427099704742432,King,Luxury Component,Victim,False,
+Tyus Jones,2021-22,System Player - Ceiling Test,0.3666666666666667,2.2387332916259766,Sniper,Avoid/System Merchant,Sniper,True,
+Domantas Sabonis,2021-22,True Negative - Comparison Case,0.4099999999999999,2.263091564178467,Sniper,Avoid/System Merchant,Victim,True,
+Tyrese Haliburton,2021-22,True Positive - Comparison Case,0.2555555555555555,3.638289213180542,Bulldozer,Luxury Component,Bulldozer,True,
+Karl-Anthony Towns,2015-16,True Negative - Empty Stats Star,0.3800000000000001,2.466834306716919,Sniper,Avoid/System Merchant,Victim,True,
+Karl-Anthony Towns,2016-17,True Negative - Empty Stats Star,0.09,3.1241135597229004,Bulldozer,Franchise Cornerstone,Victim,False,
+Karl-Anthony Towns,2017-18,True Negative - Empty Stats Star,0.3399999999999999,1.8321666717529297,Sniper,Avoid/System Merchant,Victim,True,
+Karl-Anthony Towns,2018-19,True Negative - Empty Stats Star,0.09,4.948183059692383,King,Franchise Cornerstone,Victim,False,
+Karl-Anthony Towns,2019-20,True Negative - Empty Stats Star,0.4,1.091863989830017,Sniper,Avoid/System Merchant,Victim,True,
+Karl-Anthony Towns,2020-21,True Negative - Empty Stats Star,0.42,2.506411552429199,Bulldozer,Luxury Component,Victim,False,
+Markelle Fultz,2017-18,,,,,,,,MISSING DATA
+Markelle Fultz,2018-19,,,,,,,,MISSING DATA
+Markelle Fultz,2019-20,True Negative - Draft Bust,0.3777777777777777,3.6956026554107666,Bulldozer,Luxury Component,Victim,False,
+Markelle Fultz,2020-21,,,,,,,,MISSING DATA
+Markelle Fultz,2021-22,,,,,,,,MISSING DATA
+Markelle Fultz,2022-23,True Negative - Draft Bust,0.3555555555555556,2.4269559383392334,Sniper,Avoid/System Merchant,Victim,True,
+Markelle Fultz,2023-24,True Negative - Draft Bust,0.5688888888888889,1.4965847730636597,Sniper,Avoid/System Merchant,Victim,True,

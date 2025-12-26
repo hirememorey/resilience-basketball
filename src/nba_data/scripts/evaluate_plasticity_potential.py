@@ -731,37 +731,88 @@ class StressVectorEngine:
             return pd.DataFrame()
 
     def _calculate_fragility_score(self, df: pd.DataFrame) -> pd.DataFrame:
-        logger.info("Calculating FRAGILITY_SCORE (v3)...")
+        logger.info("Calculating FRAGILITY_SCORE (v3.5 - The Abdication Update)...")
 
         def robust_normalize(series):
             min_val = series.quantile(0.05)
             max_val = series.quantile(0.95)
             if (max_val - min_val) == 0: return pd.Series(0.5, index=series.index)
             return ((series - min_val) / (max_val - min_val)).clip(0, 1)
+
         # 1. Calculate base Physicality Score
         norm_ftr = robust_normalize(df.get('RS_FTr', pd.Series(0, index=df.index)))
         norm_rim_appetite = robust_normalize(df.get('RS_RIM_APPETITE', pd.Series(0, index=df.index)))
         physicality_score = (0.6 * norm_ftr + 0.4 * norm_rim_appetite).fillna(0.5)
+
         # 2. De-Risking: "The Curry Paradox" (Sniper Exception)
-        qualified_mask = df.get('TOTAL_FGA_TRACKED', pd.Series(0, index=df.index)) > 200 # Use existing volume metric
+        qualified_mask = df.get('TOTAL_FGA_TRACKED', pd.Series(0, index=df.index)) > 200
         qualified_players = df[qualified_mask]
-        efg_95th = qualified_players['EFG_ISO_WEIGHTED'].quantile(0.95)
-        sq_delta_95th = qualified_players['SHOT_QUALITY_GENERATION_DELTA'].quantile(0.95)
+        
+        # Calculate thresholds only if we have data
+        if not qualified_players.empty:
+            efg_95th = qualified_players['EFG_ISO_WEIGHTED'].quantile(0.95)
+            sq_delta_95th = qualified_players['SHOT_QUALITY_GENERATION_DELTA'].quantile(0.95)
+        else:
+            efg_95th = 0.60
+            sq_delta_95th = 0.15
+
         is_elite_shooter = (df['EFG_ISO_WEIGHTED'] > efg_95th) | (df['SHOT_QUALITY_GENERATION_DELTA'] > sq_delta_95th)
         physicality_score.loc[is_elite_shooter] = 1.0 # Immune to penalty
+
         # 3. De-Risking: "The Grifter Trap" (Trae Young Rule)
-        ftr_80th = qualified_players['RS_FTr'].quantile(0.80)
-        rim_appetite_40th = qualified_players['RS_RIM_APPETITE'].quantile(0.40)
+        if not qualified_players.empty:
+            ftr_80th = qualified_players['RS_FTr'].quantile(0.80)
+            rim_appetite_40th = qualified_players['RS_RIM_APPETITE'].quantile(0.40)
+        else:
+            ftr_80th = 0.40
+            rim_appetite_40th = 0.20
+            
         is_grifter = (df['RS_FTr'] > ftr_80th) & (df['RS_RIM_APPETITE'] < rim_appetite_40th)
         physicality_score.loc[is_grifter] = physicality_score.loc[is_grifter].clip(upper=0.5)
-        # 4. Calculate Final Fragility Score
+        
+        # 4. The Abdication & Choke Multiplier (Simmons/KAT Rule)
+        # Fragility manifests as either Fear (Abdication) or Incompetence (Choking).
+        
+        leverage_usg_delta = df.get('LEVERAGE_USG_DELTA', pd.Series(0, index=df.index))
+        leverage_ts_delta = df.get('LEVERAGE_TS_DELTA', pd.Series(0, index=df.index))
+        
+        # LOGGING PROBE: Check Ben Simmons ('19) and KAT ('19)
+        # We need to see the raw delta to tune the slope.
+        # Check column case (PLAYER_NAME vs player_name)
+        # p_col = 'PLAYER_NAME' if 'PLAYER_NAME' in df.columns else 'player_name'
+        # s_col = 'SEASON' if 'SEASON' in df.columns else 'season'
+        
+        # probe_mask = df[p_col].isin(['Ben Simmons', 'Karl-Anthony Towns']) & df[s_col].str.contains('2018-19')
+        # if probe_mask.any():
+        #     logger.info("  [PROBE] Leverage Delta for Key Cases:")
+        #     logger.info(df.loc[probe_mask, [p_col, s_col, 'LEVERAGE_USG_DELTA', 'LEVERAGE_TS_DELTA']])
+
+        # Component A: ABDICATION (Usage Drop) - The Simmons Tax
+        # -6.7% drop -> 1.0 Penalty. Slope -15.0.
+        abdication_penalty = (leverage_usg_delta * -15.0).clip(0, 1.0)
+        
+        # Component B: CHOKING (Efficiency Drop) - The KAT Tax
+        # -11.9% drop -> 0.60 Penalty. Slope -5.0.
+        choke_penalty = (leverage_ts_delta * -5.0).clip(0, 1.0)
+        
+        # Combined Penalty (Take the MAX of either fear or failure)
+        leverage_fragility = np.maximum(abdication_penalty, choke_penalty)
+        
+        # 5. Calculate Final Fragility Score
         norm_open_shot_freq = robust_normalize(df.get('RS_OPEN_SHOT_FREQUENCY', pd.Series(0, index=df.index)))
         norm_sq_delta = robust_normalize(df.get('SHOT_QUALITY_GENERATION_DELTA', pd.Series(0, index=df.index)))
-        df['FRAGILITY_SCORE'] = (
-            ((1.0 - physicality_score) * 0.50) +
-            (norm_open_shot_freq * 0.30) +
-            ((1.0 - norm_sq_delta) * 0.20)
-        ).fillna(0.5)
+        
+        # Base Fragility: Lack of Physicality + Reliance on Open Shots
+        base_fragility = ((1.0 - physicality_score) * 0.40) + (norm_open_shot_freq * 0.30)
+        
+        # Add Leverage Fragility (The key fix)
+        df['FRAGILITY_SCORE'] = (base_fragility + leverage_fragility).clip(0, 1.0)
+        
+        # De-risk elite creators (SQ Delta) from being flagged as fragile unless they abdicate
+        # If you create great shots (High SQ Delta) AND don't abdicate, you are robust.
+        is_elite_creator = norm_sq_delta > 0.8
+        df.loc[is_elite_creator, 'FRAGILITY_SCORE'] *= 0.5
+        
         logger.info(f"  -> FRAGILITY_SCORE calculated. Average: {df['FRAGILITY_SCORE'].mean():.3f}")
         return df
 
