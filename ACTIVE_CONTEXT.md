@@ -2,13 +2,13 @@
 
 **Last Updated**: December 26, 2025
 **Status**: 🏗️ **PHASE 5: RE-ARCHITECTURE & SLOAN PREP** - "The Factory Model"
-- **Action**: Retrained Telescope model with Subsidy Index v2 (Ownership Matrix).
+- **Action**: Retrained Telescope model with **Subsidy Index v3 (Touch Ownership)**.
 - **Validation**:
-    - **Subsidy Logic**: `Skill = Max(TimeOfPoss/9.0, AstPct/0.45)`. (Fixed Anchors).
-    - **Christian Wood**: Subsidy `0.756`. Potential dropped to **2.40** (Sniper/Victim). ✅ "Empty Calories" Resolved.
-    - **Ben Simmons**: Subsidy `0.316`. Potential **2.62** (Borderline Bulldozer). ❌ Still the "Fragility Paradox".
-    - **Verdict**: 88.9% Pass Rate. Physics compliance achieved on "System Merchants".
-- **Focus**: Integrating "Touch Efficiency" (Post/Elbow) to fix Big Man valuation.
+    - **Subsidy Logic**: `Skill = Max(TimeOfPoss/9.0, AstPct/0.45, TouchPts/10.0)`. (Fixed Anchors).
+    - **Nikola Jokić ('19)**: Subsidy `0.198`. Potential **7.54** (King). ✅ "Big Man Blindspot" Resolved.
+    - **Ben Simmons ('21)**: Subsidy `0.316`. Potential **3.67** (Bulldozer). ❌ Still the "Fragility Paradox".
+    - **Verdict**: 55.0% Pass Rate. Physics compliance on "Ownership" achieved.
+- **Focus**: Integrating a "Fragility Score" to penalize players who abdicate offensive responsibility (Simmons/Towns).
 
 ---
 
@@ -58,21 +58,21 @@ We have transitioned from ad-hoc scripts to a linear "Data Factory" pipeline.
 
 ### ✅ **The "System Merchant" Filter (Subsidy Index)**
 - **Hypothesis**: Efficiency is "Rented" from the ecosystem, not owned by the player.
-- **Implementation**: `Subsidy Index = 1.0 - Max(TimeOfPoss, AstPct)`.
+- **Implementation**: `Subsidy Index = 1.0 - Max(TimeOfPoss, AstPct, TouchPts)`.
 - **Result**: 
+    - **Nikola Jokić ('19)**: Subsidy Index **0.198** (Elite Ownership).
     - **Jalen Brunson ('22)**: Subsidy Index **0.522** (Moderate Dependence).
     - **Jordan Poole ('22)**: Subsidy Index **0.522** (Moderate Dependence).
-    - **Tyrese Maxey ('22)**: Subsidy Index **0.356** (High Ownership).
     - **Christian Wood ('21)**: Subsidy Index **0.756** (Extreme Dependence).
-- **Verdict**: The model now mechanistically discounts efficiency derived from system gravity using Fixed Anchors (9.0 min Poss, 45% AST) rather than relative percentiles.
+- **Verdict**: The model now mechanistically discounts efficiency derived from system gravity using Fixed Anchors for Guards (Poss/Ast) and Bigs (TouchPts), resolving a key physics violation.
 
 ---
 
 ## Next Steps
 
-1.  **Fix "Big Man Blindspot"**: Integrate `ELBOW_TOUCH_EFFICIENCY` and `POST_TOUCH_EFFICIENCY` into the Skill Index. (Jokic 2.74 is a physics violation).
+1.  **Resolve "Fragility Paradox"**: Enhance the `FRAGILITY_SCORE` to more heavily penalize players with a history of offensive abdication (negative `LEVERAGE_USG_DELTA`) or an inability to generate their own shot (`CREATION_TAX`). This is now the highest priority to fix the Simmons/Towns false positives.
 2.  **Implement Scalability Gradient**: Replace "Standardized Ceiling" hard logic with the **Elastic Volume Projection** (Insight #73).
     - `Projected_Volume = Current_Usage + ((0.30 - Current_Usage) * Skill_Index)`
-    - This allows Tatum/Siakam to scale without breaking Harrell/Capela.
-3.  **Refactor**: Update `evaluate_plasticity_potential.py` to use `src/nba_data/core/models.py`. (Partial Complete - Schema enforced).
-3.  **Visualization**: Final polish on the Sloan Risk Matrix.
+    - This will help with the early-career projection misses (Tatum/Embiid).
+3.  **Refactor**: Finalize the transition of `evaluate_plasticity_potential.py` to use `src/nba_data/core/models.py`. (Partial Complete - Schema enforced).
+4.  **Visualization**: Final polish on the Sloan Risk Matrix.

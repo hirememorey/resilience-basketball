@@ -1,7 +1,7 @@
 # Universal Projection Implementation: Fixing the "Static Avatar" Fallacy & The "Poole Mirage"
 
 **Date**: December 2025  
-**Status**: ✅ **COMPLETE** (v2 with Subsidy Index)  
+**Status**: ✅ **COMPLETE** (v3 with Touch Ownership)  
 **Priority**: High - Core Model Logic Upgrade
 
 ## The Problem: "Static Avatar" Fallacy & The "Poole Mirage"
@@ -23,7 +23,8 @@ Using Player Tracking data, we define Skill as either **Kinetic Energy** (Moveme
 $$SkillIndex = Max(NormalizedSpeed_{Offense}, NormalizedTimeOfPossession)$$
 $$SubsidyIndex = 1.0 - SkillIndex$$
 
-*Note: As of Dec 26, 2025, Speed has been removed from the Skill Index to avoid the "Activity Merchant" trap (e.g., Jordan Poole). The formula is now Max(TimeOfPoss, AstPct).*
+*Note: As of Dec 26, 2025, the formula is now a 3-dimensional Max-Gate to include "Touch Ownership" for big men.*
+$$SkillIndex = Max(NormalizedTimeOfPoss, NormalizedAstPct, NormalizedTouchProduction)$$
 
 - **Treatment**: Efficiency is taxed by the Subsidy Index before projection. A player with high subsidy (Low speed, Low possession time) has their baseline efficiency discounted by up to 50%.
 
@@ -84,22 +85,20 @@ Modified `prepare_features()` to:
 
 ## Validation: The "Ground Truth" Test (2021-22)
 
-| Metric | Jalen Brunson (Engine) | Jordan Poole (Merchant) |
+| Metric | Nikola Jokić ('19) (Owner) | Jordan Poole ('22) (Merchant) |
 | :--- | :--- | :--- |
-| **Subsidy Index** | **0.015** (1.5%) | **0.223** (22.3%) |
+| **Subsidy Index** | **0.198** (19.8%) | **0.522** (52.2%) |
 | **Projected Impact** | **Scales** with usage. | **Discounted** by subsidy tax. |
 
-The system now correctly identifies that Poole's efficiency was 15x more subsidized than Brunson's, solving the "Mirage Breakout" failure mode.
+The system now correctly identifies that Poole's efficiency was ~2.6x more subsidized than Jokic's, resolving both the "Mirage Breakout" and "Big Man Blindspot" failure modes.
 
 ## Files Modified
 
 1. **`src/nba_data/scripts/evaluate_plasticity_potential.py`**:
-   - Added `fetch_tracking_metrics()` for Speed and Possession Time.
-   - Implemented `calculate_subsidy_index()` using Max-Gate logic.
-   - Updated `calculate_projected_playoff_output()` to apply the Subsidy Tax.
+   - Added `fetch_touch_metrics()` for Post and Elbow production.
+   - Updated `calculate_subsidy_index()` to use the 3-dimensional Max-Gate logic.
 2. **`src/nba_data/core/models.py`**:
-   - Added `subsidy_index`, `avg_speed_offense`, and `time_of_poss` to `PlayerSeason`.
-   - Added projected outputs (`projected_playoff_pps`, etc.) to schema.
+   - Added `weighted_touch_production` and `skill_index` to `PlayerSeason` schema for validation and debugging.
 
 ## Key Principles
 

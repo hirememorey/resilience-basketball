@@ -71,6 +71,8 @@ class PlayerSeason(BaseModel):
     # Vector 4: System Dependence (The Subsidy Index)
     avg_speed_offense: Optional[float] = Field(None, ge=0)
     time_of_poss: Optional[float] = Field(None, ge=0)
+    weighted_touch_production: Optional[float] = Field(None, ge=0)
+    skill_index: Optional[float] = Field(None, ge=0, le=1.0)
     subsidy_index: Optional[float] = Field(None, ge=0, le=1.0) # 0.0 = Pure Skill, 1.0 = Purely Subsidized
 
     # Outputs (Projected)

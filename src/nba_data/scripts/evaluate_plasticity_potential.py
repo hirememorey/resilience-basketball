@@ -251,35 +251,101 @@ class StressVectorEngine:
             logger.error(f"❌ Error fetching tracking metrics for {season}: {e}", exc_info=True)
             return pd.DataFrame()
 
+    def fetch_touch_metrics(self, season: str, season_type: str = "Regular Season") -> pd.DataFrame:
+        """
+        Fetches 'PostTouch' and 'ElbowTouch' tracking data to solve the 'Big Man Blindspot'.
+        
+        This data proves 'Ownership' for players who create offense without dribbling or passing
+        (e.g., Jokic, Embiid, Sabonis).
+        """
+        logger.info(f"Fetching Touch Metrics (Post & Elbow) for {season} ({season_type})...")
+        try:
+            # 1. Fetch Post Touches
+            logger.info(f"  - Fetching PostTouch stats...")
+            post_data = self.client.get_league_player_tracking_stats(
+                season=season, 
+                pt_measure_type="PostTouch",
+                season_type=season_type
+            )
+            
+            # 2. Fetch Elbow Touches
+            logger.info(f"  - Fetching ElbowTouch stats...")
+            time.sleep(0.6) # Rate limit kindness
+            elbow_data = self.client.get_league_player_tracking_stats(
+                season=season, 
+                pt_measure_type="ElbowTouch",
+                season_type=season_type
+            )
+
+            # Process Post Data
+            if post_data and 'resultSets' in post_data:
+                headers_post = post_data['resultSets'][0]['headers']
+                rows_post = post_data['resultSets'][0]['rowSet']
+                df_post = pd.DataFrame(rows_post, columns=headers_post)
+                # Key metrics: Touches (Volume) and Points (Efficiency/Production)
+                # We need columns that indicate Creation.
+                # POST_TOUCHES: Volume
+                # POST_TOUCH_PTS: Production
+                df_post = df_post[['PLAYER_ID', 'POST_TOUCHES', 'POST_TOUCH_PTS']]
+                df_post = df_post.rename(columns={
+                    'POST_TOUCHES': 'post_touches',
+                    'POST_TOUCH_PTS': 'post_touch_pts'
+                })
+            else:
+                df_post = pd.DataFrame(columns=['PLAYER_ID', 'post_touches', 'post_touch_pts'])
+
+            # Process Elbow Data
+            if elbow_data and 'resultSets' in elbow_data:
+                headers_elbow = elbow_data['resultSets'][0]['headers']
+                rows_elbow = elbow_data['resultSets'][0]['rowSet']
+                df_elbow = pd.DataFrame(rows_elbow, columns=headers_elbow)
+                df_elbow = df_elbow[['PLAYER_ID', 'ELBOW_TOUCHES', 'ELBOW_TOUCH_PTS']]
+                df_elbow = df_elbow.rename(columns={
+                    'ELBOW_TOUCHES': 'elbow_touches',
+                    'ELBOW_TOUCH_PTS': 'elbow_touch_pts'
+                })
+            else:
+                df_elbow = pd.DataFrame(columns=['PLAYER_ID', 'elbow_touches', 'elbow_touch_pts'])
+            
+            # Merge
+            df_touch = pd.merge(df_post, df_elbow, on='PLAYER_ID', how='outer').fillna(0)
+            
+            # Calculate Derived Metrics for Indexing
+            # We want a "Touch Creation" metric. 
+            # Simple Sum for now to capture magnitude of responsibility.
+            df_touch['weighted_touch_production'] = df_touch['post_touch_pts'] + df_touch['elbow_touch_pts']
+            
+            logger.info(f"✅ Successfully fetched touch metrics for {len(df_touch)} players.")
+            return df_touch
+
+        except Exception as e:
+            logger.error(f"❌ Error fetching touch metrics for {season}: {e}", exc_info=True)
+            return pd.DataFrame()
+
     def calculate_subsidy_index(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculates the SUBSIDY_INDEX using the "Ownership Matrix" logic:
         
-        SkillIndex = Max(NormalizedTimeOfPoss, NormalizedAstPct)
+        SkillIndex = Max(NormalizedTimeOfPoss, NormalizedAstPct, NormalizedTouchCreation)
         
         Rationale:
         - TimeOfPoss: Represents On-Ball Creation (Heliocentricity).
         - AstPct: Represents Playmaking Creation (Hub / Floor General).
-        - Speed is EXCLUDED: High speed without ball/passing is "Activity", not "Ownership". 
-          (e.g., Cutters rely on screens/passers).
-          
+        - TouchCreation: Represents Static/Post Creation (Big Man Ownership).
+        
         SubsidyIndex = 1.0 - SkillIndex
         """
-        logger.info("Calculating SUBSIDY_INDEX using Ownership Matrix (Poss + Ast)...")
+        logger.info("Calculating SUBSIDY_INDEX using Ownership Matrix (Poss + Ast + Touch)...")
         
-        # Ensure AST_PCT is present (fetch_player_metadata now grabs it)
-        if 'AST_PCT' not in df.columns:
-            logger.warning("AST_PCT missing for Subsidy Calculation. Fetching or defaulting...")
-            # Fallback if not in df (should be there from metadata now)
-            df['AST_PCT'] = 0.15 # League average-ish
-            
-        if 'time_of_poss' not in df.columns:
-             logger.warning("time_of_poss missing. Defaulting to 0.")
-             df['time_of_poss'] = 0.0
+        # Ensure columns exist
+        cols_to_check = ['AST_PCT', 'time_of_poss', 'weighted_touch_production']
+        for col in cols_to_check:
+            if col not in df.columns:
+                logger.warning(f"{col} missing for Subsidy Calculation. Defaulting to 0.")
+                df[col] = 0.0
 
         # Fill NaNs
-        df['time_of_poss'] = df['time_of_poss'].fillna(0.0)
-        df['AST_PCT'] = df['AST_PCT'].fillna(0.0)
+        df[cols_to_check] = df[cols_to_check].fillna(0.0)
 
         # Robust Normalization (Fixed Anchors - First Principles)
         # We replace relative percentile normalization (which fluctuates and sets the bar too low)
@@ -288,16 +354,19 @@ class StressVectorEngine:
         
         ANCHOR_TIME_POSS = 9.0 # Luka/Harden level (Minutes/Game)
         ANCHOR_AST_PCT = 0.45 # Westbrook/Harden/Haliburton peak level (45%)
+        # New Anchor for Touch Production (Embiid/Jokic level)
+        ANCHOR_TOUCH_PTS = 10.0 
         
         def fixed_norm(series, anchor):
              return (series / anchor).clip(0, 1)
 
         norm_poss = fixed_norm(df['time_of_poss'], ANCHOR_TIME_POSS)
         norm_ast = fixed_norm(df['AST_PCT'], ANCHOR_AST_PCT)
+        norm_touch = fixed_norm(df['weighted_touch_production'], ANCHOR_TOUCH_PTS)
 
-        # The Max-Gate: Specialization in EITHER Ball Dominance OR Playmaking is Ownership.
+        # The Max-Gate: Specialization in EITHER Ball Dominance OR Playmaking OR Touch Creation is Ownership.
         # Speed is removed to expose "Empty Activity" merchants (Poole).
-        df['skill_index'] = np.maximum(norm_poss, norm_ast)
+        df['skill_index'] = np.maximum.reduce([norm_poss, norm_ast, norm_touch])
         
         # Subsidy is the inverse of skill
         df['subsidy_index'] = 1.0 - df['skill_index']
@@ -1117,6 +1186,7 @@ class StressVectorEngine:
                 
                 # 5. Fetch other RS-based metrics (Tracking, Leverage, Context, etc.)
                 df_tracking = self.fetch_tracking_metrics(season, season_type="Regular Season")
+                df_touch = self.fetch_touch_metrics(season, season_type="Regular Season")
                 df_leverage = self.fetch_leverage_metrics(season)
                 df_context = self.fetch_context_metrics(season)
                 
@@ -1126,6 +1196,10 @@ class StressVectorEngine:
                 # Merge tracking data
                 if not df_tracking.empty:
                     df_season = pd.merge(df_season, df_tracking, on='PLAYER_ID', how='left')
+
+                # Merge touch data
+                if not df_touch.empty:
+                     df_season = pd.merge(df_season, df_touch, on='PLAYER_ID', how='left')
 
                 # Merge creation data
                 if not df_creation_rs.empty:

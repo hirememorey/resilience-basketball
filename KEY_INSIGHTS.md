@@ -67,7 +67,9 @@ Players can appear elite against "Top 10 Defenses" in blowouts when starters are
 
 **The Insight**: Big Man ownership looks different than Guard ownership. It manifests as **Efficiency Maintenance at Volume** on "Touch" plays (Post-ups, Elbow touches).
 
-**The Fix (Next Steps)**: Integrate `ELBOW_TOUCH_EFFICIENCY` and `POST_TOUCH_EFFICIENCY` into the Skill Index for players > 6'9".
+**The Fix (v3)**: Integrate `ELBOW_TOUCH_EFFICIENCY` and `POST_TOUCH_EFFICIENCY` into the Skill Index.
+- **Formula**: $SkillIndex = Max(NormPoss, NormAst, NormTouchPts)$
+- **Status**: ✅ **COMPLETE** - This has resolved the "Jokic Paradox" where the league's most resilient player was misclassified.
 
 ## 73. The "Scalability Gradient" (Elasticity of Volume) 🎯 CRITICAL (December 2025)
 
