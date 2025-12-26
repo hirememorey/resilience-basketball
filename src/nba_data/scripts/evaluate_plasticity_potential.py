@@ -30,6 +30,79 @@ from src.nba_data.api.nba_stats_client import create_nba_stats_client
 from src.nba_data.api.synergy_playtypes_client import SynergyPlaytypesClient
 from src.nba_data.constants import ID_TO_ABBREV, get_team_abbrev, ABBREV_TO_ID
 from calculate_dependence_score import calculate_dependence_scores_batch
+from src.nba_data.core.models import PlayerSeason
+from pydantic import ValidationError
+
+
+def validate_with_pydantic(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Validates the DataFrame against the PlayerSeason Pydantic model.
+    Logs errors for rows that fail validation.
+
+    Args:
+        df: The final DataFrame to validate.
+
+    Returns:
+        A DataFrame containing only the valid rows.
+    """
+    logger.info("Validating final dataset against PlayerSeason schema...")
+    
+    df_to_validate = df.copy()
+    
+    # The Pydantic model requires 'minutes', but the dataframe uses various metrics.
+    # We will use 'RS_TOTAL_VOLUME' as the canonical measure for minutes played.
+    if 'RS_TOTAL_VOLUME' in df_to_validate.columns:
+        df_to_validate.rename(columns={'RS_TOTAL_VOLUME': 'minutes'}, inplace=True)
+    elif 'minutes' not in df_to_validate.columns:
+        logger.warning("No 'minutes' or 'RS_TOTAL_VOLUME' column found for validation. Using 0.0 as default.")
+        df_to_validate['minutes'] = 0.0
+
+    # Ensure USG_PCT is present for validation
+    if 'USG_PCT' not in df_to_validate.columns:
+        logger.warning("No 'USG_PCT' column found for validation. Using 0.0 as default.")
+        df_to_validate['USG_PCT'] = 0.0
+        
+    # Ensure TS_PCT is present for validation
+    if 'TS_PCT' not in df_to_validate.columns:
+        logger.warning("No 'TS_PCT' column found for validation. Using 0.0 as default.")
+        df_to_validate['TS_PCT'] = 0.0
+        
+    # Ensure PLAYER_NAME is present for validation
+    if 'PLAYER_NAME' not in df_to_validate.columns:
+        logger.warning("No 'PLAYER_NAME' column found for validation. Using 'Unknown' as default.")
+        df_to_validate['PLAYER_NAME'] = 'Unknown'
+
+
+    validated_records = []
+    error_count = 0
+    total_rows = len(df_to_validate)
+    
+    for index, row in df_to_validate.iterrows():
+        try:
+            # Pydantic can validate directly from a dict
+            validated_model = PlayerSeason.model_validate(row.to_dict())
+            validated_records.append(validated_model.model_dump())
+        except ValidationError:
+            error_count += 1
+            # Skip logging individual errors to prevent spam
+            pass
+
+    if error_count > 0:
+        logger.warning(f"Validation failed for {error_count} out of {total_rows} rows ({error_count/total_rows:.1%}). These rows will be dropped.")
+    
+    if not validated_records:
+        logger.error("No records passed validation. Returning an empty DataFrame.")
+        return pd.DataFrame()
+
+    validated_df = pd.DataFrame(validated_records)
+    logger.info(f"Validation complete. {len(validated_df)} / {total_rows} rows passed.")
+    
+    # Revert column name if we changed it
+    if 'minutes' in validated_df.columns and 'RS_TOTAL_VOLUME' in df.columns:
+        validated_df.rename(columns={'minutes': 'RS_TOTAL_VOLUME'}, inplace=True)
+
+    return validated_df
+
 
 # Setup Logging
 logging.basicConfig(
@@ -522,7 +595,7 @@ class StressVectorEngine:
             )
             
             # Verify required columns exist
-            required_cols = ['PLAYER_ID', 'PLAYER_NAME', 'USG_PCT', 'TS_PCT', 'AGE']
+            required_cols = ['PLAYER_ID', 'PLAYER_NAME', 'USG_PCT', 'TS_PCT', 'AGE', 'MIN']
             missing_cols = [col for col in required_cols if col not in df_advanced.columns]
             if missing_cols:
                 logger.error(f"❌ Missing required columns in advanced_stats response: {missing_cols}")
@@ -532,19 +605,23 @@ class StressVectorEngine:
             # Select only needed columns
             df_metadata = df_advanced[required_cols].copy()
             
+            # Rename MIN to RS_TOTAL_VOLUME for consistency
+            df_metadata.rename(columns={'MIN': 'RS_TOTAL_VOLUME'}, inplace=True)
+            
             # Handle USG_PCT: API might return as decimal (0.20) or percentage (20.0)
             if len(df_metadata) > 0:
                 sample_usg = df_metadata['USG_PCT'].dropna()
                 if len(sample_usg) > 0:
                     max_usg = sample_usg.max()
-                    if max_usg < 1.0:
-                        # Stored as decimal, convert to percentage for consistency
-                        df_metadata['USG_PCT'] = df_metadata['USG_PCT'] * 100.0
+                    if max_usg > 1.0:
+                        # Stored as percentage, convert to decimal for consistency
+                        df_metadata['USG_PCT'] = df_metadata['USG_PCT'] / 100.0
             
             logger.info(f"  ✅ Fetched metadata for {len(df_metadata)} players")
             logger.info(f"  - USG_PCT coverage: {df_metadata['USG_PCT'].notna().sum()} / {len(df_metadata)}")
             logger.info(f"  - TS_PCT coverage: {df_metadata['TS_PCT'].notna().sum()} / {len(df_metadata)}")
             logger.info(f"  - AGE coverage: {df_metadata['AGE'].notna().sum()} / {len(df_metadata)}")
+            logger.info(f"  - RS_TOTAL_VOLUME (MIN) coverage: {df_metadata['RS_TOTAL_VOLUME'].notna().sum()} / {len(df_metadata)}")
             
             return df_metadata
             
@@ -819,21 +896,24 @@ class StressVectorEngine:
             logger.info(f"=== Processing {season} ===")
             
             try:
-                # 1. Fetch Regular Season Data
+                # 1. Fetch Base Metadata (The new "Source of Truth" for a season)
+                logger.info(f"--- Fetching Base Player Metadata for {season} ---")
+                df_season = self.fetch_player_metadata(season)
+                if df_season.empty:
+                    logger.warning(f"Skipping {season} due to missing base metadata.")
+                    return None
+
+                # 2. Fetch Regular Season Features
                 logger.info(f"--- Fetching Regular Season data for {season} ---")
                 df_creation_rs = self.fetch_creation_metrics(season, season_type="Regular Season")
-                if df_creation_rs.empty:
-                    logger.warning(f"Skipping {season} due to missing RS creation data.")
-                    return None
-                
                 df_playtype_rs = self.fetch_playtype_metrics(season, season_type="Regular Season")
-
-                # 2. Fetch Playoff Data
+                
+                # 3. Fetch Playoff Data for Friction Calculation
                 logger.info(f"--- Fetching Playoff data for {season} ---")
                 df_creation_po = self.fetch_creation_metrics(season, season_type="Playoffs")
                 df_playtype_po = self.fetch_playtype_metrics(season, season_type="Playoffs")
                 
-                # 3. Merge RS and PO data to calculate Friction
+                # 4. Calculate Friction Coefficients
                 logger.info(f"--- Calculating Friction Coefficients for {season} ---")
                 
                 # Merge Creation Metrics
@@ -844,9 +924,9 @@ class StressVectorEngine:
                     how='inner' # Inner join: must have both RS and PO data
                 )
                 if not df_creation_merged.empty:
-                    df_creation_merged = df_creation_merged.drop(columns=['PLAYER_ID_PO'])
-                    df_creation_merged = df_creation_merged.rename(columns={'PLAYER_ID_RS': 'PLAYER_ID'})
-                
+                    df_creation_merged = df_creation_merged.drop(columns=['PLAYER_ID_PO', 'PLAYER_NAME_PO'])
+                    df_creation_merged = df_creation_merged.rename(columns={'PLAYER_ID_RS': 'PLAYER_ID', 'PLAYER_NAME_RS': 'PLAYER_NAME'})
+
                 # Merge Playtype Metrics
                 df_playtype_merged = pd.merge(
                     df_playtype_rs.add_suffix('_RS'),
@@ -867,10 +947,6 @@ class StressVectorEngine:
                     df_friction = df_playtype_merged
                 else:
                     df_friction = pd.DataFrame()
-                
-                # Now, calculate friction for each playtype
-                # Friction = Playoff_PPS / Regular_Season_PPS
-                # We use EFG for dribble-based, and PPP for playtype-based
                 
                 friction_cols = []
                 if not df_friction.empty:
@@ -893,30 +969,29 @@ class StressVectorEngine:
                         df_friction['FRICTION_COEFF_POST'] = df_friction['POST_PPP_PO'] / df_friction['POST_PPP_RS']
                         friction_cols.append('FRICTION_COEFF_POST')
                     
-                    # Replace inf/-inf with NaN, then fill NaN with 1.0 (neutral friction)
                     if friction_cols:
                         df_friction[friction_cols] = df_friction[friction_cols].replace([np.inf, -np.inf], np.nan).fillna(1.0)
                     
                     logger.info(f"Calculated friction for {len(df_friction)} players in {season}.")
                 
-                # 4. Fetch other RS-based metrics (Leverage, Context, etc.)
+                # 5. Fetch other RS-based metrics (Leverage, Context, etc.)
                 df_leverage = self.fetch_leverage_metrics(season)
                 df_context = self.fetch_context_metrics(season)
-                df_metadata = self.fetch_player_metadata(season)
                 
-                # 5. Combine all data for the season
-                # Start with the base regular season creation data
-                df_season = df_creation_rs
-                
-                # Merge the friction coefficients we just calculated
+                # 6. Combine all data for the season using LEFT joins from metadata
+                logger.info(f"--- Merging all feature sets for {season} ---")
+
+                # Merge creation data
+                if not df_creation_rs.empty:
+                    df_season = pd.merge(df_season, df_creation_rs.drop(columns=['PLAYER_NAME']), on='PLAYER_ID', how='left')
+
+                # Merge friction coefficients
                 if not df_friction.empty:
                     df_season = pd.merge(df_season, df_friction[['PLAYER_ID'] + friction_cols], on='PLAYER_ID', how='left')
-                    # For players without playoff data, friction is neutral (1.0)
                     for col in friction_cols:
                          if col in df_season.columns:
                               df_season[col] = df_season[col].fillna(1.0)
                 else:
-                    # No friction data available for this season, create columns with default 1.0
                     for col in ['FRICTION_COEFF_ISO', 'FRICTION_COEFF_0_DRIBBLE', 'FRICTION_COEFF_PLAYTYPE_ISO', 'FRICTION_COEFF_PNR_HANDLER', 'FRICTION_COEFF_POST']:
                         df_season[col] = 1.0
 
@@ -925,17 +1000,12 @@ class StressVectorEngine:
                     df_season = pd.merge(df_season, df_leverage, on='PLAYER_ID', how='left')
                 if not df_context.empty:
                     df_season = pd.merge(df_season, df_context, on='PLAYER_ID', how='left')
-                if not df_metadata.empty:
-                     # Remove PLAYER_NAME from metadata to avoid suffix duplicates, as df_season already has it
-                     cols_to_use = [c for c in df_metadata.columns if c == 'PLAYER_ID' or c not in df_season.columns]
-                     df_season = pd.merge(df_season, df_metadata[cols_to_use], on='PLAYER_ID', how='left')
                 if not df_playtype_rs.empty:
-                     # Merge the RS playtype data for frequency/efficiency features
                      df_season = pd.merge(df_season, df_playtype_rs.add_suffix('_RS'), left_on='PLAYER_ID', right_on='PLAYER_ID_RS', how='left')
                      if 'PLAYER_ID_RS' in df_season.columns:
                           df_season = df_season.drop(columns=['PLAYER_ID_RS'])
 
-                # 6. Engineer the Projected Playoff Output Feature
+                # 7. Engineer the Projected Playoff Output Feature
                 df_season = self.calculate_projected_playoff_output(df_season)
                 
                 df_season['SEASON'] = season
@@ -1076,6 +1146,9 @@ class StressVectorEngine:
         
         # INSERT THIS CALL
         final_df = self._calculate_fragility_score(final_df)
+        
+        # PHASE 5 REFACTOR: Validate the final dataset against the Pydantic schema
+        final_df = validate_with_pydantic(final_df)
         
         # For now, just save what we have
         output_path = self.results_dir / "predictive_dataset_with_friction.csv"

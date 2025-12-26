@@ -1,239 +1,173 @@
 """
-Universal Projection Utilities
+Universal Projection Engine for the "Universal Avatar"
 
-Shared utilities for projecting player features at different usage levels.
-Extracted from predict_conditional_archetype.py to avoid code duplication.
+This utility implements the core logic for projecting a player's efficiency 
+at different usage levels, incorporating the empirically derived "friction 
+coefficients".
 
-This module provides the "Universal Projection" logic that scales features together
-using empirical distributions rather than linear scaling.
+Core Principles:
+1.  Law of Friction: Efficiency degrades as usage and defensive attention increase.
+2.  Resilience Buffer: A player's ability to create high-quality shots 
+    (SHOT_QUALITY_GENERATION_DELTA) acts as a buffer against this friction.
+3.  Friction Tiers: We apply different friction coefficients based on a player's 
+    creator archetype (SQ_DELTA quantiles).
 """
 
 import pandas as pd
 import numpy as np
-from typing import Dict, Tuple, Optional
-import logging
+from typing import Dict, Union
 
-logger = logging.getLogger(__name__)
+# Empirically derived friction coefficients from 'derive_friction_coefficients.py'
+# Represents the change in TS% for each 1% increase in USG%.
+# Note: These are simplified for this initial implementation. A more robust
+# version would use a continuous function or more granular tiers.
+FRICTION_COEFFICIENTS = {
+    'High SQ Delta (Creators)': -0.007133,
+    'Low SQ Delta (Finishers)': 0.007870, # Note: Positive coefficient suggests selection bias, we'll treat as near-zero friction.
+    'Mid SQ Delta': 0.000340
+}
+
+# Thresholds for defining archetypes based on SHOT_QUALITY_GENERATION_DELTA
+# Derived from the 10th and 90th percentiles in the historical analysis.
+SQ_DELTA_THRESHOLDS = {
+    'low': 0.0635,
+    'high': 0.1685
+}
 
 
-def calculate_empirical_usage_buckets(df_features: pd.DataFrame) -> Dict:
+def get_player_archetype(shot_quality_generation_delta: float) -> str:
     """
-    Calculate empirical bucket medians for universal projection.
-
-    Features must scale together using empirical distributions, not linear scaling.
-    This captures the non-linear relationships between usage and creation volume.
+    Categorizes a player into a creator archetype based on their SQ_DELTA.
 
     Args:
-        df_features: DataFrame with player features including USG_PCT and CREATION_VOLUME_RATIO
+        shot_quality_generation_delta: The player's score.
 
     Returns:
-        Dict with bucket definitions and medians
+        The corresponding archetype name.
     """
-    # Define usage buckets (percentage ranges)
-    buckets = {
-        '20-25%': {'min': 0.20, 'max': 0.25, 'median_creation_vol': None},
-        '25-30%': {'min': 0.25, 'max': 0.30, 'median_creation_vol': None},
-        '30-35%': {'min': 0.30, 'max': 0.35, 'median_creation_vol': None}
+    if shot_quality_generation_delta >= SQ_DELTA_THRESHOLDS['high']:
+        return 'High SQ Delta (Creators)'
+    elif shot_quality_generation_delta <= SQ_DELTA_THRESHOLDS['low']:
+        return 'Low SQ Delta (Finishers)'
+    else:
+        return 'Mid SQ Delta'
+
+
+def project_efficiency(
+    base_usg: float,
+    base_ts: float,
+    shot_quality_generation_delta: float,
+    target_usg: float
+) -> Dict[str, Union[str, float]]:
+    """
+    Projects a player's True Shooting % (TS%) at a new target Usage % (USG%).
+
+    Args:
+        base_usg: The player's current USG% (e.g., 0.25 for 25%).
+        base_ts: The player's current TS% (e.g., 0.60 for 60%).
+        shot_quality_generation_delta: The player's creation score.
+        target_usg: The target USG% to project to.
+
+    Returns:
+        A dictionary containing the projected TS%, the archetype used, and the
+        friction coefficient applied.
+    """
+    if pd.isna(base_usg) or pd.isna(base_ts) or pd.isna(shot_quality_generation_delta):
+        return {
+            "projected_ts": np.nan,
+            "archetype": "Unknown",
+            "friction_coefficient": np.nan,
+            "delta_usg": np.nan,
+            "delta_ts_raw": np.nan
+        }
+
+    # 1. Determine the player's creator archetype
+    archetype = get_player_archetype(shot_quality_generation_delta)
+
+    # 2. Get the corresponding friction coefficient
+    friction_coeff = FRICTION_COEFFICIENTS[archetype]
+    
+    # Special Handling for "Finishers" where a positive coefficient was found.
+    # This is likely selection bias. For projection, it's safer to assume 
+    # their efficiency stays flat rather than magically increasing. We'll cap
+    # the friction at 0 (no penalty), which is a conservative assumption.
+    if archetype == 'Low SQ Delta (Finishers)' and friction_coeff > 0:
+        friction_coeff = 0.0
+
+    # 3. Calculate the change in usage
+    # The coefficient is per 1% change, so we multiply by 100.
+    delta_usg_points = (target_usg - base_usg) * 100
+
+    # 4. Calculate the expected change in True Shooting
+    # This is the "Friction Tax"
+    delta_ts_raw = friction_coeff * delta_usg_points
+
+    # 5. Apply the tax to the base efficiency
+    projected_ts = base_ts + (delta_ts_raw / 100) # Convert back to percentage points
+
+    return {
+        "projected_ts": projected_ts,
+        "archetype": archetype,
+        "friction_coefficient": friction_coeff,
+        "delta_usg": target_usg - base_usg,
+        "delta_ts_raw": delta_ts_raw
     }
 
-    # Calculate median creation volume for each usage bucket
-    for bucket_name, bucket_info in buckets.items():
-        bucket_data = df_features[
-            (df_features['USG_PCT'] >= bucket_info['min']) &
-            (df_features['USG_PCT'] < bucket_info['max']) &
-            (df_features['CREATION_VOLUME_RATIO'].notna())
-        ]
+# Example Usage (for demonstration and testing)
+if __name__ == '__main__':
+    print("--- Universal Projection Engine: Example Cases ---")
 
-        if len(bucket_data) > 0:
-            bucket_info['median_creation_vol'] = bucket_data['CREATION_VOLUME_RATIO'].median()
-            logger.debug(f"{bucket_name}: {len(bucket_data)} players, median creation vol: {bucket_info['median_creation_vol']:.4f}")
-        else:
-            logger.warning(f"No data for {bucket_name} bucket")
-
-    return buckets
-
-
-def calculate_feature_percentiles(df_features: pd.DataFrame) -> Dict:
-    """
-    Calculate percentiles needed for flash multiplier and gate logic.
-
-    Args:
-        df_features: DataFrame with player features
-
-    Returns:
-        Dict with calculated percentiles
-    """
-    percentiles = {}
-
-    # Creation volume percentiles for flash detection
-    if 'CREATION_VOLUME_RATIO' in df_features.columns:
-        percentiles['creation_vol_25th'] = df_features['CREATION_VOLUME_RATIO'].quantile(0.25)
-        percentiles['creation_vol_median'] = df_features['CREATION_VOLUME_RATIO'].median()
-
-    # Efficiency percentiles for flash detection
-    if 'CREATION_TAX' in df_features.columns:
-        percentiles['creation_tax_80th'] = df_features['CREATION_TAX'].quantile(0.80)
-
-    if 'EFG_ISO_WEIGHTED' in df_features.columns:
-        percentiles['efg_iso_80th'] = df_features['EFG_ISO_WEIGHTED'].quantile(0.80)
-
-    if 'RS_PRESSURE_RESILIENCE' in df_features.columns:
-        percentiles['pressure_resilience_80th'] = df_features['RS_PRESSURE_RESILIENCE'].quantile(0.80)
-
-    # Star-level medians (players with high usage)
-    star_players = df_features[df_features['USG_PCT'] > 0.25]
-    if len(star_players) > 0 and 'CREATION_VOLUME_RATIO' in star_players.columns:
-        percentiles['star_median_creation_vol'] = star_players['CREATION_VOLUME_RATIO'].median()
-    else:
-        percentiles['star_median_creation_vol'] = None
-
-    return percentiles
-
-
-def detect_flash_multiplier(
-    player_data: pd.Series,
-    percentiles: Dict,
-    target_usage: float,
-    current_usage: float
-) -> Tuple[float, bool]:
-    """
-    Detect "Flash Multiplier" - elite efficiency on low volume.
-
-    If a player shows elite efficiency on low volume, project to star-level volume
-    instead of linear scaling. This captures "flashes of brilliance."
-
-    Args:
-        player_data: Player's feature data
-        percentiles: Pre-calculated percentiles
-        target_usage: Target usage level
-        current_usage: Current usage level
-
-    Returns:
-        Tuple of (projection_factor, flash_applied)
-    """
-    if target_usage <= current_usage:
-        return 1.0, False
-
-    creation_vol = player_data.get('CREATION_VOLUME_RATIO', 0)
-    creation_tax = player_data.get('CREATION_TAX', 0)
-    efg_iso = player_data.get('EFG_ISO_WEIGHTED', 0)
-    pressure_resilience = player_data.get('RS_PRESSURE_RESILIENCE', 0)
-
-    # Check if "Flash of Brilliance" (low volume + elite efficiency)
-    is_low_volume = False
-    is_elite_efficiency = False
-
-    if (percentiles.get('creation_vol_25th') is not None and
-        pd.notna(creation_vol) and creation_vol < percentiles['creation_vol_25th']):
-        is_low_volume = True
-
-    # Expanded flash definition - ISO efficiency OR Pressure Resilience
-    if (percentiles.get('creation_tax_80th') is not None and
-        pd.notna(creation_tax) and creation_tax > percentiles['creation_tax_80th']):
-        is_elite_efficiency = True
-    elif (percentiles.get('efg_iso_80th') is not None and
-          pd.notna(efg_iso) and efg_iso > percentiles['efg_iso_80th']):
-        is_elite_efficiency = True
-    elif (percentiles.get('pressure_resilience_80th') is not None and
-          pd.notna(pressure_resilience) and pressure_resilience > percentiles['pressure_resilience_80th']):
-        is_elite_efficiency = True
-
-    if (is_low_volume and is_elite_efficiency and
-        percentiles.get('star_median_creation_vol') is not None):
-
-        # Project to star-level volume instead of scalar projection
-        projection_factor = percentiles['star_median_creation_vol'] / max(creation_vol, 0.001)
-        logger.debug(f"Flash Multiplier applied: {creation_vol:.4f} → {percentiles['star_median_creation_vol']:.4f}")
-        return projection_factor, True
-
-    return 1.0, False
-
-
-def project_stress_vectors_for_usage(
-    player_data: pd.Series,
-    target_usage: float,
-    usage_buckets: Dict,
-    percentiles: Dict
-) -> pd.Series:
-    """
-    Project stress vectors for different usage level using universal projection.
-
-    Features must scale together using empirical distributions, not independently.
-
-    Args:
-        player_data: Player's original feature data
-        target_usage: Target usage level (decimal)
-        usage_buckets: Empirical bucket definitions
-        percentiles: Pre-calculated percentiles
-
-    Returns:
-        Projected feature vector
-    """
-    projected_data = player_data.copy()
-
-    # Update usage
-    projected_data['USG_PCT'] = target_usage
-
-    current_usage = player_data.get('USG_PCT', target_usage)
-
-    # Apply flash multiplier if applicable
-    projection_factor, flash_applied = detect_flash_multiplier(
-        player_data, percentiles, target_usage, current_usage
+    # Case 1: Jalen Brunson (High SQ Delta Creator)
+    # Simulating his jump from role player to primary engine in NY.
+    brunson_base = {
+        'name': 'Jalen Brunson (Pre-NY)',
+        'usg': 0.22,
+        'ts': 0.58,
+        'sq_delta': 0.201 # High creator value from ACTIVE_CONTEXT
+    }
+    brunson_target_usg = 0.30 # Star-level usage
+    
+    brunson_projection = project_efficiency(
+        brunson_base['usg'],
+        brunson_base['ts'],
+        brunson_base['sq_delta'],
+        brunson_target_usg
+    )
+    
+    print(f"\nProjecting: {brunson_base['name']}")
+    print(f"  Base Stats: {brunson_base['usg']*100:.1f}% USG, {brunson_base['ts']*100:.1f}% TS")
+    print(f"  Target USG: {brunson_target_usg*100:.1f}%")
+    print(f"  Archetype: {brunson_projection['archetype']}")
+    print(f"  Friction Coefficient: {brunson_projection['friction_coefficient']:.5f}")
+    print(f"  Result -> Projected TS: {brunson_projection['projected_ts']*100:.1f}%")
+    
+    
+    # Case 2: Jordan Poole (Low SQ Delta Finisher)
+    # Simulating his transition from beneficiary in GSW to primary in WAS.
+    poole_base = {
+        'name': 'Jordan Poole (GSW)',
+        'usg': 0.27,
+        'ts': 0.59,
+        'sq_delta': 0.142 # Lower creator value from ACTIVE_CONTEXT
+    }
+    poole_target_usg = 0.32 # High usage
+    
+    poole_projection = project_efficiency(
+        poole_base['usg'],
+        poole_base['ts'],
+        poole_base['sq_delta'],
+        poole_target_usg
     )
 
-    # If projecting upward, use empirical bucket median instead of linear scaling
-    if target_usage > current_usage:
-        # Find appropriate bucket
-        target_bucket = None
-        for bucket_name, bucket_info in usage_buckets.items():
-            if bucket_info['min'] <= target_usage < bucket_info['max']:
-                target_bucket = bucket_name
-                break
+    print(f"\nProjecting: {poole_base['name']}")
+    print(f"  Base Stats: {poole_base['usg']*100:.1f}% USG, {poole_base['ts']*100:.1f}% TS")
+    print(f"  Target USG: {poole_target_usg*100:.1f}%")
+    print(f"  Archetype: {poole_projection['archetype']}")
+    print(f"  Friction Coefficient: {poole_projection['friction_coefficient']:.5f}")
+    print(f"  Result -> Projected TS: {poole_projection['projected_ts']*100:.1f}%")
 
-        if target_bucket and usage_buckets[target_bucket]['median_creation_vol'] is not None:
-            # Use empirical bucket median (non-linear scaling)
-            projected_data['CREATION_VOLUME_RATIO'] = usage_buckets[target_bucket]['median_creation_vol']
-            logger.debug(f"Universal Projection: {current_usage:.1%} → {target_usage:.1%}, "
-                        f"Creation Vol: {player_data.get('CREATION_VOLUME_RATIO', 0):.4f} → "
-                        f"{projected_data['CREATION_VOLUME_RATIO']:.4f} (empirical)")
-        else:
-            # Fallback to flash-adjusted linear scaling
-            projected_data['CREATION_VOLUME_RATIO'] = player_data.get('CREATION_VOLUME_RATIO', 0) * projection_factor
-
-    # Store flash multiplier flag for downstream logic
-    projected_data['_FLASH_MULTIPLIER_ACTIVE'] = flash_applied
-
-    return projected_data
-
-
-def prepare_features_for_prediction(
-    projected_data: pd.Series,
-    feature_names: list,
-    model
-) -> np.ndarray:
-    """
-    Prepare feature vector for model prediction.
-
-    Args:
-        projected_data: Projected player data
-        feature_names: Expected feature names
-        model: Trained model (for feature validation)
-
-    Returns:
-        Feature array ready for prediction
-    """
-    features = []
-
-    for feature_name in feature_names:
-        if feature_name in projected_data.index:
-            value = projected_data[feature_name]
-            if pd.notna(value):
-                features.append(value)
-            else:
-                # Use median imputation for missing values
-                features.append(0.0)  # Conservative imputation
-        else:
-            # Feature not available
-            features.append(0.0)
-
-    return np.array(features).reshape(1, -1)
+    # Note: Poole's SQ Delta (0.142) puts him in the "Mid" category based on our
+    # historical quantiles. His real-world collapse was more severe than this
+    # model predicts, suggesting a non-linear friction effect or other factors
+    # (like the "Schematic Cliff") are at play, which is a key insight for V2.
+    # For now, this linear model is the correct first implementation step.
