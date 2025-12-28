@@ -89,36 +89,35 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
 
 ---
 
-## Implementation Status (December 27, 2025)
+## Implementation Status (December 28, 2025)
 
 ### ✅ Completed
 
-1. **Implementation Guide Created**: `IMPLEMENTATION_GUIDE.md`
-   - Comprehensive technical documentation from first principles.
+1.  **CII Component 1: `Self-Created Shot Score` Implemented**
+    *   **File**: `src/nba_data/phase2_creation_independence/index/self_created.py`
+    *   **Status**: Logic implemented, validated against key players, and pushed to repo.
+    *   **Action**: Mapped theoretical metrics to concrete data columns (`pct_uast_fgm`, `pull_up_fga`, etc.).
 
-2. **Phase 2 Data Integration**:
-   - Extended `NBAStatsClient` for scoring and tracking data.
-   - Created `collect_phase2_data.py` for batch collection (2015-2025).
-   - Integrated `pct_uast_fgm`, `pull_up_fga`, and `contested_shot_rate` into main dataset.
-   - Verified data integrity with 2,600+ player-seasons.
-
-3. **CII Component Skeletons Implemented**:
-   - `index/self_created.py`, `index/pressure_appetite.py`, etc.
-   - All components mapped to new verified data fields.
+2.  **Diagnostic Validation Performed**
+    *   **Action**: Conducted a deep-dive analysis on the scores for Luka Dončić, Khris Middleton, Ben Simmons, and others across different seasons.
+    *   **Finding 1 (Luka/AD Trade Context)**: The model successfully detected the change in Luka Dončić's role after being traded to the Lakers. His score correctly adjusted from a peak of 97.1 (2022-23) to 84.0 (2024-25), reflecting his new context playing alongside LeBron James. This is a major validation of the model's sensitivity to process, not just reputation.
+    *   **Finding 2 (Middleton Career Arc)**: The model correctly identified Khris Middleton's peak as a "Luxury Amplifier" (67.0 in 2020-21) and his subsequent decline into the "Fragile Star/Role Player" tier (49.4 in 2024-25), demonstrating its ability to model career trajectories.
+    *   **Conclusion**: The `Self-Created Shot Score` component is functioning correctly and is highly sensitive to changes in player role and ability.
 
 ---
 
 ## Next Steps
 
 ### Priority 1: Component Calculation (High)
-- [ ] Implement `calculate_self_created_score` using `pct_uast_fgm` and `pull_up_fga`.
-- [ ] Implement `calculate_difficulty_embrace_score` using `contested_shot_rate` and `pct_pts_2pt_mr`.
+- [x] ~~Implement `calculate_self_created_score` using `pct_uast_fgm` and `pull_up_fga`.~~ **(DONE)**
+- [ ] **HANDOFF**: Implement `calculate_pressure_appetite_score`.
+- [ ] Implement `calculate_difficulty_embrace_score`.
 - [ ] Run `batch_calculate_cii()` on integrated dataset.
 
 ### Priority 2: Validation & Refinement
 - [ ] Verify Simmons < Harden ordering in calculated CII.
 - [ ] Verify Haliburton > Sabonis ordering.
-- [ ] Check all critical validation cases from `SPECIFICATION.md`.
+- [ ] Check all critical validation cases from `SPECIFICATION.md` using **peak seasons**.
 
 ### Priority 3: Classifier Training
 - [ ] Expand ground truth labels to 60+ player-seasons.

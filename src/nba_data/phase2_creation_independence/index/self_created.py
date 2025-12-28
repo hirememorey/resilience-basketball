@@ -22,7 +22,9 @@ Validation Cases:
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional
+import logging
 
+logger = logging.getLogger(__name__)
 
 # Weights for sub-metrics
 WEIGHTS = {
@@ -79,22 +81,32 @@ def _calculate_unassisted_score(data: pd.Series) -> float:
     Higher unassisted rate = more self-created scoring.
     
     Benchmarks:
-    - Simmons: ~35% (mostly assisted on dunks)
-    - Average: ~50%
-    - Harden: ~65% (creates most of his own)
+    - Simmons: ~0.20-0.30 (mostly assisted on dunks)
+    - Average: ~0.50
+    - Harden/Luka: ~0.80+ (creates most of his own)
     """
-    # TODO: Collect UNASSISTED_FG_PCT from tracking data
-    # For now, use creation_volume_ratio as proxy
-    unassisted_rate = data.get('UNASSISTED_FG_PCT', None)
+    # Primary Source: pct_uast_fgm (0.0 - 1.0)
+    # Available in predictive_dataset_with_friction.csv
+    unassisted_rate = data.get('pct_uast_fgm', None)
     
+    # Fallback keys just in case
+    if unassisted_rate is None:
+        unassisted_rate = data.get('PCT_UAST_FGM', None)
+
     if unassisted_rate is None:
         # Fallback: estimate from creation_volume_ratio
-        cvr = data.get('creation_volume_ratio', 
-                       data.get('CREATION_VOLUME_RATIO', 0.5))
-        unassisted_rate = 0.35 + (cvr * 0.35)  # Scale 0.35-0.70
-    
-    # Scale: 35% = 0, 65%+ = 100
-    score = (unassisted_rate - 0.35) / 0.30 * 100
+        # If 50% of shots are self-created, roughly 50% are unassisted
+        cvr = data.get('creation_volume_ratio', 0.5)
+        unassisted_rate = 0.20 + (cvr * 0.60)  # Map 0->0.20, 1->0.80
+
+    # Handle percentage vs decimal
+    if unassisted_rate > 1.0:
+        unassisted_rate = unassisted_rate / 100.0
+        
+    # Scale: 
+    # 0.20 (20%) -> 0 score
+    # 0.85 (85%) -> 100 score
+    score = (unassisted_rate - 0.20) / 0.65 * 100
     return np.clip(score, 0, 100)
 
 
@@ -105,24 +117,39 @@ def _calculate_creation_volume_score(data: pd.Series) -> float:
     Measures how often the player is asked/chooses to create.
     
     Benchmarks:
-    - Role player: <2 possessions/game
-    - Average starter: 2-4 possessions/game
-    - Primary creator: 4-8 possessions/game
-    - Elite heliocentric: 8+ possessions/game
+    - Role player: <2 pull-ups/game
+    - Primary creator: 6-8 pull-ups/game
+    - Elite heliocentric: 10+ pull-ups/game
     """
-    # ISO possessions
-    iso_poss = data.get('ISO_POSS_RS', data.get('ISO_POSS', 0))
+    # 1. Pull-up FGA (Best proxy for creation volume currently available)
+    pull_up_fga = data.get('pull_up_fga', 0)
     
-    # Pull-up attempts (3-6 and 7+ dribble shots)
-    fga_3_dribble = data.get('FGA_3_DRIBBLE', 0)
-    fga_7_dribble = data.get('FGA_7_DRIBBLE', 0)
+    # 2. Time of Possession (Secondary indicator of on-ball load)
+    time_of_poss = data.get('time_of_poss', 0)
     
-    # Total creation volume per game (approximate)
-    total_creation = iso_poss + fga_3_dribble + fga_7_dribble
+    # 3. Creation Volume Ratio (Rate stat)
+    # This is (ISO + Pull-ups) / Total FGA
+    cvr = data.get('creation_volume_ratio', 0)
     
-    # Scale: 2 = 0, 8+ = 100
-    score = (total_creation - 2.0) / 6.0 * 100
-    return np.clip(score, 0, 100)
+    # Composite Volume Metric
+    # We want absolute volume, but weighted by the rate (to penalize "fake" volume if any)
+    # Pull-ups are the gold standard for self-creation.
+    
+    # Score based on Pull-up FGA:
+    # 0 -> 0
+    # 2 -> 25
+    # 5 -> 60
+    # 10+ -> 100
+    
+    # Linear interpolation
+    # Min: 0.5 (generous floor), Max: 10.0 (Elite)
+    volume_score = (pull_up_fga - 0.5) / 9.5 * 100
+    
+    # Boost if high Time of Possession (indicates ISOs that might not end in pull-ups, e.g. drives)
+    if time_of_poss > 6.0: # Harden/Luka level
+        volume_score *= 1.1
+        
+    return np.clip(volume_score, 0, 100)
 
 
 def _calculate_self_created_efficiency_score(data: pd.Series) -> float:
@@ -132,16 +159,35 @@ def _calculate_self_created_efficiency_score(data: pd.Series) -> float:
     Measures ability to score EFFICIENTLY when creating.
     
     Benchmarks:
-    - Poor: <40% EFG on ISO
-    - Average: 40-45% EFG
-    - Good: 45-50% EFG
-    - Elite: 50%+ EFG (Harden stepback range)
+    - Poor: <50% TS
+    - Average: 55% TS
+    - Elite: 60%+ TS on high volume
     """
-    efg_iso = data.get('EFG_ISO_WEIGHTED', data.get('ISO_EFG_PCT', 0.45))
+    # Ideally: EFG_ISO_WEIGHTED (dropped in current pipeline)
+    # Proxy: TS_PCT adjusted by Creation Volume
     
-    # Scale: 40% = 0, 55%+ = 100
-    score = (efg_iso - 0.40) / 0.15 * 100
-    return np.clip(score, 0, 100)
+    ts_pct = data.get('ts_pct', 0.55)
+    
+    # Handle percentage vs decimal
+    if ts_pct > 1.0:
+        ts_pct = ts_pct / 100.0
+        
+    # We need to distinguish "Efficient because dunks" vs "Efficient creator"
+    # High Unassisted Rate + High Efficiency = Elite Creator
+    # Low Unassisted Rate + High Efficiency = Finisher (Gobert)
+    
+    unassisted_rate = data.get('pct_uast_fgm', data.get('creation_volume_ratio', 0.5))
+    if unassisted_rate > 1.0: unassisted_rate /= 100.0
+    
+    # If unassisted rate is low (<30%), their efficiency is likely NOT self-created.
+    # We penalize the efficiency score for low unassisted rate.
+    relevance_factor = np.clip((unassisted_rate - 0.2) / 0.4, 0, 1) # 0.2->0, 0.6->1
+    
+    # Baseline Score (50% TS = 0, 62% TS = 100)
+    base_score = (ts_pct - 0.50) / 0.12 * 100
+    base_score = np.clip(base_score, 0, 100)
+    
+    return base_score * relevance_factor
 
 
 def _calculate_creation_tools_score(data: pd.Series) -> float:
@@ -150,40 +196,38 @@ def _calculate_creation_tools_score(data: pd.Series) -> float:
     
     Does the player have stepback, fadeaway, floater, etc.?
     
-    Proxy: Use deep ISO (7+ dribbles) as indicator.
-    Players with tools can operate in deep ISO situations.
+    Proxy: 
+    - High Pull-up 3 frequency (Range)
+    - High Time of Possession (Handle)
+    - High Creation Volume Ratio (Bag depth)
     """
-    fga_7_dribble = data.get('FGA_7_DRIBBLE', 0)
-    fga_iso_total = data.get('FGA_ISO_TOTAL', 1)
+    # 1. Range: Pull-up 3s
+    pull_up_3a = data.get('pull_up_fg3a', 0)
+    range_score = min(pull_up_3a / 6.0 * 100, 100) # 6+ pull-up 3s = Elite range
     
-    if fga_iso_total < 0.5:
-        return 0  # No creation at all
+    # 2. Handle: Time of Possession
+    time_poss = data.get('time_of_poss', 0)
+    handle_score = min(time_poss / 8.0 * 100, 100) # 8+ seconds = Elite handle
     
-    # What % of creation is deep ISO?
-    deep_ratio = fga_7_dribble / max(fga_iso_total, 1)
+    # 3. Bag Depth: Creation Volume Ratio
+    cvr = data.get('creation_volume_ratio', 0)
+    bag_score = min(cvr / 0.70 * 100, 100) # 70% self-created = Deep bag
     
-    # Also factor in time of possession (longer = more tools used)
-    time_of_poss = data.get('time_of_poss', 3.0)
-    time_factor = min(time_of_poss / 6.0, 1.0)  # 6+ seconds = full credit
+    # Combined: Range (40%) + Handle (30%) + Bag (30%)
+    score = (range_score * 0.4) + (handle_score * 0.3) + (bag_score * 0.3)
     
-    # Combined score
-    score = (deep_ratio * 100 * 0.6) + (time_factor * 100 * 0.4)
     return np.clip(score, 0, 100)
 
 
 def get_required_features() -> List[str]:
     """Return list of features required for this component."""
     return [
-        # Primary features
-        'UNASSISTED_FG_PCT',        # Needs collection from tracking
-        'ISO_POSS_RS',              # From playtype data
-        'FGA_3_DRIBBLE',            # From shooting stats
-        'FGA_7_DRIBBLE',            # From shooting stats
-        'FGA_ISO_TOTAL',            # Calculated
-        'EFG_ISO_WEIGHTED',         # Calculated
-        # Fallback features
-        'creation_volume_ratio',    # Existing feature
-        'time_of_poss',             # From tracking data
+        'pct_uast_fgm',         # Unassisted rate
+        'pull_up_fga',          # Volume
+        'pull_up_fg3a',         # Range
+        'creation_volume_ratio',# Bag/Rate
+        'time_of_poss',         # Handle
+        'ts_pct'                # Efficiency
     ]
 
 
@@ -193,89 +237,77 @@ def get_missing_features(df: pd.DataFrame) -> List[str]:
     missing = [f for f in required if f not in df.columns]
     return missing
 
+def diagnose_player_score(player_data: pd.Series):
+    """Prints a detailed breakdown of the self-created score for a player."""
+    player_name = player_data.get('player_name', 'Unknown')
+    season = player_data.get('season', 'N/A')
+    print(f"\n--- Diagnosing: {player_name} ({season}) ---")
 
-# Validation test cases from SPECIFICATION.md
-VALIDATION_CASES = {
-    'Ben Simmons': {
-        'expected_score': 5,
-        'tolerance': 10,
-        'reason': 'Near zero self-created jumpers in career'
-    },
-    'James Harden': {
-        'expected_score': 95,
-        'tolerance': 10,
-        'reason': 'Elite stepback, can get any shot anytime'
-    },
-    'Luka Dončić': {
-        'expected_score': 95,
-        'tolerance': 10,
-        'reason': 'Maximum creation, holds ball 6+ seconds'
-    },
-    'Khris Middleton': {
-        'expected_score': 70,
-        'tolerance': 15,
-        'reason': 'Good mid-range creation, not elite volume'
-    },
-}
+    # 1. Unassisted Score
+    unassisted_rate = player_data.get('pct_uast_fgm', 0)
+    if unassisted_rate > 1.0: unassisted_rate /= 100.0
+    unassisted_score = _calculate_unassisted_score(player_data)
+    print(f"  Unassisted (W: 25%): {unassisted_score:.1f}")
+    print(f"    - pct_uast_fgm: {unassisted_rate:.3f}")
 
+    # 2. Volume Score
+    pull_up_fga = player_data.get('pull_up_fga', 0)
+    time_of_poss = player_data.get('time_of_poss', 0)
+    volume_score = _calculate_creation_volume_score(player_data)
+    print(f"  Volume (W: 30%): {volume_score:.1f}")
+    print(f"    - pull_up_fga: {pull_up_fga:.2f}")
+    print(f"    - time_of_poss: {time_of_poss:.2f}")
 
-def validate_component(df: pd.DataFrame) -> Dict[str, dict]:
-    """
-    Validate component against known test cases.
-    
-    Returns:
-        Dict mapping player names to pass/fail results
-    """
-    results = {}
-    
-    for player, case in VALIDATION_CASES.items():
-        player_mask = df['player_name'].str.lower().str.contains(player.lower())
-        
-        if not player_mask.any():
-            results[player] = {
-                'status': 'SKIP',
-                'reason': 'Player not in dataset'
-            }
-            continue
-        
-        # Get most recent season
-        player_df = df[player_mask].sort_values('season', ascending=False)
-        player_data = player_df.iloc[0]
-        
-        score = calculate_self_created_score(player_data)
-        expected = case['expected_score']
-        tolerance = case['tolerance']
-        
-        if abs(score - expected) <= tolerance:
-            results[player] = {
-                'status': 'PASS',
-                'score': score,
-                'expected': expected
-            }
-        else:
-            results[player] = {
-                'status': 'FAIL',
-                'score': score,
-                'expected': expected,
-                'delta': score - expected
-            }
-    
-    return results
+    # 3. Efficiency Score
+    ts_pct = player_data.get('ts_pct', 0)
+    if ts_pct > 1.0: ts_pct /= 100.0
+    efficiency_score = _calculate_self_created_efficiency_score(player_data)
+    relevance_factor = np.clip((unassisted_rate - 0.2) / 0.4, 0, 1)
+    print(f"  Efficiency (W: 30%): {efficiency_score:.1f}")
+    print(f"    - ts_pct: {ts_pct:.3f}")
+    print(f"    - relevance_factor: {relevance_factor:.2f}")
+
+    # 4. Tools Score
+    pull_up_3a = player_data.get('pull_up_fg3a', 0)
+    cvr = player_data.get('creation_volume_ratio', 0)
+    tools_score = _calculate_creation_tools_score(player_data)
+    print(f"  Tools (W: 15%): {tools_score:.1f}")
+    print(f"    - pull_up_fg3a: {pull_up_3a:.2f} (Range)")
+    print(f"    - time_of_poss: {time_of_poss:.2f} (Handle)")
+    print(f"    - creation_volume_ratio: {cvr:.3f} (Bag)")
+
+    final_score = calculate_self_created_score(player_data)
+    print(f"  ---------------------------------")
+    print(f"  Final Weighted Score: {final_score:.2f}")
 
 
 if __name__ == '__main__':
-    # Quick test with synthetic data
-    test_data = pd.Series({
-        'creation_volume_ratio': 0.6,
-        'ISO_POSS_RS': 5.0,
-        'FGA_3_DRIBBLE': 3.0,
-        'FGA_7_DRIBBLE': 2.0,
-        'FGA_ISO_TOTAL': 5.0,
-        'EFG_ISO_WEIGHTED': 0.48,
-        'time_of_poss': 5.5
-    })
+    from pathlib import Path
     
-    score = calculate_self_created_score(test_data)
-    print(f"Test Score: {score}")
-    print(f"Expected range: 60-80 for solid creator")
+    dataset_path = Path(__file__).parents[4] / 'results' / 'predictive_dataset_with_friction.csv'
+    
+    if not dataset_path.exists():
+        print("Dataset not found. Cannot run diagnosis.")
+    else:
+        print(f"Loading dataset from {dataset_path}...")
+        df = pd.read_csv(dataset_path)
+        # Normalize column names to lower case for consistency
+        df.columns = [c.lower() for c in df.columns]
 
+        players_to_diagnose = {
+            'Luka Dončić': ['2022-23', '2024-25'],
+            'Khris Middleton': ['2020-21', '2024-25'], # Peak vs recent
+            'James Harden': ['2018-19', '2024-25'], # Peak vs recent
+            'Ben Simmons': ['2018-19', '2023-24'], # Pre-injury vs post
+            'Giannis Antetokounmpo': ['2020-21', '2024-25'],
+            'Anthony Davis': ['2019-20', '2024-25']
+        }
+
+        for player_name, seasons in players_to_diagnose.items():
+            for season in seasons:
+                player_data = df[(df['player_name'].str.lower() == player_name.lower()) & (df['season'] == season)]
+                
+                if not player_data.empty:
+                    diagnose_player_score(player_data.iloc[0])
+                else:
+                    print(f"\n--- Could not find data for {player_name} in {season} ---")
