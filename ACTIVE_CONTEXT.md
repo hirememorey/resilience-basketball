@@ -1,76 +1,138 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 26, 2025
-**Status**: 🏗️ **PHASE 5: RE-ARCHITECTURE & SLOAN PREP** - "The Factory Model"
-- **Action**: Retrained Telescope model with **Fragility Score v3.5 (Abdication + Choke Tax)**.
-- **Validation**:
-    - **Subsidy Logic**: `Skill = Max(TimeOfPoss/9.0, AstPct/0.45, TouchPts/10.0)`. (Fixed Anchors).
-    - **Fragility Logic**: `Fragility = Base + (Abdication * 15.0) + (Choking * 5.0)`.
-    - **D'Angelo Russell ('19)**: Corrected from **King (5.81)** to **Sniper (1.43)**. ✅ The "Abdication Tax" works.
-    - **Ben Simmons ('19)**: Potential reduced (7.17 -> 4.32), but still **King**. ❌ "The Linearity Trap".
-    - **KAT ('19)**: Potential reduced (7.37 -> 4.95), but still **King**. ❌ Raw volume overpowers fragility.
-    - **Verdict**: 60.0% Pass Rate. Physics of "Fragility" are sound, but the model architecture (XGBoost) struggles to enforce hard penalties on elite volume.
+**Last Updated**: December 27, 2025
+**Status**: 🔄 **PHASE 2: CREATION INDEPENDENCE** - "The Right Question"
 
 ---
 
-## Project Goal
+## The Pivot
 
-To build a **Simulation Engine** ("Universal Avatar") that projects how a player's efficiency scales with usage and defensive pressure, distinguishing between "Floor Raisers" and "Helio Engines."
+We discovered that Phase 1 was asking the **wrong question**:
 
----
+- **Phase 1 asked**: "How good will this player be?" (predicting future playoff PIE)
+- **Phase 2 asks**: "Can this player create when schemed?" (measuring creation independence)
 
-## Core Architecture: The "Factory" Pipeline (New)
+### Why Phase 1 Failed
 
-We have transitioned from ad-hoc scripts to a linear "Data Factory" pipeline.
+The fundamental issue was the **Ground Truth Trap**:
+- Ben Simmons had decent playoff PIE (pre-2021) because of Embiid + shooters
+- The model learned Simmons was "good" because his outcomes were good
+- But his **process** (zero self-created shots, hiding under pressure) was fragile
+- We could patch this with abdication penalties, but patches aren't learning
 
-### 1. Ingestion & Feature Engineering (The Engine)
-- **Script**: `src/nba_data/scripts/evaluate_plasticity_potential.py`
-- **Output**: `results/predictive_dataset_with_friction.csv`
-- **Key Metrics**: `HELIO_POTENTIAL_SCORE`, `SUBSIDY_INDEX`, `FRAGILITY_SCORE`.
-- **New Logic (Dec 26)**:
-    - **Abdication Tax**: Penalizes `LEVERAGE_USG_DELTA` (Simmons/D-Lo).
-    - **Choke Tax**: Penalizes `LEVERAGE_TS_DELTA` (KAT).
+### The Creation Independence Insight
 
-### 2. Universal Projection (The Physics)
-- **Module**: `src/nba_data/utils/projection_utils.py`
-- **Logic**: Applies empirically derived friction coefficients to project `TS%` at higher usage.
-- **Status**: ✅ Stress Tested (Brunson vs. Poole).
+The key differentiator between true stars and fragile ones is **creation independence**:
+- **Harden at OKC**: Give him the ball and get out of the way. He IS the situation.
+- **Simmons**: Needs shooters, Embiid doubles, transition. He needs the situation.
 
-### 3. Visualization (The Deliverable)
-- **Script**: `src/nba_data/scripts/visualize_risk_matrix.py`
-- **Output**: Streamlit App (2D Risk Matrix).
-
-### 4. Data Integrity (In Progress)
-- **Schema**: `src/nba_data/core/models.py` (Pydantic Models).
-- **Goal**: Move away from loose CSVs to typed objects.
+This leads to our new question: **"Does this player need the right situation, or IS he the situation?"**
 
 ---
 
-## Validation Results: Physics Compliance Achieved
+## Phase 2: Creation Independence Index (CII)
 
-### ✅ **The "Glass Cannon" Fix (D-Lo Case)**
-- **Hypothesis**: High Ownership (Subsidy) is not enough; one must maintain intent under pressure.
-- **Correction**: `FRAGILITY_SCORE` now includes an **Abdication Multiplier** (Slope -15.0).
-- **Result**: D'Angelo Russell ('19) usage drop (-6.7%) triggered massive penalty. Prediction moved from **King** to **Sniper**.
+### Location
+`/src/nba_data/phase2_creation_independence/`
 
-### ✅ **The "System Merchant" Filter (Subsidy Index)**
-- **Hypothesis**: Efficiency is "Rented" from the ecosystem, not owned by the player.
-- **Implementation**: `Subsidy Index = 1.0 - Max(TimeOfPoss, AstPct, TouchPts)`.
-- **Result**: 
-    - **Nikola Jokić ('19)**: Subsidy Index **0.198** (Elite Ownership).
-    - **Jalen Brunson ('22)**: Subsidy Index **0.522** (Moderate Dependence).
-    - **Jordan Poole ('22)**: Subsidy Index **0.522** (Moderate Dependence).
-    - **Christian Wood ('21)**: Subsidy Index **0.756** (Extreme Dependence).
-- **Verdict**: The model now mechanistically discounts efficiency derived from system gravity.
+### Components
+
+| Component | Weight | What It Measures |
+|-----------|--------|------------------|
+| Self-Created Shot Score | 30% | Can you get a shot without a play? |
+| Pressure Appetite Score | 25% | Do you WANT the ball in clutch? |
+| Shot Difficulty Embrace | 20% | Do you take hard shots or hide? |
+| Defensive Survival Score | 15% | Do you maintain against schemes? |
+| Force Multiplication Score | 10% | Do you create through physicality? |
+
+### Archetypes (Classification Target)
+
+| Archetype | CII Range | Definition |
+|-----------|-----------|------------|
+| Franchise Engine | 80+ | Can be #1 on a championship team |
+| Strong Creator | 70-80 | High creation, optimal as #2 |
+| Luxury Amplifier | 55-70 | Excellent, needs an Engine |
+| Fragile Star | 40-55 | Looks like Engine, fatal flaws |
+| Role Player | <40 | Solid contributor, not a star |
+
+### Ground Truth
+Curated labels in `/ground_truth/player_labels.csv` - 40+ player-seasons with expert archetypes.
+
+---
+
+## Phase 1 Archive
+
+Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
+- `train_telescope_model.py` - XGBoost regressor
+- `validate_telescope_resilience.py` - 35 test cases
+- Achieved 60% pass rate with abdication penalty
+- See `/phase1_helio_archive/README.md` for details
+
+### Key Phase 1 Learnings
+1. **Features were valuable**: `clutch_usg_absolute`, `abdication_interaction` have signal
+2. **Target was wrong**: `FUTURE_PEAK_HELIO` rewarded converters, not creators
+3. **Patches don't scale**: Abdication penalty worked but violated "learn don't patch"
+4. **Wrong question**: Outcomes ≠ Process, need to measure creation directly
+
+---
+
+## Current Pipeline (Preserved)
+
+### Data Collection (Still Active)
+- `/src/nba_data/scripts/` - All collection scripts unchanged
+- Playtype, tracking, shot quality, clutch splits, defensive context
+
+### Feature Engineering (Still Active)
+- `evaluate_plasticity_potential.py` - Generates features
+- Output: `results/predictive_dataset_with_friction.csv`
+- Key features: `clutch_usg_absolute`, `relative_usage_drop`, `abdication_interaction`
 
 ---
 
 ## Next Steps
 
-1.  **Resolve "The Linearity Trap" (Simmons/KAT)**: The Fragility Score is high, but the XGBoost model overpowers it with volume signals.
-    - **Action**: Implement a "Hard Gate" or "Penalty Injection" into the target variable itself, or use a 2-stage model (Filter -> Rank).
-2.  **Implement Scalability Gradient**: Replace "Standardized Ceiling" hard logic with the **Elastic Volume Projection** (Insight #73).
-    - `Projected_Volume = Current_Usage + ((0.30 - Current_Usage) * Skill_Index)`
-    - This will help with the early-career projection misses (Tatum/Embiid).
-3.  **Refactor**: Finalize the transition of `evaluate_plasticity_potential.py` to use `src/nba_data/core/models.py`. (Partial Complete - Schema enforced).
-4.  **Visualization**: Final polish on the Sloan Risk Matrix.
+1. **Calculate CII for ground truth players**
+   - Implement each component function in `/phase2_creation_independence/index/`
+   - Use existing features where available
+   - Identify missing data needs
+
+2. **Validate CII ranking**
+   - Do CII scores correctly order players by archetype?
+   - Does Simmons score < Harden at OKC?
+   - Does Haliburton score > Sabonis?
+
+3. **Train archetype classifier**
+   - Use CII components as features
+   - Predict 5-class archetype
+   - Validate on held-out test set
+
+4. **Deploy for latent star detection**
+   - Apply to current rookies/young players
+   - Identify future Engines before consensus
+
+---
+
+## Key Decision: Creator vs. Converter
+
+The central question for any player:
+
+> **Creators** can manufacture efficient offense against engaged defenses.
+> **Converters** can only cash in opportunities that the system creates.
+
+| | High Efficiency | Low Efficiency |
+|---|---|---|
+| **High Creation** | FRANCHISE ENGINE | Struggling Star |
+| **Low Creation** | LUXURY AMPLIFIER | Role Player |
+
+Ben Simmons is in the bottom-left: efficient but dependent. The model must identify this.
+
+---
+
+## Files to Reference
+
+| File | Purpose |
+|------|---------|
+| `phase2_creation_independence/SPECIFICATION.md` | Detailed CII spec |
+| `phase2_creation_independence/ground_truth/player_labels.csv` | Expert labels |
+| `KEY_INSIGHTS.md` | 40+ learnings from Phase 1 |
+| `LUKA_SIMMONS_PARADOX.md` | Theoretical foundation |

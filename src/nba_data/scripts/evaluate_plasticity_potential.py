@@ -1421,6 +1421,36 @@ class StressVectorEngine:
         # INSERT THIS CALL
         final_df = self._calculate_fragility_score(final_df)
         
+        # ========== NEW FEATURES (Dec 2025): Clutch Behavior Encoding ==========
+        # These features directly encode clutch behavior, not just deltas.
+        # Principle: "Learn, Don't Patch" - give the model the right information.
+        
+        # Get leverage columns (may be uppercase or lowercase at this point)
+        lev_usg = final_df.get('LEVERAGE_USG_DELTA', final_df.get('leverage_usg_delta', pd.Series(0, index=final_df.index)))
+        lev_ts = final_df.get('LEVERAGE_TS_DELTA', final_df.get('leverage_ts_delta', pd.Series(0, index=final_df.index)))
+        usg = final_df.get('USG_PCT', final_df.get('usg_pct', pd.Series(0.2, index=final_df.index)))
+        
+        # 1. CLUTCH_USG_ABSOLUTE: The floor matters, not just the delta
+        # Simmons at 0.148 vs Luka at 0.276 - directly encodes "role player vs star in clutch"
+        final_df['CLUTCH_USG_ABSOLUTE'] = usg + lev_usg
+        logger.info(f"  -> CLUTCH_USG_ABSOLUTE calculated. Mean: {final_df['CLUTCH_USG_ABSOLUTE'].mean():.4f}")
+        
+        # 2. RELATIVE_USAGE_DROP: Proportional drop, not absolute
+        # A 7% drop from 35% is different than 7% from 21%
+        # Simmons: -31% relative vs Luka: -22% relative
+        final_df['RELATIVE_USAGE_DROP'] = np.where(
+            usg > 0.05,  # Avoid division by zero
+            lev_usg / usg,
+            0.0
+        )
+        logger.info(f"  -> RELATIVE_USAGE_DROP calculated. Mean: {final_df['RELATIVE_USAGE_DROP'].mean():.4f}")
+        
+        # 3. ABDICATION_INTERACTION: Captures the "hiding while protecting stats" pattern
+        # Negative = usage down AND efficiency up (only taking easy shots) = ABDICATION
+        # Positive = both move same direction (stepping up or being forced)
+        final_df['ABDICATION_INTERACTION'] = lev_usg * lev_ts
+        logger.info(f"  -> ABDICATION_INTERACTION calculated. Mean: {final_df['ABDICATION_INTERACTION'].mean():.6f}")
+        
         # PHASE 5 REFACTOR: Validate the final dataset against the Pydantic schema
         final_df = validate_with_pydantic(final_df)
         

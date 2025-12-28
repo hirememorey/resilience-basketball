@@ -83,6 +83,12 @@ class PlayerSeason(BaseModel):
     # Vector 2: Leverage (Clutch) - Explicitly added for debugging/persistence
     leverage_usg_delta: Optional[float] = None
     leverage_ts_delta: Optional[float] = None
+    
+    # Vector 2b: Clutch Behavior Encoding (Dec 2025 - "Learn, Don't Patch")
+    # These directly encode clutch behavior for the model to learn from
+    clutch_usg_absolute: Optional[float] = None  # The floor matters, not just delta
+    relative_usage_drop: Optional[float] = None  # Proportional drop, not absolute
+    abdication_interaction: Optional[float] = None  # Usage × Efficiency delta interaction
 
     # Outputs (Projected)
     projected_playoff_pps: Optional[float] = None

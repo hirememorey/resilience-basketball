@@ -107,7 +107,67 @@ Players can appear elite against "Top 10 Defenses" in blowouts when starters are
 2.  **Rank (The ML)**: Rank the survivors based on projected potential.
 *Principle: You cannot "Average" your way out of a fatal flaw.*
 
+## 76. The "Ground Truth Trap" (Outcomes ≠ Process) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Phase 1 predicted `FUTURE_PEAK_HELIO` (future playoff PIE), but playoff PIE is contaminated by context. Ben Simmons had decent playoff PIE pre-2021 because of Embiid doubles + shooters. The model learned he was "good."
+
+**The Insight**: We were training on **outcomes** (what happened) instead of **process** (how it happened). Outcomes are contextual; process is portable.
+
+**The Fix**: Shift from predicting outcomes to measuring **Creation Independence** - the ability to generate offense when the defense knows it's coming. This is portable across contexts.
+
+**Key Principle**: **Model the process, not the outcome.**
+
+## 77. The "Patch vs. Learn" Trap (Architectural Integrity) 🎯 CRITICAL (December 2025)
+
+**The Problem**: We could catch Simmons by adding an "abdication penalty" to the target variable. This worked (60% pass rate), but it violated the "learn don't patch" principle.
+
+**The Insight**: Every time we add a manual penalty or hard gate, we're admitting the features don't capture the phenomenon. The model should learn from features, not have the answer coded into the target.
+
+**The Fix**: Instead of patching the target, engineer features that directly measure the phenomenon. `clutch_usg_absolute` is better than `leverage_usg_delta` because it answers "what IS the clutch usage?" not "how much did it change?"
+
+**Key Principle**: **If you're patching the target, you're asking the wrong question.**
+
+## 78. The "Creator vs. Converter" Dichotomy (The Right Question) 🎯 CRITICAL (December 2025)
+
+**The Problem**: The old question "How good will this player be?" doesn't distinguish between players who CREATE opportunities and players who CONVERT opportunities created by others.
+
+**The Insight**: The fundamental distinction is:
+- **Creators**: Can manufacture efficient offense against engaged defenses. They ARE the situation.
+- **Converters**: Can only cash in opportunities the system creates. They NEED the situation.
+
+Ben Simmons is an elite Converter (great in transition, with shooters) but a poor Creator (no self-created jumpers). The old model couldn't see this.
+
+**The Fix**: Ask the right question: "Can this player create when schemed?" The answer is the **Creation Independence Index**.
+
+**Key Principle**: **Creators are portable; Converters are contextual.**
+
+## 79. The "Feature Reframe" Insight (Deltas vs. Absolutes) 🎯 CRITICAL (December 2025)
+
+**The Problem**: `leverage_usg_delta` (change in clutch usage) treats a player going from 40% → 35% the same as 15% → 10%. But these are very different situations - one is still a go-to player, one is hiding.
+
+**The Insight**: Deltas lose information about the baseline. Sometimes the absolute value matters more than the change.
+
+**The Fix**: Add `clutch_usg_absolute = usg_pct + leverage_usg_delta` to measure the actual clutch usage, not just the change. Luka at 38% clutch usage is very different from Simmons at 12%.
+
+**Key Principle**: **Absolutes tell you what happened; deltas tell you how it changed. You need both.**
+
+## 80. The "Archetype over Regression" Insight (Classification > Prediction) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Regression to predict "potential score" is falsely precise. We don't actually know if a player will score 7.2 vs 7.8 HELIO. But we DO know if they're a "Franchise Engine" or "Fragile Star."
+
+**The Insight**: The decision isn't "how good exactly?" It's "what type of player is this?" A max contract decision needs to know: can they be your #1? That's a classification question.
+
+**The Fix**: Phase 2 uses archetype classification:
+- Franchise Engine
+- Strong Creator  
+- Luxury Amplifier
+- Fragile Star
+- Role Player
+
+**Key Principle**: **Classify the archetype, don't predict the score.**
+
 ## See Also
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)
 - `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
+- `phase2_creation_independence/SPECIFICATION.md` - **NEW** - CII specification

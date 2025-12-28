@@ -1,0 +1,68 @@
+player_name,season,archetype,confidence,notes
+# =============================================================================
+# FRANCHISE ENGINES - Can be #1 on a championship team
+# =============================================================================
+James Harden,2011-12,Engine,High,"OKC 6th man year. Elite ISO efficiency, stepback available, high FTr. Became MVP candidate immediately after trade."
+James Harden,2012-13,Engine,High,"First Houston year. 26 PPG, 6 APG. Proved OKC creation was portable."
+Luka Dončić,2018-19,Engine,High,"Rookie year. Already holding ball 6+ sec/touch, creating everything. ROY."
+Luka Dončić,2019-20,Engine,High,"Age 20. 29/9/9. Elite creation, stepback 3, passing."
+Nikola Jokić,2018-19,Engine,High,"Age 23. First All-NBA. Elite creation via passing, post scoring."
+Nikola Jokić,2019-20,Engine,High,"MVP trajectory clear. Elite creation, low subsidy."
+Jayson Tatum,2017-18,Engine,Medium,"Rookie. Could get any shot. Efficiency inconsistent but creation elite."
+Jayson Tatum,2018-19,Engine,High,"Age 20. Shot creation fully developed."
+Shai Gilgeous-Alexander,2019-20,Engine,Medium,"Age 21. Starting to show creation. Still in CP3 shadow."
+Shai Gilgeous-Alexander,2020-21,Engine,High,"Age 22. 24 PPG, elite mid-range creation, high FTr."
+Joel Embiid,2018-19,Engine,High,"Age 24. Elite post creation, can shoot. Portable skills."
+Giannis Antetokounmpo,2018-19,Engine,High,"Age 24. MVP. Creates via force, not skill. Unstoppable in transition."
+Giannis Antetokounmpo,2019-20,Engine,High,"Age 25. Back-to-back MVP. Force multiplication maximum."
+Anthony Davis,2017-18,Engine,Medium,"Age 24. Elite two-way. Creates via rim pressure."
+Anthony Davis,2018-19,Engine,High,"Age 25. MVP candidate. Portable creation skills."
+
+# =============================================================================
+# STRONG CREATORS - High creation, optimal as #2 but can carry
+# =============================================================================
+Tyrese Haliburton,2021-22,Strong Creator,High,"Pre-trade season. Elite PnR creation, pull-up shooting."
+Tyrese Haliburton,2022-23,Strong Creator,High,"First full Pacers season. All-Star. Creates for self and others."
+Jaylen Brown,2020-21,Strong Creator,Medium,"Age 24. Developed creation ability. Can carry but thrives as 1B."
+Jaylen Brown,2021-22,Strong Creator,High,"Age 25. Finals run. Self-created scoring improved."
+Kyrie Irving,2016-17,Strong Creator,High,"Age 24. Elite creation, handle, finishing. Championship proven but needs Engine."
+Donovan Mitchell,2017-18,Strong Creator,Medium,"Rookie playoffs. Elite scoring creation. Question is ceiling."
+Donovan Mitchell,2019-20,Strong Creator,High,"Age 23. Elite shot creation. Can he be #1 on a champion? TBD."
+Devin Booker,2019-20,Strong Creator,Medium,"Age 23. Elite shot making. Creation improving."
+Devin Booker,2020-21,Strong Creator,High,"Age 24. Finals run. Creation fully developed."
+
+# =============================================================================
+# LUXURY AMPLIFIERS - Excellent, need an Engine to win
+# =============================================================================
+Domantas Sabonis,2021-22,Amplifier,High,"All-Star. Elite passing from post. But needs plays run for him."
+Domantas Sabonis,2022-23,Amplifier,High,"Traded for Haliburton. Proves the point - Hali was the asset."
+Khris Middleton,2018-19,Amplifier,High,"Elite 3-and-D plus mid-range. But not a creator."
+Khris Middleton,2020-21,Amplifier,High,"Championship. Crucial piece but Giannis is the Engine."
+Pascal Siakam,2019-20,Amplifier,Medium,"Age 25. MIP, All-NBA. Creation improving but not Engine level."
+Pascal Siakam,2020-21,Amplifier,High,"Age 26. Showed limitations as #1 option."
+Chris Bosh,2009-10,Amplifier,High,"Toronto. 24 PPG but creation limited. Needed Wade/LeBron."
+Tobias Harris,2018-19,Amplifier,High,"Pre-Sixers. Solid all-around but no elite creation skill."
+Tobias Harris,2019-20,Amplifier,High,"Max contract year. Compiler, not creator."
+
+# =============================================================================
+# FRAGILE STARS - Look like Engine, fatal creation flaws
+# =============================================================================
+Ben Simmons,2017-18,Fragile Star,High,"Rookie. Triple-double machine. But ZERO self-created jumpers."
+Ben Simmons,2018-19,Fragile Star,High,"Age 22. All-Star. Usage drops in clutch. No jump shot."
+Ben Simmons,2019-20,Fragile Star,High,"Age 23. Red flags clear. Passing out of open dunks."
+Ben Simmons,2020-21,Fragile Star,High,"Age 24. Hawks collapse. The fraud is fully exposed."
+Karl-Anthony Towns,2017-18,Fragile Star,Medium,"Age 22. Elite skills but playoff creation poor."
+Karl-Anthony Towns,2018-19,Fragile Star,High,"Age 23. Can shoot but can't create against scheme."
+Karl-Anthony Towns,2019-20,Fragile Star,High,"Age 24. Pattern continues. High skills, low force."
+Julius Randle,2020-21,Fragile Star,High,"All-NBA. 24 PPG. Playoffs: 18 PPG on 30% FG. Fraud exposed."
+Andrew Wiggins,2016-17,Fragile Star,High,"Age 21. 24 PPG but no creation beyond ISO. Scorer, not creator."
+Andrew Wiggins,2017-18,Fragile Star,High,"Age 22. Same pattern. Volume scorer, low efficiency."
+
+# =============================================================================
+# ROLE PLAYERS - Solid contributors, clearly not stars
+# =============================================================================
+Tyus Jones,2021-22,Role Player,High,"Elite AST/TO ratio. But no star-level creation."
+Monte Morris,2020-21,Role Player,High,"Solid backup. No creation ceiling."
+Derrick White,2021-22,Role Player,High,"3-and-D plus playmaking. Not a creator."
+Mikal Bridges,2021-22,Role Player,Medium,"Elite 3-and-D. Brooklyn showed creation limits."
+
