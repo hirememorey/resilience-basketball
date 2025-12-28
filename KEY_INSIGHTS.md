@@ -179,6 +179,50 @@ Ben Simmons is an elite Converter (great in transition, with shooters) but a poo
 
 **Key Principle**: **Creation is the ability to generate a shot when the defense is set.**
 
+## 82. The "Traffic vs. Difficulty" Trap (Contested Shot Rate) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Using `contested_shot_rate` as a proxy for "shot difficulty embrace" is fundamentally flawed.
+
+**The Data**:
+- Ben Simmons: 76% contested rate
+- Rudy Gobert: 85% contested rate (HIGHEST)
+- Jayson Tatum: 50% contested rate
+
+A naive implementation would score Gobert as the player who "most embraces difficulty."
+
+**The Insight**: Contested shot rate conflates two very different phenomena:
+- **Active Difficulty Embrace**: Tatum taking a contested fadeaway (resilience/skill)
+- **Passive Difficulty Exposure**: Gobert dunking in traffic because he can't shoot elsewhere
+
+Simmons and Gobert have HIGH contested rates because they ONLY take shots at the rim. The paint is packed because defenses don't respect their jumper.
+
+**The Fix**: Use jump shot volume metrics (`pull_up_fga`, `pct_pts_2pt_mr`, `pull_up_fg3a`) as primary signals for Component 3. These metrics:
+- Create a 15x gap between Simmons (0.7 pull-up FGA) and Tatum (10.4 pull-up FGA)
+- Automatically penalize players who can't take jumpers
+- Properly reward mid-range specialists (DeRozan: 35% of points from mid-range)
+
+**Key Principle**: **Measure the shot type, not just the defender proximity.**
+
+## 83. The "Force Creator" Archetype (Giannis/Shaq/Zion) 🎯 IMPORTANT (December 2025)
+
+**The Problem**: Some Franchise Engines (Giannis, Shaq, Zion) don't take many jumpers but ARE the situation.
+
+**The Insight**: Creation Independence has two valid paths:
+1. **Perimeter Creation**: Pull-ups, mid-range, off-dribble 3s (Harden, Tatum, DeRozan)
+2. **Force Creation**: Rim attacks through contact at high volume (Giannis, Shaq)
+
+Both are valid. The difference from Simmons/Gobert is:
+- **Agency**: Giannis DEMANDS the ball; Gobert waits for lobs
+- **Volume**: Giannis takes 20+ FGA; Gobert takes 6-8
+- **Pressure Response**: Giannis' usage INCREASES in clutch; Simmons' DECREASES
+
+**The Fix**: 
+- Component 3 (Shot Difficulty) focuses on JUMP SHOT creation
+- Force creators get credit through Component 1 (`creation_volume_ratio`) and Component 5 (`physicality_score`, `FTr`)
+- The CII composite correctly identifies both archetypes as Engines through different paths
+
+**Key Principle**: **Multiple valid paths to the same destination. Don't conflate the path with the destination.**
+
 ## See Also
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)

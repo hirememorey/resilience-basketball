@@ -1120,13 +1120,13 @@ python -c "from src.nba_data.phase2_creation_independence.index.self_created imp
 4. Validate Simmons << Luka
 
 #### Task 1.3: Shot Difficulty Embrace Score
-**File**: `src/nba_data/phase2_creation_independence/index/difficulty_embrace.py`
+✅ **COMPLETE** - Implemented in `src/nba_data/phase2_creation_independence/index/difficulty_embrace.py`.
 
-1. Create file with skeleton from Section 4.3
-2. Collect missing data:
-   - Defender distance stats from `CloseDefDistRange`
-   - Mid-range volume from shot charts
-3. Validate Simmons << Tatum
+**Key Implementation Notes**:
+- Removed `contested_shot_rate` as primary signal (the "Traffic vs Difficulty" trap)
+- Uses `pull_up_fga` (40%), `pct_pts_2pt_mr` (30%), `pull_up_fg3a` (20%), `time_of_poss` (10%)
+- Force creators (Giannis, Zion) get credit through Components 1 and 5, not here
+- 7/7 validation cases passing (Simmons, Gobert, Zion, Giannis, Tatum, Middleton, DeRozan)
 
 #### Task 1.4: Defensive Survival Score
 **File**: `src/nba_data/phase2_creation_independence/index/defensive_survival.py`

@@ -1,6 +1,6 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 28, 2025
+**Last Updated**: December 28, 2025 (Evening)
 **Status**: 🔄 **PHASE 2: CREATION INDEPENDENCE** - "The Right Question"
 
 ---
@@ -103,7 +103,30 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
     *   **Status**: Logic implemented and validated.
     *   **Action**: Mapped `clutch_usg_absolute` and `relative_usage_drop` to measure the "Abdication Tax." Successfully identified Simmons as a low-appetite outlier (score ~18-21).
 
-3.  **Diagnostic Validation Performed**
+3.  **CII Component 3: `Shot Difficulty Embrace Score` Implemented** ✨ NEW
+    *   **File**: `src/nba_data/phase2_creation_independence/index/difficulty_embrace.py`
+    *   **Status**: Complete rewrite with **7/7 validation cases passing**.
+    *   **Key Learnings**:
+        *   **The Contested Shot Rate Trap**: Simmons (0.76) and Gobert (0.85) have the HIGHEST contested shot rates because they only take layups/dunks in traffic. Naive use of this metric would score them as "difficulty embracers."
+        *   **The Fix**: Replaced `contested_shot_rate` with jump shot metrics (`pull_up_fga`, `pct_pts_2pt_mr`, `pull_up_fg3a`) as primary signals.
+        *   **Giannis/Shaq Consideration**: Force creators get credit through Components 1 and 5, not Component 3. This keeps the component focused on "shot difficulty" specifically.
+    *   **Final Architecture**:
+        *   Pull-up Volume: 40% (the key differentiator)
+        *   Mid-range %: 30%
+        *   Pull-up 3 Volume: 20%
+        *   Time of Possession: 10%
+    *   **Validation Results**:
+        | Player | Score | Status |
+        |--------|-------|--------|
+        | Rudy Gobert | 0.2 | ✅ Pure finisher |
+        | Zion Williamson | 10.1 | ✅ Force creator (C1/C5) |
+        | Ben Simmons | 24.3 | ✅ Minimal jumpers |
+        | Giannis | 36.9 | ✅ Hybrid |
+        | Tatum | 51.9 | ✅ Perimeter creator |
+        | Middleton | 64.7 | ✅ Elite mid-range |
+        | DeRozan | 77.8 | ✅ Maximum mid-range |
+
+4.  **Diagnostic Validation Performed**
     *   **Action**: Conducted a deep-dive analysis on the scores for Luka Dončić, Khris Middleton, Ben Simmons, and others across different seasons.
     *   **Finding 1 (Luka/AD Trade Context)**: The model successfully detected the change in Luka Dončić's role after being traded to the Lakers. His score correctly adjusted from a peak of 97.1 (2022-23) to 84.0 (2024-25), reflecting his new context playing alongside LeBron James. This is a major validation of the model's sensitivity to process, not just reputation.
     *   **Finding 2 (Middleton Career Arc)**: The model correctly identified Khris Middleton's peak as a "Luxury Amplifier" (67.0 in 2020-21) and his subsequent decline into the "Fragile Star/Role Player" tier (49.4 in 2024-25), demonstrating its ability to model career trajectories.
@@ -116,7 +139,7 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
 ### Priority 1: Component Calculation (High)
 - [x] ~~Implement `calculate_self_created_score` using `pct_uast_fgm` and `pull_up_fga`.~~ **(DONE)**
 - [x] ~~Implement `calculate_pressure_appetite_score`.~~ **(DONE)**
-- [ ] Implement `calculate_difficulty_embrace_score`.
+- [x] ~~Implement `calculate_difficulty_embrace_score`.~~ **(DONE - Dec 28 evening)**
 - [ ] Implement `calculate_defensive_survival_score`.
 - [ ] Implement `calculate_force_multiplication_score`.
 - [ ] Run `batch_calculate_cii()` on integrated dataset.
