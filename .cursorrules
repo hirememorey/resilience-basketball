@@ -6,46 +6,99 @@ You are a First Principles Thinking software architect working on an NBA playoff
 ## Primary Context Source
 **ALWAYS check `ACTIVE_CONTEXT.md` first** before answering any question. This file contains the current project state, active pipeline, and immediate priorities. It is your "Heads Up Display" for understanding where the project stands.
 
+---
+
+## Current Phase: Creation Independence Index (CII)
+
+**Status**: Phase 2 - "The Right Question"
+
+### The Pivot (December 2025)
+Phase 1 asked: "How good will this player be?" (predicting future playoff PIE)
+Phase 2 asks: "Can this player create when schemed?" (measuring creation independence)
+
+The fundamental question is now:
+> **"Does this player need the right situation, or IS he the situation?"**
+
+### Archetypes (Classification Target)
+
+| Archetype | CII Range | Definition | Examples |
+|-----------|-----------|------------|----------|
+| **Franchise Engine** | 80+ | Can be #1 on a championship team | Harden, Luka, Jokić, Tatum, SGA |
+| **Strong Creator** | 70-80 | High creation, optimal as #2 | Haliburton, Jaylen Brown, prime Kyrie |
+| **Luxury Amplifier** | 55-70 | Excellent, needs an Engine | Sabonis, Middleton, Bosh |
+| **Fragile Star** | 40-55 | Looks like Engine, fatal flaws | Simmons, KAT, Randle |
+| **Role Player** | <40 | Solid contributor, not a star | Tyus Jones, 3-and-D players |
+
+---
+
 ## Core Principles (Immutable Laws)
 
-### 1. Filter First, Then Rank
+### 1. Creators vs. Converters (The Central Distinction)
+- **Creators** can manufacture efficient offense against engaged defenses. They ARE the situation.
+- **Converters** can only cash in opportunities the system creates. They NEED the situation.
+- Ben Simmons is an elite Converter (great in transition) but a poor Creator (no self-created jumpers).
+
+### 2. Filter First, Then Rank
 - Filter the candidate pool FIRST, then normalize and rank within that subset
 - Never rank against the entire league when evaluating a specific cohort
 - Value is relative to the reference class, not absolute
 
-### 2. No Proxies
+### 3. Model the Process, Not the Outcome
+- **Outcomes** (playoff PIE) are contaminated by context (teammates, schemes)
+- **Process** (can they create?) is portable across contexts
+- This is the "Ground Truth Trap" - training on outcomes rewards converters who got lucky
+
+### 4. No Proxies
 - Don't use one metric as a proxy for another (e.g., ISO EFG ≠ Leverage TS Delta)
 - Flag missing data with confidence scores instead of imputing
 - Missing data often indicates selection bias, not random noise
 
-### 3. Resilience = Efficiency × Volume
+### 5. Resilience = Efficiency × Volume
 - The "Abdication Tax" is real: passivity is failure
 - Players who maintain volume under pressure are resilient
-- Efficiency alone is insufficient (see: Ben Simmons Paradox)
+- Efficiency alone is insufficient (see: Simmons Paradox)
 
-### 4. Learn, Don't Patch
-- Prefer continuous gradients over hard gates
-- Model should learn patterns from features, not hard rules
-- Use sample weighting for asymmetric costs (false positives > false negatives)
+### 6. Learn, Don't Patch
+- If you're patching the target, you're asking the wrong question
+- Engineer features that directly measure phenomena
+- Avoid manual penalties coded into targets
 
-### 5. Two-Dimensional Evaluation
-- Performance (what happened) vs. Dependence (portability) are orthogonal
-- Use 2D Risk Matrix: Franchise Cornerstone, Luxury Component, Depth, Avoid
-- Avoid the "Ground Truth Trap" (outcomes ≠ portability)
-
-### 6. Features Must Scale Together
+### 7. Features Must Scale Together
 - When projecting usage, project multiple features together (Universal Projection)
 - Use empirical distributions, not linear scaling
 - Features are causally linked (usage → creation volume → pressure appetite)
 
+---
+
 ## Project Structure
 
-### Active Pipeline (Current)
-- **Data Ingestion**: `src/nba_data/scripts/collect_*.py`
-- **Feature Engineering**: `src/nba_data/scripts/evaluate_plasticity_potential.py`, `calculate_*.py`
-- **Training**: `src/nba_data/scripts/train_rfe_model.py` (10 features, RFE-optimized)
-- **Inference**: `src/nba_data/scripts/predict_conditional_archetype.py` (core engine)
-- **Validation**: `test_latent_star_cases.py` (32 test cases)
+### Phase 2 Pipeline (Current)
+- **CII Specification**: `src/nba_data/phase2_creation_independence/SPECIFICATION.md`
+- **Ground Truth Labels**: `src/nba_data/phase2_creation_independence/ground_truth/player_labels.csv`
+- **Index Components**: `src/nba_data/phase2_creation_independence/index/`
+- **Classification**: `src/nba_data/phase2_creation_independence/classification/`
+
+### CII Components (5 Sub-Scores)
+
+| Component | Weight | Question |
+|-----------|--------|----------|
+| Self-Created Shot Score | 30% | Can you get a shot without a play? |
+| Pressure Appetite Score | 25% | Do you WANT the ball in clutch? |
+| Shot Difficulty Embrace | 20% | Do you take hard shots or hide? |
+| Defensive Survival Score | 15% | Do you maintain against schemes? |
+| Force Multiplication Score | 10% | Do you create through physicality? |
+
+### Phase 1 Archive (Preserved)
+- **Location**: `src/nba_data/phase1_helio_archive/`
+- **What it was**: XGBoost regressor predicting `FUTURE_PEAK_HELIO` (playoff PIE)
+- **Why archived**: Predicted outcomes, not process. Subject to Ground Truth Trap.
+- **Preserved learnings**: Features like `clutch_usg_absolute`, `creation_volume_ratio` still valuable.
+
+### Data Collection (Still Active)
+- **Location**: `src/nba_data/scripts/`
+- Playtype, tracking, shot quality, clutch splits, defensive context
+- Feature engineering: `evaluate_plasticity_potential.py`
+- Output: `results/predictive_dataset_with_friction.csv`
 
 ### Key Directories
 - `src/nba_data/` - Active codebase
@@ -54,75 +107,102 @@ You are a First Principles Thinking software architect working on an NBA playoff
 - `data/` - Raw CSVs, SQLite DB
 - `archive/` - Deprecated frameworks (ignore by default)
 
-### Current Model
-- **Algorithm**: XGBoost Classifier (Multi-Class)
-- **Features**: 10 core features (RFE-optimized from 65)
-- **Accuracy**: 46.77% (RS-only, temporal split, true predictive power)
-- **Test Pass Rate**: 75.0% (24/32) with gates enabled
+---
 
 ## Reference Documents (Load on Demand)
 
-### For Core Logic & Gates
+### For Core Theory
 - **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation (why we built this)
-  - Required when working on gate logic, archetype system, or core resilience concepts
-  - Explains the Luka Paradox (false negative) and Simmons Paradox (false positive)
+  - The Luka Paradox (false negative) and Simmons Paradox (false positive)
+  - The Dual-Grade Archetype System
+  - Resolution via Two-Clock Architecture
 
 ### For Implementation Patterns
-- **`KEY_INSIGHTS.md`** - 42+ hard-won lessons
-  - Use the Quick Reference Checklist at the bottom
-  - Reference specific insights by number when debugging (e.g., "Insight #11: Opportunity vs. Ability")
+- **`KEY_INSIGHTS.md`** - 80+ hard-won lessons
+  - Insight #76: Ground Truth Trap
+  - Insight #77: Patch vs. Learn
+  - Insight #78: Creator vs. Converter
+  - Insight #80: Archetype over Regression
+
+### For Phase 2 Details
+- **`src/nba_data/phase2_creation_independence/SPECIFICATION.md`** - Full CII spec
+- **`src/nba_data/phase2_creation_independence/ground_truth/player_labels.csv`** - Expert labels
 
 ### For Architecture
 - **`FILE_STRUCTURE.md`** - Recommended organization (future state)
-- **`UNIVERSAL_PROJECTION_IMPLEMENTATION.md`** - Feature projection logic
-- **`docs/2D_RISK_MATRIX_IMPLEMENTATION.md`** - 2D framework details
+- **`UNIVERSAL_PROJECTION_IMPLEMENTATION.md`** - Feature projection logic (Phase 1 archive)
+
+---
 
 ## Workflow Instructions
 
 1. **Before starting any task**: Read `ACTIVE_CONTEXT.md` to understand current state
-2. **When implementing features**: Check `KEY_INSIGHTS.md` Quick Reference Checklist
-3. **When modifying gates**: Read `LUKA_SIMMONS_PARADOX.md` for theoretical foundation
-4. **When debugging**: Reference specific insights by number from `KEY_INSIGHTS.md`
+2. **When implementing CII components**: Reference `SPECIFICATION.md` for weights and formulas
+3. **When debugging failures**: Check `KEY_INSIGHTS.md` by insight number
+4. **When modifying archetypes**: Read `LUKA_SIMMONS_PARADOX.md` for theory
 5. **After major changes**: Update `ACTIVE_CONTEXT.md` to reflect new state
+
+---
 
 ## Style Guide
 
 - **First Principles**: Always reason from fundamental constraints, not patterns
 - **Explainability**: Code should be self-documenting; add comments for "why" not "what"
 - **Scientific Rigor**: Use temporal splits, no data leakage, validate on test cases
-- **Iterative Refinement**: Document failures and learnings (see `KEY_INSIGHTS.md`)
-
-## Common Patterns to Avoid
-
-❌ **Don't**: Rank all players, then filter  
-✅ **Do**: Filter first, then rank within subset
-
-❌ **Don't**: Use ISO EFG as proxy for Leverage TS Delta  
-✅ **Do**: Flag missing data with confidence scores
-
-❌ **Don't**: Project only USG_PCT when usage changes  
-✅ **Do**: Project multiple features together using empirical distributions
-
-❌ **Don't**: Use hard gates (binary if/else)  
-✅ **Do**: Use continuous gradients and let model learn
-
-❌ **Don't**: Average all features equally  
-✅ **Do**: Use model feature importance weights
-
-## Key Terms (Quick Reference)
-
-- **Abdication Tax**: Negative LEVERAGE_USG_DELTA (passivity penalty)
-- **Flash Multiplier**: Elite efficiency on low volume → star-level projection
-- **Ground Truth Trap**: Training labels based on outcomes, but we want portability
-- **Static Avatar Fallacy**: Features must scale together, not independently
-- **Low-Floor Illusion**: Uniformly inefficient ≠ resilient
-- **System Merchant**: High performance but high dependence (not portable)
-
-## Archive Policy
-
-Files in `archive/` are historical artifacts. Do not reference them unless specifically debugging historical decisions. The active codebase is in `src/nba_data/`.
+- **Iterative Refinement**: Document failures and learnings in `KEY_INSIGHTS.md`
 
 ---
 
-**Remember**: This project values scientific rigor and explainability over raw accuracy. A 46.77% accuracy model with mechanistic insights is more valuable than a 70% black box.
+## Common Patterns to Avoid
 
+❌ **Don't**: Predict raw scores (regression)
+✅ **Do**: Classify archetypes
+
+❌ **Don't**: Train on outcomes (playoff PIE)
+✅ **Do**: Model the process (creation independence)
+
+❌ **Don't**: Patch the target with manual penalties
+✅ **Do**: Engineer features that directly measure phenomena
+
+❌ **Don't**: Use hard gates (binary if/else)
+✅ **Do**: Use continuous gradients and let model learn
+
+❌ **Don't**: Rank all players, then filter
+✅ **Do**: Filter first, then rank within subset
+
+❌ **Don't**: Project only USG_PCT when usage changes
+✅ **Do**: Project multiple features together using empirical distributions
+
+---
+
+## Key Terms (Quick Reference)
+
+- **Creation Independence Index (CII)**: Composite score measuring ability to create when schemed
+- **Creators vs. Converters**: The central distinction - IS vs. NEEDS the situation
+- **Abdication Tax**: Negative LEVERAGE_USG_DELTA (passivity penalty)
+- **Ground Truth Trap**: Training on outcomes when you want to model process
+- **Fragile Star**: High skills but fails under playoff schematic pressure
+- **System Merchant**: High efficiency dependent on teammate gravity (not portable)
+- **Subsidy Index**: Measures how much efficiency is "rented" from ecosystem
+- **Two-Clock Architecture**: Crucible (current viability) + Telescope (future potential)
+
+---
+
+## Validation Criteria
+
+A successful CII implementation must:
+1. **Simmons identified as Fragile Star** in all seasons pre-collapse
+2. **Harden at OKC identified as Engine** despite 6th man role
+3. **Haliburton ranked above Sabonis** before the trade
+4. **Early-career stars (Tatum, SGA, Luka)** identified as Engines
+5. **KAT identified as Fragile** despite elite raw stats
+
+---
+
+## Archive Policy
+
+Files in `archive/` and `phase1_helio_archive/` are historical artifacts. Do not reference them unless specifically debugging historical decisions. The active work is in `phase2_creation_independence/`.
+
+---
+
+**Remember**: This project values scientific rigor and explainability over raw accuracy. A model that correctly classifies Simmons as Fragile and Harden as Engine is more valuable than one with higher overall accuracy that conflates them.
