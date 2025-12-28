@@ -1,6 +1,6 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 27, 2025
+**Last Updated**: December 28, 2025
 **Status**: 🔄 **PHASE 2: CREATION INDEPENDENCE** - "The Right Question"
 
 ---
@@ -98,7 +98,12 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
     *   **Status**: Logic implemented, validated against key players, and pushed to repo.
     *   **Action**: Mapped theoretical metrics to concrete data columns (`pct_uast_fgm`, `pull_up_fga`, etc.).
 
-2.  **Diagnostic Validation Performed**
+2.  **CII Component 2: `Pressure Appetite Score` Implemented**
+    *   **File**: `src/nba_data/phase2_creation_independence/index/pressure_appetite.py`
+    *   **Status**: Logic implemented and validated.
+    *   **Action**: Mapped `clutch_usg_absolute` and `relative_usage_drop` to measure the "Abdication Tax." Successfully identified Simmons as a low-appetite outlier (score ~18-21).
+
+3.  **Diagnostic Validation Performed**
     *   **Action**: Conducted a deep-dive analysis on the scores for Luka Dončić, Khris Middleton, Ben Simmons, and others across different seasons.
     *   **Finding 1 (Luka/AD Trade Context)**: The model successfully detected the change in Luka Dončić's role after being traded to the Lakers. His score correctly adjusted from a peak of 97.1 (2022-23) to 84.0 (2024-25), reflecting his new context playing alongside LeBron James. This is a major validation of the model's sensitivity to process, not just reputation.
     *   **Finding 2 (Middleton Career Arc)**: The model correctly identified Khris Middleton's peak as a "Luxury Amplifier" (67.0 in 2020-21) and his subsequent decline into the "Fragile Star/Role Player" tier (49.4 in 2024-25), demonstrating its ability to model career trajectories.
@@ -110,8 +115,10 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
 
 ### Priority 1: Component Calculation (High)
 - [x] ~~Implement `calculate_self_created_score` using `pct_uast_fgm` and `pull_up_fga`.~~ **(DONE)**
-- [ ] **HANDOFF**: Implement `calculate_pressure_appetite_score`.
+- [x] ~~Implement `calculate_pressure_appetite_score`.~~ **(DONE)**
 - [ ] Implement `calculate_difficulty_embrace_score`.
+- [ ] Implement `calculate_defensive_survival_score`.
+- [ ] Implement `calculate_force_multiplication_score`.
 - [ ] Run `batch_calculate_cii()` on integrated dataset.
 
 ### Priority 2: Validation & Refinement

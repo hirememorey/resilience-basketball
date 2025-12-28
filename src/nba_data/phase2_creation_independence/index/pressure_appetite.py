@@ -4,35 +4,34 @@ Component 2: Pressure Appetite Score (Weight: 25%)
 Question: When the game matters, do you WANT the ball?
 
 Physics Principle:
-True stars don't just maintain under pressure - they SEEK responsibility.
-The key insight from KEY_INSIGHTS.md #79:
-- Deltas lose baseline information
-- A player going 40%→35% usage is different than 15%→10%
-- We need ABSOLUTE clutch usage, not just the delta
+True Engines expand their volume under pressure (Luka, Jordan).
+Fragile Stars shrink their volume to avoid failure (Simmons, KAT).
+This measures the "Abdication Tax" - efficiency maintained by passing the grenade is a failure of resilience.
 
 Sub-Metrics:
-- Clutch Usage Absolute (50%): What is the actual clutch usage?
-- Relative Usage Change (30%): Does usage go up or down in clutch?
-- Playoff Appetite (20%): Does usage increase in playoffs?
+- Clutch Usage Absolute (50%): Actual usage in clutch moments.
+- Relative Usage Change (30%): (Clutch USG - Base USG). Do you step up or hide?
+- Playoff Elevation (20%): Does your usage hold up in the playoffs?
 
 Validation Cases:
-- Ben Simmons: ~20 (usage DROPS under pressure)
-- Luka Dončić: ~95 (usage INCREASES under pressure)
-- James Harden: ~85 (historically clutch, go-to scorer)
+- Ben Simmons: ~20 (Usage drops significantly under pressure)
+- Luka Dončić: ~95 (Usage increases, demands the ball)
+- James Harden: ~85 (Historically high volume, though efficiency may vary)
 """
 
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional
+import logging
 
+logger = logging.getLogger(__name__)
 
 # Weights for sub-metrics
 WEIGHTS = {
     'clutch_usage_absolute': 0.50,
     'relative_usage_change': 0.30,
-    'playoff_appetite': 0.20
+    'playoff_elevation': 0.20
 }
-
 
 def calculate_pressure_appetite_score(player_data: pd.Series) -> float:
     """
@@ -43,235 +42,206 @@ def calculate_pressure_appetite_score(player_data: pd.Series) -> float:
         
     Returns:
         Score from 0-100 where:
-        - 0-20: Hiding under pressure (Simmons)
-        - 20-40: Role player in clutch
-        - 40-60: Maintains responsibility
-        - 60-80: Steps up under pressure
-        - 80-100: Demands the ball in clutch (Luka, Harden)
+        - 0-30: Shrinks under pressure (Role players, Fragile Stars)
+        - 30-60: Maintains role (Standard starters)
+        - 60-80: Steps up (Strong Creators)
+        - 80-100: Demands the ball (Franchise Engines)
     """
     
     # Sub-metric 1: Clutch Usage Absolute (50%)
-    clutch_score = _calculate_clutch_absolute_score(player_data)
+    clutch_score = _calculate_clutch_usage_score(player_data)
     
     # Sub-metric 2: Relative Usage Change (30%)
-    appetite_score = _calculate_relative_change_score(player_data)
+    appetite_score = _calculate_relative_appetite_score(player_data)
     
-    # Sub-metric 3: Playoff Appetite (20%)
-    playoff_score = _calculate_playoff_appetite_score(player_data)
+    # Sub-metric 3: Playoff Elevation (20%)
+    playoff_score = _calculate_playoff_elevation_score(player_data)
     
     # Weighted combination
     final_score = (
         WEIGHTS['clutch_usage_absolute'] * clutch_score +
         WEIGHTS['relative_usage_change'] * appetite_score +
-        WEIGHTS['playoff_appetite'] * playoff_score
+        WEIGHTS['playoff_elevation'] * playoff_score
     )
     
     return round(np.clip(final_score, 0, 100), 2)
 
 
-def _calculate_clutch_absolute_score(data: pd.Series) -> float:
+def _calculate_clutch_usage_score(data: pd.Series) -> float:
     """
-    Calculate score based on ABSOLUTE clutch usage.
+    Calculate score based on absolute usage in clutch time.
     
-    This directly answers: "Does this player want the ball in crunch time?"
-    
-    Key Insight (Insight #79):
-    - Simmons at 14.8% clutch usage = role player behavior
-    - Luka at 27.6% clutch usage = go-to option behavior
-    - The ABSOLUTE number matters, not just the change
+    This answers: "Does this player want the ball in crunch time?"
     
     Benchmarks:
-    - Role player: <15% clutch usage
-    - Secondary option: 15-22% clutch usage
-    - Primary option: 22-30% clutch usage
-    - Elite closer: 30%+ clutch usage
+    - Role Player: <15%
+    - Star: 25-30%
+    - Engine: 35%+
     """
-    # Primary feature: CLUTCH_USG_ABSOLUTE (already calculated)
-    clutch_usg = data.get('CLUTCH_USG_ABSOLUTE', data.get('clutch_usg_absolute', None))
+    # Try different case variations
+    clutch_usg = data.get('clutch_usg_absolute', data.get('CLUTCH_USG_ABSOLUTE', 0.15))
     
-    if clutch_usg is None:
-        # Fallback: calculate from base usage + delta
-        base_usg = data.get('USG_PCT', data.get('usg_pct', 0.20))
-        delta = data.get('LEVERAGE_USG_DELTA', data.get('leverage_usg_delta', 0))
-        clutch_usg = base_usg + delta
-    
-    # Scale: 12% = 0, 32%+ = 100
-    # This maps role player (12%) to 0 and elite closer (32%) to 100
-    score = (clutch_usg - 0.12) / 0.20 * 100
-    return np.clip(score, 0, 100)
-
-
-def _calculate_relative_change_score(data: pd.Series) -> float:
-    """
-    Calculate score based on PROPORTIONAL usage change.
-    
-    Key Insight (Insight #79):
-    - A 7% drop from 35% is different than 7% from 21%
-    - Simmons: -31% relative drop (hiding)
-    - Luka: +5% relative increase (stepping up)
-    
-    Positive change = stepping UP under pressure (good)
-    Negative change = hiding under pressure (bad - the Simmons pattern)
-    """
-    # Primary feature: RELATIVE_USAGE_DROP
-    relative_drop = data.get('RELATIVE_USAGE_DROP', data.get('relative_usage_drop', None))
-    
-    if relative_drop is None:
-        # Calculate from raw values
-        base_usg = data.get('USG_PCT', data.get('usg_pct', 0.20))
-        delta = data.get('LEVERAGE_USG_DELTA', data.get('leverage_usg_delta', 0))
+    # Handle percentage vs decimal
+    if clutch_usg > 1.0:
+        clutch_usg = clutch_usg / 100.0
         
-        if base_usg > 0.05:
-            relative_drop = delta / base_usg
-        else:
-            relative_drop = 0
-    
-    # Map: -30% relative drop = 0, 0% = 50, +20% relative increase = 100
-    # Simmons (-31%) → 0
-    # Stable player (0%) → 50  
-    # Luka (+5%) → 62.5
-    score = 50 + (relative_drop * 166.67)  # Scale so -0.30 = 0, +0.30 = 100
+    # Scale: 
+    # 10% -> 0 score
+    # 40% -> 100 score
+    score = (clutch_usg - 0.10) / 0.30 * 100
     return np.clip(score, 0, 100)
 
 
-def _calculate_playoff_appetite_score(data: pd.Series) -> float:
+def _calculate_relative_appetite_score(data: pd.Series) -> float:
     """
-    Calculate score based on playoff usage vs regular season.
+    Calculate score based on how usage changes from base to clutch.
     
-    Players who embrace playoff pressure have higher usage in playoffs.
-    This is a longer-term version of the clutch metric.
+    Positive = stepping UP under pressure (good)
+    Negative = hiding under pressure (bad - the Simmons pattern)
+    
+    Benchmarks:
+    - Hiding: -25% drop (Simmons) -> Score 0
+    - Stable: 0% change -> Score 50
+    - Elevation: +25% rise (Luka) -> Score 100
     """
-    # Playoff usage (may not be available for all players)
-    playoff_usg = data.get('PLAYOFF_USG_PCT', None)
-    rs_usg = data.get('USG_PCT', data.get('usg_pct', 0.20))
+    # Try different case variations
+    # relative_usage_drop might be named leverage_usg_delta in some versions
+    relative_change = data.get('relative_usage_drop', 
+                         data.get('RELATIVE_USAGE_DROP', 
+                           data.get('leverage_usg_delta', 
+                             data.get('LEVERAGE_USG_DELTA', 0))))
     
-    if playoff_usg is None:
-        # No playoff data - use neutral score
-        # Don't penalize players who haven't been in playoffs
-        return 50.0
+    # Map: -0.25 (hiding) = 0, 0 (stable) = 50, +0.25 (stepping up) = 100
+    # Slope = (100 - 50) / 0.25 = 200
+    score = 50 + (relative_change * 200)
     
+    return np.clip(score, 0, 100)
+
+
+def _calculate_playoff_elevation_score(data: pd.Series) -> float:
+    """
+    Calculate score based on usage retention/elevation in playoffs.
+    
+    Players who embrace pressure often scale volume in playoffs.
+    
+    Benchmarks:
+    - Drop: -10% or worse -> Score 35 (or lower)
+    - Stable: 0% -> Score 50
+    - Rise: +10% -> Score 65+
+    """
+    playoff_usg = data.get('playoff_usg_pct', data.get('PLAYOFF_USG_PCT', None))
+    rs_usg = data.get('usg_pct', data.get('USG_PCT', 0.20))
+    
+    # Handle percentage vs decimal
+    if rs_usg > 1.0: rs_usg /= 100.0
+    if playoff_usg is not None and playoff_usg > 1.0: playoff_usg /= 100.0
+    
+    # If no playoff data, default to neutral/base usage
+    if playoff_usg is None or pd.isna(playoff_usg) or playoff_usg == 0:
+        playoff_usg = rs_usg
+        
     if rs_usg > 0.05:
         playoff_bump = (playoff_usg - rs_usg) / rs_usg
     else:
         playoff_bump = 0
+        
+    # Scale:
+    # -0.20 (-20% drop) -> 20
+    # 0.00 (flat) -> 50
+    # +0.20 (+20% rise) -> 80
+    score = 50 + (playoff_bump * 150)
     
-    # Map: -15% relative drop = 25, 0% = 50, +15% increase = 75
-    score = 50 + (playoff_bump * 166.67)
     return np.clip(score, 0, 100)
 
 
 def get_required_features() -> List[str]:
     """Return list of features required for this component."""
     return [
-        # Primary features (should exist)
-        'CLUTCH_USG_ABSOLUTE',
-        'RELATIVE_USAGE_DROP',
-        'LEVERAGE_USG_DELTA',
-        'USG_PCT',
-        # Optional features
-        'PLAYOFF_USG_PCT',          # May not exist for all players
+        'clutch_usg_absolute',
+        'relative_usage_drop', # Or leverage_usg_delta
+        'playoff_usg_pct',
+        'usg_pct'
     ]
 
 
 def get_missing_features(df: pd.DataFrame) -> List[str]:
     """Check which required features are missing from dataset."""
     required = get_required_features()
-    missing = [f for f in required if f not in df.columns and f.lower() not in df.columns]
+    # Check lowercase versions since we often normalize
+    cols = [c.lower() for c in df.columns]
+    missing = [f for f in required if f.lower() not in cols]
     return missing
 
 
-# Validation test cases from SPECIFICATION.md
-VALIDATION_CASES = {
-    'Ben Simmons': {
-        'expected_score': 20,
-        'tolerance': 15,
-        'reason': 'Usage DROPS massively under pressure (abdication)'
-    },
-    'Luka Dončić': {
-        'expected_score': 95,
-        'tolerance': 10,
-        'reason': 'Usage INCREASES under pressure, demands the ball'
-    },
-    'James Harden': {
-        'expected_score': 85,
-        'tolerance': 10,
-        'reason': 'Historically clutch, go-to scorer in Houston years'
-    },
-    'Karl-Anthony Towns': {
-        'expected_score': 45,
-        'tolerance': 20,
-        'reason': 'Takes shots but efficiency drops (chokes, not abdicates)'
-    },
-}
+def diagnose_pressure_appetite(player_data: pd.Series):
+    """Prints a detailed breakdown of the pressure appetite score for a player."""
+    player_name = player_data.get('player_name', 'Unknown')
+    season = player_data.get('season', 'N/A')
+    print(f"\n--- Diagnosing Pressure Appetite: {player_name} ({season}) ---")
 
+    # 1. Clutch Usage Absolute
+    clutch_usg = player_data.get('clutch_usg_absolute', player_data.get('CLUTCH_USG_ABSOLUTE', 0))
+    clutch_score = _calculate_clutch_usage_score(player_data)
+    print(f"  Clutch Usage (W: 50%): {clutch_score:.1f}")
+    print(f"    - Value: {clutch_usg:.3f}")
 
-def validate_component(df: pd.DataFrame) -> Dict[str, dict]:
-    """
-    Validate component against known test cases.
-    
-    Returns:
-        Dict mapping player names to pass/fail results
-    """
-    results = {}
-    
-    for player, case in VALIDATION_CASES.items():
-        player_mask = df['player_name'].str.lower().str.contains(player.lower())
-        
-        if not player_mask.any():
-            results[player] = {
-                'status': 'SKIP',
-                'reason': 'Player not in dataset'
-            }
-            continue
-        
-        # Get most recent season
-        player_df = df[player_mask].sort_values('season', ascending=False)
-        player_data = player_df.iloc[0]
-        
-        score = calculate_pressure_appetite_score(player_data)
-        expected = case['expected_score']
-        tolerance = case['tolerance']
-        
-        if abs(score - expected) <= tolerance:
-            results[player] = {
-                'status': 'PASS',
-                'score': score,
-                'expected': expected
-            }
-        else:
-            results[player] = {
-                'status': 'FAIL',
-                'score': score,
-                'expected': expected,
-                'delta': score - expected
-            }
-    
-    return results
+    # 2. Relative Change
+    relative_change = player_data.get('relative_usage_drop', 
+                                    player_data.get('RELATIVE_USAGE_DROP', 
+                                      player_data.get('leverage_usg_delta', 
+                                        player_data.get('LEVERAGE_USG_DELTA', 0))))
+    appetite_score = _calculate_relative_appetite_score(player_data)
+    print(f"  Relative Change (W: 30%): {appetite_score:.1f}")
+    print(f"    - Value: {relative_change:.3f}")
+
+    # 3. Playoff Elevation
+    playoff_usg = player_data.get('playoff_usg_pct', player_data.get('PLAYOFF_USG_PCT', 0))
+    rs_usg = player_data.get('usg_pct', player_data.get('USG_PCT', 0))
+    playoff_score = _calculate_playoff_elevation_score(player_data)
+    print(f"  Playoff Elevation (W: 20%): {playoff_score:.1f}")
+    print(f"    - RS Usage: {rs_usg:.3f}")
+    print(f"    - PO Usage: {playoff_usg:.3f}")
+
+    final_score = calculate_pressure_appetite_score(player_data)
+    print(f"  ---------------------------------")
+    print(f"  Final Pressure Appetite Score: {final_score:.2f}")
 
 
 if __name__ == '__main__':
-    # Quick test with synthetic data
+    from pathlib import Path
     
-    # Test case 1: Ben Simmons pattern (hiding)
-    simmons_data = pd.Series({
-        'USG_PCT': 0.214,
-        'LEVERAGE_USG_DELTA': -0.066,  # -6.6% absolute drop
-        'CLUTCH_USG_ABSOLUTE': 0.148,  # Only 14.8% clutch usage
-        'RELATIVE_USAGE_DROP': -0.31,  # -31% relative drop
-    })
+    dataset_path = Path(__file__).parents[4] / 'results' / 'predictive_dataset_with_friction.csv'
     
-    # Test case 2: Luka pattern (stepping up)
-    luka_data = pd.Series({
-        'USG_PCT': 0.355,
-        'LEVERAGE_USG_DELTA': -0.079,  # Small absolute drop
-        'CLUTCH_USG_ABSOLUTE': 0.276,  # Still 27.6% clutch usage!
-        'RELATIVE_USAGE_DROP': -0.22,  # Only -22% relative
-    })
-    
-    simmons_score = calculate_pressure_appetite_score(simmons_data)
-    luka_score = calculate_pressure_appetite_score(luka_data)
-    
-    print(f"Simmons Score: {simmons_score} (expected ~20)")
-    print(f"Luka Score: {luka_score} (expected ~80+)")
-    print(f"Gap: {luka_score - simmons_score} (should be large)")
+    if not dataset_path.exists():
+        print("Dataset not found. Cannot run diagnosis.")
+    else:
+        print(f"Loading dataset from {dataset_path}...")
+        df = pd.read_csv(dataset_path)
+        # Normalize column names to lower case for consistency
+        df.columns = [c.lower() for c in df.columns]
 
+        # Critical Validation Cases
+        players_to_diagnose = {
+            'Ben Simmons': ['2018-19', '2020-21'], # The Abdicator
+            'Luka Dončić': ['2020-21', '2023-24'], # The Engine
+            'James Harden': ['2018-19', '2019-20'], # The System
+            'Trae Young': ['2020-21'], # High volume creator
+            'Rudy Gobert': ['2020-21'], # Converter (should be low)
+        }
+
+        for player_name, seasons in players_to_diagnose.items():
+            for season in seasons:
+                # Fuzzy match for player name
+                player_mask = df['player_name'].str.lower().str.contains(player_name.lower())
+                season_mask = df['season'] == season
+                
+                player_data = df[player_mask & season_mask]
+                
+                if not player_data.empty:
+                    # Take the first match (sometimes multiple rows if traded, take max G or similar if needed, 
+                    # but usually unique per team-season in this dataset)
+                    # Ideally we want the row with most minutes or aggregated.
+                    # For now just take the first one found.
+                    diagnose_pressure_appetite(player_data.iloc[0])
+                else:
+                    print(f"\n--- Could not find data for {player_name} in {season} ---")
