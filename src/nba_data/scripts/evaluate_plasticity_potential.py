@@ -1244,6 +1244,51 @@ class StressVectorEngine:
                 # 6. Combine all data for the season using LEFT joins from metadata
                 logger.info(f"--- Merging all feature sets for {season} ---")
 
+                # Merge Phase 2 Stats (NEW)
+                phase2_path = self.data_dir / "phase2" / f"phase2_stats_{season}.csv"
+                if phase2_path.exists():
+                    logger.info(f"  - Merging Phase 2 stats from {phase2_path}")
+                    df_phase2 = pd.read_csv(phase2_path)
+                    cols_to_drop = [c for c in ['PLAYER_NAME', 'SEASON'] if c in df_phase2.columns]
+                    df_phase2 = df_phase2.drop(columns=cols_to_drop)
+                    if not df_phase2.empty:
+                        df_season = pd.merge(df_season, df_phase2, on='PLAYER_ID', how='left')
+                        p2_cols = ['PCT_UAST_FGM', 'PCT_PTS_2PT_MR', 'PULL_UP_FGA', 'PULL_UP_FG3A', 'PULL_UP_FG3M']
+                        for c in p2_cols:
+                            if c in df_season.columns:
+                                df_season[c] = df_season[c].fillna(0.0)
+                
+                # Merge Shot Quality (Contested Rate)
+                sq_path = self.data_dir / "shot_quality" / f"shot_quality_{season}.csv"
+                if sq_path.exists():
+                    logger.info(f"  - Merging Shot Quality stats from {sq_path}")
+                    df_sq = pd.read_csv(sq_path)
+                    
+                    # Pivot/Aggregate to get Contested Rate
+                    # SHOT_QUALITY values: 'VeryTight', 'Tight', 'Open', 'WideOpen'
+                    # Contested = VeryTight + Tight
+                    
+                    # Ensure FGA is numeric
+                    df_sq['FGA'] = pd.to_numeric(df_sq['FGA'], errors='coerce').fillna(0)
+                    
+                    # Group by Player
+                    df_sq_agg = df_sq.groupby('PLAYER_ID').apply(lambda x: pd.Series({
+                        'TOTAL_FGA_SQ': x['FGA'].sum(),
+                        'CONTESTED_FGA': x[x['SHOT_QUALITY'].isin(['VeryTight', 'Tight'])]['FGA'].sum()
+                    })).reset_index()
+                    
+                    df_sq_agg['CONTESTED_SHOT_RATE'] = np.where(
+                        df_sq_agg['TOTAL_FGA_SQ'] > 0,
+                        df_sq_agg['CONTESTED_FGA'] / df_sq_agg['TOTAL_FGA_SQ'],
+                        0.0
+                    )
+                    
+                    # Merge
+                    df_season = pd.merge(df_season, df_sq_agg[['PLAYER_ID', 'CONTESTED_SHOT_RATE']], on='PLAYER_ID', how='left')
+                    df_season['CONTESTED_SHOT_RATE'] = df_season['CONTESTED_SHOT_RATE'].fillna(0.0)
+                else:
+                    logger.warning(f"  - Shot Quality stats not found for {season}")
+
                 # Merge tracking data
                 if not df_tracking.empty:
                     df_season = pd.merge(df_season, df_tracking, on='PLAYER_ID', how='left')

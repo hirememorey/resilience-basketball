@@ -90,6 +90,14 @@ class PlayerSeason(BaseModel):
     relative_usage_drop: Optional[float] = None  # Proportional drop, not absolute
     abdication_interaction: Optional[float] = None  # Usage × Efficiency delta interaction
 
+    # Phase 2: Creation Independence Index (CII) Components (Dec 2025)
+    pct_uast_fgm: Optional[float] = None
+    pct_pts_2pt_mr: Optional[float] = None
+    pull_up_fga: Optional[float] = None
+    pull_up_fg3a: Optional[float] = None
+    pull_up_fg3m: Optional[float] = None
+    contested_shot_rate: Optional[float] = None
+
     # Outputs (Projected)
     projected_playoff_pps: Optional[float] = None
     projected_playoff_output: Optional[float] = None

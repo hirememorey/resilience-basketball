@@ -1189,10 +1189,10 @@ def calculate_cii(player_data: pd.Series) -> Dict:
 ### Phase 4: Data Collection Gaps (Priority: MEDIUM)
 
 #### Task 4.1: Unassisted FG%
-Add collection of unassisted FG% for Self-Created Score.
+✅ **COMPLETE** - Collected via `MeasureType='Scoring'` in `collect_phase2_data.py`.
 
 #### Task 4.2: Defender Distance
-Add collection of shot contest data for Difficulty Embrace.
+✅ **COMPLETE** - Collected via `leaguedashplayerptshot` and aggregated in `evaluate_plasticity_potential.py`.
 
 #### Task 4.3: Playoff-Specific Stats
 Ensure playoff usage and efficiency are captured.

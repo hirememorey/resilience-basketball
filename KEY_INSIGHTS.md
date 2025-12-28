@@ -166,6 +166,19 @@ Ben Simmons is an elite Converter (great in transition, with shooters) but a poo
 
 **Key Principle**: **Classify the archetype, don't predict the score.**
 
+## 81. The "Creation Signature" (UAST + Pullup) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Unassisted FG% alone can be misleading (Ben Simmons has a high UAST% because he creates transition dunks, but cannot create half-court jumpers).
+
+**The Insight**: True Creation Independence is the intersection of **Unassisted Frequency** and **Pull-up Volume**. 
+- **James Harden ('19)**: 87% UAST + 13.7 Pull-up FGA (Elite Engine)
+- **Ben Simmons ('19)**: 56% UAST + 1.2 Pull-up FGA (Dependent Finisher)
+- **Nikola Jokic ('24)**: 40% UAST + 2.1 Pull-up FGA + 66% Contested (Hub Engine)
+
+**The Fix**: Use the interaction of these metrics in the Self-Created Shot Score. High UAST without Pull-up volume is a signal of transition/rim pressure, not schemed-creation.
+
+**Key Principle**: **Creation is the ability to generate a shot when the defense is set.**
+
 ## See Also
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)

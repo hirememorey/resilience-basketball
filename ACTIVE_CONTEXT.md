@@ -94,46 +94,35 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
 ### ✅ Completed
 
 1. **Implementation Guide Created**: `IMPLEMENTATION_GUIDE.md`
-   - Comprehensive technical documentation from first principles
-   - Covers theory, architecture, data pipeline, and step-by-step tasks
-   - Includes code patterns, validation approach, and troubleshooting
+   - Comprehensive technical documentation from first principles.
 
-2. **CII Component Skeletons Implemented**:
-   - `index/self_created.py` - Self-Created Shot Score (30%)
-   - `index/pressure_appetite.py` - Pressure Appetite Score (25%)
-   - `index/difficulty_embrace.py` - Shot Difficulty Embrace (20%)
-   - `index/defensive_survival.py` - Defensive Survival Score (15%)
-   - `index/force_multiplication.py` - Force Multiplication Score (10%)
-   - `index/composite.py` - Updated with proper imports and validation
+2. **Phase 2 Data Integration**:
+   - Extended `NBAStatsClient` for scoring and tracking data.
+   - Created `collect_phase2_data.py` for batch collection (2015-2025).
+   - Integrated `pct_uast_fgm`, `pull_up_fga`, and `contested_shot_rate` into main dataset.
+   - Verified data integrity with 2,600+ player-seasons.
 
-3. **Each Component Includes**:
-   - Full docstrings explaining physics principle
-   - Sub-metric breakdown with weights
-   - Calculation logic using existing + placeholder features
-   - Validation cases from SPECIFICATION.md
-   - Self-test capability
+3. **CII Component Skeletons Implemented**:
+   - `index/self_created.py`, `index/pressure_appetite.py`, etc.
+   - All components mapped to new verified data fields.
 
 ---
 
 ## Next Steps
 
-### Priority 1: Data Collection (Required for full CII)
-- [ ] Collect `UNASSISTED_FG_PCT` from tracking data
-- [ ] Collect `CONTESTED_SHOT_RATE` from `CloseDefDistRange`
-- [ ] Collect `MIDRANGE_FGA_PER_GAME` from shot charts
-- [ ] Collect `PULLUP_3PT_RATE` from shooting splits
-- [ ] Collect `PLAYOFF_TS_PCT` and `PLAYOFF_USG_PCT`
+### Priority 1: Component Calculation (High)
+- [ ] Implement `calculate_self_created_score` using `pct_uast_fgm` and `pull_up_fga`.
+- [ ] Implement `calculate_difficulty_embrace_score` using `contested_shot_rate` and `pct_pts_2pt_mr`.
+- [ ] Run `batch_calculate_cii()` on integrated dataset.
 
-### Priority 2: Integration Testing
-- [ ] Run `batch_calculate_cii()` on existing dataset
-- [ ] Verify Simmons < Harden ordering
-- [ ] Verify Haliburton > Sabonis ordering
-- [ ] Check all validation cases pass
+### Priority 2: Validation & Refinement
+- [ ] Verify Simmons < Harden ordering in calculated CII.
+- [ ] Verify Haliburton > Sabonis ordering.
+- [ ] Check all critical validation cases from `SPECIFICATION.md`.
 
 ### Priority 3: Classifier Training
-- [ ] Expand ground truth labels to 60+ player-seasons
-- [ ] Implement `train_classifier.py`
-- [ ] Achieve 100% critical case pass rate
+- [ ] Expand ground truth labels to 60+ player-seasons.
+- [ ] Implement `train_classifier.py` and achieve 100% pass rate.
 
 ### Priority 4: Deployment
 - [ ] Apply to current season data
