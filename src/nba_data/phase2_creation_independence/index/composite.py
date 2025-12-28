@@ -2,13 +2,35 @@
 Composite Creation Independence Index (CII) Calculator
 
 Combines all five components into a single score.
+
+The CII measures a player's ability to create offense when the defense knows it's coming.
+This is the difference between "IS the situation" vs "NEEDS the situation."
+
+Formula:
+    CII = 0.30 × Self_Created_Shot_Score
+        + 0.25 × Pressure_Appetite_Score
+        + 0.20 × Shot_Difficulty_Score
+        + 0.15 × Defensive_Survival_Score
+        + 0.10 × Force_Score
+
+Each component is normalized to 0-100 scale.
 """
 
 import pandas as pd
 import numpy as np
 from typing import Dict, Optional
+import logging
 
-# Component weights
+# Import component calculators
+from .self_created import calculate_self_created_score
+from .pressure_appetite import calculate_pressure_appetite_score
+from .difficulty_embrace import calculate_difficulty_embrace_score
+from .defensive_survival import calculate_defensive_survival_score
+from .force_multiplication import calculate_force_multiplication_score
+
+logger = logging.getLogger(__name__)
+
+# Component weights (from SPECIFICATION.md)
 WEIGHTS = {
     'self_created': 0.30,
     'pressure_appetite': 0.25,
@@ -16,6 +38,7 @@ WEIGHTS = {
     'defensive_survival': 0.15,
     'force_multiplication': 0.10
 }
+
 
 def calculate_cii(
     player_data: pd.Series,
@@ -25,24 +48,25 @@ def calculate_cii(
     Calculate the Creation Independence Index for a player.
     
     Args:
-        player_data: Series containing player features
-        component_scores: Optional pre-calculated component scores
+        player_data: Series containing player features for a single season
+        component_scores: Optional pre-calculated component scores (for testing)
         
     Returns:
         Dictionary containing:
         - 'cii': The composite Creation Independence Index (0-100)
         - 'components': Individual component scores
         - 'archetype': Predicted archetype based on CII
+        - 'confidence': Confidence level based on data completeness
     """
     
     # If component scores not provided, calculate them
     if component_scores is None:
         component_scores = {
-            'self_created': _calculate_self_created_score(player_data),
-            'pressure_appetite': _calculate_pressure_appetite_score(player_data),
-            'difficulty_embrace': _calculate_difficulty_embrace_score(player_data),
-            'defensive_survival': _calculate_defensive_survival_score(player_data),
-            'force_multiplication': _calculate_force_score(player_data)
+            'self_created': calculate_self_created_score(player_data),
+            'pressure_appetite': calculate_pressure_appetite_score(player_data),
+            'difficulty_embrace': calculate_difficulty_embrace_score(player_data),
+            'defensive_survival': calculate_defensive_survival_score(player_data),
+            'force_multiplication': calculate_force_multiplication_score(player_data)
         }
     
     # Calculate weighted CII
@@ -51,112 +75,63 @@ def calculate_cii(
         for component, weight in WEIGHTS.items()
     )
     
+    # Clamp to valid range
+    cii = np.clip(cii, 0, 100)
+    
     # Determine archetype
     archetype = _determine_archetype(cii)
+    
+    # Calculate confidence based on data completeness
+    confidence = _calculate_confidence(player_data)
     
     return {
         'cii': round(cii, 2),
         'components': component_scores,
-        'archetype': archetype
+        'archetype': archetype,
+        'confidence': confidence
     }
 
 
-def _calculate_self_created_score(data: pd.Series) -> float:
+def _calculate_confidence(data: pd.Series) -> str:
     """
-    Component 1: Self-Created Shot Score
+    Calculate confidence level based on data completeness.
     
-    Measures ability to generate quality shots without plays being run.
-    
-    TODO: Implement with actual data
-    - % of FGA unassisted
-    - ISO + Pull-up volume and efficiency
-    - Stepback/fadeaway availability
+    Returns:
+        'High', 'Medium', or 'Low' confidence
     """
-    # Placeholder - use creation_volume_ratio as proxy
-    cvr = data.get('creation_volume_ratio', 0.5)
-    return min(cvr * 100, 100)
-
-
-def _calculate_pressure_appetite_score(data: pd.Series) -> float:
-    """
-    Component 2: Pressure Appetite Score
+    # Key features that should be present for high confidence
+    high_confidence_features = [
+        'CLUTCH_USG_ABSOLUTE',
+        'RELATIVE_USAGE_DROP', 
+        'creation_volume_ratio',
+        'FRAGILITY_SCORE',
+        'time_of_poss'
+    ]
     
-    Measures willingness to take responsibility in high-leverage situations.
+    present = sum(1 for f in high_confidence_features 
+                  if f in data.index or f.lower() in data.index)
     
-    Uses existing features:
-    - clutch_usg_absolute
-    - relative_usage_drop
-    """
-    clutch_usg = data.get('clutch_usg_absolute', 0.2)
-    rel_drop = data.get('relative_usage_drop', 0)
-    
-    # Higher clutch usage = better (0-40% range → 0-100 scale)
-    clutch_score = min(clutch_usg / 0.35 * 100, 100)
-    
-    # Positive relative change (stepping UP) = bonus
-    # Negative relative change (hiding) = penalty
-    appetite_modifier = 50 + (rel_drop * 100)  # -0.5 to +0.5 → 0 to 100
-    appetite_modifier = np.clip(appetite_modifier, 0, 100)
-    
-    return (clutch_score * 0.6) + (appetite_modifier * 0.4)
-
-
-def _calculate_difficulty_embrace_score(data: pd.Series) -> float:
-    """
-    Component 3: Shot Difficulty Embrace Score
-    
-    Measures willingness to take hard shots (not just layups/dunks).
-    
-    TODO: Implement with actual data
-    - % of shots contested
-    - Mid-range volume
-    - Pull-up 3PT rate
-    """
-    # Placeholder - use time_of_poss as proxy (longer possessions = harder shots)
-    top = data.get('time_of_poss', 3.0)
-    return min(top / 8.0 * 100, 100)
-
-
-def _calculate_defensive_survival_score(data: pd.Series) -> float:
-    """
-    Component 4: Defensive Attention Survival Score
-    
-    Measures ability to maintain production against elite defenses.
-    
-    TODO: Implement with actual data
-    - Efficiency vs Top 10 defenses
-    - Playoff vs RS efficiency
-    """
-    # Placeholder - use fragility_score inverted
-    fragility = data.get('fragility_score', 0.5)
-    return (1 - fragility) * 100
-
-
-def _calculate_force_score(data: pd.Series) -> float:
-    """
-    Component 5: Force Multiplication Score
-    
-    Measures ability to create through physicality and pressure.
-    
-    Uses existing features:
-    - physicality_score
-    - Free throw rate (from underlying data)
-    """
-    physicality = data.get('physicality_score', 0.5)
-    return physicality * 100
+    if present >= 4:
+        return 'High'
+    elif present >= 2:
+        return 'Medium'
+    else:
+        return 'Low'
 
 
 def _determine_archetype(cii: float) -> str:
     """
     Map CII score to archetype.
     
-    | CII Range | Archetype |
-    |-----------|-----------|
-    | 80+       | Franchise Engine |
-    | 70-80     | Strong Creator |
-    | 55-70     | Luxury Amplifier |
-    | 40-55     | Fragile Star |
-    | <40       | Role Player |
+    Thresholds from SPECIFICATION.md:
+    
+    | CII Range | Archetype         | Description                           |
+    |-----------|-------------------|---------------------------------------|
+    | 80+       | Franchise Engine  | Can be #1 on a championship team     |
+    | 70-80     | Strong Creator    | High creation, optimal as #2         |
+    | 55-70     | Luxury Amplifier  | Excellent, needs an Engine           |
+    | 40-55     | Fragile Star      | Looks like Engine, fatal flaws       |
+    | <40       | Role Player       | Solid contributor, not a star        |
     """
     if cii >= 80:
         return "Franchise Engine"
@@ -175,22 +150,150 @@ def batch_calculate_cii(df: pd.DataFrame) -> pd.DataFrame:
     Calculate CII for all players in a DataFrame.
     
     Args:
-        df: DataFrame with player features
+        df: DataFrame with player features (one row per player-season)
         
     Returns:
-        DataFrame with CII scores and archetypes added
+        DataFrame with CII scores and archetypes added:
+        - player_name, season, cii, archetype, confidence
+        - cii_self_created, cii_pressure_appetite, etc.
     """
+    logger.info(f"Calculating CII for {len(df)} player-seasons...")
+    
     results = []
     
     for idx, row in df.iterrows():
-        cii_result = calculate_cii(row)
-        results.append({
-            'player_name': row.get('player_name', ''),
-            'season': row.get('season', ''),
-            'cii': cii_result['cii'],
-            'archetype': cii_result['archetype'],
-            **{f'cii_{k}': v for k, v in cii_result['components'].items()}
-        })
+        try:
+            cii_result = calculate_cii(row)
+            results.append({
+                'player_name': row.get('player_name', row.get('PLAYER_NAME', '')),
+                'season': row.get('season', row.get('SEASON', '')),
+                'cii': cii_result['cii'],
+                'archetype': cii_result['archetype'],
+                'confidence': cii_result['confidence'],
+                **{f'cii_{k}': v for k, v in cii_result['components'].items()}
+            })
+        except Exception as e:
+            logger.warning(f"Error calculating CII for index {idx}: {e}")
+            results.append({
+                'player_name': row.get('player_name', row.get('PLAYER_NAME', '')),
+                'season': row.get('season', row.get('SEASON', '')),
+                'cii': np.nan,
+                'archetype': 'Error',
+                'confidence': 'Low'
+            })
     
-    return pd.DataFrame(results)
+    result_df = pd.DataFrame(results)
+    
+    # Log summary statistics
+    if not result_df.empty:
+        valid_scores = result_df['cii'].dropna()
+        logger.info(f"  -> CII calculated. Mean: {valid_scores.mean():.2f}, Median: {valid_scores.median():.2f}")
+        logger.info(f"  -> Archetype distribution:")
+        for archetype, count in result_df['archetype'].value_counts().items():
+            logger.info(f"      {archetype}: {count}")
+    
+    return result_df
+
+
+def validate_cii(df: pd.DataFrame) -> Dict[str, dict]:
+    """
+    Validate CII calculations against critical test cases.
+    
+    Returns:
+        Dictionary of pass/fail results for each test case
+    """
+    from .self_created import VALIDATION_CASES as SELF_CASES
+    from .pressure_appetite import VALIDATION_CASES as PRESSURE_CASES
+    from .difficulty_embrace import VALIDATION_CASES as DIFFICULTY_CASES
+    from .defensive_survival import VALIDATION_CASES as DEFENSE_CASES
+    from .force_multiplication import VALIDATION_CASES as FORCE_CASES
+    
+    # Critical CII test cases from SPECIFICATION.md
+    CRITICAL_CASES = {
+        'Ben Simmons': {'expected_archetype': 'Fragile Star', 'max_cii': 40},
+        'James Harden': {'expected_archetype': 'Franchise Engine', 'min_cii': 80},
+        'Luka Dončić': {'expected_archetype': 'Franchise Engine', 'min_cii': 85},
+        'Tyrese Haliburton': {'expected_archetype': 'Strong Creator', 'min_cii': 70},
+        'Domantas Sabonis': {'expected_archetype': 'Luxury Amplifier', 'max_cii': 65},
+    }
+    
+    # Calculate CII for all players
+    cii_results = batch_calculate_cii(df)
+    
+    results = {}
+    for player, case in CRITICAL_CASES.items():
+        player_mask = cii_results['player_name'].str.lower().str.contains(player.lower())
+        
+        if not player_mask.any():
+            results[player] = {'status': 'SKIP', 'reason': 'Not in dataset'}
+            continue
+        
+        player_df = cii_results[player_mask].sort_values('season', ascending=False)
+        player_cii = player_df.iloc[0]
+        
+        # Check archetype
+        archetype_match = player_cii['archetype'] == case['expected_archetype']
+        
+        # Check CII bounds
+        cii_valid = True
+        if 'min_cii' in case and player_cii['cii'] < case['min_cii']:
+            cii_valid = False
+        if 'max_cii' in case and player_cii['cii'] > case['max_cii']:
+            cii_valid = False
+        
+        if archetype_match and cii_valid:
+            results[player] = {
+                'status': 'PASS',
+                'cii': player_cii['cii'],
+                'archetype': player_cii['archetype']
+            }
+        else:
+            results[player] = {
+                'status': 'FAIL',
+                'cii': player_cii['cii'],
+                'archetype': player_cii['archetype'],
+                'expected': case
+            }
+    
+    # Print summary
+    passed = sum(1 for r in results.values() if r['status'] == 'PASS')
+    failed = sum(1 for r in results.values() if r['status'] == 'FAIL')
+    skipped = sum(1 for r in results.values() if r['status'] == 'SKIP')
+    
+    logger.info(f"\nValidation Results: {passed} passed, {failed} failed, {skipped} skipped")
+    
+    return results
+
+
+if __name__ == '__main__':
+    # Quick integration test
+    import pandas as pd
+    
+    # Test with synthetic player data
+    test_players = pd.DataFrame([
+        {
+            'player_name': 'Test Engine',
+            'season': '2023-24',
+            'creation_volume_ratio': 0.7,
+            'CLUTCH_USG_ABSOLUTE': 0.32,
+            'RELATIVE_USAGE_DROP': 0.05,
+            'time_of_poss': 6.5,
+            'FRAGILITY_SCORE': 0.15,
+            'physicality_score': 0.70
+        },
+        {
+            'player_name': 'Test Fragile',
+            'season': '2023-24',
+            'creation_volume_ratio': 0.2,
+            'CLUTCH_USG_ABSOLUTE': 0.14,
+            'RELATIVE_USAGE_DROP': -0.30,
+            'time_of_poss': 2.5,
+            'FRAGILITY_SCORE': 0.85,
+            'physicality_score': 0.40
+        }
+    ])
+    
+    results = batch_calculate_cii(test_players)
+    print("\nTest Results:")
+    print(results[['player_name', 'cii', 'archetype', 'confidence']])
 
