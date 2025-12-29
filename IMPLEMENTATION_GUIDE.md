@@ -1,7 +1,7 @@
 # NBA Playoff Resilience Engine - Technical Implementation Guide
 
 **Version**: 1.0  
-**Date**: December 27, 2025  
+**Date**: December 28, 2025  
 **Audience**: New developers joining the project
 
 ---
@@ -1326,6 +1326,9 @@ Harden OKC = Engine
 Haliburton > Sabonis
 Tatum/Luka/SGA early = Engine
 KAT = Fragile
+Giannis = Engine (Non-shooter force creator)
+Zion = High CII (Force creator, outcome TBD)
+Mikal Bridges = System Merchant / Luxury Component
 ```
 
 ### Key Files

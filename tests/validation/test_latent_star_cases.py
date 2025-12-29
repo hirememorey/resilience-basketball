@@ -318,22 +318,13 @@ def get_test_cases() -> List[LatentStarTestCase]:
     LatentStarTestCase(
         name="Mikal Bridges",
         season="2021-22",
-        category="True Positive - Usage Shock",
+        category="False Positive - System Merchant",
         test_usage=0.30,
-        expected_outcome="Bulldozer",
-        expected_star_level="High", # >65%
-        context="Role player in Phoenix (14.2% Usage). Broke out when traded to Brooklyn with higher usage.",
-        mechanism="Tests model's ability to see star potential through role constraints. Elite efficiency on low volume."
-    ),
-    LatentStarTestCase(
-        name="Desmond Bane",
-        season="2021-22",
-        category="True Positive - Latent Star",
-        test_usage=0.28,
-        expected_outcome="Bulldozer",
-        expected_star_level="High", # >65%
-        context="22.6% Usage. Elite secondary creator with high shooting efficiency.",
-        mechanism="Tests model's ability to identify secondary creators who can scale up. Elite Creation Vector and shooting."
+        expected_outcome="Victim",
+        expected_star_level="Low",  # <55%
+        expected_risk_category="Luxury Component",  # High efficiency dependent on system
+        context="Elite 3-and-D in Phoenix (14.2% Usage). Got volume on bad Brooklyn/NY teams but not a true creator.",
+        mechanism="Tests model's ability to distinguish elite role players from creators. High usage on bad team ≠ creation ability. Converter, not Creator."
     ),
     
         # ========== Category 1.5: The "Franchise Cornerstone" Misses (Critical False Negatives) ==========
@@ -425,6 +416,65 @@ def get_test_cases() -> List[LatentStarTestCase]:
             expected_risk_category="Franchise Cornerstone",
             context="Age 24 (33.0% Usage). All-Star. Elite rim pressure and scoring efficiency.",
             mechanism="Elite creation volume and physicality. Low dependence - self-created offense."
+        ),
+        
+        # ========== Category 1.6: The "Non-Shooter Separation" Cases (Critical for Simmons vs Giannis) ==========
+        # These cases test the model's ability to distinguish non-shooters who ARE the situation (Giannis, Shaq-type)
+        # from non-shooters who are FRAGILE (Simmons). The key is Force Multiplication + Pressure Appetite.
+        LatentStarTestCase(
+            name="Giannis Antetokounmpo",
+            season="2018-19",
+            category="True Positive - Force Creator (Non-Shooter Engine)",
+            test_usage=0.30,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 24 (30.9% Usage). First MVP. Limited shooting but elite force creation. 'The Greek Freak' breakout.",
+            mechanism="CRITICAL: Must distinguish from Simmons. High Force Multiplication, high Pressure Appetite, dominated through physicality despite limited shooting range."
+        ),
+        LatentStarTestCase(
+            name="Giannis Antetokounmpo",
+            season="2019-20",
+            category="True Positive - Force Creator (Non-Shooter Engine)",
+            test_usage=0.30,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 25 (31.1% Usage). Back-to-back MVP. Wall strategy attempted but still dominated regular season.",
+            mechanism="Tests resilience despite known weakness (shooting). Force creation overcomes schematic pressure. WANTS the ball when walled."
+        ),
+        LatentStarTestCase(
+            name="Giannis Antetokounmpo",
+            season="2020-21",
+            category="True Positive - Force Creator (Championship Proof)",
+            test_usage=0.30,
+            expected_outcome="King",
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 26 (29.3% Usage). NBA CHAMPION. 50-point Finals closeout game. Proved wall can be broken.",
+            mechanism="Ultimate validation case. Non-shooter who WON championship through force multiplication. Developed just enough counters (baby hook, improved FT%). IS the situation."
+        ),
+        LatentStarTestCase(
+            name="Zion Williamson",
+            season="2020-21",
+            category="True Positive - Force Creator (Injury-Limited)",
+            test_usage=0.30,
+            expected_outcome="Bulldozer",  # Or King
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 20 (28.5% Usage). All-Star. Shaq-like force creation profile. Most efficient high-volume scorer in NBA.",
+            mechanism="CRITICAL: Basketball physics are resilient - elite force multiplication, rim pressure, and-1 creation. Injuries/psychology are separate from CII. Process is elite."
+        ),
+        LatentStarTestCase(
+            name="Zion Williamson",
+            season="2022-23",
+            category="True Positive - Force Creator (Injury-Limited)",
+            test_usage=0.30,
+            expected_outcome="Bulldozer",  # Or King
+            expected_star_level="High",  # >65%
+            expected_risk_category="Franchise Cornerstone",
+            context="Age 22 (30.4% Usage). Return from injury. 26 PPG on 61% TS. Elite force creation when healthy.",
+            mechanism="Tests that CII measures PROCESS not OUTCOME. His creation ability is elite; availability is a separate question outside CII scope."
         ),
     
         # ========== Category 2: The "Mirage" Breakouts & Fragile Stars (False Positives) ==========

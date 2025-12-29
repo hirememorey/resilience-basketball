@@ -1,6 +1,6 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 28, 2025 (Evening)
+**Last Updated**: December 29, 2025 (Morning)
 **Status**: 🔄 **PHASE 2: CREATION INDEPENDENCE** - "The Right Question"
 
 ---
@@ -132,6 +132,16 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
     *   **Finding 2 (Middleton Career Arc)**: The model correctly identified Khris Middleton's peak as a "Luxury Amplifier" (67.0 in 2020-21) and his subsequent decline into the "Fragile Star/Role Player" tier (49.4 in 2024-25), demonstrating its ability to model career trajectories.
     *   **Conclusion**: The `Self-Created Shot Score` component is functioning correctly and is highly sensitive to changes in player role and ability.
 
+5.  **Validation Test Suite Overhauled** ✨ NEW
+    *   **File**: `tests/validation/test_latent_star_cases.py`
+    *   **Status**: Complete refactor of test cases based on first principles.
+    *   **Key Changes**:
+        *   **Mikal Bridges**: Re-classified from `True Positive` to `False Positive - System Merchant`. Correctly identifies that high usage on a bad team is not the same as creation ability.
+        *   **Desmond Bane**: Removed. Outcome is not yet certain, and the validation suite requires ground truth.
+        *   **Giannis Antetokounmpo**: Added multiple seasons (including championship year) as a `True Positive - Force Creator`. This is a critical addition to ensure the model can distinguish between fragile non-shooters (Simmons) and engine non-shooters.
+        *   **Zion Williamson**: Added as `True Positive - Force Creator (Injury-Limited)`. This tests the model's focus on PROCESS (elite creation physics) vs. OUTCOME (championships), as his availability is out of scope for CII.
+    *   **Conclusion**: The test suite is now more robust and directly targets the core discrimination challenges of the project.
+
 ---
 
 ## Next Steps
@@ -139,7 +149,8 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
 ### Priority 1: Component Calculation (High)
 - [x] ~~Implement `calculate_self_created_score` using `pct_uast_fgm` and `pull_up_fga`.~~ **(DONE)**
 - [x] ~~Implement `calculate_pressure_appetite_score`.~~ **(DONE)**
-- [x] ~~Implement `calculate_difficulty_embrace_score`.~~ **(DONE - Dec 28 evening)**
+- [x] ~~Implement `calculate_difficulty_embrace_score`.~~ **(DONE)**
+- [x] ~~Overhaul validation test suite~~ **(DONE - Dec 29 morning)**
 - [ ] Implement `calculate_defensive_survival_score`.
 - [ ] Implement `calculate_force_multiplication_score`.
 - [ ] Run `batch_calculate_cii()` on integrated dataset.
