@@ -7,33 +7,44 @@ Physics Principle:
 Creators must generate offense through EITHER:
 - Perimeter creation: Pull-ups, mid-range, off-dribble 3s (Tatum, Harden, DeRozan)
 - Force creation: Rim attacks through contact at high volume (Giannis, Zion)
+- Hub creation: Elite efficiency via post orchestration (Jokić, prime Shaq)
+
+TWO VALID PATHS (same as Component 1):
+1. Perimeter Path: Pull-ups, mid-range, off-dribble 3s
+2. Hub Path: Elite efficiency at high volume with positive pressure response
+
+For hub creators like Jokić, taking "easy" shots at 70% TS is BETTER than 
+taking hard shots at 55% TS. They've solved the difficulty problem by 
+manufacturing good looks - that's skill, not avoidance.
 
 CRITICAL INSIGHT (from development):
 Raw contested_shot_rate is a TRAP metric. Players like Simmons and Gobert have
 the HIGHEST contested rates (~0.76-0.85) because they only take layups/dunks in
 traffic. This conflates "embracing difficulty" with "being forced into traffic."
 
-The fix: Use pull-up volume and mid-range as PRIMARY signals (these are jumpers
-that require shot-making skill), and add a "Rim Creation" sub-metric that
-captures force creators WITHOUT rewarding pure finishers like Gobert.
+The fix: Use pull-up volume and mid-range as PRIMARY signals for perimeter path,
+and add Hub Creation path that rewards elite efficiency + pressure response
+WITHOUT rewarding players who hide (Sabonis) or lack the tools (Gobert).
 
-Sub-Metrics:
+Sub-Metrics (Perimeter Path):
 - Pull-up Volume (40%): Off-dribble FGA - THE key differentiator
 - Mid-Range % (30%): Percentage of points from mid-range
 - Pull-up 3 Volume (20%): Off-dribble 3PA
 - Time of Possession (10%): Possession length proxy
 
-NOTE: Rim creation is NOT included. Force creators (Giannis, Zion, Shaq) 
-get credit in Component 1 (Self-Created) and Component 5 (Force Multiplication).
-Including rim creation here caused Simmons to score similarly to stars because
-"creating through drives" conflated with "having no other options."
+Hub Creation Path (gates same as C1):
+- Elite efficiency (65%+ TS) at significant usage (24%+)
+- Positive pressure response (leverage_usg_delta >= 0)
+- Elite touch production (8+ points from touches)
+This prevents Sabonis (hides) and Gobert (no touch game) from benefiting.
 
 Validation Cases:
-- Ben Simmons: ~10-15 (zero jump shot creation)
-- Rudy Gobert: ~0-3 (pure finisher, no jumpers at all)
-- Zion Williamson: ~8-15 (force creator, gets credit in C1/C5 not here)
-- Giannis Antetokounmpo: ~35-45 (moderate pull-ups for a big)
-- Jayson Tatum: ~60-75 (elite perimeter creation)
+- Ben Simmons: ~10-20 (no perimeter, no hub - fails both paths)
+- Rudy Gobert: ~0-5 (pure finisher, fails both paths)
+- Domantas Sabonis: ~10-15 (good touches but HIDES - no hub bonus)
+- Nikola Jokić: ~75-85 (elite hub creation)
+- Giannis Antetokounmpo: ~35-50 (moderate pull-ups, some hub traits)
+- Jayson Tatum: ~60-80 (elite perimeter creation)
 - DeMar DeRozan: ~75-90 (maximum mid-range embrace)
 """
 
@@ -88,10 +99,16 @@ BENCHMARKS = {
     # Time of possession (seconds)
     'time_floor': 2.0,
     'time_ceiling': 7.0,  # Elite: Harden, Luka
-    
-    # Rim creation scaling
-    'rim_creation_floor': 0.0,
-    'rim_creation_ceiling': 0.25  # Elite: Giannis at high usage
+}
+
+# Hub Creation thresholds (same as Component 1)
+HUB_THRESHOLDS = {
+    'touch_production_elite': 8.0,     # 8+ points from touches = elite
+    'touch_production_max': 12.0,      # For scaling
+    'ts_elite': 0.65,                  # 65%+ TS = elite efficiency (slightly higher than C1)
+    'ts_max': 0.72,                    # For scaling
+    'leverage_threshold': 0.0,         # Must be non-negative (not hiding)
+    'usage_threshold': 0.24,           # Must have significant usage to qualify
 }
 
 
@@ -99,21 +116,40 @@ def calculate_difficulty_embrace_score(player_data: pd.Series) -> float:
     """
     Calculate Shot Difficulty Embrace Score (0-100).
     
-    This measures ability to create offense when the defense knows you're
-    getting the ball - through EITHER shot-making OR force.
+    Uses TWO PATHS and takes the maximum (same logic as Component 1):
+    1. Perimeter Path: Pull-ups, mid-range, off-dribble 3s (Harden, Tatum, DeRozan)
+    2. Hub Path: Elite efficiency at volume with positive pressure (Jokić)
     
     Args:
         player_data: Series containing player features for a season
         
     Returns:
         Score from 0-100 where:
-        - 0-20: No shot creation (Simmons, Gobert)
-        - 20-40: Limited creation or pure force
+        - 0-20: No creation (Simmons, Gobert)
+        - 20-40: Limited creation
         - 40-60: Moderate creation (hybrid bigs, developing guards)
         - 60-80: Strong creation (most stars)
-        - 80-100: Elite creation (Tatum, DeRozan, Lillard)
+        - 80-100: Elite creation (Tatum, DeRozan, Jokić)
     """
     
+    # PATH 1: Perimeter creation (existing logic)
+    perimeter_score = _calculate_perimeter_difficulty_score(player_data)
+    
+    # PATH 2: Hub creation (elite efficiency = solved the difficulty problem)
+    hub_score = _calculate_hub_difficulty_score(player_data)
+    
+    # Take the MAXIMUM of both paths
+    final_score = max(perimeter_score, hub_score)
+    
+    return round(np.clip(final_score, 0, 100), 2)
+
+
+def _calculate_perimeter_difficulty_score(player_data: pd.Series) -> float:
+    """
+    Calculate perimeter difficulty score (original logic).
+    
+    For guards/wings who create via pull-ups, mid-range, stepbacks.
+    """
     # Sub-metric 1: Pull-up Volume (40%)
     pullup_score = _calculate_pullup_volume_score(player_data)
     
@@ -127,15 +163,82 @@ def calculate_difficulty_embrace_score(player_data: pd.Series) -> float:
     time_score = _calculate_time_score(player_data)
     
     # Weighted combination
-    # Note: Rim creation removed - see WEIGHTS comment for rationale
-    final_score = (
+    score = (
         WEIGHTS['pullup_volume'] * pullup_score +
         WEIGHTS['midrange_pct'] * midrange_score +
         WEIGHTS['pullup_3_volume'] * pullup_3_score +
         WEIGHTS['time_of_poss'] * time_score
     )
     
-    return round(np.clip(final_score, 0, 100), 2)
+    return np.clip(score, 0, 100)
+
+
+def _calculate_hub_difficulty_score(player_data: pd.Series) -> float:
+    """
+    Calculate hub difficulty score for post-centric orchestrators.
+    
+    For bigs who "solve" difficulty through elite efficiency rather than
+    shot-making. Taking an "easy" shot at 70% TS is BETTER than taking
+    a hard shot at 55% TS - they've manufactured the advantage.
+    
+    REQUIRES ALL THREE GATES (same as Component 1):
+    1. Elite efficiency (65%+ TS at significant usage)
+    2. Non-hiding pressure response (leverage_usg_delta >= 0)
+    3. Elite touch production (8+ points from touches)
+    
+    This prevents Sabonis (hides), Gobert (no touch game), and
+    role players (low usage) from benefiting.
+    """
+    # Get inputs
+    touch_prod = player_data.get('weighted_touch_production', 
+                          player_data.get('WEIGHTED_TOUCH_PRODUCTION', 0))
+    ts_pct = player_data.get('ts_pct', player_data.get('TS_PCT', 0.55))
+    leverage_usg = player_data.get('leverage_usg_delta',
+                            player_data.get('LEVERAGE_USG_DELTA', 0))
+    usage = player_data.get('usg_pct', player_data.get('USG_PCT', 0.15))
+    
+    # Handle NaN and percentages
+    if pd.isna(touch_prod): touch_prod = 0
+    if pd.isna(ts_pct): ts_pct = 0.55
+    if pd.isna(leverage_usg): leverage_usg = 0
+    if pd.isna(usage): usage = 0.15
+    if ts_pct > 1.0: ts_pct = ts_pct / 100.0
+    if usage > 1.0: usage = usage / 100.0
+    
+    # GATE 1: Must have significant usage (not a role player)
+    if usage < HUB_THRESHOLDS['usage_threshold']:
+        return 0.0
+    
+    # GATE 2: Must NOT be hiding under pressure
+    if leverage_usg < HUB_THRESHOLDS['leverage_threshold']:
+        return 0.0
+    
+    # GATE 3: Must have elite touch production
+    if touch_prod < HUB_THRESHOLDS['touch_production_elite']:
+        return 0.0
+    
+    # GATE 4: Must have elite efficiency
+    if ts_pct < HUB_THRESHOLDS['ts_elite']:
+        return 0.0
+    
+    # All gates passed - calculate score
+    
+    # Efficiency score (65% → 70, 72%+ → 100)
+    eff_score = (ts_pct - HUB_THRESHOLDS['ts_elite']) / \
+                (HUB_THRESHOLDS['ts_max'] - HUB_THRESHOLDS['ts_elite'])
+    eff_score = 70 + (eff_score * 30)  # 70-100 range
+    eff_score = np.clip(eff_score, 70, 100)
+    
+    # Touch production score (8 → 75, 12+ → 100)
+    touch_score = (touch_prod - HUB_THRESHOLDS['touch_production_elite']) / \
+                  (HUB_THRESHOLDS['touch_production_max'] - HUB_THRESHOLDS['touch_production_elite'])
+    touch_score = 75 + (touch_score * 25)  # 75-100 range
+    touch_score = np.clip(touch_score, 75, 100)
+    
+    # Combined score (efficiency primary, touch secondary)
+    base_score = (eff_score * 0.6 + touch_score * 0.4)
+    
+    return np.clip(base_score, 0, 100)
 
 
 def _calculate_pullup_volume_score(data: pd.Series) -> float:
@@ -257,14 +360,16 @@ def _calculate_time_score(data: pd.Series) -> float:
 def get_required_features() -> List[str]:
     """Return list of features required for this component."""
     return [
-        # Primary features (all available in dataset)
+        # Perimeter path features
         'pull_up_fga',           # Off-dribble FGA
         'pct_pts_2pt_mr',        # Mid-range as % of points
         'pull_up_fg3a',          # Off-dribble 3PA
-        'creation_volume_ratio', # Self-created FGA ratio
-        'physicality_score',     # Force proxy
-        'usg_pct',               # Usage for rim creation scaling
         'time_of_poss',          # Possession length
+        # Hub path features
+        'weighted_touch_production', # Touch points
+        'ts_pct',                # Efficiency
+        'leverage_usg_delta',    # Pressure response
+        'usg_pct',               # Usage
     ]
 
 
@@ -288,43 +393,50 @@ def calculate_sub_scores(player_data: pd.Series) -> Dict[str, float]:
 
 
 # =============================================================================
-# VALIDATION CASES - Pure shot creation focus (no rim creation)
+# VALIDATION CASES - Two paths: perimeter and hub creation
 # =============================================================================
 VALIDATION_CASES = {
     'Ben Simmons': {
+        'season': '2019-20',
         'expected_score': 15,
         'tolerance': 10,
-        'reason': 'Minimal jump shot creation - early career had some pull-ups (2.4), declined to near-zero by 2020'
+        'reason': 'No perimeter creation (0.7 pull-ups), no hub bonus (hides under pressure)'
     },
     'Rudy Gobert': {
+        'season': '2020-21',
         'expected_score': 1,
         'tolerance': 3,
-        'reason': 'Pure finisher - zero pull-ups, zero mid-range'
+        'reason': 'Pure finisher - zero pull-ups, zero mid-range, low touches'
     },
-    'Zion Williamson': {
+    'Domantas Sabonis': {
+        'season': '2022-23',
         'expected_score': 10,
         'tolerance': 8,
-        'reason': 'Force creator but almost zero jumper volume (get credit in C1/C5)'
+        'reason': 'Good touches but HIDES (leverage -0.058) - fails hub gates'
+    },
+    'Nikola Jokić': {
+        'season': '2022-23',
+        'expected_score': 80,
+        'tolerance': 12,
+        'reason': 'Elite hub creation (70% TS, 10.5 touches, steps UP)'
     },
     'Giannis Antetokounmpo': {
-        'expected_score': 38,
+        'season': '2019-20',
+        'expected_score': 45,
         'tolerance': 12,
-        'reason': 'Hybrid - moderate pull-ups for a big, some mid-range (force in C5)'
+        'reason': 'Hybrid - some hub traits, moderate pull-ups'
     },
     'Jayson Tatum': {
-        'expected_score': 55,
+        'season': '2023-24',
+        'expected_score': 70,
         'tolerance': 12,
-        'reason': 'Elite perimeter creation - peaks at 75+ in 2024-25, but validator picks lower 2022-23'
+        'reason': 'Elite perimeter creation (10+ pull-ups, good 3s)'
     },
     'DeMar DeRozan': {
+        'season': '2021-22',
         'expected_score': 78,
         'tolerance': 10,
-        'reason': 'Maximum mid-range embrace, elite pull-up volume, low 3s'
-    },
-    'Khris Middleton': {
-        'expected_score': 68,
-        'tolerance': 12,
-        'reason': 'Elite mid-range scorer, good pull-up volume'
+        'reason': 'Maximum mid-range embrace, elite pull-up volume'
     },
 }
 

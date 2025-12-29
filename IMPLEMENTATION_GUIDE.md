@@ -1,8 +1,10 @@
 # NBA Playoff Resilience Engine - Technical Implementation Guide
 
-**Version**: 1.0  
-**Date**: December 28, 2025  
+**Version**: 1.1  
+**Date**: December 29, 2025  
 **Audience**: New developers joining the project
+
+> **⚠️ Note**: The implementation skeletons in this guide are for reference only. The actual implementations in `src/nba_data/phase2_creation_independence/index/` include additional logic like the **Two-Path Architecture** (Perimeter + Hub paths) for Components 1 and 3 that recognize both perimeter creators (Harden, Luka) and hub creators (Jokić).
 
 ---
 

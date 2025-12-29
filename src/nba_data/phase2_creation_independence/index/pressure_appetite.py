@@ -207,6 +207,13 @@ def diagnose_pressure_appetite(player_data: pd.Series):
     print(f"  Final Pressure Appetite Score: {final_score:.2f}")
 
 
+VALIDATION_CASES: Dict[str, Dict] = {
+    'Ben Simmons': {'expected_score': 20, 'tolerance': 15},  # Usage DROPS under pressure
+    'Luka Dončić': {'expected_score': 95, 'tolerance': 10},  # Usage INCREASES under pressure
+    'James Harden': {'expected_score': 85, 'tolerance': 10}, # Historically clutch
+}
+
+
 if __name__ == '__main__':
     from pathlib import Path
     

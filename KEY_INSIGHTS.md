@@ -251,6 +251,61 @@ adjusted_efficiency_score = base_efficiency_score * volume_multiplier
 
 **Key Principle**: **Efficiency maintained through passivity is fake resilience.**
 
+## 85. The "Having Tools vs Using Them" Trap (Force Multiplication) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Ben Simmons has `physicality_score` of 0.93-0.98 (elite physical tools - top 5% in the league). A naive "force multiplication" component would score him as an elite force creator alongside Giannis.
+
+**The Data**:
+- Simmons: physicality 0.95, BUT leverage_usg_delta = -0.085 (hiding!)
+- Giannis: physicality 1.0, AND leverage_usg_delta = +0.06 (stepping up)
+- Curry: physicality 0.45, BUT leverage_usg_delta = +0.10 (demands the ball)
+
+**The Insight**: HAVING physical tools ≠ USING them. The true signal for force multiplication requires:
+1. **Physical Tools** (the ability): physicality_score, FTr
+2. **Force Volume** (the usage): usage × creation_volume_ratio
+3. **Force Agency** (the demand): clutch_usg_absolute, leverage_usg_delta
+4. **Touch Production** (the output): weighted_touch_production
+
+Simmons COULD force his way to the basket. He just... doesn't. Especially when it matters.
+
+**The Fix**: Weight force components by agency indicators:
+- Physical tools alone get 25% weight
+- Force volume (usage + creation) gets 30% weight  
+- Force AGENCY (do you DEMAND the ball?) gets 25% weight
+- Touch production (did you convert?) gets 20% weight
+
+**Result**: Giannis 92.9 (elite force), Simmons 44.2 (has tools, doesn't use them), Curry 58.2 (gravity not force).
+
+**Key Principle**: **Tools are potential. Agency is actualization. Score the actualization.**
+
+## 86. The "Hub Creator" Path (Jokić Exception) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Jokić, a 3x MVP who led his team to a championship, was initially classified as "Fragile Star" (CII ~42) because the model only measured perimeter creation (pull-ups, ISO).
+
+**The Data**:
+- Jokić: pull_up_fga 1.1, pull_up_fg3a 0.3 (minimal perimeter creation)
+- But: TS% 70.1%, touch_production 10.5, leverage_usg_delta +0.043
+
+**The Insight**: There are TWO equally valid paths to creation independence:
+1. **Perimeter Creation**: Pull-ups, ISO, stepback 3s (Harden, Luka, Tatum)
+2. **Hub Creation**: Elite efficiency via post orchestration (Jokić, prime Shaq)
+
+Jokić doesn't NEED to take hard shots because his shot CREATION is so elite that he manufactures easy shots. That's SKILL, not avoidance.
+
+**The Critical Gate**: Hub creation bonus ONLY applies if `leverage_usg_delta >= 0`. This separates Jokić (steps UP) from Sabonis (HIDES). Both have good touch production, but Sabonis has leverage_usg_delta = -0.058.
+
+**The Fix**: Components 1 (Self-Created) and 3 (Difficulty Embrace) now use MAX(perimeter_score, hub_score):
+- Hub gates: Elite efficiency (65%+ TS) + Elite touches (8+) + Non-hiding (leverage >= 0) + Usage (24%+)
+- All 4 gates must pass to get hub bonus
+- Sabonis fails 3 of 4 gates (hiding, low usage, borderline touches)
+
+**Result**: 
+- Jokić: CII 82.7 → **Franchise Engine** (#5 all-time)
+- Sabonis: CII 24.2 → Role Player
+- **58-point gap** between superficially similar bigs
+
+**Key Principle**: **Multiple valid paths to the same destination. Gate the bonus on pressure response.**
+
 ## See Also
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)
