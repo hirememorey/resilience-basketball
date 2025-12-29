@@ -223,6 +223,34 @@ Both are valid. The difference from Simmons/Gobert is:
 
 **Key Principle**: **Multiple valid paths to the same destination. Don't conflate the path with the destination.**
 
+## 84. The "Abdication Efficiency Trap" (Volume-Adjusted Resilience) 🎯 CRITICAL (December 2025)
+
+**The Problem**: Ben Simmons has POSITIVE `leverage_ts_delta` (+0.04 to +0.09) in clutch situations. A naive interpretation would be "his efficiency improves under pressure."
+
+**The Data**:
+- Simmons: leverage_ts_delta = +0.043, leverage_usg_delta = -0.085
+- Harden: leverage_ts_delta = -0.003, leverage_usg_delta = +0.096
+
+**The Insight**: Simmons maintains efficiency by HIDING. When clutch time comes, he stops shooting and only takes uncontested layups. His positive efficiency delta is an artifact of volume abdication, not clutch performance.
+
+The TRUE signal for "defensive survival" is:
+1. **Volume-Adjusted Efficiency**: If you're hiding (negative `leverage_usg_delta`), efficiency doesn't count
+2. **Shot Versatility**: Can you be schemed? Multiple modes = no
+3. **Stepping Up**: Do you WANT more volume under pressure?
+
+**The Fix**: Weight efficiency resilience BY volume maintenance:
+```python
+if leverage_usg_delta < 0:
+    volume_multiplier = max(0.5, 1.0 + (leverage_usg_delta / 0.30))
+else:
+    volume_multiplier = 1.0
+adjusted_efficiency_score = base_efficiency_score * volume_multiplier
+```
+
+**Result**: Simmons correctly identified as "Vulnerable to schemes" (32.6) while Harden identified as "Hard to scheme" (77.6).
+
+**Key Principle**: **Efficiency maintained through passivity is fake resilience.**
+
 ## See Also
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)

@@ -103,7 +103,7 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
     *   **Status**: Logic implemented and validated.
     *   **Action**: Mapped `clutch_usg_absolute` and `relative_usage_drop` to measure the "Abdication Tax." Successfully identified Simmons as a low-appetite outlier (score ~18-21).
 
-3.  **CII Component 3: `Shot Difficulty Embrace Score` Implemented** ✨ NEW
+3.  **CII Component 3: `Shot Difficulty Embrace Score` Implemented**
     *   **File**: `src/nba_data/phase2_creation_independence/index/difficulty_embrace.py`
     *   **Status**: Complete rewrite with **7/7 validation cases passing**.
     *   **Key Learnings**:
@@ -126,13 +126,35 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
         | Middleton | 64.7 | ✅ Elite mid-range |
         | DeRozan | 77.8 | ✅ Maximum mid-range |
 
-4.  **Diagnostic Validation Performed**
+4.  **CII Component 4: `Defensive Survival Score` Implemented** ✨ NEW (Dec 28)
+    *   **File**: `src/nba_data/phase2_creation_independence/index/defensive_survival.py`
+    *   **Status**: Complete implementation with **6/6 validation cases passing**.
+    *   **Key Insight - The Abdication Efficiency Trap**:
+        *   Ben Simmons maintains POSITIVE `leverage_ts_delta` (+0.04 to +0.09) because when he HIDES, he only takes his best shots (uncontested layups).
+        *   His efficiency is maintained through VOLUME ABDICATION, not skill.
+        *   The fix: Weight efficiency resilience BY volume maintenance. If you're hiding, efficiency doesn't count.
+    *   **Final Architecture**:
+        *   Clutch Volume Maintenance: 35% (do you stay in the game?)
+        *   Shot Versatility: 30% (can you be schemed?)
+        *   Efficiency Resilience: 25% (volume-adjusted)
+        *   Fragility Inverse: 10% (supporting signal)
+    *   **Validation Results**:
+        | Player | Season | Score | Status |
+        |--------|--------|-------|--------|
+        | Ben Simmons | 2019-20 | 32.6 | ✅ Abdicator (hiding pattern) |
+        | James Harden | 2018-19 | 77.6 | ✅ Engine (steps UP) |
+        | Nikola Jokić | 2021-22 | 54.9 | ✅ Hub creator (steps up, low versatility) |
+        | Luka Dončić | 2020-21 | 69.8 | ✅ Elite versatility |
+        | KAT | 2017-18 | 21.0 | ✅ Double collapse (volume + efficiency) |
+        | Giannis | 2020-21 | 49.2 | ✅ Force creator |
+
+5.  **Diagnostic Validation Performed**
     *   **Action**: Conducted a deep-dive analysis on the scores for Luka Dončić, Khris Middleton, Ben Simmons, and others across different seasons.
     *   **Finding 1 (Luka/AD Trade Context)**: The model successfully detected the change in Luka Dončić's role after being traded to the Lakers. His score correctly adjusted from a peak of 97.1 (2022-23) to 84.0 (2024-25), reflecting his new context playing alongside LeBron James. This is a major validation of the model's sensitivity to process, not just reputation.
     *   **Finding 2 (Middleton Career Arc)**: The model correctly identified Khris Middleton's peak as a "Luxury Amplifier" (67.0 in 2020-21) and his subsequent decline into the "Fragile Star/Role Player" tier (49.4 in 2024-25), demonstrating its ability to model career trajectories.
     *   **Conclusion**: The `Self-Created Shot Score` component is functioning correctly and is highly sensitive to changes in player role and ability.
 
-5.  **Validation Test Suite Overhauled** ✨ NEW
+6.  **Validation Test Suite Overhauled**
     *   **File**: `tests/validation/test_latent_star_cases.py`
     *   **Status**: Complete refactor of test cases based on first principles.
     *   **Key Changes**:
@@ -151,7 +173,7 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
 - [x] ~~Implement `calculate_pressure_appetite_score`.~~ **(DONE)**
 - [x] ~~Implement `calculate_difficulty_embrace_score`.~~ **(DONE)**
 - [x] ~~Overhaul validation test suite~~ **(DONE - Dec 29 morning)**
-- [ ] Implement `calculate_defensive_survival_score`.
+- [x] ~~Implement `calculate_defensive_survival_score`.~~ **(DONE - Dec 28 evening)**
 - [ ] Implement `calculate_force_multiplication_score`.
 - [ ] Run `batch_calculate_cii()` on integrated dataset.
 
