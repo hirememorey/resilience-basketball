@@ -1,7 +1,7 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 29, 2025 (Evening)
-**Status**: ✅ **PHASE 2: CREATION INDEPENDENCE** - All 5 Components Complete
+**Last Updated**: December 29, 2025 (Late Evening)
+**Status**: ✅ **PHASE 2: CREATION INDEPENDENCE** - 2D Classification Complete
 
 ---
 
@@ -223,10 +223,13 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
 - [x] ~~Create 2D ground truth labels (CII × TII)~~ **(DONE)**
 - [x] ~~Implement validation test suite~~ **(DONE - 11/11 tests pass)**
 
-### Priority 4: 2D Classification Integration
-- [ ] Update `composite.py` to return both CII and TII
-- [ ] Implement 2D archetype classification
-- [ ] Tune thresholds based on validation results
+### Priority 4: 2D Classification Integration ✅ COMPLETE (Dec 29)
+- [x] ~~Update `composite.py` to return both CII and TII~~ **(DONE)**
+- [x] ~~Implement 2D archetype classification~~ **(DONE - `classify_2d.py`)**
+- [x] ~~Tune thresholds based on validation results~~ **(DONE)**
+- [x] ~~Add career leverage pattern check~~ **(DONE - breakthrough discovery)**
+- [x] ~~Add creation tools check~~ **(DONE - distinguishes Luxury Amplifier from Fragile Star)**
+- [x] ~~Validate on core cases (13/13 pass)~~ **(DONE)**
 
 ### Priority 5: Deployment
 - [ ] Apply to current season data
@@ -291,6 +294,88 @@ CII          ├─────────────┼───────�
 
 ---
 
+## NEW: 2D Classification with Career Leverage Pattern ✅ (Dec 29)
+
+### The Breakthrough: Career Leverage Pattern
+
+During TII validation, we discovered the **Randle Problem**: Julius Randle 2020-21 had high TII (72.1) because his single-season metrics looked good (positive leverage, pull-up volume). But he collapsed in the playoffs.
+
+**Key Discovery**: Randle's career `leverage_usg_delta` revealed a consistent hiding pattern:
+- Career mean: -0.023 (8 negative seasons, 2 positive)
+- His 2020-21 positive leverage was an OUTLIER, not his nature
+
+Compare to true Engines:
+- Harden: +0.053 mean (9+/1-)
+- Brunson: +0.040 mean (5+/1-)
+- SGA: +0.033 mean (5+/0-)
+
+### The Three-Way Classification
+
+```
+IF career_leverage >= 0.01:
+    → ENGINE CANDIDATE (can be #1)
+ELIF has_real_creation_tools:
+    → LUXURY AMPLIFIER (can thrive as #2)
+ELSE:
+    → FRAGILE STAR (fundamental skill gaps)
+```
+
+Where `has_real_creation_tools` = (pull-up 2PA > 2.0) OR (mid-range% > 10%)
+
+### Key Distinction: Luxury Amplifier vs Fragile Star
+
+| | Luxury Amplifier | Fragile Star |
+|---|---|---|
+| Career Leverage | Negative | Negative |
+| Creation Tools | YES | NO |
+| As #2 | THRIVES | Still struggles |
+| Examples | Randle, Brown, Klay | Simmons, Sabonis, KAT |
+
+**Critical Insight**: The difference is PORTABILITY.
+- **Fragile Stars** need PERFECT context and still might fail
+- **Luxury Amplifiers** need an Engine and will excel
+
+### Validation Results (13/13 Core Cases Pass)
+
+| Player | Season | Classification | Status |
+|--------|--------|----------------|--------|
+| James Harden | 2018-19 | Franchise Engine | ✅ |
+| Nikola Jokić | 2022-23 | Franchise Engine | ✅ |
+| Luka Dončić | 2022-23 | Franchise Engine | ✅ |
+| Jalen Brunson | 2020-21 | Latent Engine | ✅ Alpha case |
+| Jalen Brunson | 2021-22 | Latent Engine | ✅ |
+| SGA | 2020-21 | Franchise Engine | ✅ |
+| Julius Randle | 2020-21 | Luxury Amplifier | ✅ Corrected! |
+| Jaylen Brown | 2023-24 | Luxury Amplifier | ✅ |
+| Khris Middleton | 2020-21 | Latent Engine | ✅ |
+| Ben Simmons | 2019-20 | Fragile Star | ✅ |
+| Ben Simmons | 2020-21 | Fragile Star | ✅ |
+| Karl-Anthony Towns | 2019-20 | Fragile Star | ✅ |
+| Domantas Sabonis | 2022-23 | Fragile Star | ✅ |
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `index/classify_2d.py` | 2D classification engine |
+| `results/classification_2d_results.csv` | Full dataset results (2673 rows) |
+
+### Archetype Distribution
+
+| Archetype | Count | % |
+|-----------|-------|---|
+| Franchise Engine | 86 | 3.2% |
+| Latent Engine | 198 | 7.4% |
+| Strong Creator | 153 | 5.7% |
+| Luxury Amplifier | 224 | 8.4% |
+| Developing Engine | 40 | 1.5% |
+| Developing Star | 8 | 0.3% |
+| Developing Prospect | 220 | 8.2% |
+| Fragile Star | 221 | 8.3% |
+| Role Player | 1523 | 57.0% |
+
+---
+
 ## Key Decision: Creator vs. Converter
 
 The central question for any player:
@@ -311,15 +396,20 @@ Ben Simmons is in the bottom-left: efficient but dependent. The model must ident
 
 | File | Purpose |
 |------|---------|
-| **`IMPLEMENTATION_GUIDE.md`** | **NEW: Complete technical guide for developers** |
+| **`IMPLEMENTATION_GUIDE.md`** | **Complete technical guide for developers** |
 | `phase2_creation_independence/SPECIFICATION.md` | Detailed CII spec |
+| `phase2_creation_independence/TII_SPECIFICATION.md` | Detailed TII spec |
 | `phase2_creation_independence/index/composite.py` | Main CII calculator |
+| `phase2_creation_independence/index/trajectory.py` | TII calculator |
+| **`phase2_creation_independence/index/classify_2d.py`** | **2D classification with career pattern** |
 | `phase2_creation_independence/index/self_created.py` | Component 1 implementation |
 | `phase2_creation_independence/index/pressure_appetite.py` | Component 2 implementation |
 | `phase2_creation_independence/index/difficulty_embrace.py` | Component 3 implementation |
 | `phase2_creation_independence/index/defensive_survival.py` | Component 4 implementation |
 | `phase2_creation_independence/index/force_multiplication.py` | Component 5 implementation |
-| `phase2_creation_independence/ground_truth/player_labels.csv` | Expert labels |
+| `phase2_creation_independence/ground_truth/player_labels.csv` | 1D expert labels |
+| `phase2_creation_independence/ground_truth/player_labels_2d.csv` | 2D expert labels |
+| `results/classification_2d_results.csv` | Full classification output |
 | `KEY_INSIGHTS.md` | 80+ learnings from Phase 1 |
 | `LUKA_SIMMONS_PARADOX.md` | Theoretical foundation |
 

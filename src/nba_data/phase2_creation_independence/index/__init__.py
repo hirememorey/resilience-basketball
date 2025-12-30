@@ -55,12 +55,34 @@ from .force_multiplication import (
     VALIDATION_CASES as FORCE_VALIDATION
 )
 
+from .trajectory import (
+    calculate_tii,
+    VALIDATION_CASES as TII_VALIDATION
+)
+
+from .classify_2d import (
+    classify_2d,
+    batch_classify_2d,
+    diagnose_2d_classification,
+    calculate_career_leverage,
+    has_real_creation_tools,
+    VALIDATION_CASES_2D
+)
+
 __all__ = [
     # Main functions
     'calculate_cii',
     'batch_calculate_cii',
     'validate_cii',
     'WEIGHTS',
+    # TII functions
+    'calculate_tii',
+    # 2D Classification functions
+    'classify_2d',
+    'batch_classify_2d',
+    'diagnose_2d_classification',
+    'calculate_career_leverage',
+    'has_real_creation_tools',
     # Component calculators
     'calculate_self_created_score',
     'calculate_pressure_appetite_score', 
@@ -73,4 +95,6 @@ __all__ = [
     'DIFFICULTY_VALIDATION',
     'DEFENSE_VALIDATION',
     'FORCE_VALIDATION',
+    'TII_VALIDATION',
+    'VALIDATION_CASES_2D',
 ]

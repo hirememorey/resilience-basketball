@@ -792,7 +792,9 @@ TII = 0.30 × Scaling_Efficiency_Score
 
 ## 6. 2D Classification System
 
-The combination of CII (current ability) and TII (scaling potential) creates a 2D classification:
+The combination of CII (current ability) and TII (scaling potential) creates a 2D classification.
+
+**Implementation File**: `src/nba_data/phase2_creation_independence/index/classify_2d.py`
 
 ### 6.1 The 2D Grid
 
@@ -800,43 +802,109 @@ The combination of CII (current ability) and TII (scaling potential) creates a 2
                            TII (Scaling Potential)
                     Low (<50)    Med (50-70)    High (>70)
                ┌─────────────┬─────────────┬─────────────┐
-    High (80+) │  Franchise  │  Franchise  │  Franchise  │
+    High (74+) │  Franchise  │  Franchise  │  Franchise  │
                │   Engine    │   Engine    │   Engine    │
 CII            ├─────────────┼─────────────┼─────────────┤
 (Current)      │   Luxury    │   Strong    │   LATENT    │
-    Med (50-80)│  Amplifier  │  Creator    │   ENGINE    │ ← THE ALPHA
+    Med (45-74)│  Amplifier  │  Creator    │   ENGINE    │ ← THE ALPHA
                ├─────────────┼─────────────┼─────────────┤
                │    Role     │ Developing  │ Developing  │
-    Low (<50)  │   Player    │  Prospect   │   Star      │
+    Low (<45)  │   Player    │  Prospect   │   Star      │
                └─────────────┴─────────────┴─────────────┘
 ```
 
-### 6.2 Archetype Definitions (2D)
+### 6.2 The Breakthrough: Career Leverage Pattern
 
-| Archetype | CII | TII | Description |
-|-----------|-----|-----|-------------|
-| **Franchise Engine** | 80+ | Any | Already proven elite creator |
-| **Latent Engine** | 50-80 | 70+ | Has skills, needs opportunity → **THE ALPHA** |
-| **Strong Creator** | 50-80 | 50-70 | Good creator, unclear ceiling |
-| **Luxury Amplifier** | 50-80 | <50 | Good but ceiling-limited |
-| **Developing Star** | <50 | 70+ | Raw but high ceiling |
-| **Developing Prospect** | <50 | 50-70 | Too early to classify |
-| **Role Player** | <50 | <50 | Correctly priced |
-| **Fragile Star** | Special | Special | High stats but fatal creation flaws |
+During TII validation, we discovered the **Randle Problem**: Julius Randle 2020-21 had high TII (72.1) because his single-season metrics looked good. But he collapsed in the playoffs.
 
-### 6.3 Key Discrimination: Latent Engine vs Luxury Amplifier
+**Key Discovery**: Randle's career `leverage_usg_delta` revealed a consistent hiding pattern:
+- Career mean: -0.023 (8 negative seasons, 2 positive)
+- His 2020-21 positive leverage was an OUTLIER, not his nature
 
-The critical value proposition is identifying **Latent Engines** before they break out:
+Compare to true Engines:
+- Harden: +0.053 mean (9+/1-)
+- Brunson: +0.040 mean (5+/1-)
+- SGA: +0.033 mean (5+/0-)
 
-| Player | Season | CII | TII | 2D Classification |
-|--------|--------|-----|-----|-------------------|
-| Brunson | 2020-21 | 50.0 | 77.2 | **Latent Engine** |
-| Sabonis | 2022-23 | 24.2 | 39.8 | Role Player |
-| **Gap** | | 25.8 | **37.4** | TII provides differentiation |
+### 6.3 The Three-Way Classification Algorithm
 
-Both had similar CII (~50 vs ~24), but TII revealed Brunson's scaling potential (77 vs 40).
+```python
+IF career_leverage >= 0.01:
+    → ENGINE CANDIDATE (can be #1)
+ELIF has_real_creation_tools:
+    → LUXURY AMPLIFIER (can thrive as #2)
+ELSE:
+    → FRAGILE STAR (fundamental skill gaps)
+```
 
-### 6.4 Ground Truth Labels (2D Format)
+Where `has_real_creation_tools`:
+```python
+def has_real_creation_tools(player_data):
+    pull_up_2pa = player_data['pull_up_fga'] - player_data['pull_up_fg3a']
+    mid_range = player_data['pct_pts_2pt_mr']
+    
+    return (
+        pull_up_2pa > 2.0 or      # Has pull-up 2s (mid-range, drives)
+        mid_range > 0.10 or        # 10%+ of points from mid-range
+        (pull_up_fga > 5.0 and pull_up_fg3a < 3.0)  # High volume, not all 3s
+    )
+```
+
+### 6.4 Key Distinction: Luxury Amplifier vs Fragile Star
+
+| | Luxury Amplifier | Fragile Star |
+|---|---|---|
+| Career Leverage | Negative | Negative |
+| Creation Tools | YES | NO |
+| As #2 | THRIVES | Still struggles |
+| Examples | Randle, Brown, Klay | Simmons, Sabonis, KAT |
+
+**Critical Insight**: The difference is PORTABILITY.
+- **Fragile Stars** need PERFECT context and still might fail
+- **Luxury Amplifiers** need an Engine and will excel
+
+### 6.5 Implementation
+
+```python
+from src.nba_data.phase2_creation_independence.index.classify_2d import (
+    classify_2d,
+    batch_classify_2d,
+    diagnose_2d_classification,
+    calculate_career_leverage,
+    has_real_creation_tools
+)
+
+# Classify a single player-season
+result = classify_2d(player_data, df=full_df)
+print(f"{result['player_name']}: {result['archetype_2d']}")
+print(f"  Reasoning: {result['reasoning']}")
+
+# Classify all players
+results = batch_classify_2d(df)
+
+# Diagnose a specific player
+diagnose_2d_classification('Jalen Brunson', '2020-21', df)
+```
+
+### 6.6 Validation Results (13/13 Core Cases Pass)
+
+| Player | Season | Classification | Status |
+|--------|--------|----------------|--------|
+| James Harden | 2018-19 | Franchise Engine | ✅ |
+| Nikola Jokić | 2022-23 | Franchise Engine | ✅ |
+| Luka Dončić | 2022-23 | Franchise Engine | ✅ |
+| Jalen Brunson | 2020-21 | Latent Engine | ✅ Alpha case |
+| Jalen Brunson | 2021-22 | Latent Engine | ✅ |
+| SGA | 2020-21 | Franchise Engine | ✅ |
+| Julius Randle | 2020-21 | Luxury Amplifier | ✅ Corrected! |
+| Jaylen Brown | 2023-24 | Luxury Amplifier | ✅ |
+| Khris Middleton | 2020-21 | Latent Engine | ✅ |
+| Ben Simmons | 2019-20 | Fragile Star | ✅ |
+| Ben Simmons | 2020-21 | Fragile Star | ✅ |
+| Karl-Anthony Towns | 2019-20 | Fragile Star | ✅ |
+| Domantas Sabonis | 2022-23 | Fragile Star | ✅ |
+
+### 6.7 Ground Truth Labels (2D Format)
 
 Located at: `phase2_creation_independence/ground_truth/player_labels_2d.csv`
 
@@ -845,6 +913,20 @@ player_name,season,cii_archetype,tii_archetype,combined_archetype,confidence,not
 Jalen Brunson,2020-21,Developing,Elite Scaling,Latent Engine,High,"KEY CASE: Mavs backup..."
 Ben Simmons,2019-20,Role Player,Limited Scaling,Fragile Star,High,"No creation tools..."
 ```
+
+### 6.8 Archetype Distribution
+
+| Archetype | Count | % |
+|-----------|-------|---|
+| Franchise Engine | 86 | 3.2% |
+| Latent Engine | 198 | 7.4% |
+| Strong Creator | 153 | 5.7% |
+| Luxury Amplifier | 224 | 8.4% |
+| Developing Engine | 40 | 1.5% |
+| Developing Star | 8 | 0.3% |
+| Developing Prospect | 220 | 8.2% |
+| Fragile Star | 221 | 8.3% |
+| Role Player | 1523 | 57.0% |
 
 ---
 
@@ -1540,7 +1622,50 @@ test_latent_engine_detection.py → Validation suite
 
 ---
 
-**Document Version**: 2.0  
-**Last Updated**: December 29, 2025  
+## Appendix C: 2D Classification Quick Reference
+
+### Classification Algorithm
+```python
+IF career_leverage >= 0.01:
+    → ENGINE CANDIDATE
+ELIF has_real_creation_tools:
+    → LUXURY AMPLIFIER
+ELSE:
+    → FRAGILE STAR
+```
+
+### Creation Tools Check
+```python
+has_real_creation_tools = (pull_up_2PA > 2.0) OR (mid_range% > 10%)
+```
+
+### Key Thresholds
+```
+CII Engine: 74+  |  CII Medium: 45-74  |  CII Low: <45
+TII Elite: 70+   |  TII High: 55-70    |  TII Low: <55
+Career Leverage Positive: >= 0.01
+Career Leverage Hiding: <= -0.02
+```
+
+### Critical Validation Cases
+```
+Harden 2018-19 = Franchise Engine ✅
+Brunson 2020-21 = Latent Engine ✅ (detected BEFORE breakout)
+Randle 2020-21 = Luxury Amplifier ✅ (corrected from Fragile Star)
+Simmons 2019-20 = Fragile Star ✅
+KAT 2019-20 = Fragile Star ✅
+```
+
+### Files for 2D Classification
+```
+classify_2d.py              → 2D classification engine
+classification_2d_results.csv → Full dataset results (2673 rows)
+player_labels_2d.csv        → 2D ground truth labels
+```
+
+---
+
+**Document Version**: 2.1  
+**Last Updated**: December 29, 2025 (Late Evening)  
 **Maintainer**: NBA Resilience Engine Team
 
