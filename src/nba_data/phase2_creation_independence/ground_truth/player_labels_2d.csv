@@ -1,0 +1,126 @@
+player_name,season,cii_archetype,tii_archetype,combined_archetype,confidence,notes
+# =============================================================================
+# 2D GROUND TRUTH LABELS (CII × TII Classification)
+# =============================================================================
+#
+# CII Archetypes (Current Creation Independence):
+#   - Engine: CII 80+ (can be #1 now)
+#   - Strong Creator: CII 60-80 (high creation)
+#   - Developing: CII 40-60 (building skills)
+#   - Role Player: CII <40 (limited creation)
+#
+# TII Archetypes (Trajectory Independence):
+#   - Elite Scaling: TII 80+ (would be Engine if given opportunity)
+#   - High Scaling: TII 65-80 (strong candidate for growth)
+#   - Moderate Scaling: TII 50-65 (unclear ceiling)
+#   - Limited Scaling: TII <50 (ceiling-constrained)
+#
+# Combined Archetypes:
+#   - Franchise Engine: High CII, any TII (already there)
+#   - Latent Engine: Med CII, High TII (THE ALPHA - undervalued)
+#   - Strong Creator: Med CII, Med TII
+#   - Luxury Amplifier: Med CII, Low TII (good but capped)
+#   - Developing Star: Low CII, High TII (raw upside)
+#   - Fragile Star: Stats but fatal creation flaws
+#   - Role Player: Low CII, Low TII
+#
+# =============================================================================
+
+# =============================================================================
+# FRANCHISE ENGINES - Already proven elite (High CII, any TII)
+# =============================================================================
+James Harden,2018-19,Engine,Elite Scaling,Franchise Engine,High,"Peak Harden. 36 PPG, elite ISO, proven playoff performer."
+James Harden,2019-20,Engine,Elite Scaling,Franchise Engine,High,"Still elite creation. Led league in ISO."
+Luka Dončić,2021-22,Engine,Elite Scaling,Franchise Engine,High,"Age 22. 28/9/9. Elite creation fully realized."
+Luka Dončić,2022-23,Engine,Elite Scaling,Franchise Engine,High,"Peak Luka. MVP candidate. Maximum creation."
+Nikola Jokić,2020-21,Engine,Elite Scaling,Franchise Engine,High,"First MVP. Hub creation at maximum. 70% TS."
+Nikola Jokić,2021-22,Engine,Elite Scaling,Franchise Engine,High,"Back-to-back MVP. Elite hub creator."
+Nikola Jokić,2022-23,Engine,Elite Scaling,Franchise Engine,High,"Third MVP. Peak hub creation. 70% TS, 10.5 touch prod."
+Shai Gilgeous-Alexander,2022-23,Engine,Elite Scaling,Franchise Engine,High,"Breakout MVP candidate. 31 PPG, elite mid-range."
+Shai Gilgeous-Alexander,2023-24,Engine,Elite Scaling,Franchise Engine,High,"MVP. Elite creation fully proven."
+Joel Embiid,2021-22,Engine,High Scaling,Franchise Engine,High,"MVP runner-up. Elite post creation."
+Joel Embiid,2022-23,Engine,High Scaling,Franchise Engine,High,"MVP. Peak Embiid. Elite creation."
+Giannis Antetokounmpo,2020-21,Engine,High Scaling,Franchise Engine,High,"Championship. Force creation proven in playoffs."
+Giannis Antetokounmpo,2021-22,Engine,High Scaling,Franchise Engine,High,"Peak Giannis. Maximum force multiplication."
+Jayson Tatum,2021-22,Engine,Elite Scaling,Franchise Engine,High,"Finals run. Creation fully developed."
+Jayson Tatum,2022-23,Engine,Elite Scaling,Franchise Engine,High,"Elite two-way. Shot creation proven."
+
+# =============================================================================
+# LATENT ENGINES - The Alpha (Med CII, High TII)
+# These players were undervalued but became Engines
+# =============================================================================
+Jalen Brunson,2020-21,Developing,Elite Scaling,Latent Engine,High,"KEY CASE: Mavs backup. USG 0.196, TS 0.618, CVR 0.69, positive leverage. Breakout came 2022-23."
+Jalen Brunson,2021-22,Strong Creator,Elite Scaling,Latent Engine,High,"Playoff explosion vs Jazz (41 pts). Creation scaling visible."
+James Harden,2011-12,Strong Creator,Elite Scaling,Latent Engine,High,"OKC 6th man. Elite ISO EFG at low volume. Became MVP immediately after."
+James Harden,2012-13,Engine,Elite Scaling,Franchise Engine,High,"First Houston year. 26 PPG. Proved scaling."
+Shai Gilgeous-Alexander,2019-20,Developing,High Scaling,Latent Engine,Medium,"With CP3. Creation tools present, limited touches."
+Shai Gilgeous-Alexander,2020-21,Strong Creator,Elite Scaling,Latent Engine,High,"24 PPG after CP3 trade. Scaling confirmed."
+Tyrese Maxey,2022-23,Developing,High Scaling,Latent Engine,High,"With Harden. Pull-up development visible. Positive pressure."
+Tyrese Maxey,2023-24,Strong Creator,Elite Scaling,Latent Engine,High,"Post-Harden emergence. 25+ PPG. Creation scaling."
+Anthony Edwards,2021-22,Strong Creator,Elite Scaling,Latent Engine,High,"Age 20. High volume, tools developing. Alpha mentality."
+Anthony Edwards,2022-23,Engine,Elite Scaling,Franchise Engine,High,"Breakout confirmed. Elite creation."
+Jaylen Brown,2020-21,Strong Creator,High Scaling,Latent Engine,Medium,"Age 24. Creation developing alongside Tatum."
+Donovan Mitchell,2017-18,Strong Creator,High Scaling,Latent Engine,High,"Rookie playoffs. Elite scoring creation visible."
+
+# =============================================================================
+# STRONG CREATORS - Good creation, unclear ceiling (Med CII, Med TII)
+# =============================================================================
+Tyrese Haliburton,2022-23,Strong Creator,Moderate Scaling,Strong Creator,High,"All-Star. Elite PnR creation. Question: can he be #1 on champion?"
+Tyrese Haliburton,2023-24,Strong Creator,Moderate Scaling,Strong Creator,High,"Continued growth. Playmaking elite. Scoring ceiling unclear."
+Devin Booker,2020-21,Strong Creator,Moderate Scaling,Strong Creator,High,"Finals run. Elite shot making. #2 behind CP3."
+Devin Booker,2022-23,Strong Creator,Moderate Scaling,Strong Creator,High,"Post-CP3. Creation improved but ceiling question remains."
+Kyrie Irving,2016-17,Strong Creator,High Scaling,Strong Creator,High,"Elite creation. Handle elite. Question: can he lead?"
+Kyrie Irving,2020-21,Strong Creator,Moderate Scaling,Strong Creator,High,"Brooklyn. Elite skills but leadership questions."
+De'Aaron Fox,2022-23,Strong Creator,Moderate Scaling,Strong Creator,High,"Career year. Elite speed creation. Efficiency inconsistent."
+
+# =============================================================================
+# LUXURY AMPLIFIERS - Good but ceiling-limited (Med CII, Low TII)
+# =============================================================================
+Khris Middleton,2020-21,Strong Creator,Limited Scaling,Luxury Amplifier,High,"Championship. Elite 3-and-D plus mid-range. Giannis is the Engine."
+Khris Middleton,2021-22,Strong Creator,Limited Scaling,Luxury Amplifier,High,"Peak Middleton. Excellent but not a #1."
+Pascal Siakam,2019-20,Strong Creator,Moderate Scaling,Luxury Amplifier,Medium,"MIP, All-NBA. Creation improving but plateaued."
+Pascal Siakam,2021-22,Strong Creator,Limited Scaling,Luxury Amplifier,High,"Showed limitations as #1. Good but not Engine."
+Zach LaVine,2021-22,Strong Creator,Limited Scaling,Luxury Amplifier,High,"25 PPG. Volume scorer. Efficiency inconsistent in playoffs."
+CJ McCollum,2020-21,Strong Creator,Limited Scaling,Luxury Amplifier,High,"Elite shot maker. Not a #1 but excellent #2."
+Tobias Harris,2019-20,Developing,Limited Scaling,Luxury Amplifier,High,"Max contract. Compiler, not creator. Limited upside."
+Tobias Harris,2020-21,Developing,Limited Scaling,Luxury Amplifier,High,"Same pattern. Good stats, limited creation."
+
+# =============================================================================
+# DEVELOPING STARS - Raw but high ceiling (Low CII, High TII)
+# =============================================================================
+Jayson Tatum,2017-18,Developing,Elite Scaling,Developing Star,High,"Rookie. Age 19. Could get any shot. Efficiency inconsistent but tools elite."
+Jayson Tatum,2018-19,Developing,Elite Scaling,Developing Star,High,"Age 20. Still developing but ceiling obvious."
+Luka Dončić,2018-19,Strong Creator,Elite Scaling,Developing Star,High,"ROY. Age 19. Already creating but raw."
+Luka Dončić,2019-20,Strong Creator,Elite Scaling,Latent Engine,High,"Age 20. 29/9/9. Scaling visible."
+Nikola Jokić,2018-19,Developing,High Scaling,Developing Star,High,"Age 23. Hub creation emerging. Not yet at peak."
+Nikola Jokić,2019-20,Strong Creator,High Scaling,Latent Engine,High,"Age 24. MVP trajectory clear."
+Giannis Antetokounmpo,2018-19,Strong Creator,High Scaling,Developing Star,High,"Age 24. MVP. Force creation present but playoff questions."
+Giannis Antetokounmpo,2019-20,Strong Creator,High Scaling,Latent Engine,High,"Back-to-back MVP. Force fully developed."
+Anthony Davis,2017-18,Strong Creator,High Scaling,Developing Star,Medium,"Age 24. Elite two-way. Creation via rim pressure."
+Anthony Davis,2018-19,Strong Creator,High Scaling,Developing Star,High,"Age 25. MVP candidate. Portable but needs playmaker."
+
+# =============================================================================
+# FRAGILE STARS - Stats but fatal creation flaws (Special case)
+# =============================================================================
+Ben Simmons,2017-18,Role Player,Limited Scaling,Fragile Star,High,"Rookie. Triple-double machine. But ZERO self-created jumpers. Hiding pattern."
+Ben Simmons,2018-19,Role Player,Limited Scaling,Fragile Star,High,"All-Star. Usage drops in clutch. No jump shot. Latent? NO - no tools."
+Ben Simmons,2019-20,Role Player,Limited Scaling,Fragile Star,High,"Red flags clear. Passing out of open dunks. Negative leverage."
+Ben Simmons,2020-21,Role Player,Limited Scaling,Fragile Star,High,"Hawks collapse. The fraud fully exposed. No trajectory."
+Karl-Anthony Towns,2018-19,Developing,Limited Scaling,Fragile Star,High,"Elite skills but playoff creation poor. Can shoot but can't create against scheme."
+Karl-Anthony Towns,2019-20,Developing,Limited Scaling,Fragile Star,High,"Pattern continues. High skills, low force, negative pressure."
+Julius Randle,2020-21,Strong Creator,Limited Scaling,Fragile Star,High,"All-NBA. 24 PPG. Playoffs: 18 PPG on 30% FG. ISO EFG collapsed. False Latent."
+Andrew Wiggins,2016-17,Developing,Limited Scaling,Fragile Star,High,"24 PPG at 21. Volume without efficient creation. ISO EFG poor."
+Andrew Wiggins,2017-18,Developing,Limited Scaling,Fragile Star,High,"Same pattern. Volume scorer, low efficiency on self-created."
+
+# =============================================================================
+# ROLE PLAYERS - Limited creation, limited ceiling (Low CII, Low TII)
+# =============================================================================
+Domantas Sabonis,2021-22,Role Player,Limited Scaling,Role Player,High,"All-Star. Elite passing. But HIDES under pressure. Not a creator."
+Domantas Sabonis,2022-23,Role Player,Limited Scaling,Role Player,High,"Traded for Haliburton. Proves the point - Hali was the asset."
+Tyus Jones,2021-22,Role Player,Limited Scaling,Role Player,High,"Elite AST/TO ratio. No star-level creation."
+Monte Morris,2020-21,Role Player,Limited Scaling,Role Player,High,"Solid backup. No creation ceiling."
+Derrick White,2021-22,Role Player,Limited Scaling,Role Player,High,"3-and-D plus playmaking. Not a creator."
+Mikal Bridges,2021-22,Role Player,Limited Scaling,Role Player,High,"Elite 3-and-D. Brooklyn showed creation limits. System merchant."
+Mikal Bridges,2022-23,Developing,Limited Scaling,Role Player,High,"Brooklyn high usage. Efficiency collapsed. No latent ability."
+Rudy Gobert,2021-22,Role Player,Limited Scaling,Role Player,High,"DPOY. Zero creation. Correct role."
+

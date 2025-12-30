@@ -1,6 +1,6 @@
 # NBA Playoff Resilience Engine - Technical Implementation Guide
 
-**Version**: 1.1  
+**Version**: 2.0  
 **Date**: December 29, 2025  
 **Audience**: New developers joining the project
 
@@ -14,11 +14,12 @@
 2. [Architecture Overview](#2-architecture-overview)
 3. [Data Pipeline](#3-data-pipeline)
 4. [CII Component Implementation](#4-cii-component-implementation)
-5. [Classification System](#5-classification-system)
-6. [Testing & Validation](#6-testing--validation)
-7. [Code Patterns & Conventions](#7-code-patterns--conventions)
-8. [Step-by-Step Implementation Tasks](#8-step-by-step-implementation-tasks)
-9. [Troubleshooting & Anti-Patterns](#9-troubleshooting--anti-patterns)
+5. [TII Component Implementation](#5-tii-component-implementation) ← **NEW**
+6. [2D Classification System](#6-2d-classification-system) ← **NEW**
+7. [Testing & Validation](#7-testing--validation)
+8. [Code Patterns & Conventions](#8-code-patterns--conventions)
+9. [Step-by-Step Implementation Tasks](#9-step-by-step-implementation-tasks)
+10. [Troubleshooting & Anti-Patterns](#10-troubleshooting--anti-patterns)
 
 ---
 
@@ -683,9 +684,175 @@ VALIDATION_CASES = {
 
 ---
 
-## 5. Classification System
+## 5. TII Component Implementation
 
-### 5.1 Ground Truth Labels
+The **Trajectory Independence Index (TII)** answers a different question than the CII:
+
+| Index | Question | Example |
+|-------|----------|---------|
+| **CII** | "Can this player create when schemed RIGHT NOW?" | Harden 2018-19: Yes |
+| **TII** | "If we gave this player 30% usage, would they maintain efficiency?" | Brunson 2020-21: Yes |
+
+**The TII identifies Latent Engines** - players whose creation skills are present but underutilized.
+
+### 5.1 TII Formula
+
+```
+TII = 0.30 × Scaling_Efficiency_Score
+    + 0.25 × Pressure_Appetite_Score
+    + 0.20 × Creation_Tool_Depth_Score
+    + 0.15 × Opportunity_Response_Score
+    + 0.10 × Age_Trajectory_Score
+```
+
+### 5.2 Component 1: Scaling Efficiency (30%)
+
+**Question**: Does this player create efficiently WHEN THEY CREATE?
+
+**Key Insight**: A player taking 2 ISO shots with 60% EFG has more latent ability than one taking 8 ISO shots with 40% EFG.
+
+**Implementation File**: `src/nba_data/phase2_creation_independence/index/trajectory.py`
+
+**Critical Gate**: Creation Tools Check
+- Players without pull-up jumpers (Simmons) have their scaling efficiency capped
+- Real creation tools = pull-up 3s OR mid-range (8%+ of points)
+- This prevents "fake" high TS from dunks/layups counting as scalable
+
+**Sub-Metrics**:
+| Metric | Weight | Calculation |
+|--------|--------|-------------|
+| Efficiency at Creation | 40% | TS% weighted by creation_volume_ratio |
+| Creation Rate vs Usage | 30% | CVR / USG (high at low usage = latent) |
+| Subsidy Inverse | 30% | 1 - subsidy_index (portable efficiency) |
+
+### 5.3 Component 2: Pressure Appetite (25%)
+
+**Question**: Does this player SEEK high-leverage possessions?
+
+**Key Insight**: Latent Engines have positive pressure response even when opportunity is limited.
+
+**Critical Gate**: Hiding Pattern Detection
+- `leverage_usg_delta < -0.03` caps score at 40 (hiding pattern)
+- This catches Simmons, Sabonis, KAT
+
+**Sub-Metrics**:
+| Metric | Weight | Calculation |
+|--------|--------|-------------|
+| Leverage USG Delta | 50% | Stepping up vs hiding |
+| Clutch USG Relative | 30% | clutch_usg / base_usg |
+| Pressure Consistency | 20% | Efficiency stability under pressure |
+
+### 5.4 Component 3: Creation Tools (20%)
+
+**Question**: Does this player have the TOOLS for high-volume creation?
+
+**Key Insight**: Creation tools (pull-up shooting, mid-range, handle) predict scaling ability.
+
+**Sub-Metrics**:
+| Metric | Weight | Calculation |
+|--------|--------|-------------|
+| Pull-Up Rate | 35% | pull_up_fga normalized by usage |
+| Mid-Range Game | 25% | pct_pts_2pt_mr (schematic-proof shot) |
+| Time of Possession | 25% | Ball handling ability |
+| Tool Efficiency | 15% | Pull-up 3PT% |
+
+### 5.5 Component 4: Opportunity Response (15%)
+
+**Question**: When given MORE opportunity, does this player step up?
+
+**Sub-Metrics**:
+| Metric | Weight | Calculation |
+|--------|--------|-------------|
+| Usage-Adjusted Efficiency | 50% | TS vs expected at usage level |
+| Minutes Efficiency | 30% | Maintains efficiency at high minutes |
+| Role Upside | 20% | Low usage + good efficiency = room to grow |
+
+### 5.6 Component 5: Age Trajectory (10%)
+
+**Question**: Given this player's age, how much development runway?
+
+| Age | Score |
+|-----|-------|
+| ≤22 | 100 |
+| 23-25 | 85-100 |
+| 26-28 | 65-85 |
+| 29-31 | 40-65 |
+| 32+ | 20-40 |
+
+### 5.7 TII Validation Results
+
+| Player | Season | TII | Archetype | Status |
+|--------|--------|-----|-----------|--------|
+| Brunson | 2020-21 | 77.2 | High Scaling | ✅ Latent Engine detected |
+| Simmons | 2019-20 | 42.4 | Limited Scaling | ✅ No creation tools |
+| Sabonis | 2022-23 | 39.8 | Limited Scaling | ✅ Hiding pattern |
+| Harden | 2018-19 | 80.3 | Elite Scaling | ✅ Already Engine |
+
+---
+
+## 6. 2D Classification System
+
+The combination of CII (current ability) and TII (scaling potential) creates a 2D classification:
+
+### 6.1 The 2D Grid
+
+```
+                           TII (Scaling Potential)
+                    Low (<50)    Med (50-70)    High (>70)
+               ┌─────────────┬─────────────┬─────────────┐
+    High (80+) │  Franchise  │  Franchise  │  Franchise  │
+               │   Engine    │   Engine    │   Engine    │
+CII            ├─────────────┼─────────────┼─────────────┤
+(Current)      │   Luxury    │   Strong    │   LATENT    │
+    Med (50-80)│  Amplifier  │  Creator    │   ENGINE    │ ← THE ALPHA
+               ├─────────────┼─────────────┼─────────────┤
+               │    Role     │ Developing  │ Developing  │
+    Low (<50)  │   Player    │  Prospect   │   Star      │
+               └─────────────┴─────────────┴─────────────┘
+```
+
+### 6.2 Archetype Definitions (2D)
+
+| Archetype | CII | TII | Description |
+|-----------|-----|-----|-------------|
+| **Franchise Engine** | 80+ | Any | Already proven elite creator |
+| **Latent Engine** | 50-80 | 70+ | Has skills, needs opportunity → **THE ALPHA** |
+| **Strong Creator** | 50-80 | 50-70 | Good creator, unclear ceiling |
+| **Luxury Amplifier** | 50-80 | <50 | Good but ceiling-limited |
+| **Developing Star** | <50 | 70+ | Raw but high ceiling |
+| **Developing Prospect** | <50 | 50-70 | Too early to classify |
+| **Role Player** | <50 | <50 | Correctly priced |
+| **Fragile Star** | Special | Special | High stats but fatal creation flaws |
+
+### 6.3 Key Discrimination: Latent Engine vs Luxury Amplifier
+
+The critical value proposition is identifying **Latent Engines** before they break out:
+
+| Player | Season | CII | TII | 2D Classification |
+|--------|--------|-----|-----|-------------------|
+| Brunson | 2020-21 | 50.0 | 77.2 | **Latent Engine** |
+| Sabonis | 2022-23 | 24.2 | 39.8 | Role Player |
+| **Gap** | | 25.8 | **37.4** | TII provides differentiation |
+
+Both had similar CII (~50 vs ~24), but TII revealed Brunson's scaling potential (77 vs 40).
+
+### 6.4 Ground Truth Labels (2D Format)
+
+Located at: `phase2_creation_independence/ground_truth/player_labels_2d.csv`
+
+```csv
+player_name,season,cii_archetype,tii_archetype,combined_archetype,confidence,notes
+Jalen Brunson,2020-21,Developing,Elite Scaling,Latent Engine,High,"KEY CASE: Mavs backup..."
+Ben Simmons,2019-20,Role Player,Limited Scaling,Fragile Star,High,"No creation tools..."
+```
+
+---
+
+## 7. Legacy Classification System
+
+> **Note**: The original 1D classification system is preserved for reference. The 2D system (Section 6) is the active implementation.
+
+### 7.1 Ground Truth Labels
 
 The ground truth is stored in `phase2_creation_independence/ground_truth/player_labels.csv`:
 
@@ -887,9 +1054,9 @@ def validate_critical_cases(model, X, player_info):
 
 ---
 
-## 6. Testing & Validation
+## 8. Testing & Validation
 
-### 6.1 Unit Test Structure
+### 8.1 Unit Test Structure
 
 Each component should have corresponding tests:
 
@@ -943,7 +1110,7 @@ class TestSelfCreatedScore:
         pass
 ```
 
-### 6.2 Integration Testing
+### 8.2 Integration Testing
 
 ```python
 # tests/test_cii_integration.py
@@ -973,7 +1140,7 @@ def test_full_cii_pipeline():
     assert engines['cii'].min() >= 80, "All Engines should have CII >= 80"
 ```
 
-### 6.3 Validation Metrics
+### 8.3 Validation Metrics
 
 Track these metrics for model health:
 
@@ -987,9 +1154,9 @@ Track these metrics for model health:
 
 ---
 
-## 7. Code Patterns & Conventions
+## 9. Code Patterns & Conventions
 
-### 7.1 Naming Conventions
+### 9.1 Naming Conventions
 
 | Type | Convention | Example |
 |------|------------|---------|
@@ -999,7 +1166,7 @@ Track these metrics for model health:
 | Constants | `UPPER_SNAKE_CASE` | `VALIDATION_CASES` |
 | Features | `UPPER_SNAKE_CASE` | `CLUTCH_USG_ABSOLUTE` |
 
-### 7.2 Feature Engineering Pattern
+### 9.2 Feature Engineering Pattern
 
 ```python
 def calculate_new_feature(df: pd.DataFrame) -> pd.DataFrame:
@@ -1040,7 +1207,7 @@ def calculate_new_feature(df: pd.DataFrame) -> pd.DataFrame:
     return df
 ```
 
-### 7.3 Normalization Pattern
+### 9.3 Normalization Pattern
 
 Always normalize to 0-100 scale for CII components:
 
@@ -1069,7 +1236,7 @@ def normalize_component(raw_scores: Dict[int, float]) -> Dict[int, float]:
     # return standardize_metric(raw_scores)
 ```
 
-### 7.4 Logging Pattern
+### 9.4 Logging Pattern
 
 ```python
 import logging
@@ -1094,9 +1261,9 @@ logger.info(f"  ✅ Successfully processed {n} records")
 
 ---
 
-## 8. Step-by-Step Implementation Tasks
+## 10. Step-by-Step Implementation Tasks
 
-### Phase 1: Complete CII Components (Priority: HIGH)
+### Phase 1: Complete CII Components ✅ COMPLETE
 
 #### Task 1.1: Self-Created Shot Score
 **File**: `src/nba_data/phase2_creation_independence/index/self_created.py`
@@ -1201,9 +1368,9 @@ Ensure playoff usage and efficiency are captured.
 
 ---
 
-## 9. Troubleshooting & Anti-Patterns
+## 11. Troubleshooting & Anti-Patterns
 
-### 9.1 Common Mistakes to Avoid
+### 11.1 Common Mistakes to Avoid
 
 #### ❌ Training on Outcomes
 ```python
@@ -1253,7 +1420,7 @@ candidates = df[df['min_volume'] > threshold]
 candidates['rank'] = candidates['score'].rank()
 ```
 
-### 9.2 Debugging Checklist
+### 11.2 Debugging Checklist
 
 When a validation case fails:
 
@@ -1284,7 +1451,7 @@ When a validation case fails:
    print(df['component'].describe())  # Should be 0-100 range
    ```
 
-### 9.3 Performance Optimization
+### 11.3 Performance Optimization
 
 For large batch processing:
 
@@ -1344,7 +1511,36 @@ player_labels.csv     → Ground truth
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: December 27, 2025  
+## Appendix B: TII Quick Reference
+
+### TII Formula
+```
+TII = 0.30×Scaling + 0.25×Pressure + 0.20×Tools + 0.15×Opportunity + 0.10×Age
+```
+
+### TII Thresholds
+```
+Elite Scaling: 80+  |  High Scaling: 65-80  |  Moderate: 50-65  |  Limited: 35-50  |  Low: <35
+```
+
+### Critical Latent Engine Cases
+```
+Brunson 2020-21 = Latent Engine (TII 77.2, became Engine by 2023)
+Harden 2011-12 = Latent Engine (OKC 6th man, became MVP)
+SGA 2019-20 = Latent Engine (with CP3, became MVP candidate)
+```
+
+### Files for TII
+```
+TII_SPECIFICATION.md   → Full TII spec
+trajectory.py          → TII calculator
+player_labels_2d.csv   → 2D ground truth
+test_latent_engine_detection.py → Validation suite
+```
+
+---
+
+**Document Version**: 2.0  
+**Last Updated**: December 29, 2025  
 **Maintainer**: NBA Resilience Engine Team
 

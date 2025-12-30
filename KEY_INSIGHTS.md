@@ -306,8 +306,47 @@ Jokić doesn't NEED to take hard shots because his shot CREATION is so elite tha
 
 **Key Principle**: **Multiple valid paths to the same destination. Gate the bonus on pressure response.**
 
+---
+
+## Insight #82: The Latent Engine Discovery (December 29, 2025)
+
+**The Problem**: CII measures CURRENT creation ability. But the goal is to find undervalued players like Brunson (pre-Knicks) and Harden (OKC).
+
+**The Key Insight**: "Current ability" and "scaling potential" are orthogonal dimensions. A player can have:
+- Low current ability + High scaling potential = **Latent Engine** (Brunson 2020-21)
+- High current ability + Any scaling = **Franchise Engine** (already there)
+- Low current ability + Low scaling = **Role Player** (correctly priced)
+
+**The TII (Trajectory Independence Index)** answers: "If we gave this player 30% usage, would they maintain efficiency?"
+
+**Critical Gates**:
+1. **Creation Tools Gate**: Simmons has high TS but NO pull-up jumpers → can't scale
+2. **Pressure Hiding Gate**: Sabonis has good touches but HIDES under pressure → won't scale
+
+**Brunson 2020-21 Signal (the key validation)**:
+- USG 0.196 (backup level)
+- TS 0.618 (elite efficiency)
+- CVR 0.692 (creates when he touches it)
+- leverage_usg_delta +0.029 (steps UP)
+- TII: 77.2 → **High Scaling Potential**
+
+Two years later (2022-23 Knicks): 28 PPG, CII 72.2, proven Engine.
+
+**The 2D Classification Grid**:
+```
+                  Low TII    Mid TII    High TII
+High CII         Engine     Engine     Engine
+Med CII          Amplifier  Creator    LATENT ENGINE ← Alpha
+Low CII          Role       Developing Developing
+```
+
+**Key Principle**: **Two indices for two questions. CII for "now", TII for "potential". The intersection reveals undervalued assets.**
+
+---
+
 ## See Also
 - `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
 - `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)
 - `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
-- `phase2_creation_independence/SPECIFICATION.md` - **NEW** - CII specification
+- `phase2_creation_independence/SPECIFICATION.md` - CII specification
+- `phase2_creation_independence/TII_SPECIFICATION.md` - **NEW** - TII specification

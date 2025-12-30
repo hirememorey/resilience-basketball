@@ -217,13 +217,77 @@ Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
   - Jokić (CII 82.7) vs Sabonis (CII 24.2) = **58-point gap** - EXACTLY what we wanted
   - Sabonis fails hub gates because he HIDES (`leverage_usg_delta = -0.058`)
 
-### Priority 3: Classifier Training
-- [ ] Expand ground truth labels to 60+ player-seasons.
-- [ ] Implement `train_classifier.py` and achieve 100% pass rate.
+### Priority 3: TII (Trajectory Independence Index) ✅ NEW (Dec 29)
+- [x] ~~Design TII specification~~ **(DONE)**
+- [x] ~~Implement TII calculator with 5 components~~ **(DONE)**
+- [x] ~~Create 2D ground truth labels (CII × TII)~~ **(DONE)**
+- [x] ~~Implement validation test suite~~ **(DONE - 11/11 tests pass)**
 
-### Priority 4: Deployment
+### Priority 4: 2D Classification Integration
+- [ ] Update `composite.py` to return both CII and TII
+- [ ] Implement 2D archetype classification
+- [ ] Tune thresholds based on validation results
+
+### Priority 5: Deployment
 - [ ] Apply to current season data
-- [ ] Identify latent stars
+- [ ] Identify latent stars (Latent Engines on rookie contracts)
+
+---
+
+## NEW: Trajectory Independence Index (TII)
+
+### The Insight
+The CII measures **current creation independence**: "Can you create when schemed RIGHT NOW?"
+
+But for identifying undervalued players (like Brunson pre-Knicks, Harden at OKC), we need a second question: **"If we gave you 30% usage, would you maintain efficiency?"**
+
+This led to the **TII (Trajectory Independence Index)** - detecting **Latent Engines**.
+
+### TII Components
+
+| Component | Weight | What It Measures |
+|-----------|--------|------------------|
+| Scaling Efficiency | 30% | Does efficiency hold when they create? |
+| Pressure Appetite | 25% | Do they seek high-leverage possessions? |
+| Creation Tools | 20% | Do they have tools even if underused? |
+| Opportunity Response | 15% | Do they step up when given more minutes? |
+| Age Trajectory | 10% | How much development runway? |
+
+### 2D Classification (CII × TII)
+
+```
+                       TII (Scaling Potential)
+                  Low (<50)    Med (50-70)    High (>70)
+             ┌─────────────┬─────────────┬─────────────┐
+  High (80+) │  Franchise  │  Franchise  │  Franchise  │
+             │   Engine    │   Engine    │   Engine    │
+CII          ├─────────────┼─────────────┼─────────────┤
+(Current)    │   Luxury    │   Strong    │   LATENT    │
+  Med (50-80)│  Amplifier  │  Creator    │   ENGINE    │ ← Alpha
+             ├─────────────┼─────────────┼─────────────┤
+             │    Role     │ Developing  │ Developing  │
+  Low (<50)  │   Player    │  Prospect   │   Star      │
+             └─────────────┴─────────────┴─────────────┘
+```
+
+### Key Validation Results
+
+| Player | Season | CII | TII | Classification |
+|--------|--------|-----|-----|----------------|
+| Brunson | 2020-21 | 50.0 | 77.2 | **Latent Engine** ✅ |
+| Brunson | 2023-24 | 77.2 | 80.6 | Franchise Engine ✅ |
+| Simmons | 2019-20 | 26.9 | 42.4 | Limited Scaling ✅ |
+| Sabonis | 2022-23 | 24.2 | 39.8 | Limited Scaling ✅ |
+| Harden | 2018-19 | 85.6 | 80.3 | Franchise Engine ✅ |
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `TII_SPECIFICATION.md` | Full TII specification |
+| `index/trajectory.py` | TII calculator |
+| `ground_truth/player_labels_2d.csv` | 2D ground truth labels |
+| `test_latent_engine_detection.py` | Validation test suite |
 
 ---
 
