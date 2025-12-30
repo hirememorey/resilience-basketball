@@ -1624,15 +1624,27 @@ test_latent_engine_detection.py → Validation suite
 
 ## Appendix C: 2D Classification Quick Reference
 
-### Classification Algorithm
+### Classification Algorithm (Phase 2b - Refined)
 ```python
-IF career_leverage >= 0.01:
-    → ENGINE CANDIDATE
+# Step 1: Check for Fragile Star FIRST (with Usage Gate)
+IF (usage > 22% OR (minutes > 32 AND usage > 20%)) AND 
+   low_CII AND (no_tools OR extreme_hiding):
+    → FRAGILE STAR
+
+# Step 2: Engine candidates
+ELIF career_leverage >= 0.01:
+    → ENGINE CANDIDATE (Franchise or Latent based on CII/TII/Age)
+
+# Step 3: Negative leverage with tools
 ELIF has_real_creation_tools:
     → LUXURY AMPLIFIER
+
+# Step 4: Negative leverage without tools (but low usage)
 ELSE:
-    → FRAGILE STAR
+    → ROLE PLAYER (not Fragile Star - they don't have star usage)
 ```
+
+**Key Refinement (Phase 2b)**: Usage Gate prevents elite role players (Derrick White, Josh Hart) from being misclassified as "Fragile Star". A role player who hides is just a role player; a STAR who hides is Fragile.
 
 ### Creation Tools Check
 ```python
@@ -1645,6 +1657,11 @@ CII Engine: 74+  |  CII Medium: 45-74  |  CII Low: <45
 TII Elite: 70+   |  TII High: 55-70    |  TII Low: <55
 Career Leverage Positive: >= 0.01
 Career Leverage Hiding: <= -0.02
+
+Usage Gates (Phase 2b):
+- High Usage: >22% (or >20% with >32 min/game)
+- Age Developing Cap: 25 (max age for "Developing" labels)
+- Age Latent Cap: 28 (max age for "Latent Engine")
 ```
 
 ### Critical Validation Cases
@@ -1654,6 +1671,11 @@ Brunson 2020-21 = Latent Engine ✅ (detected BEFORE breakout)
 Randle 2020-21 = Luxury Amplifier ✅ (corrected from Fragile Star)
 Simmons 2019-20 = Fragile Star ✅
 KAT 2019-20 = Fragile Star ✅
+
+Phase 2b Refinements:
+Derrick White 2024-25 = Role Player ✅ (not Fragile Star - usage 19.5%)
+Josh Hart 2024-25 = Role Player ✅ (not Fragile Star - usage 15.1%)
+Jordan Poole 2024-25 = Fragile Star ✅ (usage 28.1% + no tools)
 ```
 
 ### Files for 2D Classification
@@ -1665,7 +1687,13 @@ player_labels_2d.csv        → 2D ground truth labels
 
 ---
 
-**Document Version**: 2.1  
-**Last Updated**: December 29, 2025 (Late Evening)  
+**Document Version**: 2.2  
+**Last Updated**: December 29, 2025 (Late Evening - Phase 2b Refinements)  
 **Maintainer**: NBA Resilience Engine Team
+
+**Recent Updates (Phase 2b)**:
+- Added Usage Gates to prevent role player misclassification
+- Added Age Gates to prevent veteran misclassification
+- Refined Fragile Star definition to require high usage (>22%)
+- Updated validation cases to reflect refined logic
 

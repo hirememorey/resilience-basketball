@@ -1,430 +1,106 @@
 # Active Context: NBA Playoff Resilience Engine
 
 **Last Updated**: December 29, 2025 (Late Evening)
-**Status**: ✅ **PHASE 2: CREATION INDEPENDENCE** - 2D Classification Complete
+**Status**: ✅ **DEPLOYED** - 2025-26 Season Analysis Complete & Refined
 
 ---
 
 ## The Pivot
-
 We discovered that Phase 1 was asking the **wrong question**:
-
 - **Phase 1 asked**: "How good will this player be?" (predicting future playoff PIE)
 - **Phase 2 asks**: "Can this player create when schemed?" (measuring creation independence)
 
-### Why Phase 1 Failed
-
-The fundamental issue was the **Ground Truth Trap**:
-- Ben Simmons had decent playoff PIE (pre-2021) because of Embiid + shooters
-- The model learned Simmons was "good" because his outcomes were good
-- But his **process** (zero self-created shots, hiding under pressure) was fragile
-- We could patch this with abdication penalties, but patches aren't learning
-
-### The Creation Independence Insight
-
-The key differentiator between true stars and fragile ones is **creation independence**:
-- **Harden at OKC**: Give him the ball and get out of the way. He IS the situation.
-- **Simmons**: Needs shooters, Embiid doubles, transition. He needs the situation.
-
-This leads to our new question: **"Does this player need the right situation, or IS he the situation?"**
+The fundamental question is now:
+> **"Does this player need the right situation, or IS he the situation?"**
 
 ---
 
-## Phase 2: Creation Independence Index (CII)
+## 🚀 Deployment Results (December 2025)
 
-### Location
-`/src/nba_data/phase2_creation_independence/`
+We successfully deployed the 2D Classification System (CII × TII) to the 2024-25 season dataset (most recent complete data).
+
+### Key Findings
+
+| Category | Definition | Identified Players |
+| :--- | :--- | :--- |
+| **Franchise Engine** | The system. #1 Option. | Jokić, Brunson, SGA, Trae Young, Ant Edwards |
+| **Latent Engine** | **THE ALPHA**. Young, undervalued, high potential. | **Darius Garland, Cade Cunningham, Anfernee Simons, Paolo Banchero** |
+| **Strong Creator** | Elite #2. Reliable. | Kyrie Irving, Devin Booker, DeMar DeRozan, Chris Paul |
+| **Fragile Star** | **THE TRAP**. High usage, fatal flaws. | **Jordan Poole, Coby White, RJ Barrett, Kyle Kuzma** |
+
+### The "Alpha" List (Latent Engines < 26)
+These players have the Creation Independence (CII) and Trajectory (TII) markers of future superstars but may not be priced as such yet:
+1.  **Darius Garland**: +0.021 Leverage, Elite TII (78.3)
+2.  **Cade Cunningham**: +0.039 Leverage, High CII (70.0)
+3.  **Anfernee Simons**: +0.048 Leverage (Steps Up), Elite TII (75.7)
+4.  **Paolo Banchero**: Age 22, already High CII (68.1)
+
+---
+
+## System Architecture
+
+### 2D Classification Logic (Refined Phase 2b)
+
+The classification now includes **Age Gates**, **Usage Gates**, and **Career Pattern Analysis**:
+
+1.  **Engine Filter**: `CII >= 74` → **Franchise Engine**
+2.  **Latent Filter**: `Positive Leverage` + `High TII` + `Age <= 28` → **Latent Engine**
+    *   *Correction*: Veterans (>28) with these stats are mapped to **Strong Creator**.
+3.  **Fragile Filter**: `High Usage (>22%)` + `Low CII` + (`Negative Leverage` OR `No Tools`) → **Fragile Star**
+    *   *Protection*: Low usage players (<22%) are classified as **Role Players**, avoiding false positives for elite role players like Derrick White.
+4.  **Amplifier Filter**: `Negative Leverage` + `Has Tools` → **Luxury Amplifier**
 
 ### Components
 
-| Component | Weight | What It Measures |
-|-----------|--------|------------------|
-| Self-Created Shot Score | 30% | Can you get a shot without a play? |
-| Pressure Appetite Score | 25% | Do you WANT the ball in clutch? |
-| Shot Difficulty Embrace | 20% | Do you take hard shots or hide? |
-| Defensive Survival Score | 15% | Do you maintain against schemes? |
-| Force Multiplication Score | 10% | Do you create through physicality? |
-
-### Archetypes (Classification Target)
-
-| Archetype | CII Range | Definition |
-|-----------|-----------|------------|
-| Franchise Engine | 80+ | Can be #1 on a championship team |
-| Strong Creator | 70-80 | High creation, optimal as #2 |
-| Luxury Amplifier | 55-70 | Excellent, needs an Engine |
-| Fragile Star | 40-55 | Looks like Engine, fatal flaws |
-| Role Player | <40 | Solid contributor, not a star |
-
-### Ground Truth
-Curated labels in `/ground_truth/player_labels.csv` - 40+ player-seasons with expert archetypes.
+| Component | Weight | Question |
+|-----------|--------|----------|
+| **CII (Current)** | 100% | "Can you create right now?" |
+| - Self-Created Shot | 30% | Unassisted volume + efficiency |
+| - Pressure Appetite | 25% | Do you want the ball in clutch? |
+| - Difficulty Embrace | 20% | Do you take tough shots? |
+| - Defensive Survival | 15% | Do you survive schemes? |
+| - Force Multiplication | 10% | Physicality/Free Throws |
+| **TII (Trajectory)** | N/A | "Do you have scaling potential?" |
 
 ---
 
-## Phase 1 Archive
+## Project Structure
 
-Phase 1 work preserved in `/src/nba_data/phase1_helio_archive/`:
-- `train_telescope_model.py` - XGBoost regressor
-- `validate_telescope_resilience.py` - 35 test cases
-- Achieved 60% pass rate with abdication penalty
-- See `/phase1_helio_archive/README.md` for details
+### Active Directories
+- `src/nba_data/phase2_creation_independence/` - Core logic
+    - `index/` - Component calculators (`classify_2d.py` is the main engine)
+    - `ground_truth/` - Expert labels
+- `src/nba_data/scripts/` - Data collection (Use `deploy_2025_26_analysis.py` for execution)
+- `results/` - Output CSVs (Look for `classification_2d_2024_25.csv`)
 
-### Key Phase 1 Learnings
-1. **Features were valuable**: `clutch_usg_absolute`, `abdication_interaction` have signal
-2. **Target was wrong**: `FUTURE_PEAK_HELIO` rewarded converters, not creators
-3. **Patches don't scale**: Abdication penalty worked but violated "learn don't patch"
-4. **Wrong question**: Outcomes ≠ Process, need to measure creation directly
-
----
-
-## Current Pipeline (Preserved)
-
-### Data Collection (Still Active)
-- `/src/nba_data/scripts/` - All collection scripts unchanged
-- Playtype, tracking, shot quality, clutch splits, defensive context
-
-### Feature Engineering (Still Active)
-- `evaluate_plasticity_potential.py` - Generates features
-- Output: `results/predictive_dataset_with_friction.csv`
-- Key features: `clutch_usg_absolute`, `relative_usage_drop`, `abdication_interaction`
-
----
-
-## Implementation Status (December 28, 2025)
-
-### ✅ Completed
-
-1.  **CII Component 1: `Self-Created Shot Score` Implemented** (Updated Dec 29)
-    *   **File**: `src/nba_data/phase2_creation_independence/index/self_created.py`
-    *   **Status**: Complete with **Two-Path Architecture** (Perimeter + Hub paths).
-    *   **Key Architecture Update (Dec 29)**:
-        *   Added **Hub Creation Path** for post-centric orchestrators (Jokić, prime Shaq)
-        *   Takes MAX(perimeter_score, hub_score) - allows either path to excellence
-        *   **Critical Gate**: Hub path only activates if `leverage_usg_delta >= 0` (not hiding)
-    *   **Validation Results**:
-        | Player | Perimeter | Hub | Final | Status |
-        |--------|-----------|-----|-------|--------|
-        | Jokić | 25.9 | 89.7 | **89.7** | ✅ Hub path |
-        | Sabonis | 25.8 | 0.0 | 25.8 | ✅ No hub (hides) |
-        | Harden | 99.0 | 0.0 | 99.0 | ✅ Perimeter path |
-        | Simmons | 38.1 | 0.0 | 38.1 | ✅ Neither path elite |
-
-2.  **CII Component 2: `Pressure Appetite Score` Implemented**
-    *   **File**: `src/nba_data/phase2_creation_independence/index/pressure_appetite.py`
-    *   **Status**: Logic implemented and validated.
-    *   **Action**: Mapped `clutch_usg_absolute` and `relative_usage_drop` to measure the "Abdication Tax." Successfully identified Simmons as a low-appetite outlier (score ~18-21).
-
-3.  **CII Component 3: `Shot Difficulty Embrace Score` Implemented** (Updated Dec 29)
-    *   **File**: `src/nba_data/phase2_creation_independence/index/difficulty_embrace.py`
-    *   **Status**: Complete with **Two-Path Architecture** (Perimeter + Hub paths).
-    *   **Key Architecture Update (Dec 29)**:
-        *   Added **Hub Creation Path** to recognize elite efficiency as a form of difficulty embrace
-        *   Jokić (70% TS, 10.5 touch production) "solves" difficulty by manufacturing easy shots
-        *   **Critical Gate**: Hub path only activates if `leverage_usg_delta >= 0` (not hiding)
-        *   Takes MAX(perimeter_score, hub_score) - same logic as Component 1
-    *   **Two Paths**:
-        *   **Perimeter Path**: Pull-up Volume (40%), Mid-range (30%), Pull-up 3s (20%), Time (10%)
-        *   **Hub Path**: Elite TS (65%+) + Elite touches (8+) + Non-hiding + Significant usage
-    *   **Validation Results**:
-        | Player | Perimeter | Hub | Final | Status |
-        |--------|-----------|-----|-------|--------|
-        | Jokić | 15.4 | 91.4 | **91.4** | ✅ Hub path |
-        | Sabonis | 8.6 | 0.0 | 8.6 | ✅ No hub (hides) |
-        | DeRozan | 77.9 | 0.0 | 77.9 | ✅ Perimeter path |
-        | Simmons | 14.0 | 0.0 | 14.0 | ✅ Neither path |
-
-4.  **CII Component 4: `Defensive Survival Score` Implemented** (Dec 28)
-    *   **File**: `src/nba_data/phase2_creation_independence/index/defensive_survival.py`
-    *   **Status**: Complete implementation with **6/6 validation cases passing**.
-    *   **Key Insight - The Abdication Efficiency Trap**:
-        *   Ben Simmons maintains POSITIVE `leverage_ts_delta` (+0.04 to +0.09) because when he HIDES, he only takes his best shots (uncontested layups).
-        *   His efficiency is maintained through VOLUME ABDICATION, not skill.
-        *   The fix: Weight efficiency resilience BY volume maintenance. If you're hiding, efficiency doesn't count.
-    *   **Final Architecture**:
-        *   Clutch Volume Maintenance: 35% (do you stay in the game?)
-        *   Shot Versatility: 30% (can you be schemed?)
-        *   Efficiency Resilience: 25% (volume-adjusted)
-        *   Fragility Inverse: 10% (supporting signal)
-    *   **Validation Results**:
-        | Player | Season | Score | Status |
-        |--------|--------|-------|--------|
-        | Ben Simmons | 2019-20 | 32.6 | ✅ Abdicator (hiding pattern) |
-        | James Harden | 2018-19 | 77.6 | ✅ Engine (steps UP) |
-        | Nikola Jokić | 2021-22 | 54.9 | ✅ Hub creator (steps up, low versatility) |
-        | Luka Dončić | 2020-21 | 69.8 | ✅ Elite versatility |
-        | KAT | 2017-18 | 21.0 | ✅ Double collapse (volume + efficiency) |
-        | Giannis | 2020-21 | 49.2 | ✅ Force creator |
-
-5.  **CII Component 5: `Force Multiplication Score` Implemented** ✨ NEW (Dec 28)
-    *   **File**: `src/nba_data/phase2_creation_independence/index/force_multiplication.py`
-    *   **Status**: Complete implementation with **6/6 validation cases passing**.
-    *   **Key Insight - The "Having Tools vs Using Them" Trap**:
-        *   Ben Simmons has `physicality_score` of 0.93-0.98 (elite physical tools!)
-        *   But his `leverage_usg_delta` is -0.085 (HIDING under pressure)
-        *   Giannis has `physicality_score` of 1.0 AND maintains/increases volume
-        *   The fix: Combine physical tools (25%) with volume usage (30%), pressure agency (25%), and touch production (20%)
-    *   **Final Architecture**:
-        *   Physical Tools: 25% (FTr + Rim Appetite via physicality_score)
-        *   Force Volume: 30% (usage × creation volume ratio)
-        *   Force Agency: 25% (clutch_usg_absolute + leverage_usg_delta)
-        *   Touch Production: 20% (weighted_touch_production)
-    *   **Validation Results**:
-        | Player | Season | Score | Status |
-        |--------|--------|-------|--------|
-        | Giannis | 2019-20 | 92.9 | ✅ Maximum force creator |
-        | Ben Simmons | 2019-20 | 44.2 | ✅ Has tools, doesn't use them |
-        | Stephen Curry | 2020-21 | 58.2 | ✅ Gravity not force |
-        | Joel Embiid | 2022-23 | 80.5 | ✅ Post force + FT machine |
-        | Zion Williamson | 2020-21 | 77.0 | ✅ Elite force (when healthy) |
-        | Rudy Gobert | 2020-21 | 24.1 | ✅ Physical but no agency |
-
-5.  **Diagnostic Validation Performed**
-    *   **Action**: Conducted a deep-dive analysis on the scores for Luka Dončić, Khris Middleton, Ben Simmons, and others across different seasons.
-    *   **Finding 1 (Luka/AD Trade Context)**: The model successfully detected the change in Luka Dončić's role after being traded to the Lakers. His score correctly adjusted from a peak of 97.1 (2022-23) to 84.0 (2024-25), reflecting his new context playing alongside LeBron James. This is a major validation of the model's sensitivity to process, not just reputation.
-    *   **Finding 2 (Middleton Career Arc)**: The model correctly identified Khris Middleton's peak as a "Luxury Amplifier" (67.0 in 2020-21) and his subsequent decline into the "Fragile Star/Role Player" tier (49.4 in 2024-25), demonstrating its ability to model career trajectories.
-    *   **Conclusion**: The `Self-Created Shot Score` component is functioning correctly and is highly sensitive to changes in player role and ability.
-
-6.  **Validation Test Suite Overhauled**
-    *   **File**: `tests/validation/test_latent_star_cases.py`
-    *   **Status**: Complete refactor of test cases based on first principles.
-    *   **Key Changes**:
-        *   **Mikal Bridges**: Re-classified from `True Positive` to `False Positive - System Merchant`. Correctly identifies that high usage on a bad team is not the same as creation ability.
-        *   **Desmond Bane**: Removed. Outcome is not yet certain, and the validation suite requires ground truth.
-        *   **Giannis Antetokounmpo**: Added multiple seasons (including championship year) as a `True Positive - Force Creator`. This is a critical addition to ensure the model can distinguish between fragile non-shooters (Simmons) and engine non-shooters.
-        *   **Zion Williamson**: Added as `True Positive - Force Creator (Injury-Limited)`. This tests the model's focus on PROCESS (elite creation physics) vs. OUTCOME (championships), as his availability is out of scope for CII.
-    *   **Conclusion**: The test suite is now more robust and directly targets the core discrimination challenges of the project.
+### Key Files
+- **`IMPLEMENTATION_GUIDE.md`** - Technical manual
+- **`LUKA_SIMMONS_PARADOX.md`** - Theoretical foundation
+- **`KEY_INSIGHTS.md`** - Lessons learned
 
 ---
 
 ## Next Steps
 
-### Priority 1: Component Calculation (High) ✅ COMPLETE
-- [x] ~~Implement `calculate_self_created_score` using `pct_uast_fgm` and `pull_up_fga`.~~ **(DONE)**
-- [x] ~~Implement `calculate_pressure_appetite_score`.~~ **(DONE)**
-- [x] ~~Implement `calculate_difficulty_embrace_score`.~~ **(DONE)**
-- [x] ~~Overhaul validation test suite~~ **(DONE - Dec 29 morning)**
-- [x] ~~Implement `calculate_defensive_survival_score`.~~ **(DONE - Dec 28 evening)**
-- [x] ~~Implement `calculate_force_multiplication_score`.~~ **(DONE - Dec 28)**
-- [x] ~~Run `batch_calculate_cii()` on integrated dataset.~~ **(DONE - Dec 28)**
+### Priority 1: Visualization & Reporting
+- [ ] Build a Streamlit dashboard to visualize the 2D grid (CII vs TII).
+- [ ] Create "Player Cards" showing their CII component breakdown.
 
-### Priority 2: Validation & Refinement ✅ COMPLETE
-- [x] ~~Verify Simmons < Harden ordering in calculated CII.~~ **(DONE - Simmons 27 vs Harden 86)**
-- [x] ~~Verify Haliburton > Sabonis ordering.~~ **(DONE - Haliburton 75 vs Sabonis 24)**
-- [x] ~~Check critical validation cases~~ **(7/7 pass - Dec 28)**
-- [x] ~~**RESOLVED**: Jokić now classified as "Franchise Engine"~~ **(DONE - CII 82.7)**
-  - **Solution**: Added "Hub Creation Path" to Components 1 (Self-Created) and 3 (Difficulty Embrace)
-  - Hub path rewards elite efficiency (65%+ TS) + touch production (8+) + positive pressure response
-  - **Critical Gate**: `leverage_usg_delta >= 0` (must NOT be hiding under pressure)
-  - Jokić (CII 82.7) vs Sabonis (CII 24.2) = **58-point gap** - EXACTLY what we wanted
-  - Sabonis fails hub gates because he HIDES (`leverage_usg_delta = -0.058`)
-
-### Priority 3: TII (Trajectory Independence Index) ✅ NEW (Dec 29)
-- [x] ~~Design TII specification~~ **(DONE)**
-- [x] ~~Implement TII calculator with 5 components~~ **(DONE)**
-- [x] ~~Create 2D ground truth labels (CII × TII)~~ **(DONE)**
-- [x] ~~Implement validation test suite~~ **(DONE - 11/11 tests pass)**
-
-### Priority 4: 2D Classification Integration ✅ COMPLETE (Dec 29)
-- [x] ~~Update `composite.py` to return both CII and TII~~ **(DONE)**
-- [x] ~~Implement 2D archetype classification~~ **(DONE - `classify_2d.py`)**
-- [x] ~~Tune thresholds based on validation results~~ **(DONE)**
-- [x] ~~Add career leverage pattern check~~ **(DONE - breakthrough discovery)**
-- [x] ~~Add creation tools check~~ **(DONE - distinguishes Luxury Amplifier from Fragile Star)**
-- [x] ~~Validate on core cases (13/13 pass)~~ **(DONE)**
-
-### Priority 5: Deployment
-- [ ] Apply to current season data
-- [ ] Identify latent stars (Latent Engines on rookie contracts)
+### Priority 2: Monitoring
+- [ ] Monitor the "Latent Engine" list (Garland, Cunningham, Simons) during the 2025-26 season.
+- [ ] Watch the "Fragile Stars" (Poole, Kuzma) for playoff collapse.
 
 ---
 
-## NEW: Trajectory Independence Index (TII)
+## Quick Start
 
-### The Insight
-The CII measures **current creation independence**: "Can you create when schemed RIGHT NOW?"
-
-But for identifying undervalued players (like Brunson pre-Knicks, Harden at OKC), we need a second question: **"If we gave you 30% usage, would you maintain efficiency?"**
-
-This led to the **TII (Trajectory Independence Index)** - detecting **Latent Engines**.
-
-### TII Components
-
-| Component | Weight | What It Measures |
-|-----------|--------|------------------|
-| Scaling Efficiency | 30% | Does efficiency hold when they create? |
-| Pressure Appetite | 25% | Do they seek high-leverage possessions? |
-| Creation Tools | 20% | Do they have tools even if underused? |
-| Opportunity Response | 15% | Do they step up when given more minutes? |
-| Age Trajectory | 10% | How much development runway? |
-
-### 2D Classification (CII × TII)
-
-```
-                       TII (Scaling Potential)
-                  Low (<50)    Med (50-70)    High (>70)
-             ┌─────────────┬─────────────┬─────────────┐
-  High (80+) │  Franchise  │  Franchise  │  Franchise  │
-             │   Engine    │   Engine    │   Engine    │
-CII          ├─────────────┼─────────────┼─────────────┤
-(Current)    │   Luxury    │   Strong    │   LATENT    │
-  Med (50-80)│  Amplifier  │  Creator    │   ENGINE    │ ← Alpha
-             ├─────────────┼─────────────┼─────────────┤
-             │    Role     │ Developing  │ Developing  │
-  Low (<50)  │   Player    │  Prospect   │   Star      │
-             └─────────────┴─────────────┴─────────────┘
-```
-
-### Key Validation Results
-
-| Player | Season | CII | TII | Classification |
-|--------|--------|-----|-----|----------------|
-| Brunson | 2020-21 | 50.0 | 77.2 | **Latent Engine** ✅ |
-| Brunson | 2023-24 | 77.2 | 80.6 | Franchise Engine ✅ |
-| Simmons | 2019-20 | 26.9 | 42.4 | Limited Scaling ✅ |
-| Sabonis | 2022-23 | 24.2 | 39.8 | Limited Scaling ✅ |
-| Harden | 2018-19 | 85.6 | 80.3 | Franchise Engine ✅ |
-
-### Files
-
-| File | Purpose |
-|------|---------|
-| `TII_SPECIFICATION.md` | Full TII specification |
-| `index/trajectory.py` | TII calculator |
-| `ground_truth/player_labels_2d.csv` | 2D ground truth labels |
-| `test_latent_engine_detection.py` | Validation test suite |
-
----
-
-## NEW: 2D Classification with Career Leverage Pattern ✅ (Dec 29)
-
-### The Breakthrough: Career Leverage Pattern
-
-During TII validation, we discovered the **Randle Problem**: Julius Randle 2020-21 had high TII (72.1) because his single-season metrics looked good (positive leverage, pull-up volume). But he collapsed in the playoffs.
-
-**Key Discovery**: Randle's career `leverage_usg_delta` revealed a consistent hiding pattern:
-- Career mean: -0.023 (8 negative seasons, 2 positive)
-- His 2020-21 positive leverage was an OUTLIER, not his nature
-
-Compare to true Engines:
-- Harden: +0.053 mean (9+/1-)
-- Brunson: +0.040 mean (5+/1-)
-- SGA: +0.033 mean (5+/0-)
-
-### The Three-Way Classification
-
-```
-IF career_leverage >= 0.01:
-    → ENGINE CANDIDATE (can be #1)
-ELIF has_real_creation_tools:
-    → LUXURY AMPLIFIER (can thrive as #2)
-ELSE:
-    → FRAGILE STAR (fundamental skill gaps)
-```
-
-Where `has_real_creation_tools` = (pull-up 2PA > 2.0) OR (mid-range% > 10%)
-
-### Key Distinction: Luxury Amplifier vs Fragile Star
-
-| | Luxury Amplifier | Fragile Star |
-|---|---|---|
-| Career Leverage | Negative | Negative |
-| Creation Tools | YES | NO |
-| As #2 | THRIVES | Still struggles |
-| Examples | Randle, Brown, Klay | Simmons, Sabonis, KAT |
-
-**Critical Insight**: The difference is PORTABILITY.
-- **Fragile Stars** need PERFECT context and still might fail
-- **Luxury Amplifiers** need an Engine and will excel
-
-### Validation Results (13/13 Core Cases Pass)
-
-| Player | Season | Classification | Status |
-|--------|--------|----------------|--------|
-| James Harden | 2018-19 | Franchise Engine | ✅ |
-| Nikola Jokić | 2022-23 | Franchise Engine | ✅ |
-| Luka Dončić | 2022-23 | Franchise Engine | ✅ |
-| Jalen Brunson | 2020-21 | Latent Engine | ✅ Alpha case |
-| Jalen Brunson | 2021-22 | Latent Engine | ✅ |
-| SGA | 2020-21 | Franchise Engine | ✅ |
-| Julius Randle | 2020-21 | Luxury Amplifier | ✅ Corrected! |
-| Jaylen Brown | 2023-24 | Luxury Amplifier | ✅ |
-| Khris Middleton | 2020-21 | Latent Engine | ✅ |
-| Ben Simmons | 2019-20 | Fragile Star | ✅ |
-| Ben Simmons | 2020-21 | Fragile Star | ✅ |
-| Karl-Anthony Towns | 2019-20 | Fragile Star | ✅ |
-| Domantas Sabonis | 2022-23 | Fragile Star | ✅ |
-
-### Files
-
-| File | Purpose |
-|------|---------|
-| `index/classify_2d.py` | 2D classification engine |
-| `results/classification_2d_results.csv` | Full dataset results (2673 rows) |
-
-### Archetype Distribution
-
-| Archetype | Count | % |
-|-----------|-------|---|
-| Franchise Engine | 86 | 3.2% |
-| Latent Engine | 198 | 7.4% |
-| Strong Creator | 153 | 5.7% |
-| Luxury Amplifier | 224 | 8.4% |
-| Developing Engine | 40 | 1.5% |
-| Developing Star | 8 | 0.3% |
-| Developing Prospect | 220 | 8.2% |
-| Fragile Star | 221 | 8.3% |
-| Role Player | 1523 | 57.0% |
-
----
-
-## Key Decision: Creator vs. Converter
-
-The central question for any player:
-
-> **Creators** can manufacture efficient offense against engaged defenses.
-> **Converters** can only cash in opportunities that the system creates.
-
-| | High Efficiency | Low Efficiency |
-|---|---|---|
-| **High Creation** | FRANCHISE ENGINE | Struggling Star |
-| **Low Creation** | LUXURY AMPLIFIER | Role Player |
-
-Ben Simmons is in the bottom-left: efficient but dependent. The model must identify this.
-
----
-
-## Files to Reference
-
-| File | Purpose |
-|------|---------|
-| **`IMPLEMENTATION_GUIDE.md`** | **Complete technical guide for developers** |
-| `phase2_creation_independence/SPECIFICATION.md` | Detailed CII spec |
-| `phase2_creation_independence/TII_SPECIFICATION.md` | Detailed TII spec |
-| `phase2_creation_independence/index/composite.py` | Main CII calculator |
-| `phase2_creation_independence/index/trajectory.py` | TII calculator |
-| **`phase2_creation_independence/index/classify_2d.py`** | **2D classification with career pattern** |
-| `phase2_creation_independence/index/self_created.py` | Component 1 implementation |
-| `phase2_creation_independence/index/pressure_appetite.py` | Component 2 implementation |
-| `phase2_creation_independence/index/difficulty_embrace.py` | Component 3 implementation |
-| `phase2_creation_independence/index/defensive_survival.py` | Component 4 implementation |
-| `phase2_creation_independence/index/force_multiplication.py` | Component 5 implementation |
-| `phase2_creation_independence/ground_truth/player_labels.csv` | 1D expert labels |
-| `phase2_creation_independence/ground_truth/player_labels_2d.csv` | 2D expert labels |
-| `results/classification_2d_results.csv` | Full classification output |
-| `KEY_INSIGHTS.md` | 80+ learnings from Phase 1 |
-| `LUKA_SIMMONS_PARADOX.md` | Theoretical foundation |
-
----
-
-## Quick Start for New Developers
-
+To run the analysis:
 ```bash
-# 1. Read the implementation guide
-cat IMPLEMENTATION_GUIDE.md
+python scripts/deploy_2025_26_analysis.py
+```
 
-# 2. Test CII calculation
-python -c "from src.nba_data.phase2_creation_independence.index import batch_calculate_cii; print('OK')"
-
-# 3. Run component tests
-python src/nba_data/phase2_creation_independence/index/self_created.py
-python src/nba_data/phase2_creation_independence/index/pressure_appetite.py
+To classify a single player:
+```python
+from src.nba_data.phase2_creation_independence.index.classify_2d import diagnose_2d_classification
+diagnose_2d_classification("Cade Cunningham", "2024-25", df)
 ```

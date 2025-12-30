@@ -57,11 +57,16 @@ THRESHOLDS = {
     'pull_up_3pa_cap': 3.0,         # Not dominated by 3s
     
     # Fragile Star detection
-    'high_usage': 0.20,         # Usage above this = significant role
-    'high_minutes': 28.0,       # Minutes above this = significant role
+    'high_usage': 0.22,         # Usage above this = significant role (raised from 0.20)
+    'high_minutes': 32.0,       # Minutes above this = significant role
+    'high_minutes_usage': 0.20, # Usage required if high minutes (raised from 0.18)
     
     # Minimum seasons for career pattern
     'min_career_seasons': 4,
+    
+    # Age Gates (New for Phase 2b)
+    'age_developing_cap': 25,   # Max age for "Developing" labels
+    'age_latent_cap': 28,       # Max age for "Latent Engine" (veterans are "Strong Creator")
 }
 
 
@@ -70,7 +75,7 @@ def is_fragile_star_candidate(player_data: pd.Series, cii: float, career_stats: 
     Check if player is a Fragile Star candidate.
     
     Fragile Star = High-status player with fatal creation flaws
-    - Significant offensive role: high usage (>21%) OR (high minutes + medium usage)
+    - Significant offensive role: high usage (>22%) OR (high minutes >32 + medium usage >20%)
     - Low CII (<40) = can't create when schemed
     - Negative career leverage OR no creation tools
     
@@ -90,11 +95,11 @@ def is_fragile_star_candidate(player_data: pd.Series, cii: float, career_stats: 
     has_tools = has_real_creation_tools(player_data)
     
     # Must have significant OFFENSIVE role (not just minutes)
-    # High usage (>21%) indicates they're taking significant shots
-    # OR high minutes (>30) AND medium-high usage (>18%) - key contributor
+    # High usage (>22%) indicates they're taking significant shots
+    # OR high minutes (>32) AND medium-high usage (>20%) - key contributor
     has_significant_role = (
-        usg > 0.21 or  # Clear high-usage player
-        (minutes > 30.0 and usg > 0.18)  # Key contributor with meaningful usage
+        usg > THRESHOLDS['high_usage'] or 
+        (minutes > THRESHOLDS['high_minutes'] and usg > THRESHOLDS['high_minutes_usage'])
     )
     
     # Must have low CII
@@ -115,9 +120,9 @@ def is_fragile_star_candidate(player_data: pd.Series, cii: float, career_stats: 
     
     if has_significant_role and has_low_cii and has_fatal_flaw and has_career_sample:
         reasons = []
-        if usg > 0.21:
+        if usg > THRESHOLDS['high_usage']:
             reasons.append(f"high usage ({usg:.1%})")
-        if minutes > 30.0 and usg > 0.18:
+        if minutes > THRESHOLDS['high_minutes'] and usg > THRESHOLDS['high_minutes_usage']:
             reasons.append(f"high minutes ({minutes:.1f})")
         reasons.append(f"low CII ({cii:.1f})")
         if career_lev < -0.05:
@@ -275,6 +280,13 @@ def classify_2d(
     career_lev = career_stats.get('career_leverage_mean', np.nan)
     total_seasons = career_stats.get('total_seasons', 0)
     
+    # Extract Age (new for Phase 2b) - Try multiple keys
+    age = player_data.get('age')
+    if pd.isna(age):
+        age = player_data.get('AGE')
+    if pd.isna(age):
+        age = player_data.get('Age')
+    
     # Check for Fragile Star FIRST (high-status player with fatal flaws)
     is_fragile, fragile_reason = is_fragile_star_candidate(player_data, cii, career_stats)
     if is_fragile:
@@ -308,7 +320,9 @@ def classify_2d(
         career_leverage=career_lev,
         has_creation_tools=has_tools,
         total_seasons=total_seasons,
-        career_stats=career_stats
+        career_stats=career_stats,
+        player_data=player_data,
+        age=age
     )
     
     return {
@@ -341,21 +355,61 @@ def _determine_2d_archetype(
     career_leverage: float,
     has_creation_tools: bool,
     total_seasons: int,
-    career_stats: Dict
+    career_stats: Dict,
+    player_data: pd.Series,
+    age: float = np.nan
 ) -> Tuple[str, str]:
     """
-    Apply the refined 2D classification logic.
+    Apply the refined 2D classification logic with age gates.
     
     Key distinctions:
     - ENGINE: Positive career leverage
     - LUXURY AMPLIFIER: Negative leverage + has tools (can thrive as #2)
     - FRAGILE STAR: Negative leverage + no tools (fundamental gaps)
     
+    New Phase 2b Age Gates:
+    - Developing labels only for age <= 25
+    - Latent Engine only for age <= 28 (older players are "Strong Creator" or "Luxury Amplifier")
+    
     Returns:
         Tuple of (archetype, reasoning)
     """
     pos_seasons = career_stats.get('positive_seasons', 0)
     neg_seasons = career_stats.get('negative_seasons', 0)
+    
+    # Determine if player has significant role (Usage Gate)
+    # Re-use same logic as Fragile Star check but inside the flow
+    usg = player_data.get('usg_pct', 0) or 0
+    minutes = player_data.get('minutes', 0) or 0
+    is_high_usage = (
+        usg > THRESHOLDS['high_usage'] or 
+        (minutes > THRESHOLDS['high_minutes'] and usg > THRESHOLDS['high_minutes_usage'])
+    )
+    
+    # Helper for handling "Developing" labels
+    def _map_developing(base_archetype, reason):
+        if pd.isna(age) or age <= THRESHOLDS['age_developing_cap']:
+            return base_archetype, reason
+        else:
+            # Older players can't be developing
+            if 'Engine' in base_archetype:
+                return 'Strong Creator', f"{reason} (Age {age:.0f} > 25, reclassified from Developing Engine)"
+            elif 'Star' in base_archetype:
+                return 'Strong Creator', f"{reason} (Age {age:.0f} > 25, reclassified from Developing Star)"
+            elif 'Prospect' in base_archetype:
+                return 'Role Player', f"{reason} (Age {age:.0f} > 25, reclassified from Developing Prospect)"
+            return base_archetype, reason
+
+    # Helper for handling "Latent Engine" label
+    def _map_latent(base_archetype, reason):
+        if base_archetype != 'Latent Engine':
+            return base_archetype, reason
+            
+        if pd.isna(age) or age <= THRESHOLDS['age_latent_cap']:
+            return base_archetype, reason
+        else:
+            # Older players are "Established" Strong Creators, not Latent
+            return 'Strong Creator', f"{reason} (Age {age:.0f} > 28, reclassified from Latent Engine)"
     
     # Case 1: Already a Franchise Engine (high CII or borderline with elite TII)
     if cii >= THRESHOLDS['cii_engine']:
@@ -379,7 +433,7 @@ def _determine_2d_archetype(
         # Positive career leverage = Engine candidate
         if career_leverage >= THRESHOLDS['leverage_positive']:
             if cii >= THRESHOLDS['cii_medium'] and tii >= THRESHOLDS['tii_elite']:
-                return (
+                return _map_latent(
                     'Latent Engine',
                     f'Positive career leverage ({career_leverage:+.3f}, {pos_seasons}+/{neg_seasons}-), '
                     f'CII {cii:.1f}, TII {tii:.1f}: Can be #1'
@@ -391,12 +445,47 @@ def _determine_2d_archetype(
                     f'CII {cii:.1f}: Stepping up consistently'
                 )
             else:
-                return (
+                return _map_developing(
                     'Developing Engine',
                     f'Positive career leverage ({career_leverage:+.3f}), '
                     f'CII {cii:.1f} still developing'
                 )
         
+        # Mixed Leverage (0.0 to 0.01) - Treat as "Show Me" state
+        # Requires creation tools to be Amplifier/Creator, else Role/Fragile
+        elif career_leverage >= 0: # Mixed (0.0 to 0.01)
+            if has_creation_tools:
+                if cii >= THRESHOLDS['cii_medium']:
+                    # High TII + Tools + Mixed Leverage = Latent/Strong
+                    if tii >= THRESHOLDS['tii_elite']:
+                        return _map_latent(
+                            'Latent Engine',
+                            f'Mixed career leverage ({career_leverage:+.3f}), '
+                            f'CII {cii:.1f}, TII {tii:.1f} + Tools: High potential'
+                        )
+                    else:
+                        return (
+                            'Strong Creator',
+                            f'Mixed career leverage ({career_leverage:+.3f}) but has tools/CII'
+                        )
+                else:
+                    return (
+                        'Luxury Amplifier',
+                        f'Mixed career leverage ({career_leverage:+.3f}), low CII but has tools'
+                    )
+            else:
+                # No tools + Mixed leverage -> Fragile Star if high stats, else Role
+                if (cii >= THRESHOLDS['cii_medium'] or tii >= THRESHOLDS['tii_high']) and is_high_usage:
+                    return (
+                        'Fragile Star',
+                        f'Mixed career leverage ({career_leverage:+.3f}), NO tools: Empty stats'
+                    )
+                else:
+                    return (
+                        'Role Player',
+                        f'Mixed career leverage, no tools, low CII'
+                    )
+
         # Negative career leverage - check creation tools
         elif career_leverage < 0:
             if has_creation_tools:
@@ -407,7 +496,7 @@ def _determine_2d_archetype(
                 )
             else:
                 # No creation tools - Fragile Star or Role Player
-                if cii >= THRESHOLDS['cii_medium'] or tii >= THRESHOLDS['tii_high']:
+                if (cii >= THRESHOLDS['cii_medium'] or tii >= THRESHOLDS['tii_high']) and is_high_usage:
                     return (
                         'Fragile Star',
                         f'Negative career leverage ({career_leverage:+.3f}, {pos_seasons}+/{neg_seasons}-), '
@@ -424,16 +513,16 @@ def _determine_2d_archetype(
     
     if cii >= THRESHOLDS['cii_high']:
         if tii >= THRESHOLDS['tii_elite']:
-            return ('Latent Engine', f'CII {cii:.1f}, TII {tii:.1f}: High potential (limited career data)')
+            return _map_latent('Latent Engine', f'CII {cii:.1f}, TII {tii:.1f}: High potential (limited career data)')
         else:
             return ('Strong Creator', f'CII {cii:.1f}: Good creation (limited career data)')
     
     elif cii >= THRESHOLDS['cii_medium']:
         if tii >= THRESHOLDS['tii_elite']:
             if has_creation_tools:
-                return ('Latent Engine', f'Medium CII {cii:.1f}, high TII {tii:.1f}, has tools')
+                return _map_latent('Latent Engine', f'Medium CII {cii:.1f}, high TII {tii:.1f}, has tools')
             else:
-                return ('Developing Star', f'Medium CII {cii:.1f}, high TII {tii:.1f}, developing tools')
+                return _map_developing('Developing Star', f'Medium CII {cii:.1f}, high TII {tii:.1f}, developing tools')
         elif tii >= THRESHOLDS['tii_high']:
             return ('Strong Creator', f'CII {cii:.1f}, TII {tii:.1f}')
         else:
@@ -441,9 +530,9 @@ def _determine_2d_archetype(
     
     else:  # Low CII
         if tii >= THRESHOLDS['tii_elite'] and has_creation_tools:
-            return ('Developing Star', f'Low CII {cii:.1f} but high TII {tii:.1f}, has tools')
+            return _map_developing('Developing Star', f'Low CII {cii:.1f} but high TII {tii:.1f}, has tools')
         elif tii >= THRESHOLDS['tii_high']:
-            return ('Developing Prospect', f'Low CII {cii:.1f}, moderate TII {tii:.1f}')
+            return _map_developing('Developing Prospect', f'Low CII {cii:.1f}, moderate TII {tii:.1f}')
         else:
             return ('Role Player', f'Low CII {cii:.1f}, low TII {tii:.1f}')
 
@@ -655,4 +744,3 @@ if __name__ == '__main__':
             diagnose_2d_classification(player, season, df)
     else:
         print(f"Dataset not found at {dataset_path}")
-
