@@ -1,7 +1,8 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: December 29, 2025 (Late Evening)
-**Status**: ✅ **DEPLOYED** - 2025-26 Season Analysis Complete & Refined
+**Last Updated**: December 31, 2025
+**Status**: 🚧 **REFINING** - Implementing Phase 2c "Creation Viability"
+**Current Priority**: Fixing "The Mudiay/Curry Anomaly" via Viability-Dampened Volume
 
 ---
 
@@ -12,6 +13,22 @@ We discovered that Phase 1 was asking the **wrong question**:
 
 The fundamental question is now:
 > **"Does this player need the right situation, or IS he the situation?"**
+
+---
+
+## 🛠 Active Development (Phase 2c: The Viability Refinement)
+
+### The Problem: The Mudiay/Curry Anomaly
+We identified a flaw in the `Self-Created Shot Score` where "Creation Motion" (volume) was rewarded regardless of "Creation Viability" (efficiency).
+-   **Emmanuel Mudiay (2017)**: High Volume + Terrible Efficiency = **Strong Creator** (False Positive)
+-   **Steph Curry (2017)**: Moderate Volume + Elite Efficiency = **Undervalued** (False Negative)
+
+### The Solution: Viability-Dampened Volume
+We are moving from a "Motion" model to a "Work" model.
+1.  **Creation Premium**: Compare Player TS% to *Taxed* Teammate TS% (accounting for the difficulty of creation vs finishing).
+2.  **Viability Coefficient**: Dampen volume scores based on the Creation Premium.
+    -   Positive Premium (Iverson/Luka): Full credit for volume.
+    -   Negative Premium (Mudiay): Severe penalty on volume.
 
 ---
 
@@ -82,11 +99,17 @@ The classification now includes **Age Gates**, **Usage Gates**, and **Career Pat
 
 ## Next Steps
 
-### Priority 1: Visualization & Reporting
+### Priority 1: Creation Viability (The Mudiay Fix)
+- [ ] Implement `calculate_creation_viability` in `self_created.py`.
+- [ ] Implement `teammate_relative_efficiency` calculation.
+- [ ] Apply viability dampener to `volume_score` and `unassisted_score`.
+- [ ] Validate Mudiay (2017) drops to Role Player and Curry (2017) remains Strong Creator.
+
+### Priority 2: Visualization & Reporting
 - [ ] Build a Streamlit dashboard to visualize the 2D grid (CII vs TII).
 - [ ] Create "Player Cards" showing their CII component breakdown.
 
-### Priority 2: Monitoring
+### Priority 3: Monitoring
 - [ ] Monitor the "Latent Engine" list (Garland, Cunningham, Simons) during the 2025-26 season.
 - [ ] Watch the "Fragile Stars" (Poole, Kuzma) for playoff collapse.
 

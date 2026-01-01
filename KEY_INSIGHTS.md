@@ -263,7 +263,7 @@ adjusted_efficiency_score = base_efficiency_score * volume_multiplier
 **The Insight**: HAVING physical tools ≠ USING them. The true signal for force multiplication requires:
 1. **Physical Tools** (the ability): physicality_score, FTr
 2. **Force Volume** (the usage): usage × creation_volume_ratio
-3. **Force Agency** (the demand): clutch_usg_absolute, leverage_usg_delta
+3. **Force AGENCY** (the demand): clutch_usg_absolute, leverage_usg_delta
 4. **Touch Production** (the output): weighted_touch_production
 
 Simmons COULD force his way to the basket. He just... doesn't. Especially when it matters.
@@ -306,47 +306,29 @@ Jokić doesn't NEED to take hard shots because his shot CREATION is so elite tha
 
 **Key Principle**: **Multiple valid paths to the same destination. Gate the bonus on pressure response.**
 
----
+## 87. The "Finisher's Privilege" Trap (Teammate Relative Efficiency) 🎯 CRITICAL (December 2025)
 
-## Insight #82: The Latent Engine Discovery (December 29, 2025)
+**The Problem**: Comparing a primary creator's efficiency to their teammates' raw efficiency punishes the creator. Teammates often have higher TS% because they are fed easy shots *by* the creator (e.g., Allen Iverson vs Tyrone Hill).
 
-**The Problem**: CII measures CURRENT creation ability. But the goal is to find undervalued players like Brunson (pre-Knicks) and Harden (OKC).
+**The Insight**: The alternative to a self-created shot is not a teammate's dunk; it is a "stalled possession" or a forced shot by a role player. A Creator pays a tax upfront to generate offense.
 
-**The Key Insight**: "Current ability" and "scaling potential" are orthogonal dimensions. A player can have:
-- Low current ability + High scaling potential = **Latent Engine** (Brunson 2020-21)
-- High current ability + Any scaling = **Franchise Engine** (already there)
-- Low current ability + Low scaling = **Role Player** (correctly priced)
+**The Fix**: Measure **"Creation Premium"** not "Relative Efficiency." Compare creator efficiency to a *taxed* teammate efficiency (e.g., Teammate TS * 0.85).
+- Iverson (52% TS) vs Hill (55% TS) → Iverson (52%) vs Taxed Hill (46%) → Iverson wins.
+- Mudiay (48% TS) vs Jokic (64% TS) → Mudiay (48%) vs Taxed Jokic (54%) → Mudiay loses.
 
-**The TII (Trajectory Independence Index)** answers: "If we gave this player 30% usage, would they maintain efficiency?"
+**Key Principle**: **Creation is only valuable if it exceeds the Opportunity Cost of the possession.**
 
-**Critical Gates**:
-1. **Creation Tools Gate**: Simmons has high TS but NO pull-up jumpers → can't scale
-2. **Pressure Hiding Gate**: Sabonis has good touches but HIDES under pressure → won't scale
+## 88. The "Mudiay Correction" (Viability-Dampened Volume) 🎯 CRITICAL (December 2025)
 
-**Brunson 2020-21 Signal (the key validation)**:
-- USG 0.196 (backup level)
-- TS 0.618 (elite efficiency)
-- CVR 0.692 (creates when he touches it)
-- leverage_usg_delta +0.029 (steps UP)
-- TII: 77.2 → **High Scaling Potential**
+**The Problem**: The model rewarded Emmanuel Mudiay for "Creation Motion" (high unassisted volume) despite terrible efficiency, classifying him as a Strong Creator.
 
-Two years later (2022-23 Knicks): 28 PPG, CII 72.2, proven Engine.
+**The Insight**: Inefficient creation is not "Creation"; it is "Abdication of Team Value." It destroys possessions that could have been used better.
 
-**The 2D Classification Grid**:
-```
-                  Low TII    Mid TII    High TII
-High CII         Engine     Engine     Engine
-Med CII          Amplifier  Creator    LATENT ENGINE ← Alpha
-Low CII          Role       Developing Developing
-```
+**The Fix**: Apply a **"Viability Coefficient"** to volume metrics.
+- Calculate `Creation Premium`.
+- If Premium is negative (inefficient hijacking), apply a severe dampener (0.2x - 0.5x) to the Volume and Unassisted scores.
+- This ensures high volume is only rewarded if it is *viable*.
 
-**Key Principle**: **Two indices for two questions. CII for "now", TII for "potential". The intersection reveals undervalued assets.**
+**Result**: Mudiay (High Volume, Negative Viability) → Role Player. Curry (Moderate Volume, Elite Viability) → Strong Creator.
 
----
-
-## See Also
-- `2D_RISK_MATRIX_IMPLEMENTATION.md` - ✅ **COMPLETE** - 2D framework implementation
-- `UNIVERSAL_PROJECTION_IMPLEMENTATION.md` - ✅ **COMPLETE** - Universal projection implementation (v2 with Subsidy Index)
-- `LUKA_SIMMONS_PARADOX.md` - Theoretical foundation
-- `phase2_creation_independence/SPECIFICATION.md` - CII specification
-- `phase2_creation_independence/TII_SPECIFICATION.md` - **NEW** - TII specification
+**Key Principle**: **Motion without viability is not work; it is waste.**

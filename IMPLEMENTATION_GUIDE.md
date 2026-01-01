@@ -1,7 +1,7 @@
 # NBA Playoff Resilience Engine - Technical Implementation Guide
 
-**Version**: 2.0  
-**Date**: December 29, 2025  
+**Version**: 2.3  
+**Date**: December 31, 2025  
 **Audience**: New developers joining the project
 
 > **⚠️ Note**: The implementation skeletons in this guide are for reference only. The actual implementations in `src/nba_data/phase2_creation_independence/index/` include additional logic like the **Two-Path Architecture** (Perimeter + Hub paths) for Components 1 and 3 that recognize both perimeter creators (Harden, Luka) and hub creators (Jokić).
@@ -14,8 +14,8 @@
 2. [Architecture Overview](#2-architecture-overview)
 3. [Data Pipeline](#3-data-pipeline)
 4. [CII Component Implementation](#4-cii-component-implementation)
-5. [TII Component Implementation](#5-tii-component-implementation) ← **NEW**
-6. [2D Classification System](#6-2d-classification-system) ← **NEW**
+5. [TII Component Implementation](#5-tii-component-implementation)
+6. [2D Classification System](#6-2d-classification-system)
 7. [Testing & Validation](#7-testing--validation)
 8. [Code Patterns & Conventions](#8-code-patterns--conventions)
 9. [Step-by-Step Implementation Tasks](#9-step-by-step-implementation-tasks)
@@ -103,15 +103,15 @@ resilience_basketball/
 │       ├── index/
 │       │   ├── __init__.py
 │       │   ├── composite.py          # Main CII calculator
-│       │   ├── self_created.py       # Component 1 (TO BUILD)
-│       │   ├── pressure_appetite.py  # Component 2 (TO BUILD)
-│       │   ├── difficulty_embrace.py # Component 3 (TO BUILD)
-│       │   ├── defensive_survival.py # Component 4 (TO BUILD)
-│       │   └── force_multiplication.py # Component 5 (TO BUILD)
+│       │   ├── self_created.py       # Component 1 (Refined Phase 2c)
+│       │   ├── pressure_appetite.py  # Component 2 (COMPLETE)
+│       │   ├── difficulty_embrace.py # Component 3 (COMPLETE)
+│       │   ├── defensive_survival.py # Component 4 (COMPLETE)
+│       │   └── force_multiplication.py # Component 5 (COMPLETE)
 │       ├── classification/
 │       │   ├── __init__.py
-│       │   ├── train_classifier.py   # Archetype classifier (TO BUILD)
-│       │   └── validate.py           # Validation harness (TO BUILD)
+│       │   ├── train_classifier.py   # Archetype classifier
+│       │   └── validate.py           # Validation harness
 │       └── ground_truth/
 │           ├── __init__.py
 │           └── player_labels.csv     # Expert-curated labels
@@ -268,18 +268,20 @@ Each component should be normalized to 0-100 scale.
 
 **Question**: Can you generate a quality shot without a play being run?
 
+**Refinement (Phase 2c)**: Includes **Creation Viability** logic to prevent rewarding inefficient volume (e.g., Mudiay 2017).
+
 **Implementation File**: `src/nba_data/phase2_creation_independence/index/self_created.py`
 
-**Data Sources**:
-- `leaguedashplayerptshot` with `DribbleRange` filters
-- `synergyplaytypes` for ISO and PnR Handler data
+**Key Physics**:
+- **Creation Premium**: `Player_TS - (Teammate_TS * Role_Adjustment)`
+- **Viability Coefficient**: Dampens volume score if Creation Premium is negative.
 
 **Sub-Metrics**:
 
 | Metric | Weight | Calculation |
 |--------|--------|-------------|
-| Unassisted FG% | 25% | % of FGM that are unassisted |
-| ISO + Pull-up Volume | 30% | (ISO_FGA + PullUp_FGA) / 100 possessions |
+| Unassisted FG% | 25% | % of FGM that are unassisted (Dampened by Viability) |
+| ISO + Pull-up Volume | 30% | Volume per 100 poss (Dampened by Viability) |
 | Self-Created Efficiency | 30% | EFG% on 3-6 and 7+ dribble shots |
 | Creation Tools | 15% | Presence of stepback, fadeaway in shot diet |
 
@@ -290,71 +292,48 @@ Each component should be normalized to 0-100 scale.
 
 import pandas as pd
 import numpy as np
-from typing import Dict
+
+def calculate_viability_coefficient(player_data: pd.Series) -> float:
+    """
+    Calculate multiplier to dampen volume based on efficiency viability.
+    
+    Logic:
+    - Compare Player TS% to Taxed Teammate TS% (0.85 * Teammate_TS)
+    - If Player TS > Taxed Teammate TS: Creation is VIABLE (Coefficient = 1.0+)
+    - If Player TS < Taxed Teammate TS: Creation is HIJACKING (Coefficient < 1.0)
+    """
+    player_ts = player_data.get('TS_PCT', 0.55)
+    teammate_ts = player_data.get('TEAMMATE_TS_PCT', 0.55)
+    
+    # Taxed teammate efficiency (Creation Tax)
+    # The alternative to a self-created shot is a taxed late-clock shot
+    taxed_teammate_ts = teammate_ts * 0.85 
+    
+    creation_premium = player_ts - taxed_teammate_ts
+    
+    # Dampener logic
+    if creation_premium >= 0:
+        return 1.0 + (creation_premium * 2.0) # Slight bonus for elite efficiency
+    else:
+        # Severe penalty for negative premium (Mudiay Correction)
+        # -0.05 premium -> 0.5 multiplier
+        return max(0.2, 1.0 + (creation_premium * 10.0))
 
 def calculate_self_created_score(player_data: pd.Series) -> float:
     """
-    Calculate Self-Created Shot Score (0-100).
-    
-    This measures the ability to generate quality shots without plays being run.
-    
-    Sub-metrics:
-    1. Unassisted FG% (25%)
-    2. ISO + Pull-up Volume (30%)
-    3. Self-Created Efficiency (30%)
-    4. Creation Tools Availability (15%)
+    Calculate Self-Created Shot Score (0-100) with Viability Refinement.
     """
+    viability = calculate_viability_coefficient(player_data)
     
     # Sub-metric 1: Unassisted FG%
-    # Higher unassisted rate = more self-created scoring
     unassisted_rate = player_data.get('UNASSISTED_FG_PCT', 0.5)
-    unassisted_score = min(unassisted_rate / 0.65 * 100, 100)  # 65%+ = elite
+    # Dampen unassisted score if viability is low
+    unassisted_score = min(unassisted_rate / 0.65 * 100, 100) * viability
     
-    # Sub-metric 2: ISO + Pull-up Volume (per 75 possessions)
-    iso_poss = player_data.get('ISO_POSS_RS', 0)
-    pullup_fga = player_data.get('FGA_3_DRIBBLE', 0) + player_data.get('FGA_7_DRIBBLE', 0)
-    total_creation_volume = iso_poss + pullup_fga
-    volume_score = min(total_creation_volume / 8.0 * 100, 100)  # 8+ = elite
+    # Sub-metric 2: Volume
+    volume_score = min(total_creation_volume / 8.0 * 100, 100) * viability
     
-    # Sub-metric 3: Self-Created Efficiency
-    efg_self_created = player_data.get('EFG_ISO_WEIGHTED', 0.45)
-    efficiency_score = min((efg_self_created - 0.40) / 0.15 * 100, 100)  # 40% floor, 55%+ = elite
-    efficiency_score = max(efficiency_score, 0)  # Floor at 0
-    
-    # Sub-metric 4: Creation Tools (stepback availability)
-    # Proxy: Use 7+ dribble volume as indicator of deep creation ability
-    deep_creation_ratio = player_data.get('FGA_7_DRIBBLE', 0) / max(player_data.get('FGA_ISO_TOTAL', 1), 1)
-    tools_score = min(deep_creation_ratio * 100 * 2, 100)  # 50%+ of ISO being 7+ = elite
-    
-    # Weighted combination
-    final_score = (
-        0.25 * unassisted_score +
-        0.30 * volume_score +
-        0.30 * efficiency_score +
-        0.15 * tools_score
-    )
-    
-    return round(final_score, 2)
-
-
-def get_required_features() -> list:
-    """Return list of features required for this component."""
-    return [
-        'UNASSISTED_FG_PCT',  # Needs collection
-        'ISO_POSS_RS',
-        'FGA_3_DRIBBLE',
-        'FGA_7_DRIBBLE', 
-        'FGA_ISO_TOTAL',
-        'EFG_ISO_WEIGHTED'
-    ]
-
-
-# Validation cases (from SPECIFICATION.md)
-VALIDATION_CASES = {
-    'Ben Simmons': {'expected_score': 5, 'tolerance': 10},   # Near zero self-created jumpers
-    'James Harden': {'expected_score': 95, 'tolerance': 10}, # Elite stepback available
-    'Luka Dončić': {'expected_score': 95, 'tolerance': 10},  # Maximum creation
-}
+    # ... rest of calculation
 ```
 
 ### 4.2 Component 2: Pressure Appetite Score (25%)
@@ -1365,19 +1344,8 @@ python -c "from src.nba_data.phase2_creation_independence.index.self_created imp
 #### Task 1.2: Pressure Appetite Score
 ✅ **COMPLETE** - Implemented in `src/nba_data/phase2_creation_independence/index/pressure_appetite.py`.
 
-1. Create file with skeleton from Section 4.2
-2. Existing features available: `CLUTCH_USG_ABSOLUTE`, `RELATIVE_USAGE_DROP`
-3. Add playoff usage comparison (if not available)
-4. Validate Simmons << Luka
-
 #### Task 1.3: Shot Difficulty Embrace Score
 ✅ **COMPLETE** - Implemented in `src/nba_data/phase2_creation_independence/index/difficulty_embrace.py`.
-
-**Key Implementation Notes**:
-- Removed `contested_shot_rate` as primary signal (the "Traffic vs Difficulty" trap)
-- Uses `pull_up_fga` (40%), `pct_pts_2pt_mr` (30%), `pull_up_fg3a` (20%), `time_of_poss` (10%)
-- Force creators (Giannis, Zion) get credit through Components 1 and 5, not here
-- 7/7 validation cases passing (Simmons, Gobert, Zion, Giannis, Tatum, Middleton, DeRozan)
 
 #### Task 1.4: Defensive Survival Score
 **File**: `src/nba_data/phase2_creation_independence/index/defensive_survival.py`
@@ -1687,13 +1655,11 @@ player_labels_2d.csv        → 2D ground truth labels
 
 ---
 
-**Document Version**: 2.2  
-**Last Updated**: December 29, 2025 (Late Evening - Phase 2b Refinements)  
+**Document Version**: 2.3  
+**Last Updated**: December 31, 2025 (Refining Phase 2c - Creation Viability)  
 **Maintainer**: NBA Resilience Engine Team
 
-**Recent Updates (Phase 2b)**:
-- Added Usage Gates to prevent role player misclassification
-- Added Age Gates to prevent veteran misclassification
-- Refined Fragile Star definition to require high usage (>22%)
-- Updated validation cases to reflect refined logic
-
+**Recent Updates (Phase 2c)**:
+- Added "Creation Viability" logic to Self-Created Shot Score
+- Defined "Creation Premium" (Player TS - Taxed Teammate TS)
+- Introduced "Viability Coefficient" to dampen inefficient volume

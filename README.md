@@ -10,10 +10,15 @@ This distinguishes between:
 - **Creators**: Players who can manufacture efficient offense when defenses scheme for them. They ARE the situation.
 - **Converters**: Players who can only cash in opportunities created by the system. They NEED the situation.
 
-## Current Status: Phase 2 Complete - 2D Classification System (Refined)
+## Current Status: Refining Phase 2c - Creation Viability
 
-**All CII/TII components implemented with 13/13 core validation cases passing.**
-**Phase 2b refinements: Age Gates and Usage Gates implemented to prevent misclassification.**
+**Refinement In Progress**: We are implementing "Viability-Dampened Volume" to correct the "Mudiay Anomaly" (where inefficient chuckers were rewarded for raw creation volume).
+- **Previous Logic**: High Volume = High Score.
+- **New Logic**: High Volume is only valuable if it is **Viable** (more efficient than the team's alternative options).
+
+**Phase 2 Complete**: 2D Classification System (CII × TII)
+- **All CII/TII components implemented.**
+- **Phase 2b refinements (Age & Usage Gates) implemented.**
 
 The system now combines:
 1. **CII (Creation Independence Index)** - Current creation ability
@@ -48,7 +53,7 @@ CII          ├─────────────┼───────�
 | **Latent Engine** | Has skills, needs opportunity → **THE ALPHA** | Brunson 2020-21, Harden at OKC |
 | **Luxury Amplifier** | Negative leverage + has tools = thrives as #2 | Randle, Jaylen Brown, Klay |
 | **Fragile Star** | High usage (>22%) + low CII + no tools = fundamental gaps | Simmons, Sabonis, KAT, Jordan Poole |
-| **Role Player** | Limited creation, limited ceiling | Tyus Jones, 3-and-D players, Derrick White |
+| **Role Player** | Solid contributor, not a star | Tyus Jones, 3-and-D players, Derrick White |
 
 ### Key Validation Results
 
@@ -64,7 +69,7 @@ CII          ├─────────────┼───────�
 **Key Breakthroughs**:
 1. **Career Leverage Pattern**: Randle's career leverage pattern (-0.023 mean, 8 negative seasons) revealed his 2020-21 was an outlier. True Engines like Harden (+0.053), Brunson (+0.040), and SGA (+0.033) show consistent positive leverage throughout their careers.
 2. **Usage Gates (Phase 2b)**: Fragile Star classification now requires high usage (>22%) to protect elite role players like Derrick White from false positives. A role player who hides is just a role player; a STAR who hides is Fragile.
-3. **Age Gates (Phase 2b)**: Players over 25 cannot be "Developing" and players over 28 cannot be "Latent Engine" - they are reclassified as "Strong Creator" or "Luxury Amplifier" based on their actual career stage.
+3. **Creation Viability (Phase 2c - In Progress)**: Dampening creation volume for inefficient players (Mudiay Correction) using "Creation Premium" logic (Player TS vs Taxed Teammate TS).
 
 ## Quick Start
 
@@ -129,6 +134,7 @@ src/nba_data/
 ## Next Steps
 
 1. ✅ **Deployed to 2024-25 season** - Results in `results/classification_2d_2024_25.csv`
-2. Build Streamlit dashboard for interactive 2D grid visualization
-3. Monitor "Latent Engine" list (Garland, Cunningham, Simons) during 2025-26 season
-4. Track "Fragile Stars" (Poole, Kuzma) for playoff validation
+2. **Implement Creation Viability** - Fix Mudiay/Curry anomalies by weighting volume by relative efficiency.
+3. Build Streamlit dashboard for interactive 2D grid visualization
+4. Monitor "Latent Engine" list (Garland, Cunningham, Simons) during 2025-26 season
+5. Track "Fragile Stars" (Poole, Kuzma) for playoff validation
