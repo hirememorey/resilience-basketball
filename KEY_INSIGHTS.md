@@ -331,4 +331,21 @@ Jokić doesn't NEED to take hard shots because his shot CREATION is so elite tha
 
 **Result**: Mudiay (High Volume, Negative Viability) → Role Player. Curry (Moderate Volume, Elite Viability) → Strong Creator.
 
-**Key Principle**: **Motion without viability is not work; it is waste.**
+## 89. The "Creation Polymorphism" Insight (The Multi-Path Paradox) 🎯 CRITICAL (January 2026)
+
+**The Problem**: The model correctly identified Harden (ISO) and Jokic (Post Hub) as Engines, but systematically undervalued LeBron James (Drive-and-Kick) and Stephen Curry (Gravity). It classified them as "Strong Creators" but not "Engines" because they lacked the specific ISO markers (unassisted jumpers) the model was trained to look for.
+
+**The Insight**: Creation is not a single mechanism (ISO); it is a **Physics Outcome** (Advantage Generation).
+-   **Path A (ISO)**: Creating advantage via 1v1 skill (Harden).
+-   **Path B (Displacement)**: Creating advantage via rim pressure/collapse (LeBron/Giannis).
+-   **Path C (Hub)**: Creating advantage via structural positioning (Jokic).
+-   **Path D (Gravity)**: Creating advantage via distortion/spacing (Curry).
+
+A player who generates 1.5 points per possession via "Gravity" is just as "Independent" as one who does it via "Step-backs," even if the stat sheet says "Assisted."
+
+**The Fix**: Adopt a **Multi-Path Architecture** for the Self-Created Shot Score.
+-   Calculate scores for ALL 4 paths.
+-   `Final Score = Max(Path_A, Path_B, Path_C, Path_D) + Multi_Modal_Bonus`
+-   This acknowledges that elite specialists (Curry) are Engines, while rewarding polymaths (LeBron) for versatility.
+
+**Key Principle**: **Measure the Magnitude of Advantage, not just the Method of Generation.**
