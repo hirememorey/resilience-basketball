@@ -1,8 +1,8 @@
 # Active Context: NBA Playoff Resilience Engine
 
-**Last Updated**: January 2, 2026
-**Status**: 🚧 **RESTRUCTURING** - Implementing Multi-Path Creation Framework
-**Current Priority**: Refactoring Component 1 (Self-Created Shot) to capture non-ISO creation (LeBron/Curry).
+**Last Updated**: January 3, 2026
+**Status**: 🚧 **In Progress - Phase 3 (Principled Adjustments)**
+**Current Priority**: Refactoring Component 1 (Self-Created Shot) and fixing Component 3 (Difficulty Embrace) architecture.
 
 ---
 
@@ -16,10 +16,16 @@ We are moving to a **Multi-Path Architecture**:
 
 ## 🛠 Active Development (Multi-Path Implementation)
 
-### The Problem: The "LeBron/Curry Gap"
-Current Component 1 (ISO-centric) systematic failures:
--   **LeBron James (2016)**: CII 68.8 (Expected 78+). **Cause**: Drive-and-kick creation masked as "assisted" or low pull-up volume.
--   **Steph Curry (2017)**: CII 68.7 (Expected 78+). **Cause**: Off-ball gravity and relocation creation not captured by on-ball metrics.
+### Current Progress
+- [x] **Phase 1 (Bare Model)**: Created bare path modules and CII calculator with no gates.
+- [x] **Phase 2 (Diagnostics)**: Diagnosed failure modes for LeBron, Curry, Giannis, Jokić.
+- [ ] **Phase 3 (Adjustments)**: Implementing fixes based on diagnostics.
+
+### Key Findings (Diagnosis Phase)
+1.  **Jokić Failure**: Component 3 (Difficulty Embrace) lacks the Hub Path logic found in Component 1, unfairly penalizing him for efficiency.
+2.  **LeBron/Giannis Failure**: Drive-and-Kick path formula underestimates the value of elite rim pressure volume.
+3.  **Curry Failure**: Gravity path proxies (screen assists) are weak or missing; needs better formula.
+4.  **Data Gaps**: Missing tracking data for Ja Morant and Donovan Mitchell (2021-22).
 
 ### The Solution: Multi-Path Evaluation
 We will evaluate **four distinct creation pathways** and take the maximum score (plus a multi-modal bonus):
@@ -62,7 +68,7 @@ We will evaluate **four distinct creation pathways** and take the maximum score 
 |-----------|--------|----------|--------|
 | **1. Self-Created Shot** | **30%** | **Can you generate advantage?** | **MAX(ISO, Drive, Hub, Gravity)** |
 | 2. Pressure Appetite | 25% | Do you want the ball in clutch? | Usage Maintenance |
-| 3. Difficulty Embrace | 20% | Do you take tough shots? | Pull-up/Contested Vol |
+| 3. Difficulty Embrace | 20% | Do you take tough shots? | Pull-up/Contested Vol **(needs Hub logic)** |
 | 4. Defensive Survival | 15% | Do you survive schemes? | Efficiency Maintenance |
 | 5. Force Multiplication | 10% | Do you create physically? | FTr / Physicality |
 
@@ -74,10 +80,8 @@ We will evaluate **four distinct creation pathways** and take the maximum score 
 - `src/nba_data/phase2_creation_independence/`
     - `index/`
         - `self_created.py` (Target for Refactor)
-        - `path_iso.py` (New)
-        - `path_drive_kick.py` (New)
-        - `path_post_hub.py` (New)
-        - `path_gravity.py` (New)
+        - `paths/` (New modular path logic)
+            - `iso.py`, `drive_kick.py`, `post_hub.py`, `gravity.py`, `combined.py`
     - `MULTIPATH_SPECIFICATION.md` (See `implementation_plan_multipath.md`)
 
 ### Reference Documents
@@ -86,16 +90,14 @@ We will evaluate **four distinct creation pathways** and take the maximum score 
 
 ---
 
-## Next Steps
+## Next Steps (Phase 3)
 
-### Priority 1: Data Collection & Preparation
-- [ ] Implement `collect_tracking_data.py` (NBA.com API)
-- [ ] Merge tracking data with `predictive_dataset_with_friction.csv`
+### Priority 1: Fix Component Architecture (Critical)
+- [ ] Refactor `difficulty_embrace.py` to include Hub Path logic (Jokić fix).
 
-### Priority 2: Path Implementation
-- [ ] Extract Path A (ISO) and Path C (Hub) from existing logic.
-- [ ] Implement Path B (Drive-and-Kick).
-- [ ] Integrate into `calculate_self_created_score`.
+### Priority 2: Fix Path Formulas (High)
+- [ ] Tune Drive-Kick formula weights/thresholds (LeBron/Giannis fix).
+- [ ] Tune Gravity formula and proxies (Curry fix).
 
-### Priority 3: Validation
-- [ ] Verify LeBron '16 and Giannis '21 classify as Franchise Engines.
+### Priority 3: Data Pipeline
+- [ ] Investigate missing tracking data for 2021-22 (Ja Morant/Mitchell).
